@@ -7,20 +7,22 @@
 
 #include "DiscreteDynamicalSystem.h"
 
-DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynamics) {
+DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynamics, bool rational) {
 
 	this->vars = vars;
 	this->params = params;
 	this->dynamics = dynamics;
+	this->rational = rational;
 
 }
 
-DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynamics, Polyhedron *reachSet) {
+DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynamics, Polyhedron *reachSet, bool rational) {
 
 	this->vars = vars;
 	this->params = params;
 	this->dynamics = dynamics;
 	this->reachSet = reachSet;
+	this->rational = rational;
 
 	// Extract the template matrix Lambda from reachSet
 	int reachSetDim = this->reachSet->getDim();
@@ -55,12 +57,20 @@ DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynam
 		//cout<<Lambda_fog[i]<<"\n";
 	}
 
-	cout<<"Computing control points...\n";
+	cout<<"Computing control points...\n\n";
 	// Compute the template control points
 	vector< lst > templateControlPts;
-	for( int i=0; i<(signed)Lambda_fog.size(); i++){
-		BaseConverter *BC = new BaseConverter(this->reachSet->getAlpha(), Lambda_fog[i]);
-		templateControlPts.push_back(BC->getBernCoeffs());								// compute control points
+	if(!this->rational){		// check if the dynamics are rational
+		for( int i=0; i<(signed)Lambda_fog.size(); i++){
+			BaseConverter *BC = new BaseConverter(this->reachSet->getAlpha(), Lambda_fog[i]);
+			templateControlPts.push_back(BC->getBernCoeffs());								// compute control points
+		}
+	}else{
+		for( int i=0; i<(signed)Lambda_fog.size(); i++){
+			BaseConverter *BC = new BaseConverter(this->reachSet->getAlpha(), Lambda_fog[i].numer(),Lambda_fog[i].denom());
+			templateControlPts.push_back(BC->getRationalBernCoeffs());								// compute control points
+		}
+
 	}
 	this->templateControlPts = templateControlPts;
 

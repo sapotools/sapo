@@ -16,6 +16,8 @@
 #include "Conjunction.h"
 #include "Disjunction.h"
 #include "Until.h"
+#include "Always.h"
+#include "Eventually.h"
 
 #include <string>
 

@@ -83,7 +83,7 @@ Ebola::Ebola() {
 	this->init_para_set = parameter_set;
 
 	// Set the specification
-	ex constraint1 = q-50; 		//atoms
+	ex constraint1 = -i+100; 		//atoms
 	ex constraint2 = -e+100;
 	ex constraint3 = -q+25;
 	STL *phi1 = new Atom(constraint1);
@@ -91,6 +91,7 @@ Ebola::Ebola() {
 	STL *phi3 = new Atom(constraint3);
 	STL *phi23 = new Disjunction(phi2,phi3);	// phi2 or phi3
 	STL *phi = new Until(phi1,5,15,phi23);		// phi1 U (phi2 or phi3)
+	//STL *phi = new Always(50,55,phi1);		// phi1 U (phi2 or phi3)
 
 	this->spec = phi;
 

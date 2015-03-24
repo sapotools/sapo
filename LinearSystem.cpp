@@ -9,16 +9,39 @@
 
 LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 
-	this->A = A;
-	this->b = b;
+	bool smart_insert = true;
 
+	if(!smart_insert){
+		this->A = A;
+		this->b = b;
+	}else{
+		for(int i=0; i<A.size(); i++){
+			if(!this->isIn(A[i],b[i])){
+				this->A.push_back(A[i]);
+				this->b.push_back(b[i]);
+			}
+		}
+
+	}
 	this->n_vars = this->A[0].size();
+}
+
+// check if a constraint is already in
+bool LinearSystem::isIn(vector< double > Ai, double bi){
+
+	for(int i=0; i<this->A.size(); i++){
+		if( equal(this->A[i].begin(),this->A[i].end(),Ai.begin()) && this->b[i] == bi ){
+			return true;
+		}
+	}
+	return false;
 }
 
 LinearSystem::LinearSystem(lst vars, lst constraints) {
 
 	this->vars = vars;
 	this->constraints = constraints;
+	this->constraints.unique();
 
 	this->n_vars = this->vars.nops();
 

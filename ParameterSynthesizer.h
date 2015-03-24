@@ -32,6 +32,8 @@ private:
 
 	STL* initConstraintControlPts(STL *formula);
 	LinearSystemSet* synthesizeUntil(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* synthesizeAlways(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* synthesizeEventually(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
 
 public:
 	ParameterSynthesizer(DiscreteDynamicalSystem *dynSys, STL *stl_constraint);

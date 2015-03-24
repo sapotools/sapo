@@ -50,9 +50,7 @@ LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset){
 			}
 		}
 	}
-
 	return new LinearSystemSet(intSet);
-
 }
 
 // Union of two sets of linear systems

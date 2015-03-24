@@ -228,6 +228,12 @@ lst BaseConverter::getBernCoeffs(){
 		bern_coeffs.append(bernCoeff(pos2multi_index(i)));
 	}
 
+	cout<<"Degrees: ";
+	for(int i=0; i<(signed)this->vars.nops();i++){
+		cout<<this->degrees[i]<<", ";
+	}
+	cout<<"(Total points:"<<bern_coeffs.nops()<<")\n";
+
 	return bern_coeffs;
 
 }
@@ -237,9 +243,11 @@ lst BaseConverter::getRationalBernCoeffs(){
 
 	lst bern_coeffs;
 
+	cout<<"Degrees: ";
 	vector<int> degs;
 	for(int i=0; i<(signed)this->vars.nops();i++){
 		degs.push_back(max(this->num.degree(this->vars[i]),this->denom.degree(this->vars[i])));
+		cout<<degs[i]<<", ";
 	}
 
 	BaseConverter *num_conv = new BaseConverter(this->vars,this->num,degs);
@@ -254,6 +262,9 @@ lst BaseConverter::getRationalBernCoeffs(){
 		}
 	}
 
+	// eliminate duplicates
+	bern_coeffs.unique();
+	cout<<"(Total points:"<<bern_coeffs.nops()<<")\n";
 	return bern_coeffs;
 
 }

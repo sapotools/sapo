@@ -17,7 +17,7 @@
 using namespace std;
 using namespace GiNaC;
 
-enum formula_type {ATOM,CONJUNCTION,DISJUNCTION,UNTIL};
+enum formula_type {ATOM,CONJUNCTION,DISJUNCTION,UNTIL,ALWAYS,EVENTUALLY};
 
 
 

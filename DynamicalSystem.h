@@ -20,16 +20,18 @@ private:
 	lst vars;				// variables
 	lst params;				// parameters
 	lst dynamics;			// dynamics
+	bool rational;			// has rational dynamics?
 
 public:
 
-	DynamicalSystem(lst vars, lst params, lst dynamics);
+	DynamicalSystem(lst vars, lst params, lst dynamics, bool rational);
 
 	lst eulerDisc(double disc_step);
 
 	lst getVars();
 	lst getParams();
 	lst getDynamics();
+	bool isRational(){ return this->rational; };
 
 	virtual ~DynamicalSystem();
 };

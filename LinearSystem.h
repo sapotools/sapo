@@ -19,6 +19,7 @@ private:
 	vector< vector<double> > A; // matrix A
 	vector< double > b; 		// vector b
 
+	bool isIn(vector< double > Ai, double bi);	// check if a constraint is already in
 	void initLS();				// initialize A and b
 	double solveLinearSystem(vector< vector< double > > A, vector< double > b, vector< double > obj_fun, int min_max);
 

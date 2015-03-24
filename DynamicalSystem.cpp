@@ -7,11 +7,12 @@
 
 #include "DynamicalSystem.h"
 
-DynamicalSystem::DynamicalSystem(lst vars, lst params, lst dynamics) {
+DynamicalSystem::DynamicalSystem(lst vars, lst params, lst dynamics, bool rational) {
 
 	this->vars = vars;
 	this->params = params;
 	this->dynamics = dynamics;
+	this->rational = rational;
 
 }
 
