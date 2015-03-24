@@ -30,11 +30,49 @@ BaseConverter::BaseConverter(lst vars, ex polynomial) {
 	vector<int> multi_index;
 	extractCoeffs(this->polynomial,0,multi_index);
 
-	//cout<<"\nDegs: ";
-	//for(int i=0; i<this->degrees.size(); i++){
-	//	cout<<this->degrees[i];
-	//}
-	//cout<<"\n";
+//	cout<<"\nPoly: "<<polynomial<<"\n";
+//	cout<<"\nDegs: ";
+//	for(int i=0; i<this->degrees.size(); i++){
+//		cout<<this->degrees[i];
+//	}
+//	cout<<"\n";
+
+}
+
+BaseConverter::BaseConverter(lst vars, ex polynomial, vector<int> degrees) {
+
+	this->vars = vars;
+	this->polynomial = polynomial;
+
+	// Put the polynomial in extended form and extract variables degrees
+	this->polynomial = this->polynomial.expand();
+	this->degrees = degrees;
+
+	// Initialize the degree shifts
+	initShifts();
+
+	for(int i=0;i<this->shifts[0];i++){
+		this->coeffs.push_back(0);
+	}
+
+	// Initialize the coefficients vector
+	vector<int> multi_index;
+	extractCoeffs(this->polynomial,0,multi_index);
+
+//	cout<<"\nDegs: ";
+//	for(int i=0; i<this->degrees.size(); i++){
+//		cout<<this->degrees[i];
+//	}
+//	cout<<"\n";
+
+}
+
+// for rational polynomials
+BaseConverter::BaseConverter(lst vars, ex num, ex denom){
+
+	this->vars = vars;
+	this->num = num;
+	this->denom = denom;
 
 }
 
@@ -51,6 +89,7 @@ void BaseConverter::initShifts(){
 	}
 
 }
+
 
 // Convert a multi-index in a coefficient position index
 int BaseConverter::multi_index2pos(vector<int> multi_index){
@@ -187,6 +226,32 @@ lst BaseConverter::getBernCoeffs(){
 
 	for(int i=0; i<(signed)this->coeffs.size(); i++){
 		bern_coeffs.append(bernCoeff(pos2multi_index(i)));
+	}
+
+	return bern_coeffs;
+
+}
+
+// Compute the the list of Bernstein control points for rational polynomials
+lst BaseConverter::getRationalBernCoeffs(){
+
+	lst bern_coeffs;
+
+	vector<int> degs;
+	for(int i=0; i<(signed)this->vars.nops();i++){
+		degs.push_back(max(this->num.degree(this->vars[i]),this->denom.degree(this->vars[i])));
+	}
+
+	BaseConverter *num_conv = new BaseConverter(this->vars,this->num,degs);
+	BaseConverter *denom_conv = new BaseConverter(this->vars,this->denom,degs);
+
+	lst num_bern_coeffs = num_conv->getBernCoeffs();
+	lst denom_bern_coeffs = denom_conv->getBernCoeffs();
+
+	for(int i=0; i<num_bern_coeffs.nops(); i++){
+		if(denom_bern_coeffs[i] != 0){ // skip negative denominators
+			bern_coeffs.append(num_bern_coeffs[i]/denom_bern_coeffs[i]);
+		}
 	}
 
 	return bern_coeffs;
