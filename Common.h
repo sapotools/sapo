@@ -2,7 +2,7 @@
  * Common.hpp
  *
  *  Created on: Jul 25, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef COMMON_HPP_
@@ -18,6 +18,10 @@ using namespace std;
 using namespace GiNaC;
 
 enum formula_type {ATOM,CONJUNCTION,DISJUNCTION,UNTIL,ALWAYS,EVENTUALLY};
+
+struct synthesizer_opt{
+	bool largest_para_set;	// largest parameter set
+};
 
 
 

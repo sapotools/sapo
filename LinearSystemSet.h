@@ -27,7 +27,9 @@ public:
 
 	LinearSystemSet* intersectWith(LinearSystemSet *LSset);
 	LinearSystemSet* unionWith(LinearSystemSet *LSset);
+	LinearSystemSet* boundedUnionWith(LinearSystemSet *LSset, int bound);
 
+	double boundingVol();
 	int size();
 	LinearSystem* at(int i);
 	bool isEmpty();

@@ -2,7 +2,7 @@
  * LinearSystem.h
  *
  *  Created on: Oct 24, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef LINEARSYSTEM_H_
@@ -12,6 +12,7 @@
 #include <glpk.h>
 
 class LinearSystem {
+
 private:
 	int n_vars;			// number of variables
 	lst vars;			// 	list of variables
@@ -22,6 +23,7 @@ private:
 	bool isIn(vector< double > Ai, double bi);	// check if a constraint is already in
 	void initLS();				// initialize A and b
 	double solveLinearSystem(vector< vector< double > > A, vector< double > b, vector< double > obj_fun, int min_max);
+	bool zeroLine(vector<double> line);
 
 
 public:
@@ -37,6 +39,11 @@ public:
 	double maxLinearSystem(lst vars, ex obj_fun);
 	bool isEmpty();									// determine this LS is empty
 	LinearSystem* appendLinearSystem(LinearSystem *LS);
+
+	int dim(){ if(!this->isEmpty()){ return this->A[0].size(); }else{ return 0;}	};
+	int size(){ return this->b.size(); };
+
+	double volBoundingBox();
 
 	void print();
 

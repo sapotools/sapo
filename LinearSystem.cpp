@@ -2,7 +2,7 @@
  * LinearSystem.cpp
  *
  *  Created on: Oct 24, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "LinearSystem.h"
@@ -15,8 +15,8 @@ LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 		this->A = A;
 		this->b = b;
 	}else{
-		for(int i=0; i<A.size(); i++){
-			if(!this->isIn(A[i],b[i])){
+		for(int i=0; i<(signed)A.size(); i++){
+			if(!this->isIn(A[i],b[i]) && (!this->zeroLine(A[i]))){
 				this->A.push_back(A[i]);
 				this->b.push_back(b[i]);
 			}
@@ -29,10 +29,17 @@ LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 // check if a constraint is already in
 bool LinearSystem::isIn(vector< double > Ai, double bi){
 
-	for(int i=0; i<this->A.size(); i++){
-		if( equal(this->A[i].begin(),this->A[i].end(),Ai.begin()) && this->b[i] == bi ){
-			return true;
+	double epsilon = 0.001;	// necessary for double comparison
+	Ai.push_back(bi);
+
+	for( int i=0; i<(signed)this->A.size(); i++ ){
+		vector< double > line = this->A[i];
+		line.push_back(this->b[i]);
+		bool is_in = true;
+		for(int j=0; j<(signed)Ai.size(); j++){
+			is_in = is_in && (abs(Ai[j] - line[j]) < epsilon);
 		}
+		if(is_in){ return true; }
 	}
 	return false;
 }
@@ -69,9 +76,10 @@ void LinearSystem::initLS(){
 
 		double bi = ex_to<numeric>(evalf(const_term)).to_double();
 
-		this->A.push_back(Ai);
-		this->b.push_back(-bi);
-
+		if(!this->isIn(Ai,-bi)){
+			this->A.push_back(Ai);
+			this->b.push_back(-bi);
+		}
 	}
 
 }
@@ -114,7 +122,7 @@ bool LinearSystem::isEmpty(){
 	obj_fun.push_back(1);
 
 	// Add an extra variable to the linear system
-	for(int i=0; i<extA.size(); i++){
+	for(int i=0; i<(signed)extA.size(); i++){
 		extA[i].push_back(-1);
 	}
 
@@ -132,7 +140,7 @@ double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< dou
 	int size_lp = num_rows*num_cols;
 
 	int ia[size_lp+1], ja[size_lp+1];
-	double ar[size_lp+1], z;
+	double ar[size_lp+1];
 
 	glp_prob *lp;
 	lp = glp_create_prob();
@@ -204,7 +212,6 @@ double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
 	for(int i=0; i<(signed)vars.nops(); i++){
 
 		double coeff = ex_to<numeric>(evalf(obj_fun.coeff(vars[i],1))).to_double();
-
 		obj_fun_coeffs.push_back(coeff);
 		const_term = const_term.coeff(vars[i],0);
 
@@ -220,21 +227,60 @@ double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
 // Create a new liner system by merging this LS and the specified one
 LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS){
 
-	vector< vector<double> > newA = LS->getA();
-	vector<double> newb = LS->getb();
+	vector< vector<double> > newA = this->A;
+	vector<double> newb = this->b;
 
-	for(int i=0; i<this->A.size(); i++){
-		newA.push_back( this->A[i] );
-		newb.push_back( this->b[i] );
+	vector< vector<double> > LSA = LS->getA();
+	vector<double> LSb = LS->getb();
+
+	for(int i=0; i<LS->size(); i++){
+		if( !this->isIn(LSA[i],LSb[i]) ){		// check for duplicates
+			newA.push_back( LSA[i] );
+			newb.push_back( LSb[i] );
+		}
 	}
 
 	return new LinearSystem(newA,newb);
 
 }
 
+// generate the bounding box of this linear system
+double LinearSystem::volBoundingBox(){
+
+	vector<double> zeros (this->dim(),0);
+	double vol = 1;
+
+	for(int i=0; i<this->dim(); i++){
+		vector<double> facet = zeros;
+		facet[i] = 1;
+		double b_plus = this->solveLinearSystem(this->A,this->b,facet,GLP_MAX);
+		facet[i] = -1;
+		double b_minus = this->solveLinearSystem(this->A,this->b,facet,GLP_MAX);
+		vol = vol*(b_plus+b_minus);
+	}
+
+	return vol;
+}
+
+
+// check if it's a line of zeros (used to detected useless constraints)
+bool LinearSystem::zeroLine(vector<double> line){
+
+	double epsilon = 0.001;	// necessary for double comparison
+
+	bool zeros = true;
+	int i=0;
+	while(zeros && i<(signed)line.size()){
+		zeros = zeros && (abs(line[i]) < epsilon);
+		i++;
+	}
+	return zeros;
+
+}
+
 void LinearSystem::print(){
-	for(int i=0; i<this->A.size(); i++){
-		for(int j=0; j<this->A[i].size(); j++){
+	for(int i=0; i<(signed)this->A.size(); i++){
+		for(int j=0; j<(signed)this->A[i].size(); j++){
 			cout<<this->A[i][j]<<" ";
 		}
 		cout<<" <= "<<this->b[i]<<"\n";

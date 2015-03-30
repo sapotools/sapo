@@ -2,7 +2,7 @@
  * ParameterSynthesizer.h
  *
  *  Created on: Nov 5, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef PARAMETERSYNTHESIZER_H_
@@ -18,12 +18,12 @@
 class ParameterSynthesizer {
 
 private:
-
 	DiscreteDynamicalSystem *dynamicalSystem;
 	ex constraint; 	// constraint to impose over the system
 	STL *stl_constraint;
 	vector< lst > dynamicalSystemControlPts;
 	lst constraintControlPts;
+	synthesizer_opt options;
 
 	LinearSystem* refineParameters(vector< double > base_v, vector< double > lenghts, LinearSystem *parameterSet);
 	LinearSystemSet* refineParameters(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, lst constraintControlPts);
@@ -36,7 +36,7 @@ private:
 	LinearSystemSet* synthesizeEventually(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
 
 public:
-	ParameterSynthesizer(DiscreteDynamicalSystem *dynSys, STL *stl_constraint);
+	ParameterSynthesizer(DiscreteDynamicalSystem *dynSys, STL *stl_constraint, synthesizer_opt options);
 	LinearSystemSet* synthesizeSTL(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet);
 	LinearSystemSet* synthesize(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
 

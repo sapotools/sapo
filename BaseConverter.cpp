@@ -228,12 +228,6 @@ lst BaseConverter::getBernCoeffs(){
 		bern_coeffs.append(bernCoeff(pos2multi_index(i)));
 	}
 
-	cout<<"Degrees: ";
-	for(int i=0; i<(signed)this->vars.nops();i++){
-		cout<<this->degrees[i]<<", ";
-	}
-	cout<<"(Total points:"<<bern_coeffs.nops()<<")\n";
-
 	return bern_coeffs;
 
 }

@@ -10,16 +10,24 @@
 
 #include "Common.h"
 #include "Polyhedron.h"
+#include "LinearSystem.h"
 
-class Box : public Polyhedron{
-private:
 
-public:
+class Box {
 
-	Box(vector<lst> vars);
-	LinearSystem* gen2const(vector<double> q, vector<double> beta);
-	poly_values const2gen(LinearSystem *constr);
-	virtual ~Box();
-};
+	private:
+
+	vector< vector<double> > A;
+	vector< double > b;
+
+	public:
+
+		Box(vector< vector<double> > A, vector< double > b);
+
+		double volume();
+
+		void print(){ };
+		virtual ~Box();
+	};
 
 #endif /* BOX_H_ */

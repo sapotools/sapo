@@ -8,12 +8,13 @@
 #include "ParameterSynthesizer.h"
 
 
-ParameterSynthesizer::ParameterSynthesizer(DiscreteDynamicalSystem *dynamicalSystem, STL *stl_constraint){
+ParameterSynthesizer::ParameterSynthesizer(DiscreteDynamicalSystem *dynamicalSystem, STL *stl_constraint, synthesizer_opt options){
 
 	this->dynamicalSystem = dynamicalSystem;
 	this->dynamicalSystemControlPts = this->dynamicalSystem->getTemplateControlPts();
 	// initialize the control points of the predicates of the constraint
 	this->stl_constraint = initConstraintControlPts(stl_constraint);
+	this->options = options;
 
 }
 
@@ -81,7 +82,16 @@ LinearSystemSet* ParameterSynthesizer::synthesize(vector< double > base_v, vecto
 		case 2:{
 			LinearSystemSet *LS1 = this->synthesize(base_v, lenghts, parameterSet, formula->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesize(base_v, lenghts, parameterSet, formula->getRightSubFormula());
-			return LS1->unionWith(LS2);
+			// Check result type (all set or largest set)
+			if( !this->options.largest_para_set ){
+				return LS1->unionWith(LS2);
+			}else{	// return the set with max volume
+				if(LS1->boundingVol() > LS2->boundingVol()){
+					return LS1;
+				}else{
+					return LS2;
+				}
+			}
 		}
 		break;
 
@@ -120,17 +130,22 @@ LinearSystemSet* ParameterSynthesizer::synthesizeUntil(vector< double > base_v, 
 		if( P1->isEmpty() ){
 			return P1;
 		}else{
-
 			// shift until interval
 			formula->setA(a-1);
 			formula->setB(b-1);
 
-			// Reach step wrt to the i-th linear system of P1
-			for(int i=0; i<P1->size(); i++){
-				poly_values pv = reachStep(base_v, lenghts, P1->at(i));
-				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
-				tmpLSset = synthesizeUntil(pv.base_vertex, pv.lenghts, tmpLSset, formula);
-				result = result->unionWith(tmpLSset);
+			if(this->options.largest_para_set){
+				poly_values pv = reachStep(base_v, lenghts, P1->at(0));
+				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(0));
+				result = synthesizeUntil(pv.base_vertex, pv.lenghts, tmpLSset, formula);
+			}else{
+				// Reach step wrt to the i-th linear system of P1
+				for(int i=0; i<P1->size(); i++){
+					poly_values pv = reachStep(base_v, lenghts, P1->at(i));
+					LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
+					tmpLSset = synthesizeUntil(pv.base_vertex, pv.lenghts, tmpLSset, formula);
+					result = result->unionWith(tmpLSset);
+				}
 			}
 			return result;
 		}
@@ -150,20 +165,35 @@ LinearSystemSet* ParameterSynthesizer::synthesizeUntil(vector< double > base_v, 
 		// shift until interval
 		formula->setB(b-1);
 
-		// Reach step wrt to the i-th linear system of P1
-		for(int i=0; i<P1->size(); i++){
-			poly_values pv = reachStep(base_v, lenghts, P1->at(i));
-			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
-			tmpLSset = synthesizeUntil(pv.base_vertex, pv.lenghts, tmpLSset, formula);
-			result = result->unionWith(tmpLSset);
+		if( this->options.largest_para_set ){
+			if( P2->boundingVol() > P1->boundingVol() ){
+				return P2;
+			}else{
+				poly_values pv = reachStep(base_v, lenghts, P1->at(0));
+				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(0));
+				result = synthesizeUntil(pv.base_vertex, pv.lenghts, tmpLSset, formula);
+				if( result->boundingVol() > P2->boundingVol() ){
+					return result;
+				}else{
+					return P2;
+				}
+			}
+		}else{
+			// Reach step wrt to the i-th linear system of P1
+			for(int i=0; i<P1->size(); i++){
+				poly_values pv = reachStep(base_v, lenghts, P1->at(i));
+				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
+				tmpLSset = synthesizeUntil(pv.base_vertex, pv.lenghts, tmpLSset, formula);
+				result = result->unionWith(tmpLSset);
+			}
+			return P2->unionWith(result);
 		}
-
-		return P2->unionWith(result);
 
 	}
 
 	// Base case
 	if((a == 0) && (b == 0)){
+		cout<<"ciao!";
 		return this->synthesize(base_v, lenghts, parameterSet, formula->getRightSubFormula());
 	}
 
@@ -190,7 +220,13 @@ LinearSystemSet* ParameterSynthesizer::synthesizeAlways(vector< double > base_v,
 			poly_values pv = reachStep(base_v, lenghts, parameterSet->at(i));
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeAlways(pv.base_vertex, pv.lenghts, tmpLSset, formula);
-			result = result->unionWith(tmpLSset);
+			if(this->options.largest_para_set){
+				if( result->boundingVol() < tmpLSset->boundingVol() ){	// store the largest result
+					result = tmpLSset;
+				}
+			}else{
+				result = result->unionWith(tmpLSset);
+			}
 		}
 		return result;
 	}
@@ -211,7 +247,13 @@ LinearSystemSet* ParameterSynthesizer::synthesizeAlways(vector< double > base_v,
 				poly_values pv = reachStep(base_v, lenghts, P->at(i));
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
 				tmpLSset = synthesizeAlways(pv.base_vertex, pv.lenghts, tmpLSset, formula);
-				result = result->unionWith(tmpLSset);
+				if(this->options.largest_para_set){
+					if( result->boundingVol() < tmpLSset->boundingVol() ){	// store the largest result
+						result = tmpLSset;
+					}
+					}else{
+						result = result->unionWith(tmpLSset);
+				}
 			}
 
 			return result;
@@ -249,12 +291,18 @@ LinearSystemSet* ParameterSynthesizer::synthesizeEventually(vector< double > bas
 			poly_values pv = reachStep(base_v, lenghts, parameterSet->at(i));
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeEventually(pv.base_vertex, pv.lenghts, tmpLSset, formula);
-			result = result->unionWith(tmpLSset);
+			if(this->options.largest_para_set){
+				if( result->boundingVol() < tmpLSset->boundingVol() ){	// store the largest result
+					result = tmpLSset;
+				}
+			}else{
+				result = result->unionWith(tmpLSset);
+			}
 		}
 		return result;
 	}
 
-	// Inside until interval
+	// Inside eventually interval
 	if((a == 0) && (b > 0)){
 
 		// Refine wrt phi
@@ -262,16 +310,24 @@ LinearSystemSet* ParameterSynthesizer::synthesizeEventually(vector< double > bas
 
 		// shift until interval
 		formula->setB(b-1);
+		result = P;
 
 		// Reach step wrt to the i-th linear system of P1
 		for(int i=0; i<parameterSet->size(); i++){
 			poly_values pv = reachStep(base_v, lenghts, parameterSet->at(i));
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeEventually(pv.base_vertex, pv.lenghts, tmpLSset, formula);
-			result = result->unionWith(tmpLSset);
+			if(this->options.largest_para_set){
+				if( result->boundingVol() < tmpLSset->boundingVol() ){	// store the largest result
+					result = tmpLSset;
+				}
+			}else{
+				result = result->unionWith(tmpLSset);
+			}
 		}
 
-		return P->unionWith(result);
+
+		return result;
 
 	}
 

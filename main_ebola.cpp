@@ -13,7 +13,6 @@
 #include "LinearSystem.h"
 #include "Polyhedron.h"
 #include "Parallelotope.h"
-#include "Box.h"
 #include "ConvexHull.h"
 
 #include "DynamicalSystem.h"
@@ -78,7 +77,10 @@ int main(int argc,char** argv){
 
 
 	// Create the parameter synthesizer
-	ParameterSynthesizer *PS = new ParameterSynthesizer(disc_ebola,model->getSpec());
+	synthesizer_opt options;
+	options.largest_para_set = true;
+
+	ParameterSynthesizer *PS = new ParameterSynthesizer(disc_ebola,model->getSpec(),options);
 
 	// Synthesize
 	cout<<"\nStart synthesis...\n\n";
@@ -99,37 +101,6 @@ int main(int argc,char** argv){
 			result->print();
 		}
 	}
-
-//	vector<double> pts;
-//	ConvexHull *reach_set = new ConvexHull(3,pts);
-//
-//	// SIR model
-//	SIRconv *sir = new SIRconv();
-//	Model *model = sir;
-//
-//	lst vars, params, dyns;
-//	vars = model->getVars();
-//	params = model->getParams();
-//	dyns = model->getDyns();
-//
-//	cout<<"Model name: "<<model->getName()<<"\n";
-//	cout<<"Dynamics:\n";
-//	for(int i=0; i<dyns.nops(); i++){
-//		cout<<"\td"<<vars[i]<<" = "<<dyns[i]<<"\n";
-//	}
-//
-//	// Create a new dynamic system with model's dynamics
-//	DynamicalSystem *cont_SIR = new DynamicalSystem(vars,params,dyns);
-//	DiscreteDynamicalSystem *disc_SIR = new DiscreteDynamicalSystem(vars,params,cont_SIR->eulerDisc(0.1));
-//
-//	cout<<"In main";
-//
-//	Reacher *R = new Reacher(disc_SIR, reach_set);
-////	R->reach(1);
-//	cout<<"done";
-
-
-
 
 }
 
