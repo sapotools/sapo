@@ -2,7 +2,7 @@
  * Model.h
  *
  *  Created on: Jan 7, 2015
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef MODEL_H_
@@ -11,13 +11,13 @@
 #include "Common.h"
 #include "Polyhedron.h"
 #include "LinearSystemSet.h"
-#include "STL.h"
-#include "Atom.h"
-#include "Conjunction.h"
-#include "Disjunction.h"
-#include "Until.h"
-#include "Always.h"
-#include "Eventually.h"
+#include "STL/STL.h"
+#include "STL/Atom.h"
+#include "STL/Conjunction.h"
+#include "STL/Disjunction.h"
+#include "STL/Until.h"
+#include "STL/Always.h"
+#include "STL/Eventually.h"
 
 #include <string>
 
@@ -28,7 +28,8 @@ protected:
 	lst params; // list of parameters
 	lst dyns; // list of dynamics
 
-	Polyhedron *reach_set;			// Reachability set
+	vector< Polyhedron* > reach_sets;			// Reachability sets
+	vector<poly_values> initial_conditions;
 	LinearSystemSet *init_para_set;	// Parameter set
 
 	STL *spec;		// Stl specification
@@ -44,7 +45,8 @@ public:
 	virtual lst getDyns(){ return this->dyns; }
 	virtual string getName(){ return this->name; }
 
-	virtual Polyhedron* getReachSet(){ return this->reach_set; }
+	virtual vector<poly_values> getInitConds(){ return this->initial_conditions; }
+	virtual vector<Polyhedron*> getReachSets(){ return this->reach_sets; }
 	virtual LinearSystemSet* getInitParaSet(){ return this->init_para_set; }
 
 	virtual STL* getSpec(){ return this->spec; }

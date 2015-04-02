@@ -12,33 +12,38 @@
 #include "DiscreteDynamicalSystem.h"
 #include "BaseConverter.h"
 #include "Polyhedron.h"
-#include "STL.h"
+#include "STL/STL.h"
 #include "LinearSystemSet.h"
 
 class ParameterSynthesizer {
 
 private:
+
 	DiscreteDynamicalSystem *dynamicalSystem;
 	ex constraint; 	// constraint to impose over the system
 	STL *stl_constraint;
-	vector< lst > dynamicalSystemControlPts;
+	vector< vector< lst > > dynamicalSystemControlPts;
 	lst constraintControlPts;
 	synthesizer_opt options;
 
-	LinearSystem* refineParameters(vector< double > base_v, vector< double > lenghts, LinearSystem *parameterSet);
-	LinearSystemSet* refineParameters(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, lst constraintControlPts);
-	poly_values reachStep(vector< double > base_v, vector< double > lenghts, LinearSystem *parameterSet);
-	double maxVec( vector<double> vec);
 
 	STL* initConstraintControlPts(STL *formula);
-	LinearSystemSet* synthesizeUntil(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
-	LinearSystemSet* synthesizeAlways(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
-	LinearSystemSet* synthesizeEventually(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
+
+	LinearSystemSet* refineParameters(vector< poly_values > reach_sets, LinearSystemSet *parameterSet, vector< lst > constraintControlPts);
+	LinearSystemSet* synthesizeUntil(vector<poly_values> reach_sets, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* synthesizeAlways(vector<poly_values> reach_sets, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* synthesizeEventually(vector<poly_values> reach_sets, LinearSystemSet *parameterSet, STL *formula);
+
+	vector<poly_values> reachStep(vector<poly_values> reach_sets, LinearSystem *parameterSet);
+
+	double maxVec( vector<double> vec);
 
 public:
 	ParameterSynthesizer(DiscreteDynamicalSystem *dynSys, STL *stl_constraint, synthesizer_opt options);
-	LinearSystemSet* synthesizeSTL(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet);
-	LinearSystemSet* synthesize(vector< double > base_v, vector< double > lenghts, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* synthesizeSTL(poly_values reach_set, LinearSystemSet *parameterSet);
+	LinearSystemSet* synthesizeSTL(vector<poly_values> reach_sets, LinearSystemSet *parameterSet);
+	LinearSystemSet* synthesize(vector<poly_values> reach_sets, LinearSystemSet *parameterSet, STL *formula);
+	vector<poly_values> reach(vector<poly_values> reach_sets, LinearSystem *parameterSet, int k );
 
 	virtual ~ParameterSynthesizer();
 };

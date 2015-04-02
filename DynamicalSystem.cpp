@@ -2,7 +2,7 @@
  * DynamicalSystem.cpp
  *
  *  Created on: Oct 30, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "DynamicalSystem.h"
@@ -21,7 +21,7 @@ lst DynamicalSystem::eulerDisc(double disc_step){
 
 	lst disc_dynamics;
 
-	for(int i=0; i<this->dynamics.nops(); i++){
+	for(int i=0; i<(signed)this->dynamics.nops(); i++){
 		disc_dynamics.append( this->vars[i] + disc_step*this->dynamics[i] );
 	}
 	return disc_dynamics;

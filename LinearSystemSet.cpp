@@ -2,7 +2,7 @@
  * LinearSystemSet.cpp
  *
  *  Created on: Nov 17, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "LinearSystemSet.h"
@@ -18,7 +18,7 @@ LinearSystemSet::LinearSystemSet(LinearSystem *LS){
 
 LinearSystemSet::LinearSystemSet(vector<LinearSystem*> set){
 
-	for(int i=0; i<set.size(); i++){
+	for(int i=0; i<(signed)set.size(); i++){
 		if(!set[i]->isEmpty()){
 			this->set.push_back(set[i]);
 		}
@@ -42,8 +42,8 @@ LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset){
 	vector<LinearSystem*> intSet; // new intersection set
 	vector<LinearSystem*> set = LSset->getSet();
 
-	for(int i=0; i<this->set.size(); i++){
-		for(int j=0; j<set.size(); j++){
+	for(int i=0; i<(signed)this->set.size(); i++){
+		for(int j=0; j<(signed)set.size(); j++){
 			LinearSystem *intLS = this->set[i]->appendLinearSystem(set[j]); // intersect
 			if(!intLS->isEmpty()){
 				intSet.push_back(intLS);	// add inteserction

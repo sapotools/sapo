@@ -2,7 +2,7 @@
  * Polyhedron.cpp
  *
  *  Created on: Oct 30, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "Polyhedron.h"

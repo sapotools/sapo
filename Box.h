@@ -2,7 +2,7 @@
  * Box.h
  *
  *  Created on: Nov 3, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef BOX_H_

@@ -2,7 +2,7 @@
  * Box.cpp
  *
  *  Created on: Nov 3, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "Box.h"

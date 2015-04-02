@@ -2,7 +2,7 @@
  * BaseConverter.cpp
  *
  *  Created on: Oct 23, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "BaseConverter.h"

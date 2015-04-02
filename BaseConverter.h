@@ -2,7 +2,7 @@
  * BaseConverter.h
  *
  *  Created on: Oct 23, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef BASECONVERTER_H_

@@ -2,7 +2,7 @@
  * Parallelotope.cpp
  *
  *  Created on: Oct 30, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "Parallelotope.h"
@@ -295,21 +295,22 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 		lengths.push_back(euclidNorm(g[i]));
 	}
 
-	// Find the versors
-	vector< vector< double > > versors;
-	for(int i=0; i<this->dim; i++){
-		vector<double> versori;
-		for(int j=0; j<this->dim; j++){
-			versori.push_back( g[i][j]/lengths[i] );
-		}
-		versors.push_back(versori);
-	}
+
+//	// Find the versors (optional since versors are specified by the user)
+//	vector< vector< double > > versors;
+//	for(int i=0; i<this->dim; i++){
+//		vector<double> versori;
+//		for(int j=0; j<this->dim; j++){
+//			versori.push_back( g[i][j]/lengths[i] );
+//		}
+//		versors.push_back(versori);
+//	}
 
 	// Return the conversion
 	poly_values result;
 	result.base_vertex = vertices[0];
 	result.lenghts = lengths;
-	result.versors = versors;
+	//result.versors = versors;
 
 	return result;
 }

@@ -2,7 +2,7 @@
  * Conjunction.h
  *
  *  Created on: May 20, 2014
- *      Author: nicola
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef CONJUNCTION_H_

@@ -2,7 +2,7 @@
  * DynamicalSystem.h
  *
  *  Created on: Oct 30, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef DYNAMICALSYSTEM_H_

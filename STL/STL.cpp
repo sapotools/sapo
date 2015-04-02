@@ -2,7 +2,7 @@
  * STL.cpp
  *
  *  Created on: Nov 14, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "STL.h"

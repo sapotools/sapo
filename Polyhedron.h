@@ -2,7 +2,7 @@
  * Polyhedron.h
  *
  *  Created on: Oct 30, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef POLYHEDRON_H_
@@ -13,7 +13,6 @@
 
 struct poly_values{
 	vector<double> base_vertex;
-	vector< vector<double> > versors;
 	vector<double> lenghts;
 };
 
@@ -39,6 +38,7 @@ public:
 	lst getBeta();
 	int getDim();
 	vector< vector< double > > getTemplate();
+	vector< vector<double> > getVersors(){ return this->u; };
 	virtual LinearSystem* gen2const(vector<double> q, vector<double> beta){ return 0; }
 	virtual poly_values const2gen(LinearSystem *constr){ poly_values p; return p; };
 

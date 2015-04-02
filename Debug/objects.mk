@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lcln -lglpk -lm -lginac
+LIBS := -lcln -lglpk -lm -lginac -lCGAL
 

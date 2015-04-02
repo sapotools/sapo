@@ -7,6 +7,7 @@
 
 #include "LinearSystem.h"
 
+
 LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 
 	bool smart_insert = true;
@@ -24,6 +25,15 @@ LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 
 	}
 	this->n_vars = this->A[0].size();
+}
+
+LinearSystem::LinearSystem(){
+	vector< vector<double> > A;
+	vector< double > b;
+	this->A = A;
+	this->b = b;
+	this->n_vars = 0;
+
 }
 
 // check if a constraint is already in
@@ -202,6 +212,10 @@ double LinearSystem::minLinearSystem(lst vars, ex obj_fun){
 
 }
 
+double LinearSystem::maxLinearSystem(vector< double > obj_fun_coeffs){
+	return this->solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
+}
+
 // maximize the function obj_fun
 double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
 
@@ -285,7 +299,32 @@ void LinearSystem::print(){
 		}
 		cout<<" <= "<<this->b[i]<<"\n";
 	}
+	cout<<"\n";
 }
+
+// Print in MATLAB format
+void LinearSystem::plotRegion(){
+
+	if(this->dim() > 3){
+		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
+		exit (EXIT_FAILURE);
+	}
+
+	cout<<"Ab = [\n";
+	for(int i=0; i<(signed)this->A.size(); i++){
+		for(int j=0; j<(signed)this->A[i].size(); j++){
+			cout<<this->A[i][j]<<" ";
+		}
+		cout<<" "<<this->b[i]<<";\n";
+	}
+	cout<<"];\n";
+	if(this->dim() == 2){	//2d
+		cout<<"plotregion(-Ab(:,1:2),-Ab(:,3),[],[],colore);\n";
+	}else{	// 3d
+		cout<<"plotregion(-Ab(:,1:3),-Ab(:,4),[],[],colore);\n";
+	}
+}
+
 
 LinearSystem::~LinearSystem() {
 	// TODO Auto-generated destructor stub

@@ -2,7 +2,7 @@
  * Model.cpp
  *
  *  Created on: Jan 7, 2015
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #include "Model.h"

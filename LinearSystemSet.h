@@ -2,7 +2,7 @@
  * LinearSystemSet.h
  *
  *  Created on: Nov 17, 2014
- *      Author: dreossi
+ *      Author: Tommaso Dreossi
  */
 
 #ifndef LINEARSYSTEMSET_H_

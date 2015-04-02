@@ -2,7 +2,7 @@
  * Atom.cpp
  *
  *  Created on: May 20, 2014
- *      Author: nicola
+ *      Author: Tommaso Dreossi
  */
 
 #include "Atom.h"
@@ -15,14 +15,12 @@ Atom::Atom(ex predicate) {
 
 }
 
-lst Atom::getPredicateControlPts(){
+vector<lst> Atom::getPredicateControlPts(){
 	return this->predicateControlPts;
 }
 
-void Atom::setPredicateControlPts(lst predicateControlPts){
-
+void Atom::setPredicateControlPts(vector<lst> predicateControlPts){
 	this->predicateControlPts = predicateControlPts;
-
 }
 
 

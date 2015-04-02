@@ -27,6 +27,8 @@ private:
 
 
 public:
+
+	LinearSystem();
 	LinearSystem(vector< vector<double> > A, vector< double > b);
 	LinearSystem(lst vars, lst constraints);
 
@@ -37,6 +39,7 @@ public:
 
 	double minLinearSystem(lst vars, ex obj_fun);
 	double maxLinearSystem(lst vars, ex obj_fun);
+	double maxLinearSystem(vector< double > obj_fun_coeffs);
 	bool isEmpty();									// determine this LS is empty
 	LinearSystem* appendLinearSystem(LinearSystem *LS);
 
@@ -46,6 +49,7 @@ public:
 	double volBoundingBox();
 
 	void print();
+	void plotRegion();
 
 
 	virtual ~LinearSystem();
