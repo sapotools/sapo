@@ -9,6 +9,7 @@
 #define BASECONVERTER_H_
 
 #include "Common.h"
+#include <math.h>
 
 class BaseConverter {
 private:
@@ -28,6 +29,12 @@ private:
 	int multi_index_nChoosek(vector<int> n, vector<int> k);	// binomial coefficient of multi-indices
 	bool multi_index_leq(vector<int> a, vector<int> b);		// check whether b dominates a
 
+	int prod( vector<int> v, int a, int b );
+	int nchoosek(int n, int k);
+	vector< vector<ex> > matrixProd(vector< vector<ex> > A, vector< vector<ex> > B);
+
+	void print( vector< vector< ex > > M);
+
 public:
 	BaseConverter(lst vars, ex polynomial);
 	BaseConverter(lst vars, ex polynomial, vector<int> degrees);
@@ -35,8 +42,23 @@ public:
 	ex bernCoeff(vector<int> mi);
 	lst getBernCoeffs();
 	lst getRationalBernCoeffs();
+	lst getBernCoeffsMatrix();
+
+	vector< int > n2t( vector<int> a, vector<int> degs );
+	vector< int > t2n( vector<int> a, vector<int> degs );
+	vector< vector< ex > > genUtilde(int dim);
+	vector< int > transp( vector<int> b, vector<int> degs, int degs_prod );
+	vector< vector< ex > > transp( vector< vector<ex> > M, vector<int> degs );
+	vector< int > transp_naive( vector<int> b, vector<int> degs );
+
+	pair< vector<ex>, vector< vector<int> > > compressZeroCoeffs();
+	void implicitMaxIndex();
+
+	vector<int> shift(vector<int> v);
+
 	vector< vector< int > > getMultiIdxList();
 	void split(int direction, double split_point);
+	void print();
 
 	virtual ~BaseConverter();
 };

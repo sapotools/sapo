@@ -12,8 +12,12 @@
 #include "DiscreteDynamicalSystem.h"
 #include "BaseConverter.h"
 #include "Polyhedron.h"
+#include "Parallelotope.h"
 #include "STL/STL.h"
 #include "LinearSystemSet.h"
+
+#include <iostream>
+#include <fstream>
 
 class ParameterSynthesizer {
 
@@ -34,7 +38,7 @@ private:
 	LinearSystemSet* synthesizeAlways(vector<poly_values> reach_sets, LinearSystemSet *parameterSet, STL *formula);
 	LinearSystemSet* synthesizeEventually(vector<poly_values> reach_sets, LinearSystemSet *parameterSet, STL *formula);
 
-	vector<poly_values> reachStep(vector<poly_values> reach_sets, LinearSystem *parameterSet);
+	vector<poly_values> reachStep(vector<poly_values> reach_sets, LinearSystem *parameterSet, char color);
 
 	double maxVec( vector<double> vec);
 

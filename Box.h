@@ -13,7 +13,7 @@
 #include "LinearSystem.h"
 
 
-class Box {
+class Box : public Polyhedron{
 
 	private:
 

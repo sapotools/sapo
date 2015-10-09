@@ -17,8 +17,8 @@ SI::SI() {
 	params = beta;
 
 	// System's dynamics
-	ex ds = -beta*s*i;
-	ex di = beta*s*i;
+	ex ds = -beta*s*i*0.1;
+	ex di = beta*s*i*0.1;
 	dyns = ds,di;
 
 	this->vars = vars;
@@ -40,77 +40,73 @@ SI::SI() {
 	set_vars.push_back(bs);
 
 	// Initialize Template 1 versors
-	vector<double> ui1 (2,0);
-	vector< vector<double> > u1 (2,ui1);
-	u1[0][0] = 1;
-	u1[1][1] = 1;
+	vector<double> o1;
+	o1.push_back( 0.2857 );
+	o1.push_back( 3.4286 );
+	vector<double> v1i(2,0);
+	vector< vector<double> > v1 (2,v1i);
+	v1[0][0] = 1.1290; v1[0][1] = 3.7097;
+	v1[1][0] = 1.3750; v1[1][1] = 1.2500;
+	vector< vector<double> > u1 = this->normalizeVectors(o1,v1).first;
+
 	// Create Template1 parallelotope
 	Polyhedron *reach_set_1 = new Parallelotope(set_vars,u1);
 	this->reach_sets.push_back(reach_set_1);
 
-	// Initialize Template 2 versors
-	vector<double> ui2 (2,0);
-	vector< vector<double> > u2 (2,ui2);
-	u2[0][0] = 1;	u2[0][1] = 0;
-	u2[1][0] = 0.4472;	u2[1][1] = 0.8999;
-	// Create Template1 parallelotope
-	Polyhedron *reach_set_2 = new Parallelotope(set_vars,u2);
-	this->reach_sets.push_back(reach_set_2);
-
-	// Initialize Template 3 versors
-	vector<double> ui3 (2,0);
-	vector< vector<double> > u3 (2,ui3);
-	u3[0][0] = 1;	u3[0][1] = -0.5;
-	u3[1][0] = 0;	u3[1][1] = 1;
-	// Create Template1 parallelotope
-	Polyhedron *reach_set_3 = new Parallelotope(set_vars,u3);
-	this->reach_sets.push_back(reach_set_3);
-
-
 	// Declare initial conditions Template 1
-	// base vertex
-	vector< double > base_vertex_1 (2,0);
-	base_vertex_1[0] = 8;
-	base_vertex_1[1] = 1;
-	// and versors lenghts
-	vector< double > lenghts_1 (2,0);
-	lenghts_1[0] = 1;
-	lenghts_1[1] = 1;
-
+	vector< double > base_vertex_1 = o1;
+	vector< double > lenghts_1  = this->normalizeVectors(o1,v1).second;
 	poly_values ini_cond_1;
 	ini_cond_1.base_vertex = base_vertex_1;
 	ini_cond_1.lenghts = lenghts_1;
 	this->initial_conditions.push_back(ini_cond_1);
 
-	// Declare initial conditions Template 2
-	// base vertex
-	vector< double > base_vertex_2 (2,0);
-	base_vertex_2[0] = 7.5;
-	base_vertex_2[1] = 1;
-	// and versors lenghts
-	vector< double > lenghts_2 (2,0);
-	lenghts_2[0] = 1.5;
-	lenghts_2[1] = 1.1180;
 
+	// Initialize Template 2 versors
+	vector<double> o2;
+	o2.push_back( 1.1290 );
+	o2.push_back(  3.7097 );
+	vector<double> v2i(2,0);
+	vector< vector<double> > v2 (2,v2i);
+	v2[0][0] = 0.2857; v2[0][1] = 3.4286;
+	v2[1][0] = 1.3750; v2[1][1] = 1.2500;
+	vector< vector<double> > u2 = this->normalizeVectors(o2,v2).first;
+
+	// Create Template 2 parallelotope
+	Polyhedron *reach_set_2 = new Parallelotope(set_vars,u2);
+	this->reach_sets.push_back(reach_set_2);
+
+	// Declare initial conditions Template 2
+	vector< double > base_vertex_2 = o2;
+	vector< double > lenghts_2  = this->normalizeVectors(o2,v2).second;
 	poly_values ini_cond_2;
 	ini_cond_2.base_vertex = base_vertex_2;
 	ini_cond_2.lenghts = lenghts_2;
 	this->initial_conditions.push_back(ini_cond_2);
 
-	// Declare initial conditions Template 3
-	// base vertex
-	vector< double > base_vertex_3 (2,0);
-	base_vertex_3[0] = 8;
-	base_vertex_3[1] = 1;
-	// and versors lenghts
-	vector< double > lenghts_3 (2,0);
-	lenghts_3[0] = 1.1180;
-	lenghts_3[1] = 1.5;
 
+	// Initialize Template 3 versors
+	vector<double> o3;
+	o3.push_back( 1.3750 );
+	o3.push_back(1.2500);
+	vector<double> v3i(2,0);
+	vector< vector<double> > v3 (2,v3i);
+	v3[0][0] = 0.2857; v3[0][1] = 3.4286;
+	v3[1][0] = 1.1290; v3[1][1] = 3.7097;
+	vector< vector<double> > u3 = this->normalizeVectors(o3,v3).first;
+
+	// Create Template 3 parallelotope
+	Polyhedron *reach_set_3 = new Parallelotope(set_vars,u3);
+	this->reach_sets.push_back(reach_set_3);
+
+	// Declare initial conditions Template 3
+	vector< double > base_vertex_3 = o3;
+	vector< double > lenghts_3  = this->normalizeVectors(o3,v3).second;
 	poly_values ini_cond_3;
 	ini_cond_3.base_vertex = base_vertex_3;
 	ini_cond_3.lenghts = lenghts_3;
 	this->initial_conditions.push_back(ini_cond_3);
+
 
 
 	// Declare the initial parameter set as a linear system

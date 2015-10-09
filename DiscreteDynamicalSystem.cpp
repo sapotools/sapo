@@ -52,6 +52,7 @@ DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynam
 	for(int i=0; i<(signed)this->reachSets.size(); i++){
 
 		generator_functions.push_back(this->reachSets[i]->getGeneratorFunction());
+		//cout<<"\nDD gen fun: "<<generator_functions[i]<<"\n";
 
 		lst sub;
 		for(int j=0; j<(signed)generator_functions[i].nops(); j++){
@@ -63,6 +64,8 @@ DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynam
 		for(int j=0; j<(signed)dynamics.nops(); j++){
 			fog.append(dynamics[j].subs(sub));
 		}
+
+		//cout<<"fog: "<<fog<<"\n";
 
 		this->fogs.push_back(fog); // store the composition
 
@@ -88,6 +91,7 @@ DiscreteDynamicalSystem::DiscreteDynamicalSystem(lst vars, lst params, lst dynam
 		vector< lst > templateControlPts;
 		if(!this->rational){		// check if the dynamics are rational
 			for( int j=0; j<(signed)Lambda_fogs[i].size(); j++){
+				//cout<<Lambda_fogs[i][j]<<"\n";
 				BaseConverter *BC = new BaseConverter(this->reachSets[i]->getAlpha(), Lambda_fogs[i][j]);
 				templateControlPts.push_back(BC->getBernCoeffs());								// compute control points
 			}

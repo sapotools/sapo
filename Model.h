@@ -50,6 +50,12 @@ public:
 	virtual LinearSystemSet* getInitParaSet(){ return this->init_para_set; }
 
 	virtual STL* getSpec(){ return this->spec; }
+
+	pair< vector< vector<double> >, vector< double > > normalizeVectors(vector<double> q, vector< vector<double> > vectors);
+
+	ex genPoly( ex var, int deg );
+	ex genPoly( lst vars, int deg );
+
 };
 
 #endif /* MODEL_H_ */

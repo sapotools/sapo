@@ -68,6 +68,163 @@ Parallelotope::Parallelotope(vector<lst> vars, vector< vector<double> > u) {
 
 }
 
+Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
+
+	if(vars.size() != 3){
+		cout<<"Parallelotope::Parallelotope : vars must contain 3 collections of variable names (q,alpha,beta)";
+		exit (EXIT_FAILURE);
+	}
+
+	this->vars.push_back(vars[0]);
+	this->vars.push_back(vars[1]);
+	this->vars.push_back(vars[2]);
+
+	// get the dimension of the parallelotope
+	this->dim = vars[0].nops();
+	// and store its variable names
+	for(int i=0; i<3; i++){
+		if((signed)vars[i].nops() != this->dim){
+			cout<<"Parallelotope::Parallelotope : vars["<<i<<"] must have "<<this->dim<<" variables";
+			exit (EXIT_FAILURE);
+		}
+	}
+
+	// initialize generator function
+	for(int i=0; i<this->dim; i++){
+		this->generator_function.append(this->vars[0][i]);
+	}
+
+	// convert the linear system to vectors
+	vector< vector<double> > Lambda = constr->getA();
+	vector<double> d = constr->getb();
+	vector< vector<double> > vertices;
+
+	// find base vertex
+	//build the linear system
+	ex q = this->vars[0];
+	lst LS;
+
+//	for(int i=0; i<Lambda.size(); i++){
+//		for(int j=0; j<Lambda[i].size(); j++){
+//			cout<<Lambda[i][j]<<" ";
+//		}
+//		cout<<"\n";
+//	}
+
+	for(int i=0; i<this->dim; i++){
+		ex eq = 0;
+		for(int j=0; j<(signed)Lambda[i].size(); j++){
+			eq = eq + Lambda[i][j]*q[j];
+		}
+		eq = eq == d[i];
+		LS.append(eq);
+	}
+
+//	cout<<LS;
+
+	ex solLS = lsolve(LS,q);
+	if( solLS.nops() == 0 ){	// the template is singular
+		cout<<"singluar parallelotope\n";
+		constr->print();
+		cout<<LS;
+		return;
+	}
+
+	vertices.push_back( lst2vec((ex)q.subs(solLS)) ); // store the base_vertex
+
+	// Compute the vertices v
+	for(int k=0; k<this->dim; k++){
+		ex a = this->vars[1];
+		lst LS;
+
+		for(int i=0; i<this->dim; i++){
+			ex eq = 0;
+			for(int j=0; j<(signed)Lambda[i].size(); j++){
+				eq = eq + Lambda[i][j]*a[j];
+			}
+			if(i != k){
+				eq = eq == d[i];
+			}else{
+				eq = eq == -d[i+this->dim];
+			}
+			LS.append(eq);
+		}
+		ex solLS = lsolve(LS,a);
+		vertices.push_back( lst2vec(a.subs(solLS)) ); // store the i-th vertex
+	}
+
+	this->actual_base_vertex = vertices[0];
+
+	// Compute the generators
+	vector< vector<double> > g;
+	for(int i=0; i<this->dim; i++){
+		vector<double> gi;
+		for(int j=0; j<this->dim; j++){
+			gi.push_back( vertices[i+1][j] - vertices[0][j] );
+		}
+		g.push_back(gi);
+	}
+
+	// Compute the generators lengths
+	vector< double > lengths;
+	for(int i=0; i<this->dim; i++){
+		lengths.push_back(euclidNorm(g[i]));
+		//cout<<lengths[i]<<" ";
+	}
+//	cout<<"\n";
+
+	this->actual_lenghts = lengths;
+
+	//cout<<"g\n";
+	// Find the versors
+	vector< vector< double > > versors;
+	for(int i=0; i<this->dim; i++){
+		vector<double> versori;
+		for(int j=0; j<this->dim; j++){
+			//cout<<g[i][j]<<" ";
+			if(lengths[i] != 0){
+				versori.push_back( floor((g[i][j]/lengths[i]) * 100000000000.0f) / 100000000000.0f );
+			}else{
+				versori.push_back( floor(g[i][j] * 100000000000.0f) / 100000000000.0f );
+			}
+		}
+		//cout<<"\n";
+		versors.push_back(versori);
+	}
+
+	this->u = versors;
+
+//	for(int i=0; i<this->u.size(); i++){
+//		for(int j=0; j<this->u[i].size(); j++){
+//			cout<<this->u[i][j]<<" ";
+//		}
+//		cout<<"\n";
+//	}
+
+	// create the generation function accumulating the versor values
+	lst alpha = this->vars[1];
+	lst beta = this->vars[2];
+	for(int i=0; i<this->dim; i++){
+
+		// check dimension of versors
+		if((signed)u[i].size() != this->dim){
+			cout<<"Parallelotope::Parallelotope : dim and ui dimensions must agree";
+			exit (EXIT_FAILURE);
+		}
+
+		// Generatre the generator function
+		//double norm = euclidNorm(u[i]);
+		//vector< double > norm_versor;
+
+		for(int j=0; j<this->dim; j++){
+			//norm_versor.push_back(u[i][j]/norm);
+			this->generator_function[j] = this->generator_function[j] + alpha[i]*beta[i]*this->u[i][j];
+		}
+	}
+
+	this->template_matrix = constr->getA();
+}
+
 // Convert from generator to constraints representation
 // q : numeric base vertex
 // beta : numeric lenghts
@@ -296,15 +453,15 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 	}
 
 
-//	// Find the versors (optional since versors are specified by the user)
-//	vector< vector< double > > versors;
-//	for(int i=0; i<this->dim; i++){
-//		vector<double> versori;
-//		for(int j=0; j<this->dim; j++){
-//			versori.push_back( g[i][j]/lengths[i] );
-//		}
-//		versors.push_back(versori);
-//	}
+	// Find the versors (optional since versors are specified by the user)
+	vector< vector< double > > versors;
+	for(int i=0; i<this->dim; i++){
+		vector<double> versori;
+		for(int j=0; j<this->dim; j++){
+			versori.push_back( g[i][j]/lengths[i] );
+		}
+		versors.push_back(versori);
+	}
 
 	// Return the conversion
 	poly_values result;

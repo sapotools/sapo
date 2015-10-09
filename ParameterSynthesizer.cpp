@@ -109,12 +109,12 @@ LinearSystemSet* ParameterSynthesizer::synthesize(vector<poly_values> reach_sets
 
 		// Until
 		case 3:
-			//return this->synthesizeUntil(base_v, lenghts, parameterSet, formula);
+			return this->synthesizeUntil(reach_sets, parameterSet, formula);
 		break;
 
 		// Always
 		case 4:
-			//return this->synthesizeAlways(base_v, lenghts, parameterSet, formula);
+			return this->synthesizeAlways(reach_sets, parameterSet, formula);
 		break;
 
 		// Eventually
@@ -147,12 +147,12 @@ LinearSystemSet* ParameterSynthesizer::synthesizeUntil(vector<poly_values> reach
 			formula->setB(b-1);
 
 			if(this->options.largest_para_set){		// by assumption there's only one parameter set
-				vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(0));
+				vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(0),'r');
 				result = synthesizeUntil(new_reach_sets, P1, formula);
 			}else{
 				// Reach step wrt to the i-th linear system of P1
 				for(int i=0; i<P1->size(); i++){
-					vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(i));
+					vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(i),'r');
 					LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
 					tmpLSset = synthesizeUntil(new_reach_sets, tmpLSset, formula);
 					result = result->unionWith(tmpLSset);
@@ -180,7 +180,7 @@ LinearSystemSet* ParameterSynthesizer::synthesizeUntil(vector<poly_values> reach
 			if( P2->boundingVol() > P1->boundingVol() ){
 				return P2;
 			}else{
-				vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(0)); 		// by assumption there's only one parameter set
+				vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(0),'r'); 		// by assumption there's only one parameter set
 				result = synthesizeUntil(new_reach_sets, P1, formula);
 				if( result->boundingVol() > P2->boundingVol() ){
 					return result;
@@ -191,7 +191,7 @@ LinearSystemSet* ParameterSynthesizer::synthesizeUntil(vector<poly_values> reach
 		}else{
 			// Reach step wrt to the i-th linear system of P1
 			for(int i=0; i<P1->size(); i++){
-				vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(i));
+				vector<poly_values> new_reach_sets = reachStep(reach_sets, P1->at(i),'r');
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
 				tmpLSset = synthesizeUntil(new_reach_sets, tmpLSset, formula);
 				result = result->unionWith(tmpLSset);
@@ -227,7 +227,7 @@ LinearSystemSet* ParameterSynthesizer::synthesizeAlways(vector<poly_values> reac
 
 		// Reach step wrt to the i-th linear system of parameterSet
 		for(int i=0; i<parameterSet->size(); i++){
-			vector<poly_values> new_reach_sets = reachStep(reach_sets, parameterSet->at(i));
+			vector<poly_values> new_reach_sets = reachStep(reach_sets, parameterSet->at(i),'r');
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeAlways(new_reach_sets, tmpLSset, formula);
 			if(this->options.largest_para_set){
@@ -254,7 +254,7 @@ LinearSystemSet* ParameterSynthesizer::synthesizeAlways(vector<poly_values> reac
 
 			// Reach step wrt to the i-th linear system of P
 			for(int i=0; i<P->size(); i++){
-				vector<poly_values> new_reach_sets = reachStep(reach_sets, P->at(i));
+				vector<poly_values> new_reach_sets = reachStep(reach_sets, P->at(i),'r');
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
 				tmpLSset = synthesizeAlways(new_reach_sets, tmpLSset, formula);
 				if(this->options.largest_para_set){
@@ -299,7 +299,7 @@ LinearSystemSet* ParameterSynthesizer::synthesizeEventually(vector<poly_values> 
 
 		// Reach step wrt to the i-th linear system of parameterSet
 		for(int i=0; i<parameterSet->size(); i++){
-			vector<poly_values> new_reach_sets = reachStep(reach_sets, parameterSet->at(i));
+			vector<poly_values> new_reach_sets = reachStep(reach_sets, parameterSet->at(i),'r');
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeEventually(new_reach_sets, tmpLSset, formula);
 			if(this->options.largest_para_set){
@@ -325,7 +325,7 @@ LinearSystemSet* ParameterSynthesizer::synthesizeEventually(vector<poly_values> 
 
 		// Reach step wrt to the i-th linear system of P1
 		for(int i=0; i<parameterSet->size(); i++){
-			vector<poly_values> new_reach_sets = reachStep(reach_sets, parameterSet->at(i));
+			vector<poly_values> new_reach_sets = reachStep(reach_sets, parameterSet->at(i),'r');
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeEventually(new_reach_sets, tmpLSset, formula);
 			if(this->options.largest_para_set){
@@ -436,7 +436,7 @@ LinearSystemSet* ParameterSynthesizer::refineParameters(vector< poly_values > re
 
 // Perform a single reachability step
 // reach_sets is a vector of base vertices and lengths, one for each template
-vector< poly_values > ParameterSynthesizer::reachStep(vector< poly_values > reach_sets, LinearSystem *parameterSet){
+vector< poly_values > ParameterSynthesizer::reachStep(vector< poly_values > reach_sets, LinearSystem *parameterSet, char color){
 
 	LinearSystem* capReachSets = new LinearSystem();		// Linear system containing the intersection of all the sets
 
@@ -453,6 +453,8 @@ vector< poly_values > ParameterSynthesizer::reachStep(vector< poly_values > reac
 			sub.append(beta[i] == reach_sets[t].lenghts[i]);
 		}
 
+
+		//cout<<"\nNUMERICAL\n";
 		// Compute numerical control points of the dynamics
 		vector< lst > num_dynamicalSystemControlPts;
 		for(int i=0; i<(signed)this->dynamicalSystemControlPts[t].size(); i++){
@@ -460,6 +462,7 @@ vector< poly_values > ParameterSynthesizer::reachStep(vector< poly_values > reac
 			for(int j=0; j<(signed)this->dynamicalSystemControlPts[t][i].nops(); j++){
 				num_dynamicalSystemControlPts_i.append(this->dynamicalSystemControlPts[t][i][j].subs(sub));
 			}
+			//cout<<num_dynamicalSystemControlPts_i<<"\n";
 			num_dynamicalSystemControlPts.push_back(num_dynamicalSystemControlPts_i);
 		}
 
@@ -471,17 +474,22 @@ vector< poly_values > ParameterSynthesizer::reachStep(vector< poly_values > reac
 					max_control_pts_i.push_back(parameterSet->maxLinearSystem(params,num_dynamicalSystemControlPts[i][j]));
 				}
 				max_control_pts.push_back(this->maxVec(max_control_pts_i));
+				//cout<<max_control_pts[i]<<"\n";
 		}
+
 
 		// Extract the template matrix of the reach set
 		vector< vector< double> > temp_mat = this->dynamicalSystem->getReachSet(t)->getTemplate();
 		LinearSystem *reachSet = new LinearSystem(temp_mat,max_control_pts);
+		//cout<<"\n--------------------\n";
+		//reachSet->plotRegion();
+		reachSet->plotRegionToFile("matlab_script.m",color);
 
 		// Intersect actual template with others
 		capReachSets = capReachSets->appendLinearSystem(reachSet);
 	}
 
-	capReachSets->plotRegion();
+	//capReachSets->plotRegion();
 
 	// Shrink the various templates around the computed intersection
 	vector< poly_values > new_reach_sets;
@@ -509,7 +517,7 @@ vector< poly_values > ParameterSynthesizer::reachStep(vector< poly_values > reac
 vector<poly_values> ParameterSynthesizer::reach(vector<poly_values> reach_sets, LinearSystem *parameterSet, int k){
 
 	for(int i=0; i<k; i++){
-		reach_sets = this->reachStep(reach_sets,parameterSet);
+		reach_sets = this->reachStep(reach_sets,parameterSet,'y');
 	}
 
 	return reach_sets;

@@ -11,6 +11,9 @@
 #include "Common.h"
 #include <glpk.h>
 
+#include <iostream>
+#include <fstream>
+
 class LinearSystem {
 
 private:
@@ -42,6 +45,7 @@ public:
 	double maxLinearSystem(vector< double > obj_fun_coeffs);
 	bool isEmpty();									// determine this LS is empty
 	LinearSystem* appendLinearSystem(LinearSystem *LS);
+	vector<bool> redundantCons();
 
 	int dim(){ if(!this->isEmpty()){ return this->A[0].size(); }else{ return 0;}	};
 	int size(){ return this->b.size(); };
@@ -50,7 +54,9 @@ public:
 
 	void print();
 	void plotRegion();
-
+	void plotRegionToFile(char *file_name, char color);
+	void plotRegionT(double t);
+	void plotRegion(vector<int> rows, vector<int> cols);
 
 	virtual ~LinearSystem();
 };

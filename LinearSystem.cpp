@@ -10,7 +10,7 @@
 
 LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 
-	bool smart_insert = true;
+	bool smart_insert = false;
 
 	if(!smart_insert){
 		this->A = A;
@@ -39,7 +39,7 @@ LinearSystem::LinearSystem(){
 // check if a constraint is already in
 bool LinearSystem::isIn(vector< double > Ai, double bi){
 
-	double epsilon = 0.001;	// necessary for double comparison
+	double epsilon = 0.00001;	// necessary for double comparison
 	Ai.push_back(bi);
 
 	for( int i=0; i<(signed)this->A.size(); i++ ){
@@ -185,7 +185,11 @@ double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< dou
 
 	glp_load_matrix(lp, size_lp, ia, ja, ar);
 	glp_simplex(lp, &lp_param);
-	return glp_get_obj_val(lp);
+
+	double res = glp_get_obj_val(lp);
+	glp_delete_prob(lp);
+	glp_free_env();
+	return res;
 
 }
 
@@ -258,6 +262,20 @@ LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS){
 
 }
 
+// determine the redundant constraint of the linear system
+vector<bool> LinearSystem::redundantCons(){
+
+	vector<bool> redun (this->size(), false);
+
+	for(int i=0; i<this->size(); i++){
+		double max = this->maxLinearSystem(this->A[i]);
+		if( max != this->b[i]){
+			redun[i] = true;
+		}
+	}
+	return redun;
+}
+
 // generate the bounding box of this linear system
 double LinearSystem::volBoundingBox(){
 
@@ -280,7 +298,7 @@ double LinearSystem::volBoundingBox(){
 // check if it's a line of zeros (used to detected useless constraints)
 bool LinearSystem::zeroLine(vector<double> line){
 
-	double epsilon = 0.001;	// necessary for double comparison
+	double epsilon = 0.00001;	// necessary for double comparison
 
 	bool zeros = true;
 	int i=0;
@@ -318,11 +336,83 @@ void LinearSystem::plotRegion(){
 		cout<<" "<<this->b[i]<<";\n";
 	}
 	cout<<"];\n";
-	if(this->dim() == 2){	//2d
-		cout<<"plotregion(-Ab(:,1:2),-Ab(:,3),[],[],colore);\n";
-	}else{	// 3d
-		cout<<"plotregion(-Ab(:,1:3),-Ab(:,4),[],[],colore);\n";
+	cout<<"plotregion(-Ab(:,1:"<< this->A[0].size() <<"),-Ab(:,"<<this->A[0].size()+1<<"),[],[],colore);\n";
+
+}
+
+void LinearSystem::plotRegionToFile(char *file_name, char color){
+
+	if(this->dim() > 3){
+		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
+		exit (EXIT_FAILURE);
 	}
+
+
+	ofstream matlab_script;
+	matlab_script.open (file_name, ios_base::app);
+
+	matlab_script<<"Ab = [\n";
+	for(int i=0; i<(signed)this->A.size(); i++){
+		for(int j=0; j<(signed)this->A[i].size(); j++){
+			matlab_script<<this->A[i][j]<<" ";
+		}
+		matlab_script<<" "<<this->b[i]<<";\n";
+	}
+	matlab_script<<"];\n";
+	matlab_script<<"plotregion(-Ab(:,1:"<< this->A[0].size() <<"),-Ab(:,"<<this->A[0].size()+1<<"),[],[],'"<<color<<"');\n";
+	matlab_script.close();
+
+}
+
+// plot a 2d region over time
+void LinearSystem::plotRegionT(double t){
+	if(this->dim() > 2){
+		cout<<"LinearSystem::plotRegionT : maximum 2d sets are allowed";
+		exit (EXIT_FAILURE);
+	}
+
+	cout<<"Ab = [\n";
+	cout<<" 1 ";
+	for(int j=0; j<(signed)this->A[0].size(); j++){
+		cout<<" 0 ";
+	}
+	cout<<t<<";\n";
+	cout<<" -1 ";
+	for(int j=0; j<(signed)this->A[0].size(); j++){
+		cout<<" 0 ";
+	}
+	cout<<-t<<";\n";
+
+	for(int i=0; i<(signed)this->A.size(); i++){
+		cout<<" 0 ";
+		for(int j=0; j<(signed)this->A[i].size(); j++){
+			cout<<this->A[i][j]<<" ";
+		}
+		cout<<this->b[i]<<";\n";
+	}
+
+	cout<<"];\n";
+	cout<<"plotregion(-Ab(:,1:3),-Ab(:,4),[],[],colore);\n";
+
+}
+
+// Print in MATLAB format the specified projection
+void LinearSystem::plotRegion(vector<int> rows, vector<int> cols){
+
+		if(cols.size() > 3){
+			cout<<"LinearSystem::plotRegion : cols maximum 3d sets are allowed";
+			exit (EXIT_FAILURE);
+		}
+
+		cout<<"Ab = [\n";
+		for(int i=0; i<(signed)rows.size(); i++){
+			for(int j=0; j<(signed)cols.size(); j++){
+				cout<<this->A[rows[i]][cols[j]]<<" ";
+			}
+			cout<<" "<<this->b[rows[i]]<<";\n";
+		}
+		cout<<"];\n";
+		cout<<"plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],colore);\n";
 }
 
 
