@@ -13,6 +13,8 @@
 #include "BaseConverter.h"
 #include "Parallelotope.h"
 #include "LinearSystem.h"
+#include "VarsGenerator.h"
+#include <cmath>
 
 class Bundle {
 
@@ -28,7 +30,7 @@ private:
 										// vars[1] alpha : free variables \in [0,1]
 										// vars[2] beta : generator amplitudes
 	//CoeffMap *bernCoeffs;	// map with Bernstein coefficients
-	map< vector<int>, lst, classcomp > bernCoeffs;
+	map< vector<int>, lst > bernCoeffs;
 
 	double initTheta();
 	vector< double > offsetDistances();
@@ -56,6 +58,7 @@ private:
 
 public:
 
+	Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
 	Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
 
 	int getDim(){ return this->dim; };
@@ -74,7 +77,7 @@ public:
 	Bundle* canonize();
 	Bundle* decompose(double alpha, int max_iters);
 	Bundle* transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
-	Bundle* transform(lst vars, lst params, lst f, LinearSystem *paraSet, map<vector<int>,lst> &controlPts, int mode);
+	Bundle* transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
 
 	LinearSystem *getBundle();
 	Parallelotope* getParallelotope(int i);

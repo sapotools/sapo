@@ -59,6 +59,70 @@ Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > 
 	}
 }
 
+// constructor with auto-generated variables
+Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T){
+
+	if( L.size() > 0 ){
+		this->dim = L[0].size();
+	}else{
+		cout<<"Bundle::Bundle : L must be non empty";
+	}
+	if( L.size() != offp.size() ){
+		cout<<"Bundle::Bundle : L and offp must have the same size";
+		exit (EXIT_FAILURE);
+	}
+	if( L.size() != offm.size() ){
+		cout<<"Bundle::Bundle : L and offm must have the same size";
+		exit (EXIT_FAILURE);
+	}
+	if( T.size() > 0 ){
+		for(int i=0; i<T.size(); i++){
+			if( T[i].size() != this->getDim() ){
+				cout<<"Bundle::Bundle : T must have "<<this->getDim()<<" columns";
+				exit (EXIT_FAILURE);
+			}
+		}
+	}else{
+		cout<<"Bundle::Bundle : T must be non empty";
+		exit (EXIT_FAILURE);
+	}
+
+	//generate the variables
+	VarsGenerator *varsGen = new VarsGenerator(T[0].size());
+	lst qs, as, bs, ls;
+	vector<lst> us;
+	qs = varsGen->getBaseVertex();
+	as = varsGen->getFreeVars();
+	bs = varsGen->getLenghts();
+
+	vector<lst> paraVars;
+	paraVars.push_back(qs);
+	paraVars.push_back(as);
+	paraVars.push_back(bs);
+
+	this->vars = paraVars;
+	this->L = L;
+	this->offp = offp;
+	this->offm = offm;
+	this->T = T;
+
+	// initialize orthogonal proximity
+	for(int i=0; i<this->getNumDirs(); i++){
+		vector< double > Thetai (this->getNumDirs(),0);
+		for(int j=i; j<this->getNumDirs(); j++){
+			this->Theta.push_back(Thetai);
+		}
+	}
+	for(int i=0; i<this->getNumDirs(); i++){
+		this->Theta[i][i] = 0;
+		for(int j=i+1; j<this->getNumDirs(); j++){
+			double prox = this->orthProx(this->L[i],this->L[j]);
+			this->Theta[i][j] = prox;
+			this->Theta[j][i] = prox;
+		}
+	}
+}
+
 // construct the bundle
 LinearSystem* Bundle::getBundle(){
 	vector< vector< double> > A;
@@ -206,7 +270,6 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 			subParatope.append(this->vars[2][k] == lengths[k]);
 		}
 
-
 		if(mode == 0){	// static mode
 			dirs_to_bound = this->T[i];
 		}
@@ -272,7 +335,7 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 }
 
 // compute the parametric transformation of the bundle
-Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, map<vector<int>,lst> &controlPts, int mode){
+Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode){
 
 	vector<double> newDp (this->getSize(),DBL_MAX);
 	vector<double> newDm (this->getSize(),DBL_MAX);
@@ -313,33 +376,35 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 
 			lst actbernCoeffs;
 
-			if( controlPts.count(key) == 0){	// check if the coefficients were already computed
 
-			// the combination parallelotope/direction to bound is not present in hash table
-			// compute control points
-			lst sub, fog;
+			if( controlPts.count(key) == 0 || (!controlPts[key].first.is_equal(genFun)) ){	// check if the coefficients were already computed
 
-			for(int k=0; k<(signed)vars.nops(); k++){
-				sub.append(vars[k] == genFun[k]);
+				// the combination parallelotope/direction to bound is not present in hash table
+				// compute control points
+				lst sub, fog;
+
+				for(int k=0; k<(signed)vars.nops(); k++){
+					sub.append(vars[k] == genFun[k]);
+				}
+				for(int k=0; k<(signed)vars.nops(); k++){
+					fog.append(f[k].subs(sub));
+				}
+
+				ex Lfog; Lfog = 0;
+				// upper facets
+				for(int k=0; k<this->getDim(); k++){
+					Lfog = Lfog + this->L[dirs_to_bound[j]][k]*fog[k];
+				}
+
+				BaseConverter *BC = new BaseConverter(this->vars[1],Lfog);
+				actbernCoeffs = BC->getBernCoeffsMatrix();
+
+				pair<lst,lst> element (genFun,actbernCoeffs);
+				controlPts[key] = element;	// store the computed coefficients
+
+			}else{
+				actbernCoeffs = controlPts[key].second;
 			}
-			for(int k=0; k<(signed)vars.nops(); k++){
-				fog.append(f[k].subs(sub));
-			}
-
-			ex Lfog; Lfog = 0;
-			// upper facets
-			for(int k=0; k<this->getDim(); k++){
-				Lfog = Lfog + this->L[dirs_to_bound[j]][k]*fog[k];
-			}
-
-			BaseConverter *BC = new BaseConverter(this->vars[1],Lfog);
-			actbernCoeffs = BC->getBernCoeffsMatrix();
-
-			controlPts[key] = actbernCoeffs;	// store the computed coefficients
-
-		}else{
-			actbernCoeffs = controlPts[key];	// retrieve the computed coefficients
-		}
 
 			// find the maximum coefficient
 			double maxCoeffp = -DBL_MAX;

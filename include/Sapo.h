@@ -15,6 +15,7 @@
 #include "LinearSystem.h"
 #include "LinearSystemSet.h"
 #include "Bundle.h"
+#include "Model.h"
 
 class Sapo {
 
@@ -24,14 +25,13 @@ private:
 	lst params;	// parameters of the system
 	sapo_opt options;	// options
 	map< vector<int>,pair<lst,lst> > reachControlPts;	// symbolic control points
-	map<vector<int>,lst> synthControlPts;	// symbolic control points
+	map< vector<int>,pair<lst,lst> > synthControlPts;	// symbolic control points
 
 
 	vector<Bundle*> reachWitDec(Bundle* initSet, int k);
 
 public:
-	Sapo(lst vars, lst dyns, sapo_opt options);
-	Sapo(lst vars, lst params, lst dyns, sapo_opt options);
+	Sapo(Model *model, sapo_opt options);
 
 	vector<Bundle*> reach(Bundle* initSet, int k);
 	vector<Bundle*> reach(Bundle* initSet, LinearSystem* paraSet, int k);

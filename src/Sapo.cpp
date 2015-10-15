@@ -7,16 +7,10 @@
 
 #include "Sapo.h"
 
-Sapo::Sapo(lst vars, lst dyns, sapo_opt options) {
-	this->vars = vars;
-	this->dyns = dyns;
-	this->options = options;
-}
-
-Sapo::Sapo(lst vars, lst params, lst dyns, sapo_opt options) {
-	this->vars = vars;
-	this->params = params;
-	this->dyns = dyns;
+Sapo::Sapo(Model *model, sapo_opt options) {
+	this->vars = model->getVars();
+	this->params = model->getParams();
+	this->dyns = model->getDyns();
 	this->options = options;
 }
 
@@ -24,6 +18,9 @@ Sapo::Sapo(lst vars, lst params, lst dyns, sapo_opt options) {
 vector<Bundle*> Sapo::reach(Bundle* initSet, int k){
 
 	vector<Bundle*> flowPipe;
+	if(this->options.verbose){
+		initSet->getBundle()->print();
+	}
 	flowPipe.push_back(initSet);
 
 
@@ -35,6 +32,9 @@ vector<Bundle*> Sapo::reach(Bundle* initSet, int k){
 		if(this->options.decomp > 0){	// eventually decompose it
 			X = X->decompose(this->options.alpha,this->options.decomp);
 		}
+		if(this->options.verbose){
+			X->getBundle()->print();
+		}
 
 		flowPipe.push_back(X);			// store result
 	}
@@ -45,6 +45,9 @@ vector<Bundle*> Sapo::reach(Bundle* initSet, int k){
 vector<Bundle*> Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 	vector<Bundle*> flowPipe;
+	if(this->options.verbose){
+		initSet->getBundle()->print();
+	}
 	flowPipe.push_back(initSet);
 
 
@@ -55,6 +58,10 @@ vector<Bundle*> Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 		if(this->options.decomp > 0){	// eventually decompose it
 			X = X->decompose(this->options.alpha,this->options.decomp);
+		}
+
+		if(this->options.verbose){
+			X->getBundle()->print();
 		}
 
 		flowPipe.push_back(X);			// store result
@@ -125,11 +132,11 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 		key.push_back(sigma->getID());
 
 		Parallelotope *P = reachSet->getParallelotope(i);
+		lst genFun = P->getGeneratorFunction();
 		lst controlPts;
 
-		if(this->synthControlPts.count(key) == 0){
+		if(this->synthControlPts.count(key) == 0 || (!this->synthControlPts[key].first.is_equal(genFun))){
 
-			lst genFun = P->getGeneratorFunction();
 
 			// compose f(gamma(x))
 			lst sub, fog;
@@ -151,10 +158,11 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 			// compute the Bernstein control points
 			BaseConverter *bc = new BaseConverter(P->getAlpha(),sofog);
 			controlPts = bc->getBernCoeffsMatrix();
-			this->synthControlPts[key] = controlPts;
+			this->synthControlPts[key].first = genFun;
+			this->synthControlPts[key].second = controlPts;
 
 		}else{
-			controlPts = this->synthControlPts[key];
+			controlPts = this->synthControlPts[key].second;
 		}
 
 		// substitute numerical values in sofog
@@ -264,7 +272,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 
 		// Reach step wrt to the i-th linear system of parameterSet
 		for(int i=0; i<parameterSet->size(); i++){
-			Bundle *newReachSet;// = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
+			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula);
 			result = result->unionWith(tmpLSset);
@@ -285,7 +293,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 
 			// Reach step wrt to the i-th linear system of P
 			for(int i=0; i<P->size(); i++){
-				Bundle *newReachSet;// = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
+				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
 				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula);
 				result = result->unionWith(tmpLSset);

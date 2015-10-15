@@ -28,12 +28,8 @@ struct sapo_opt{
 	int trans;				// transformation (0: static, 1: dynamic)
 	double alpha;			// decomposition weight
 	int decomp;				// number of decompositions (0: none, >0: yes)
-};
-
-struct classcomp {
-  bool operator() (vector<int> v1, vector<int> v2) const {
-	  return lexicographical_compare(v1.begin(),v1.end(),v2.begin(),v2.end());
-  }
+	string plot;			// the name of the file were to plot the reach set
+	bool verbose;			// display info
 };
 
 struct poly_values{
