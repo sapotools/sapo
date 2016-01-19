@@ -1,4 +1,4 @@
-parasynth
+sapo
 =========
 
-Synthesis of parameters for polynomial dynamical systems
+Reachability computation and parameter synthesis for polynomial dynamical systems
