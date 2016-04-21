@@ -1,8 +1,9 @@
-/*
- * Parallelotope.h
+/**
+ * @file Parallelotope.h
+ * Represent and manipulate a parallelotope
  *
- *  Created on: Oct 30, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef PARALLELOTOPE_H_
@@ -15,8 +16,8 @@ class Parallelotope{
 
 private:
 
-	int dim;							// dimension of the parallelotope
-	vector<lst> vars;					// variables appearing in generato function
+	int dim;								// dimension of the parallelotope
+	vector<lst> vars;						// variables appearing in generato function
 											// vars[0] q: base vertex
 											// vars[1] alpha : free variables \in [0,1]
 											// vars[2] beta : generator amplitudes

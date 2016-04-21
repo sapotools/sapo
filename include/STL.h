@@ -1,8 +1,9 @@
-/*
- * STL.h
+/**
+ * @file STL.h
+ * STL formula
  *
- *  Created on: Nov 14, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef STL_H_

@@ -1,8 +1,9 @@
-/*
- * Eventually.h
+/**
+ * @file Eventually.h
+ * Eventually STL formula
  *
- *  Created on: May 20, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef EVENTUALLY_H_
@@ -14,7 +15,7 @@ class Eventually : public STL {
 
 private:
 
-	STL * f;
+	STL * f;			// subformula
 	int a, b;			// interval bounds
 
 public:

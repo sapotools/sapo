@@ -1,8 +1,10 @@
-/*
- * LinearSystemSet.h
+/**
+ * @file LinearSystemSet.h
+ * Represent and manipulate a set of linear systems
+ * It can be used to represent a symbolic union of polytopes
  *
- *  Created on: Nov 17, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef LINEARSYSTEMSET_H_
@@ -14,7 +16,7 @@ class LinearSystemSet {
 
 private:
 
-	vector<LinearSystem*> set;
+	vector<LinearSystem*> set;	// set of linear systems
 
 public:
 
@@ -25,6 +27,7 @@ public:
 	vector<LinearSystem*> getSet();
 	void add(LinearSystem *LS);
 
+	// operations on set
 	LinearSystemSet* intersectWith(LinearSystemSet *LSset);
 	LinearSystemSet* unionWith(LinearSystemSet *LSset);
 	LinearSystemSet* boundedUnionWith(LinearSystemSet *LSset, int bound);

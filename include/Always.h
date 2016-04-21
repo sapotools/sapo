@@ -1,8 +1,9 @@
-/*
- * Always.h
+/**
+ * @file Always.h
+ * Always STL formula
  *
- *  Created on: May 20, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef ALWAYS_H_
@@ -14,8 +15,8 @@ class Always : public STL {
 
 private:
 
-	STL * f;
-	int a, b;			// interval bounds
+	STL * f;			// subformula
+	int a, b;			// temporal interval bounds
 
 public:
 

@@ -1,8 +1,9 @@
-/*
- * Until.h
+/**
+ * @file Until.h
+ * Until STL formula
  *
- *  Created on: May 20, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef UNTIL_H_
@@ -14,7 +15,7 @@ class Until : public STL {
 
 private:
 
-	STL * f1, * f2;
+	STL * f1, * f2;		// subformulas
 	int a, b;			// interval bounds
 
 public:

@@ -1,8 +1,9 @@
-/*
- * Model.h
+/**
+ * @file Model.h
+ * Represent a discrete-time (eventually parameteric) dynamical system
  *
- *  Created on: Oct 15, 2015
- *      Author: dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef MODEL_H_

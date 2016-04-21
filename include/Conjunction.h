@@ -1,8 +1,9 @@
-/*
- * Conjunction.h
+/**
+ * @file Conjunction.h
+ * Conjunction STL formula
  *
- *  Created on: May 20, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef CONJUNCTION_H_
@@ -13,10 +14,11 @@
 class Conjunction : public STL {
 
 private:
-	STL * f1, * f2;
+	STL * f1, * f2;		// subformulas
 
 public:
 
+	// constructor
 	Conjunction(STL * f1, STL * f2);
 
 	STL * getLeftSubFormula(){return f1;};

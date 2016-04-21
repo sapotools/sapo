@@ -1,8 +1,9 @@
-/*
- * Atom.h
+/**
+ * @file Atom.h
+ * Atomic STL formula
  *
- *  Created on: May 20, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef ATOM_H_
@@ -13,9 +14,9 @@
 class Atom : public STL {
 private:
 
-	ex predicate;
-	vector<lst> predicateControlPts;
-	int id;
+	ex predicate;						// predicate
+	vector<lst> predicateControlPts;	// control points associated to this atom
+	int id;								// identifier
 
 public:
 

@@ -1,8 +1,10 @@
-/*
- * VarsGenerator.h
+/**
+ * @file VarsGenerator.h
+ * Automatically generate variables for paralleltope generator functions.
+ * For high dimensions declaring manually the variables can be tedious...
  *
- *  Created on: Jan 7, 2015
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef VARSGENERATOR_H_

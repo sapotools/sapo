@@ -1,8 +1,9 @@
-/*
- * BaseConverter.h
+/**
+ * @file BaseConverter.h
+ * Convert the basis of the given polynomial
  *
- *  Created on: Oct 23, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef BASECONVERTER_H_
@@ -29,33 +30,39 @@ private:
 	int multi_index_nChoosek(vector<int> n, vector<int> k);	// binomial coefficient of multi-indices
 	bool multi_index_leq(vector<int> a, vector<int> b);		// check whether b dominates a
 
-	int prod( vector<int> v, int a, int b );
-	int nchoosek(int n, int k);
-	vector< vector<ex> > matrixProd(vector< vector<ex> > A, vector< vector<ex> > B);
+	// auxiliary operations
+	int prod( vector<int> v, int a, int b );											// productory of element v[a]*...*v[b]
+	int nchoosek(int n, int k);															// n choose k
+	vector< vector<ex> > matrixProd(vector< vector<ex> > A, vector< vector<ex> > B);	// matrix product
 
 	void print( vector< vector< ex > > M);
 
 public:
+	// constructors
 	BaseConverter(lst vars, ex polynomial);
 	BaseConverter(lst vars, ex polynomial, vector<int> degrees);
 	BaseConverter(lst vars, ex num, ex denom);
+
+	// get Bernstein coefficients
 	ex bernCoeff(vector<int> mi);
 	lst getBernCoeffs();
 	lst getRationalBernCoeffs();
 	lst getBernCoeffsMatrix();
 
+	// operations on multi-indices
 	vector< int > n2t( vector<int> a, vector<int> degs );
 	vector< int > t2n( vector<int> a, vector<int> degs );
+
+	//operations on mutlidimensional matrices
 	vector< vector< ex > > genUtilde(int dim);
 	vector< int > transp( vector<int> b, vector<int> degs, int degs_prod );
 	vector< vector< ex > > transp( vector< vector<ex> > M, vector<int> degs );
 	vector< int > transp_naive( vector<int> b, vector<int> degs );
-
 	pair< vector<ex>, vector< vector<int> > > compressZeroCoeffs();
 	void implicitMaxIndex();
-
 	vector<int> shift(vector<int> v);
 
+	// operations of split
 	vector< vector< int > > getMultiIdxList();
 	void split(int direction, double split_point);
 	void print();
