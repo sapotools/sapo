@@ -1,13 +1,19 @@
-/*
- * Model.cpp
+/**
+ * @file Model.cpp
+ * Represent a discrete-time (eventually parameteric) dynamical system
  *
- *  Created on: Oct 15, 2015
- *      Author: dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "Model.h"
 
-// constructor for non-parametric dynamical systems
+/**
+ * Constructor that instantiates a non-parameteric dynamical system
+ *
+ * @param[in] vars list of variables
+ * @param[in] dyns list of dynamics
+ */
 Model::Model(lst vars, lst dyns) {
 
 	if( vars.nops() != dyns.nops() ){
@@ -19,7 +25,13 @@ Model::Model(lst vars, lst dyns) {
 	this->dyns = dyns;
 }
 
-// constructor for parametric dynamical systems
+/**
+ * Constructor that instantiates a parameteric dynamical system
+ *
+ * @param[in] vars list of variables
+ * @param[in] params list of parameters
+ * @param[in] dyns list of dynamics
+ */
 Model::Model(lst vars, lst params, lst dyns) {
 
 	if( vars.nops() != dyns.nops() ){

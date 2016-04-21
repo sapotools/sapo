@@ -1,8 +1,9 @@
-/*
- * STL.cpp
+/**
+ * @file STL.cpp
+ * STL formula
  *
- *  Created on: Nov 14, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "STL.h"

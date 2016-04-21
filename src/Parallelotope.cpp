@@ -1,12 +1,19 @@
-/*
- * Parallelotope.cpp
+/**
+ * @file Parallelotope.cpp
+ * Represent and manipulate a parallelotope
  *
- *  Created on: Oct 30, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "Parallelotope.h"
 
+/**
+ * Constructor that instantiates a parallelotope
+ *
+ * @param[in] vars vector with the list of variables used for the generator functions
+ * @param[in] u collection of generator versors
+ */
 Parallelotope::Parallelotope(vector<lst> vars, vector< vector<double> > u) {
 
 	if(vars.size() != 3){
@@ -68,6 +75,12 @@ Parallelotope::Parallelotope(vector<lst> vars, vector< vector<double> > u) {
 
 }
 
+/**
+ * Constructor that instantiates a parallelotope from a linear system
+ *
+ * @param[in] vars vector with the list of variables used for the generator functions
+ * @param[in] constr linear system constituting the parallelotope
+ */
 Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 
 	if(vars.size() != 3){
@@ -225,9 +238,13 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 	this->template_matrix = constr->getA();
 }
 
-// Convert from generator to constraints representation
-// q : numeric base vertex
-// beta : numeric lenghts
+/**
+ * Constructor generator to constraints representation
+ *
+ * @param[in] q numerical base vertex
+ * @param[in] beta numerical generator lengths
+ * @returns linear system representing the parallelotope
+ */
 LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 
 	if((signed)q.size() != this->dim){
@@ -318,18 +335,56 @@ LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 	return LS;
 }
 
-// Get functions
+/**
+ * Get variables of base vertex
+ *
+ * @returns base vertex variables
+ */
 lst Parallelotope::getQ(){ return this->vars[0]; }
+
+/**
+ * Get free variables
+ *
+ * @returns free variables
+ */
 lst Parallelotope::getAlpha(){ return this->vars[1]; }
+
+/**
+ * Get variables of generator lengths
+ *
+ * @returns generator lengths variables
+ */
 lst Parallelotope::getBeta(){  return this->vars[2]; }
+
+/**
+ * Get the generator functions
+ *
+ * @returns generator functions
+ */
 lst Parallelotope::getGeneratorFunction(){	return this->generator_function; }
+
+/**
+ * Get the parallelotope dimension
+ *
+ * @returns parallelotope dimension
+ */
 int Parallelotope::getDim(){ return this->dim; }
+
+/**
+ * Get the template of the parallelotope
+ *
+ * @returns parallelotope template
+ */
 vector< vector< double > > Parallelotope::getTemplate(){ return this->template_matrix; }
 
 
-// Compute the equation of the hyperplane passing through the points in pts
-// the equation is res[0]*x_0 + .. + res[n]*x_n + res[n+1] = 0
-// pts : matrix containing the points
+/**
+ * Determine the equation of the hyperplane passing through some points, i.e.,
+ * res[0]*x_0 + .. + res[n]*x_n + res[n+1] = 0
+ *
+ * @param[in] pts interpolation points
+ * @returns interpolating function coefficients
+ */
 vector<double> Parallelotope::hyperplaneThroughPts(vector< vector<double> > pts){
 
 	if(pts.size() != pts[0].size()){
@@ -397,8 +452,12 @@ vector<double> Parallelotope::hyperplaneThroughPts(vector< vector<double> > pts)
 }
 
 
-// Convert the constrain representation to the generator one
-// constr : LinearSystem
+/**
+ * Convert the constraint representation to the generator one
+ *
+ * @param[in] constr constraint representation of the parallelotope
+ * @returns numerical values to plug in the generator function for the generator representation
+ */
 poly_values Parallelotope::const2gen(LinearSystem *constr){
 
 	vector< vector<double> > Lambda = constr->getA();
@@ -480,7 +539,12 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 	return result;
 }
 
-// Convert a symbolic list to a vector
+/**
+ * Convert a symbolic list of numbers to a vector
+ *
+ * @param[in] symbolic list
+ * @returns numeric list of numbers
+ */
 vector<double> Parallelotope::lst2vec(ex list){
 
 	vector< double > res;
@@ -491,7 +555,12 @@ vector<double> Parallelotope::lst2vec(ex list){
 	return res;
 }
 
-// Compute the Euclidean norm of the vector v
+/**
+ * Compute the Euclidean norm of a vector
+ *
+ * @param[in] v vector to normalize
+ * @returns norm of the given vector
+ */
 double Parallelotope::euclidNorm(vector<double> v){
 
 	double norm = 0;

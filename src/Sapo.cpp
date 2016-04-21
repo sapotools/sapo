@@ -1,12 +1,20 @@
-/*
- * Sapo.cpp
+/**
+ * @file Sapo.cpp
+ * Core of Sapo tool.
+ * Here the reachable set and the parameter synthesis are done.
  *
- *  Created on: Oct 12, 2015
- *      Author: dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "Sapo.h"
 
+/**
+ * Constructor that instantiates Sapo
+ *
+ * @param[in] model model to analyize
+ * @param[in] sapo_opt options to tune sapo
+ */
 Sapo::Sapo(Model *model, sapo_opt options) {
 	this->vars = model->getVars();
 	this->params = model->getParams();
@@ -14,19 +22,27 @@ Sapo::Sapo(Model *model, sapo_opt options) {
 	this->options = options;
 }
 
-// compute the reachable set
-vector<Bundle*> Sapo::reach(Bundle* initSet, int k){
+/**
+ * Reachable set computation
+ *
+ * @param[in] initSet bundle with the initial set
+ * @param[in] k time horizon
+ * @returns flowpipe of bundles
+ */
+Flowpipe* Sapo::reach(Bundle* initSet, int k){
 
-	vector<Bundle*> flowPipe;
+	Flowpipe *flowpipe = new Flowpipe();
+
+	clock_t tStart = clock();
 	if(this->options.verbose){
 		initSet->getBundle()->print();
 	}
-	flowPipe.push_back(initSet);
+	flowpipe->append(initSet);
 
 
 	for(int i=0; i<k; i++){
 
-		Bundle *X = flowPipe[i];	// get actual set
+		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->dyns,this->reachControlPts,this->options.trans);	// transform it
 
 		if(this->options.decomp > 0){	// eventually decompose it
@@ -36,24 +52,35 @@ vector<Bundle*> Sapo::reach(Bundle* initSet, int k){
 			X->getBundle()->print();
 		}
 
-		flowPipe.push_back(X);			// store result
+		flowpipe->append(X);			// store result
 	}
+	cout<<"Time taken (reachability) "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
 
-	return flowPipe;
+	return flowpipe;
 }
 
-vector<Bundle*> Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
+/**
+ * Reachable set computation for parameteric dynamical systems
+ *
+ * @param[in] initSet bundle with the initial set
+ * @param[in] paraSet set of parameters
+ * @param[in] k time horizon
+ * @returns flowpipe of bundles
+ */
+Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
-	vector<Bundle*> flowPipe;
+	Flowpipe *flowpipe = new Flowpipe();
+
+	clock_t tStart = clock();
 	if(this->options.verbose){
 		initSet->getBundle()->print();
 	}
-	flowPipe.push_back(initSet);
+	flowpipe->append(initSet);
 
 
 	for(int i=0; i<k; i++){
 
-		Bundle *X = flowPipe[i];	// get actual set
+		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->params, this->dyns, paraSet, this->synthControlPts, this->options.trans);	// transform it
 
 		if(this->options.decomp > 0){	// eventually decompose it
@@ -64,17 +91,40 @@ vector<Bundle*> Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 			X->getBundle()->print();
 		}
 
-		flowPipe.push_back(X);			// store result
+		flowpipe->append(X);			// store result
 	}
+	cout<<"Time taken (parametric reachability) "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
 
-	return flowPipe;
+	return flowpipe;
 
 }
 
-// SYNTHESIS SECTION
-
-// synthesize the parameter set
+/**
+ * Parameter synthesis procedure
+ *
+ * @param[in] reachSet bundle with the initial set
+ * @param[in] parameterSet set of sets of parameters
+ * @param[in] formula STL contraint to impose over the model
+ * @returns refined sets of parameters
+ */
 LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
+
+	clock_t tStart = clock();
+	LinearSystemSet *res = this->synthesizeSTL(reachSet,parameterSet,formula);
+	cout<<"Time taken (parameter synthesis) "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+
+	return res;
+}
+
+/**
+ * Internal parameter synthesis procedure
+ *
+ * @param[in] reachSet bundle with the initial set
+ * @param[in] parameterSet set of sets of parameters
+ * @param[in] formula STL contraint to impose over the model
+ * @returns refined sets of parameters
+ */
+LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
 
 	switch( formula->getType() ){
 
@@ -85,16 +135,16 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
 
 		// Conjunction
 		case 1:{
-			LinearSystemSet *LS1 = this->synthesize(reachSet, parameterSet, formula->getLeftSubFormula());
-			LinearSystemSet *LS2 = this->synthesize(reachSet, parameterSet, formula->getRightSubFormula());
+			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
+			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 			return LS1->intersectWith(LS2);
 		}
 		break;
 
 		// Disjunction
 		case 2:{
-			LinearSystemSet *LS1 = this->synthesize(reachSet, parameterSet, formula->getLeftSubFormula());
-			LinearSystemSet *LS2 = this->synthesize(reachSet, parameterSet, formula->getRightSubFormula());
+			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
+			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 			return LS1->unionWith(LS2);
 		}
 		break;
@@ -120,7 +170,14 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
 
 }
 
-// refine the parameter set wrt the specification
+/**
+ * Parameter synthesis w.r.t. an atomic formula
+ *
+ * @param[in] reachSet bundle with the initial set
+ * @param[in] parameterSet set of sets of parameters
+ * @param[in] sigma STL atomic formula
+ * @returns refined sets of parameters
+ */
 LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, STL *sigma){
 
 	LinearSystemSet *result = new LinearSystemSet();
@@ -193,7 +250,14 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 
 }
 
-// Special procedure for until
+/**
+ * Parameter synthesis w.r.t. an until formula
+ *
+ * @param[in] reachSet bundle with the initial set
+ * @param[in] parameterSet set of sets of parameters
+ * @param[in] sigma STL until formula
+ * @returns refined sets of parameters
+ */
 LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
 
 	LinearSystemSet* result = new LinearSystemSet();
@@ -204,7 +268,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 	// Until interval far
 	if((a > 0) && (b > 0)){
 		// Synthesize wrt phi1
-		LinearSystemSet *P1 = this->synthesize(reachSet, parameterSet, formula->getLeftSubFormula());
+		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
 		if( P1->isEmpty() ){
 			return P1;			// false until
 		}else{
@@ -228,8 +292,8 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 	if((a == 0) && (b > 0)){
 
 		// Refine wrt phi1 and phi2
-		LinearSystemSet *P1 = this->synthesize(reachSet, parameterSet, formula->getLeftSubFormula());
-		LinearSystemSet *P2 = this->synthesize(reachSet, parameterSet, formula->getRightSubFormula());
+		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
+		LinearSystemSet *P2 = this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 
 		if( P1->isEmpty() ){
 			return P2;
@@ -249,14 +313,21 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 
 	// Base case
 	if((a == 0) && (b == 0)){
-		return this->synthesize(reachSet, parameterSet, formula->getRightSubFormula());
+		return this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 	}
 
 	return result;
 
 }
 
-// Special procedure for always
+/**
+ * Parameter synthesis w.r.t. an always formula
+ *
+ * @param[in] reachSet bundle with the initial set
+ * @param[in] parameterSet set of sets of parameters
+ * @param[in] sigma STL always formula
+ * @returns refined sets of parameters
+ */
 LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
 
 	LinearSystemSet* result = new LinearSystemSet();
@@ -284,7 +355,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 	if((a == 0) && (b > 0)){
 
 		// Refine wrt phi
-		LinearSystemSet *P = this->synthesize(reachSet, parameterSet, formula->getSubFormula());
+		LinearSystemSet *P = this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 
 		if(!P->isEmpty()){
 
@@ -308,7 +379,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 
 	// Base case
 	if((a == 0) && (b == 0)){
-		return this->synthesize(reachSet, parameterSet, formula->getSubFormula());
+		return this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 	}
 
 	return result;

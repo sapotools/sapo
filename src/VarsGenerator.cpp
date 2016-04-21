@@ -1,12 +1,19 @@
-/*
- * VarsGenerator.cpp
+/**
+ * @file VarsGenerator.cpp
+ * Automatically generate variables for paralleltope generator functions.
+ * For high dimensions declaring manually the variables can be tedious...
  *
- *  Created on: Jan 7, 2015
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "VarsGenerator.h"
 
+/**
+ * Constructor that instantiates the variable generator
+ *
+ * @param[in] dim dimension of the model/parallelotope
+ */
 VarsGenerator::VarsGenerator(int dim){
 
 	this->dim = dim;
@@ -85,6 +92,12 @@ VarsGenerator::VarsGenerator(int dim){
 
 }
 
+/**
+ * Generate a box out of the variables
+ *
+ * @param[in] b box offsets
+ * @returns generatred box
+ */
 LinearSystem* VarsGenerator::genBox(vector<double> b){
 	int n = b.size()/2;
 	vector<double> Ai(n,0);

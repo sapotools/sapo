@@ -1,21 +1,36 @@
-/*
- * LinearSystemSet.cpp
+/**
+ * @file LinearSystemSet.cpp
+ * Represent and manipulate a set of linear systems
+ * It can be used to represent a symbolic union of polytopes
  *
- *  Created on: Nov 17, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "LinearSystemSet.h"
 
+/**
+ * Constructor that instantiates an empty set
+ */
 LinearSystemSet::LinearSystemSet(){
 }
 
+/**
+ * Constructor that instantiates a singleton set
+ *
+ * @param[in] LS element of the set
+ */
 LinearSystemSet::LinearSystemSet(LinearSystem *LS){
 	if(!LS->isEmpty()){
 		this->set.push_back(LS);
 	}
 }
 
+/**
+ * Constructor that instantiates a set from a vector of sets
+ *
+ * @param[in] set vector of linear systems
+ */
 LinearSystemSet::LinearSystemSet(vector<LinearSystem*> set){
 
 	for(int i=0; i<(signed)set.size(); i++){
@@ -25,18 +40,32 @@ LinearSystemSet::LinearSystemSet(vector<LinearSystem*> set){
 	}
 }
 
+/**
+ * Get the set of linear systems
+ *
+ * @returns actual collection of linear systems
+ */
 vector<LinearSystem*> LinearSystemSet::getSet(){
 	return this->set;
 }
 
-// Add a linear system to the set
+/**
+ * Add a linear system to the set
+ *
+ * @param[in] LS linear system to add
+ */
 void LinearSystemSet::add(LinearSystem *LS){
 	if(!LS->isEmpty()){
 		this->set.push_back(LS);
 	}
 }
 
-// Intersect two sets of linear systems
+/**
+ * Intersect to sets of linear systems
+ *
+ * @param[in] LSset set to intersect with
+ * @returns intersected sets
+ */
 LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset){
 
 	vector<LinearSystem*> intSet; // new intersection set
@@ -53,7 +82,12 @@ LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset){
 	return new LinearSystemSet(intSet);
 }
 
-// Union of two sets of linear systems
+/**
+ * Union of sets
+ *
+ * @param[in] LSset set to union with
+ * @returns merged sets
+ */
 LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
 
 	vector<LinearSystem*> uniSet = this->set; 		// new union set
@@ -67,7 +101,13 @@ LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
 
 }
 
-// Union of two sets of linear systems up to bounded cardinality cardinality
+/**
+ * Union of two sets of linear systems up to bounded cardinality
+ *
+ * @param[in] LSset set to union with
+ * @param[in] bound set size bound
+ * @returns merged sets
+ */
 LinearSystemSet* LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, int bound){
 
 	if(this->size() > bound){
@@ -88,7 +128,11 @@ LinearSystemSet* LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, int b
 
 }
 
-// Volume of boxes containing the sets
+/**
+ * Sum of volumes of boxes containing the sets
+ *
+ * @returns sum of bounding boxes
+ */
 double LinearSystemSet::boundingVol(){
 
 	double vol = 0;
@@ -99,22 +143,38 @@ double LinearSystemSet::boundingVol(){
 
 }
 
-// Return the size of this set, i.e, the number of linear systems
+/**
+ * Get the size of this set, i.e,
+ * the number of linear systems
+ *
+ * @returns number of linear systems in the set
+ */
 int LinearSystemSet::size() {
 	return this->set.size();
 }
 
-// Return the i-th linear system
+/**
+ * Get the i-th linear system
+ *
+ * @param[in] index of the linear system to fetch
+ * @returns i-th linear system
+ */
 LinearSystem* LinearSystemSet::at(int i) {
 	return this->set[i];
 }
 
-// Check if the current set is empty
+/**
+ * Check if the current set is empty
+ *
+ * @returns true if the set is empty
+ */
 bool LinearSystemSet::isEmpty() {
 	return this->set.empty();
 }
 
-// Print the linear system
+/**
+ * Print the set of linear systems
+ */
 void LinearSystemSet::print() {
 
 	if( this->set.size() <= 0){

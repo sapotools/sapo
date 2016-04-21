@@ -1,14 +1,25 @@
-/*
+/**
+ * @file Bundle.cpp
+ * Represent and manipulate bundles of parallelotopes whose intersection
+ * represents a polytope
  *
- *  Created on: Sep 18, 2015
- *      Author: dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "Bundle.h"
 #include <string>
 
 
-// initial bundle to decompose
+/**
+ * Constructor that instantiates the bundle
+ *
+ * @param[in] vars list of variables for parallelotope generator functions
+ * @param[in] L matrix of directions
+ * @param[in] offp upper offsets
+ * @param[in] offm lower offsets
+ * @param[in] T templates matrix
+ */
 Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T) {
 
 	if( L.size() > 0 ){
@@ -59,7 +70,14 @@ Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > 
 	}
 }
 
-// constructor with auto-generated variables
+/**
+ * Constructor that instantiates the bundle with auto-generated variables
+ *
+ * @param[in] L matrix of directions
+ * @param[in] offp upper offsets
+ * @param[in] offm lower offsets
+ * @param[in] T templates matrix
+ */
 Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T){
 
 	if( L.size() > 0 ){
@@ -123,7 +141,11 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 	}
 }
 
-// construct the bundle
+/**
+ * Generate the polytope represented by the bundle
+ *
+ * @returns polytope represented by a linear system
+ */
 LinearSystem* Bundle::getBundle(){
 	vector< vector< double> > A;
 	vector< double> b;
@@ -141,6 +163,12 @@ LinearSystem* Bundle::getBundle(){
 	return Ab;
 }
 
+/**
+ * Get the i-th parallelotope of the bundle
+ *
+ * @param[in] i parallelotope index to fetch
+ * @returns i-th parallelotope
+ */
 Parallelotope* Bundle::getParallelotope(int i){
 
 	if( i<0 || i>this->T.size() ){
@@ -170,7 +198,11 @@ Parallelotope* Bundle::getParallelotope(int i){
 
 }
 
-// Canonize the current Bundle
+/**
+ * Canonize the current bundle pushing the constraints toward the symbolic polytope
+ *
+ * @returns canonized bundle
+ */
 Bundle* Bundle::canonize(){
 	// get current polytope
 	LinearSystem *bund = this->getBundle();
@@ -182,6 +214,13 @@ Bundle* Bundle::canonize(){
 	return new Bundle(this->vars,this->L,canoffp,canoffm,this->T);
 }
 
+/**
+ * Decompose the current symbolic polytope
+ *
+ * @param[in] alpha weight parameter in [0,1] for decomposition (0 for distance, 1 for orthogonality)
+ * @param[in] max_iter maximum number of randomly generated templates
+ * @returns new bundle decomposing current symbolic polytope
+ */
 Bundle* Bundle::decompose(double alpha, int max_iters){
 
 	vector< double > offDists = this->offsetDistances();
@@ -241,7 +280,15 @@ Bundle* Bundle::decompose(double alpha, int max_iters){
 
 }
 
-// compute the transformation of the bundle
+/**
+ * Transform the bundle
+ *
+ * @param[in] vars variables appearing in the transforming function
+ * @param[in] f transforming function
+ * @param[in,out] controlPts control points computed so far that might be updated
+ * @param[in] mode transformation mode (0=OFO,1=AFO)
+ * @returns transformed bundle
+ */
 Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &controlPts, int mode){
 
 	vector<double> newDp (this->getSize(),DBL_MAX);
@@ -334,7 +381,17 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 	return res;
 }
 
-// compute the parametric transformation of the bundle
+/**
+ * Parametric transformation of the bundle
+ *
+ * @param[in] vars variables appearing in the transforming function
+ * @param[in] params parameters appearing in the transforming function
+ * @param[in] f transforming function
+ * @param[in] paraSet set of parameters
+ * @param[in,out] controlPts control points computed so far that might be updated
+ * @param[in] mode transformation mode (0=OFO,1=AFO)
+ * @returns transformed bundle
+ */
 Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode){
 
 	vector<double> newDp (this->getSize(),DBL_MAX);
@@ -429,13 +486,21 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 }
 
 
-// update the templates matrix
+/**
+ * Set the bundle template
+ *
+ * @param[in] T new template
+ */
 void Bundle::setTemplate(vector< vector< int > > T){
 	this->T = T;
 }
 
 
-// compute the distances between parallel half spaces
+/**
+ * Compute the distances between the half-spaced of the parallelotopes
+ *
+ * @returns vector of distances
+ */
 vector< double > Bundle::offsetDistances(){
 
 	vector< double > dist;
@@ -446,7 +511,12 @@ vector< double > Bundle::offsetDistances(){
 
 }
 
-
+/**
+ * Compute the norm of a vector
+ *
+ * @param[in] v vector to normalize
+ * @returns norm of the given vector
+ */
 double Bundle::norm(vector<double> v){
 	double sum = 0;
 	for(int i=0; i<(signed)v.size(); i++){
@@ -455,6 +525,13 @@ double Bundle::norm(vector<double> v){
 	return sqrt(sum);
 }
 
+/**
+ * Compute the product of two vectors
+ *
+ * @param[in] v1 left vector
+ * @param[in] v2 right vector
+ * @returns product v1*v2'
+ */
 double Bundle::prod(vector<double> v1, vector<double> v2){
 	double prod = 0;
 	for(int i=0; i<(signed)v1.size(); i++){
@@ -463,16 +540,36 @@ double Bundle::prod(vector<double> v1, vector<double> v2){
 	return prod;
 }
 
+/**
+ * Compute the angle between two vectors
+ *
+ * @param[in] v1 vector
+ * @param[in] v2 vector
+ * @returns angle between v1 and v2
+ */
 double Bundle::angle(vector<double> v1, vector<double> v2){
 	return acos(this->prod(v1,v2)/(this->norm(v1)*this->norm(v2)));
 }
 
-// orthogonal proximity
+/**
+ * Orthogonal proximity of v1 and v2, i.e.,
+ * how close is the angle between v1 and v2 is to pi/2
+ *
+ * @param[in] v1 vector
+ * @param[in] v2 vector
+ * @returns orthogonal proximity
+ */
 double Bundle::orthProx(vector<double> v1, vector<double> v2){
 	return abs(this->angle(v1,v2) - (3.14159265/2));
 }
 
-// max orthogonal proximity wrt p_set
+/**
+ * Maximum orthogonal proximity of a vector w.r.t. a set of vectors
+ *
+ * @param[in] vIdx index of the reference vector
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @returns maximum orthogonal proximity
+ */
 double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx){
 
 	if(dirsIdx.empty()){
@@ -486,6 +583,12 @@ double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx){
 	return maxProx;
 }
 
+/**
+ * Maximum orthogonal proximity within a set of vectors
+ *
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @returns maximum orthogonal proximity
+ */
 double Bundle::maxOrthProx(vector<int> dirsIdx){
 	double maxProx = 0;
 	for( int i=0; i<dirsIdx.size(); i++ ){
@@ -496,6 +599,12 @@ double Bundle::maxOrthProx(vector<int> dirsIdx){
 	return maxProx;
 }
 
+/**
+ * Maximum orthogonal proximity of all the vectors of a matrix
+ *
+ * @param[in] T collection of vectors
+ * @returns maximum orthogonal proximity
+ */
 double Bundle::maxOrthProx(vector< vector<int> > T){
 	double maxorth = -DBL_MAX;
 	for(int i=0; i<T.size(); i++){
@@ -504,6 +613,14 @@ double Bundle::maxOrthProx(vector< vector<int> > T){
 	return maxorth;
 }
 
+/**
+ * Maximum distance accumulation of a vector w.r.t. a set of vectors
+ *
+ * @param[in] vIdx index of the reference vector
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @param[in] dists pre-computed distances
+ * @returns distance accumulation
+ */
 double Bundle::maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists){
 
 	if(dirsIdx.empty()){
@@ -518,6 +635,13 @@ double Bundle::maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists
 
 }
 
+/**
+ * Maximum distance accumulation of a set of vectors
+ *
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @param[in] dists pre-computed distances
+ * @returns distance accumulation
+ */
 double Bundle::maxOffsetDist(vector<int> dirsIdx, vector<double> dists){
 
 	double dist = 1;
@@ -528,6 +652,13 @@ double Bundle::maxOffsetDist(vector<int> dirsIdx, vector<double> dists){
 
 }
 
+/**
+ * Maximum distance accumulation of matrix
+ *
+ * @param[in] T matrix from which fetch the vectors
+ * @param[in] dists pre-computed distances
+ * @returns distance accumulation
+ */
 double Bundle::maxOffsetDist(vector< vector<int> > T, vector<double> dists){
 	double maxdist = -DBL_MAX;
 	for(int i=0; i<T.size(); i++){
@@ -536,7 +667,12 @@ double Bundle::maxOffsetDist(vector< vector<int> > T, vector<double> dists){
 	return maxdist;
 }
 
-// change sign to all elements of a vector
+/**
+ * Change sign to all elements of a vector
+ *
+ * @param[in] v vector to reverse
+ * @returns reversed vector
+ */
 vector< double > Bundle::negate(vector< double > v){
 
 	vector< double > minus_v;
@@ -546,6 +682,13 @@ vector< double > Bundle::negate(vector< double > v){
 	return minus_v;
 }
 
+/**
+ * Determine belonging of an element in a vector
+ *
+ * @param[in] n element to be searched
+ * @param[in] v vector in which to look for
+ * @returns true is n belongs to v
+ */
 bool Bundle::isIn(int n, vector<int> v){
 
 	for(int i=0; i<v.size(); i++){
@@ -556,6 +699,13 @@ bool Bundle::isIn(int n, vector<int> v){
 	return false;
 }
 
+/**
+ * Determine belonging of a vector in a set of vectors
+ *
+ * @param[in] v vector to be searched
+ * @param[in] vlist set of vectors in which to look for
+ * @returns true is v belongs to vlist
+ */
 bool Bundle::isIn(vector<int> v, vector< vector< int > > vlist){
 	for(int i=0; i<vlist.size(); i++){
 		if( this->isPermutation(v,vlist[i]) ){
@@ -565,7 +715,13 @@ bool Bundle::isIn(vector<int> v, vector< vector< int > > vlist){
 	return false;
 }
 
-// check if v1 is a permutation of v2
+/**
+ * Check if v1 is a permutation of v2
+ *
+ * @param[in] v1 first vector
+ * @param[in] v2 second vector
+ * @returns true is v1 is a permutation of v2
+ */
 bool Bundle::isPermutation(vector<int> v1, vector<int> v2){
 	for( int i=0; i<v1.size(); i++ ){
 		if( !this->isIn(v1[i],v2) ){
@@ -575,7 +731,14 @@ bool Bundle::isPermutation(vector<int> v1, vector<int> v2){
 	return true;
 }
 
-//check if T is valid
+/**
+ * Check if a matrix is a valid template for the current bundle
+ *
+ * @param[in] T template matrix to be tested
+ * @param[in] card cardinality of the bundle
+ * @param[in] dirs directions
+ * @returns true T is a valid template
+ */
 bool Bundle::validTemp(vector< vector<int> > T, int card, vector<int> dirs){
 
 	cout<<"dirs: ";

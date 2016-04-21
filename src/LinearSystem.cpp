@@ -1,13 +1,21 @@
-/*
- * LinearSystem.cpp
+/**
+ * @file LinearSystem.cpp
+ * Represent and manipulate a linear system
+ * It can be used to represent polytopes (reached states, parameters, etc.)
  *
- *  Created on: Oct 24, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #include "LinearSystem.h"
 
 
+/**
+ * Constructor that instantiates a linear system
+ *
+ * @param[in] A template matrix
+ * @param[in] b offset vector
+ */
 LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 
 	bool smart_insert = false;
@@ -27,6 +35,9 @@ LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 	this->n_vars = this->A[0].size();
 }
 
+/**
+ * Constructor that instantiates an empty linear system
+ */
 LinearSystem::LinearSystem(){
 	vector< vector<double> > A;
 	vector< double > b;
@@ -36,7 +47,13 @@ LinearSystem::LinearSystem(){
 
 }
 
-// check if a constraint is already in
+/**
+ * Check if a constraint belongs to the linear system
+ *
+ * @param[in] Ai direction
+ * @param[in] bi offset
+ * @returns true is Ai x <= b is in the linear system
+ */
 bool LinearSystem::isIn(vector< double > Ai, double bi){
 
 	double epsilon = 0.00001;	// necessary for double comparison
@@ -54,6 +71,12 @@ bool LinearSystem::isIn(vector< double > Ai, double bi){
 	return false;
 }
 
+/**
+ * Constructor that instantiates a linear system from a set of symbolic expressions
+ *
+ * @param[in] vars list of variables appearing in the constraints
+ * @param[in] constraints symbolic constraints
+ */
 LinearSystem::LinearSystem(lst vars, lst constraints) {
 
 	this->vars = vars;
@@ -65,8 +88,9 @@ LinearSystem::LinearSystem(lst vars, lst constraints) {
 	initLS();	// initialize Linear System
 }
 
-// Initialize the Linear System
-// computing A and b
+/**
+ * Initialize a linear system extracting template and offsets from symbolic expressions
+ */
 void LinearSystem::initLS(){
 
 	for(int i=0; i<(signed)this->constraints.nops(); i++){
@@ -94,17 +118,31 @@ void LinearSystem::initLS(){
 
 }
 
-// Get A
+/**
+ * Return the template matrix
+ *
+ * @return template matrix
+ */
 vector< vector<double> > LinearSystem::getA(){
 	return this->A;
 }
 
-// Get b
+/**
+ * Return the offset vector
+ *
+ * @return offset vector
+ */
 vector<double> LinearSystem::getb(){
 	return this->b;
 }
 
-// Get the i-j element of A
+/**
+ * Return the (i,j) element of the template matrix
+ *
+ * @param[in] i row index
+ * @param[in] j column index
+ * @return (i,j) element
+ */
 double LinearSystem::getA(int i, int j){
 	if(( 0<= i ) && (i < (signed)this->A.size())){
 		if(( 0<= j ) && (j < (signed)this->A[j].size())){
@@ -115,7 +153,12 @@ double LinearSystem::getA(int i, int j){
 	exit (EXIT_FAILURE);
 }
 
-// Get the i-th element of b
+/**
+ * Return the i-th element of the offset vector
+ *
+ * @param[in] i column index
+ * @return i-th element
+ */
 double LinearSystem::getb(int i){
 	if(( 0<= i ) && (i < (signed)this->b.size())){
 			return this->b[i];
@@ -124,7 +167,12 @@ double LinearSystem::getb(int i){
 	exit (EXIT_FAILURE);
 }
 
-// Determine whether this linear system is empty or not
+/**
+ * Determine whether this linear system is empty or not, i.e.,
+ * the linear system has solutions
+ *
+ * @return true if the linear system is empty
+ */
 bool LinearSystem::isEmpty(){
 
 	vector< vector< double > > extA = this->A;
@@ -142,7 +190,15 @@ bool LinearSystem::isEmpty(){
 
 }
 
-// Solve a linear system
+/**
+ * Optimize a linear system
+ *
+ * @param[in] A template matrix of the system to optimize
+ * @param[in] b offset vector of the system to optimize
+ * @param[in] obj_fun objective function
+ * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
+ * @return optimum
+ */
 double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< double > b, vector< double > obj_fun, int min_max){
 
 	int num_rows = A.size();
@@ -193,7 +249,13 @@ double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< dou
 
 }
 
-// minimize the function obj_fun
+/**
+ * Minimize the linear system
+ *
+ * @param[in] vars list of variables
+ * @param[in] obj_fun objective function
+ * @return minimum
+ */
 double LinearSystem::minLinearSystem(lst vars, ex obj_fun){
 
 	vector< double > obj_fun_coeffs;
@@ -216,11 +278,23 @@ double LinearSystem::minLinearSystem(lst vars, ex obj_fun){
 
 }
 
+/**
+ * Maximize the linear system
+ *
+ * @param[in] obj_fun objective function
+ * @return maximum
+ */
 double LinearSystem::maxLinearSystem(vector< double > obj_fun_coeffs){
 	return this->solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
 }
 
-// maximize the function obj_fun
+/**
+ * Maximize the linear system
+ *
+ * @param[in] vars list of variables
+ * @param[in] obj_fun objective function
+ * @return maximum
+ */
 double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
 
 	vector< double > obj_fun_coeffs;
@@ -241,8 +315,12 @@ double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
 	return (max+c);
 }
 
-
-// Create a new liner system by merging this LS and the specified one
+/**
+ * Create a new liner system by merging this LS and the specified one
+ *
+ * @param[in] LS linear system to be appended
+ * @return linear system obtained by merge
+ */
 LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS){
 
 	vector< vector<double> > newA = this->A;
@@ -262,7 +340,11 @@ LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS){
 
 }
 
-// determine the redundant constraint of the linear system
+/**
+ * Determine the redundant constraint of the linear system
+ *
+ * @return boolean vector (true is if i-th constrain is redundant)
+ */
 vector<bool> LinearSystem::redundantCons(){
 
 	vector<bool> redun (this->size(), false);
@@ -276,7 +358,11 @@ vector<bool> LinearSystem::redundantCons(){
 	return redun;
 }
 
-// generate the bounding box of this linear system
+/**
+ * Determine the volume of the bounding box of the linear system
+ *
+ * @return volume of the bounding box
+ */
 double LinearSystem::volBoundingBox(){
 
 	vector<double> zeros (this->dim(),0);
@@ -295,7 +381,13 @@ double LinearSystem::volBoundingBox(){
 }
 
 
-// check if it's a line of zeros (used to detected useless constraints)
+/**
+ * Check if if a vector is null, i.e.,
+ * it's a vector of zeros (used to detected useless constraints)
+ *
+ * @param[in] line vector to test
+ * @return true is the vector is nulle
+ */
 bool LinearSystem::zeroLine(vector<double> line){
 
 	double epsilon = 0.00001;	// necessary for double comparison
@@ -310,6 +402,9 @@ bool LinearSystem::zeroLine(vector<double> line){
 
 }
 
+/**
+ * Print the linear system
+ */
 void LinearSystem::print(){
 	for(int i=0; i<(signed)this->A.size(); i++){
 		for(int j=0; j<(signed)this->A[i].size(); j++){
@@ -320,7 +415,9 @@ void LinearSystem::print(){
 	cout<<"\n";
 }
 
-// Print in MATLAB format
+/**
+ * Print the linear system in Matlab format (for plotregion script)
+ */
 void LinearSystem::plotRegion(){
 
 	if(this->dim() > 3){
@@ -336,10 +433,16 @@ void LinearSystem::plotRegion(){
 		cout<<" "<<this->b[i]<<";\n";
 	}
 	cout<<"];\n";
-	cout<<"plotregion(-Ab(:,1:"<< this->A[0].size() <<"),-Ab(:,"<<this->A[0].size()+1<<"),[],[],colore);\n";
+	cout<<"plotregion(-Ab(:,1:"<< this->A[0].size() <<"),-Ab(:,"<<this->A[0].size()+1<<"),[],[],color);\n";
 
 }
 
+/**
+ * Print the linear system in Matlab format (for plotregion script) into a file
+ *
+ * @param[in] file_name name of the file
+ * @param[in] color color of the polytope to plot
+ */
 void LinearSystem::plotRegionToFile(char *file_name, char color){
 
 	if(this->dim() > 3){
@@ -364,7 +467,11 @@ void LinearSystem::plotRegionToFile(char *file_name, char color){
 
 }
 
-// plot a 2d region over time
+/**
+ * Print the 2d linear system in Matlab format (for plotregion script) over time
+ *
+ * @param[in] t thickness of the set to plot
+ */
 void LinearSystem::plotRegionT(double t){
 	if(this->dim() > 2){
 		cout<<"LinearSystem::plotRegionT : maximum 2d sets are allowed";
@@ -392,11 +499,16 @@ void LinearSystem::plotRegionT(double t){
 	}
 
 	cout<<"];\n";
-	cout<<"plotregion(-Ab(:,1:3),-Ab(:,4),[],[],colore);\n";
+	cout<<"plotregion(-Ab(:,1:3),-Ab(:,4),[],[],color);\n";
 
 }
 
-// Print in MATLAB format the specified projection
+/**
+ * Print the specified projections in Matlab format (for plotregion script) into a file
+ *
+ * @param[in] rows rows to be plot
+ * @param[in] cols colors of the plots
+ */
 void LinearSystem::plotRegion(vector<int> rows, vector<int> cols){
 
 		if(cols.size() > 3){
@@ -412,7 +524,7 @@ void LinearSystem::plotRegion(vector<int> rows, vector<int> cols){
 			cout<<" "<<this->b[rows[i]]<<";\n";
 		}
 		cout<<"];\n";
-		cout<<"plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],colore);\n";
+		cout<<"plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],color);\n";
 }
 
 
