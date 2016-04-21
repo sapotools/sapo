@@ -1,8 +1,9 @@
-/*
- * Common.hpp
+/**
+ * @file Common.h
+ * Libraries, structures, and data-type shared by different classes.
  *
- *  Created on: Jul 25, 2014
- *      Author: Tommaso Dreossi
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
  */
 
 #ifndef COMMON_HPP_
@@ -32,7 +33,7 @@ struct sapo_opt{
 	bool verbose;			// display info
 };
 
-struct poly_values{
+struct poly_values{			// numerical values for polytopes
 	vector<double> base_vertex;
 	vector<double> lenghts;
 };
