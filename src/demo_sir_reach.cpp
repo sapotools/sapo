@@ -41,7 +41,7 @@ int main(int argc,char** argv){
 	Model *sir = new Model(vars,dyns);
 
 
-	///// Parallelotope bundle for reachability analysis /////
+	///// Parallelotope bundle for reachable set representation /////
 
 	int num_dirs = 5;		// number of bundle directions
 	int num_temps = 3;		// number of bundle templates
@@ -89,7 +89,7 @@ int main(int argc,char** argv){
 
 	// Store the constructed flowpipe in file sir.m (in Matlab format)
 	char file_name[] = "sir_flowpipe.m";
-	flowpipe->plotRegionToFile(file_name,'b');
+	flowpipe->plotRegionToFile(file_name,'w');
 
 }
 

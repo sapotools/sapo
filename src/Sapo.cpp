@@ -133,6 +133,8 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
  */
 LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
 
+	//reachSet->getBundle()->plotRegion();
+
 	switch( formula->getType() ){
 
 		// Atomic predicate
@@ -336,6 +338,8 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
  * @returns refined sets of parameters
  */
 LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
+
+	//reachSet->getBundle()->plotRegion();
 
 	LinearSystemSet* result = new LinearSystemSet();
 	int a = formula->getA();
