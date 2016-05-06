@@ -23,7 +23,7 @@ Atom::Atom(ex predicate, int id) {
 /**
  * Returns the control points associated with this atom
  *
- * @ return vector of control points
+ * @ returns vector of control points
  */
 vector<lst> Atom::getPredicateControlPts(){
 	return this->predicateControlPts;

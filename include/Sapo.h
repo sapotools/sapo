@@ -18,6 +18,7 @@
 #include "LinearSystemSet.h"
 #include "Bundle.h"
 #include "Model.h"
+#include "Flowpipe.h"
 
 class Sapo {
 
@@ -30,18 +31,19 @@ private:
 	map< vector<int>,pair<lst,lst> > synthControlPts;		// symbolic control points
 
 	vector<Bundle*> reachWitDec(Bundle* initSet, int k);	// reachability with template decomposition
+	LinearSystemSet* synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, STL *sigma);
 	LinearSystemSet* synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, STL *sigma);
 	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
 
 public:
 	Sapo(Model *model, sapo_opt options);
 
-	vector<Bundle*> reach(Bundle* initSet, int k);							// reachability
-	vector<Bundle*> reach(Bundle* initSet, LinearSystem* paraSet, int k);	// parameteric reachability
+	Flowpipe* reach(Bundle* initSet, int k);													// reachability
+	Flowpipe* reach(Bundle* initSet, LinearSystem* paraSet, int k);								// parameteric reachability
+	LinearSystemSet* synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);	// parameter synthesis
 
-	// synthesis
-	LinearSystemSet* synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
-	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, STL *sigma);
+
 
 	virtual ~Sapo();
 };

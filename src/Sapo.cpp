@@ -39,8 +39,11 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 	}
 	flowpipe->append(initSet);
 
+	cout<<"Reachability computation\n";
 
 	for(int i=0; i<k; i++){
+
+		cout<<"Reach step "<<i<<"\n";
 
 		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->dyns,this->reachControlPts,this->options.trans);	// transform it
@@ -71,6 +74,8 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 	Flowpipe *flowpipe = new Flowpipe();
 
+	cout<<"Reachability computation\n";
+
 	clock_t tStart = clock();
 	if(this->options.verbose){
 		initSet->getBundle()->print();
@@ -79,6 +84,8 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 
 	for(int i=0; i<k; i++){
+
+		cout<<"Reach step "<<i<<"\n";
 
 		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->params, this->dyns, paraSet, this->synthControlPts, this->options.trans);	// transform it

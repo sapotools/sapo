@@ -261,6 +261,8 @@ ex BaseConverter::bernCoeff(vector<int> mi){
  */
 lst BaseConverter::getBernCoeffs(){
 
+	cout<<"\tComputing Bernstein coefficients...\n";
+
 	lst bern_coeffs;
 
 	for(int i=0; i<(signed)this->coeffs.size(); i++){
@@ -385,6 +387,8 @@ void BaseConverter::split(int direction, double split_point){
  * @returns list of Bernstein coefficients
  */
 lst BaseConverter::getBernCoeffsMatrix(){
+
+	cout<<"\tComputing Bernstein coefficients...\n";
 
 	// degrees increased by one
 	vector<int> degrees_p (this->degrees.size(),0);
