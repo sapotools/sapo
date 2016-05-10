@@ -1,12 +1,27 @@
-# sapo
-Reachability Computaion and Parameter Sythesis for Polynomial Systems
+# Sapo
+Sapo is a C++ tool for the formal analysis of discrete-time polynomial dynamical systems.
 
-Sapo is a C++ prototype tool designed to solve the reachability and parameter synthesis problem
-for polynomial dynamical systems. The dynamics of the considered system are defined as discrete-time polynomials,
-the sets reachable by the system can be represented with boxes,
-parallelotopes (the n-dimensional generalization of parallelograms),
-or parallelotope bundles (sets of parallelotopes whose intersections symbolically represent a polytope),
-while the parameter sets are represented by polytopes.
+The problems treated by Sapo are:
 
-The reachability computation and parameters refinement are carried out representing
-the polynomials in Bernstein form and transforming the problems into Linear Programs.
+- Reachability computation, i.e., the calculation of the set of states reachable by the system from a set of initial conditions
+- Parameter synthesis, i.e., the refinement of a set of parameters so that the system satisfies a given specification.
+For reachability analysis Sapo produces a flowpipe that over-approximates the set of states reachable by the system from a set of initial conditions.
+
+For parameter synthesis Sapo computes a refinement of the given set of parameters such that the system satisfies a given specification. The specification is formalized as a Signal Temporal Logic (STL) formula.
+
+In both cases, the analysis can be done on bounded time.
+
+Models
+The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form x_{k+1} = f(x_k,p)
+
+Reachability computation can be carried out also on systems without parameters whose dynamics look like x_{k+1} = f(x_k) with f : R^n to R^n polynomial.
+
+Set representation
+The flowpipe representing the reachable set consists in a series of sets. The sets supported by Sapo are:
+
+- Boxes (or hyperrectangles), i.e., n-dimensional rectangles
+- Parallelotopes, i.e., n-dimensional parallelograms
+- Parallelotopes bundles, i.e., finite sets of parallelotopes whose intersections generate polytopes
+
+The parameter synthesis produces a refined set of parameters represented by:
+- Polytopes, i.e., n-dimensional polygon
