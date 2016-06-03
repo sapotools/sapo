@@ -33,6 +33,7 @@ public:
 	void print();
 	void plotRegion();
 	void plotRegionToFile(char *file_name, char color);
+	void plotProjToFile(int var, double time_step, char *file_name, char color);
 
 	virtual ~Flowpipe();
 };

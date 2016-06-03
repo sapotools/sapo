@@ -78,6 +78,55 @@ void Flowpipe::plotRegionToFile(char *file_name, char color){
 	}
 }
 
+/**
+ * Print the projection of the variable in time using Matlab format into a file
+ *
+ * @param[in] var variable to be plotted
+ * @param[in] time_step time step for time projection
+ * @param[in] file_name name of the file
+ * @param[in] color color of the polytope to plot
+ */
+void Flowpipe::plotProjToFile(int var, double time_step, char *file_name, char color){
+
+	if( var < 0 || var >= this->get(0)->getDim() ){
+		cout<<"Flowpipe::plotProjToFile : i must be between 0 and the system dimension";
+		exit (EXIT_FAILURE);
+	}
+
+	ofstream matlab_script;
+	matlab_script.open (file_name, ios_base::app);
+
+	// select figure
+	matlab_script<<"figure("<<var+1<<")\n";
+
+	// print time
+	matlab_script<<"t = [ ";
+	for(int i=0; i<this->size(); i++){
+		matlab_script<<i*time_step<<" ";
+	}
+	matlab_script<<" ];\n";
+
+	// print lower offsets
+	matlab_script<<"varm = [ ";
+	for(int i=0; i<this->size(); i++){
+		matlab_script<<-this->get(i)->getOffm(var)<<" ";
+	}
+	matlab_script<<" ];\n";
+
+	// print upper offsets
+	matlab_script<<"varp = [ ";
+	for(int i=0; i<this->size(); i++){
+		matlab_script<<this->get(i)->getOffp(var)<<" ";
+	}
+	matlab_script<<" ];\n";
+
+	matlab_script<<"T = [t,fliplr(t)];\n";
+	matlab_script<<"X = [varm,fliplr(varp)];\n";
+	matlab_script<<"fill(T,X,'"<<color<<"');\n";
+	matlab_script.close();
+
+}
+
 Flowpipe::~Flowpipe() {
 	// TODO Auto-generated destructor stub
 }
