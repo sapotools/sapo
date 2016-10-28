@@ -28,8 +28,8 @@
         </ul>
       </header>
       <section>
-        <h1>
-<a id="description" class="anchor" href="#description" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Description</h1>
+        <h2>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h2>
 
 <p>Sapo is a C++ tool for the formal analysis of discrete-time polynomial dynamical systems.</p>
 
@@ -37,14 +37,75 @@
 
 <ul>
 <li>Reachability computation, i.e., the calculation of the set of states reachable by the system from a set of initial conditions</li>
-<li>Parameter synthesis, i.e., the refinement of a set of parameters so that the system satisfies a given specification.</li>
+<li>Parameter synthesis, i.e., the refinement of a set of parameters so that the system satisfies a given specification. For reachability analysis Sapo produces a flowpipe that over-approximates the set of states reachable by the system from a set of initial conditions.</li>
 </ul>
-
-<p>For reachability analysis Sapo produces a flowpipe that over-approximates the set of states reachable by the system from a set of initial conditions.</p>
 
 <p>For parameter synthesis Sapo computes a refinement of the given set of parameters such that the system satisfies a given specification. The specification is formalized as a Signal Temporal Logic (STL) formula.</p>
 
 <p>In both cases, the analysis can be done on bounded time.</p>
+
+<h3>
+<a id="models" class="anchor" href="#models" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Models</h3>
+
+<p>The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form x_{k+1} = f(x_k,p)</p>
+
+<p>Reachability computation can be carried out also on systems without parameters whose dynamics look like x_{k+1} = f(x_k) with f : R^n to R^n polynomial.</p>
+
+<h3>
+<a id="set-representation" class="anchor" href="#set-representation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Set representation</h3>
+
+<p>The flowpipe representing the reachable set consists in a series of sets. The sets supported by Sapo are:</p>
+
+<ul>
+<li>Boxes (or hyperrectangles), i.e., n-dimensional rectangles</li>
+<li>Parallelotopes, i.e., n-dimensional parallelograms</li>
+<li>Parallelotopes bundles, i.e., finite sets of parallelotopes whose intersections generate polytopes</li>
+</ul>
+
+<p>The parameter synthesis produces a refined set of parameters represented by:</p>
+
+<ul>
+<li>Polytopes, i.e., n-dimensional polygon</li>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<h3>
+<a id="prerequisites" class="anchor" href="#prerequisites" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Prerequisites</h3>
+
+<p>Sapo is implemented in C++. Thus, a C++ compiler is required.</p>
+
+<p>Moreover, Sapo relies on two external libraries:</p>
+
+<ul>
+<li>GiNaC (GiNaC is Not a CAS), for the symbolic manipulation of polynomials</li>
+<li>GLPK (GNU Linear Programming Kit), for solving linear programming problems</li>
+</ul>
+
+<h3>
+<a id="download" class="anchor" href="#download" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Download</h3>
+
+<p>Sapo is maintained as a GitHub repository at the address <a href="https://github.com/tommasodreossi/sapo.git">https://github.com/tommasodreossi/sapo.git</a></p>
+
+<p>It can be obtained either by typing the shell command:
+    $ git clone <a href="https://github.com/tommasodreossi/sapo.git">https://github.com/tommasodreossi/sapo.git</a></p>
+
+<p>or by downloading the ZIP archive at <a href="https://github.com/tommasodreossi/sapo.git">https://github.com/tommasodreossi/sapo.git</a></p>
+
+<h3>
+<a id="installation-1" class="anchor" href="#installation-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h3>
+
+<p>To install from the source type:
+    $ make This creates a binary called sapo in /bin</p>
+
+<p>To run Sapo, move to /bin and launch the binary with the command:
+    $ ./sapo</p>
+
+<h3>
+<a id="visualization" class="anchor" href="#visualization" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Visualization</h3>
+
+<p>2D/3D or projections of higher dimensional reachable and parameter sets computed by Sapo can be visualized using the Matlab package plotregion.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/tommasodreossi">tommasodreossi</a></p>
