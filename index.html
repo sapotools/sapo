@@ -112,6 +112,37 @@
 <a id="visualization" class="anchor" href="#visualization" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Visualization</h3>
 
 <p>2D/3D or projections of higher dimensional reachable and parameter sets computed by Sapo can be visualized using the Matlab package plotregion.</p>
+
+<h2>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h2>
+
+<h3>
+<a id="sir-model" class="anchor" href="#sir-model" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SIR model</h3>
+
+<p>Let's consider the SIR epidemic that describes the evolution of a disease in a population. The population of individuals is divided in three compartments:</p>
+
+<ul>
+<li>s, the healthy individuals susceptible to the disease</li>
+<li>i, the infected individuals</li>
+<li>r the individuals removed from the system (e.g., recovered)</li>
+</ul>
+
+<p>Two parameters regulate the evolution of the system variables:</p>
+
+<ul>
+<li>β, the contraction rate</li>
+<li>γ, where 1/γ is the mean infective period.</li>
+</ul>
+
+<p>∆ is the discretization step.</p>
+
+<p>The dynamics of the SIR model are the following:</p>
+
+<ul>
+<li>s_{k+1} = s_k - (β s_k i_k)∆</li>
+<li>i_{k+1} = i_k + (β s_k i_k - γ i_k)∆</li>
+<li>r_{k+1} = r_k + (γ i_k)∆</li>
+</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/tommasodreossi">tommasodreossi</a></p>
