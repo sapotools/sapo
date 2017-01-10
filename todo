@@ -4,6 +4,7 @@ TODO:
 
 - Vector vs List => verify that vector are alway initialis=wed, or use list otherwise
 - ginac lst => parcours with iterators
+- subs with exmap
 - use boost and smart pointers ...
 
 ### Hybrid ###
