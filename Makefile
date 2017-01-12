@@ -12,7 +12,7 @@ SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := -g # -Wall
-LIB := -lcln -lginac -lglpk -lm
+LIB :=   -lcln -lginac -lglpk -lm -lgmp -lgmpxx /home/rocca/SapoReboot/locallib/lib/libppl.a -lgmpxx -lgmp
 INC := -I include
 
 $(TARGET): $(OBJECTS)
