@@ -1,0 +1,42 @@
+TODO:
+
+### Speed up ###
+
+- Vector vs List => verify that vector are alway initialis=wed, or use list otherwise
+- ginac lst => parcours with iterators
+- subs with exmap
+- use boost and smart pointers ...
+
+### Hybrid ###
+
+- add PPL
+- BSPT BernsteinReach version or library ... ?
+- General bundle splitting
+
+### Simulation ###
+
+- add odeint
+- performs simulation
+- PCA (armadillo)
+- ICA (fast ICA ? depends of the independency definition)
+- Dynamic templates
+
+### Errors ###
+
+- Euler error
+- Hybridization error
+- Bernstein error
+- Bernstein optim improvement ?
+
+### Numerical Methods ###
+
+- Euler adaptative time steps
+- Runge-Kutta
+
+### UI ####
+
+- Re-implement .ini file reader (boost)
+- implement spaceex reader ?
+
+
+  

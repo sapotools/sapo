@@ -362,9 +362,11 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 			// find the maximum coefficient
 			double maxCoeffp = -DBL_MAX;
 			double maxCoeffm = -DBL_MAX;
-			for(int k=0; k<actbernCoeffs.nops(); k++){
-				double actCoeffp = ex_to<numeric>(evalf(actbernCoeffs[k].subs(subParatope))).to_double();
-				double actCoeffm = ex_to<numeric>(evalf((-actbernCoeffs[k]).subs(subParatope))).to_double();
+			
+			for (lst::const_iterator c = actbernCoeffs.begin(); c != actbernCoeffs.end(); ++c)
+			{
+				double actCoeffp = ex_to<numeric>((*c).subs(subParatope)).to_double();
+				double actCoeffm = ex_to<numeric>((-(*c)).subs(subParatope)).to_double();
 				maxCoeffp = max(maxCoeffp,actCoeffp);
 				maxCoeffm = max(maxCoeffm,actCoeffm);
 			}
@@ -466,9 +468,12 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 			// find the maximum coefficient
 			double maxCoeffp = -DBL_MAX;
 			double maxCoeffm = -DBL_MAX;
-			for(int k=0; k<actbernCoeffs.nops(); k++){
+		
+
+			for (lst::const_iterator c = actbernCoeffs.begin(); c != actbernCoeffs.end(); ++c)
+			{
 				ex paraBernCoeff;
-				paraBernCoeff = actbernCoeffs[k].subs(subParatope);
+				paraBernCoeff = (*c).subs(subParatope);
 				maxCoeffp = max(maxCoeffp,paraSet->maxLinearSystem(params,paraBernCoeff));
 				maxCoeffm = max(maxCoeffm,paraSet->maxLinearSystem(params,-paraBernCoeff));
 			}
