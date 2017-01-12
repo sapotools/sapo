@@ -16,7 +16,7 @@
 #include "Bundle.h"
 #include "Sapo.h"
 
-#include "ppl.hh"
+//#include "ppl.hh"
 
 using namespace std;
 /**
@@ -24,22 +24,6 @@ using namespace std;
  *
  */
 int main(int argc,char** argv){
-
-	Variable x(0);
-	Variable y(1);
-
- 	Constraint_System cs;
-	cs.insert(x >= 0);
-	cs.insert(x <= 3);
-	cs.insert(y >= 0);
-	cs.insert(y <= 3);
-	
-	cs.print();
-	Linear_Expression e1 = x + y;
-	cout << "\n";
-	e1.print();
-	
-
 	
 	///// The dynamical system /////
 
