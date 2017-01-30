@@ -244,8 +244,9 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 		}
 		ex num_sofog;
 		lst synth_controlPts;
-		for(int j=0; j<controlPts.nops(); j++){
-			synth_controlPts.append(controlPts[j].subs(para_sub));
+		//for(int j=0; j<controlPts.nops(); j++){
+		for (lst::const_iterator j = controlPts.begin(); j != controlPts.end(); ++j){
+			synth_controlPts.append((*j).subs(para_sub));
 		}
 
 		//cout<<synth_controlPts;
@@ -400,4 +401,3 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 Sapo::~Sapo() {
 	// TODO Auto-generated destructor stub
 }
-

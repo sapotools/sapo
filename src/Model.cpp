@@ -14,7 +14,11 @@
  * @param[in] vars list of variables
  * @param[in] dyns list of dynamics
  */
-Model::Model(lst vars, lst dyns) {
+
+Model::Model() { }
+
+
+/*Model::Model(lst vars, lst dyns) {
 
 	if( vars.nops() != dyns.nops() ){
 		cout<<"Model::Model : vars and dyns must have the same size";
@@ -23,7 +27,7 @@ Model::Model(lst vars, lst dyns) {
 
 	this->vars = vars;
 	this->dyns = dyns;
-}
+}*/
 
 /**
  * Constructor that instantiates a parameteric dynamical system
@@ -32,7 +36,7 @@ Model::Model(lst vars, lst dyns) {
  * @param[in] params list of parameters
  * @param[in] dyns list of dynamics
  */
-Model::Model(lst vars, lst params, lst dyns) {
+/*Model::Model(lst vars, lst params, lst dyns) {
 
 	if( vars.nops() != dyns.nops() ){
 		cout<<"Model::Model : vars and dyns must have the same size";
@@ -42,10 +46,9 @@ Model::Model(lst vars, lst params, lst dyns) {
 	this->vars = vars;
 	this->params = params;
 	this->dyns = dyns;
-}
+}*/
 
 
 Model::~Model() {
 	// TODO Auto-generated destructor stub
 }
-

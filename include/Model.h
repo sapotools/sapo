@@ -9,22 +9,25 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
+#include "Bundle.h"
 #include "Common.h"
 
 class Model {
 
-private:
+protected:
 	lst vars;		// variables
 	lst params;		// parameters
 	lst dyns;		// dynamics
 
+	Bundle *reachSet; // Initial set
+
 public:
-	Model(lst vars, lst dyns);
-	Model(lst vars, lst params, lst dyns);
+	Model();
 
 	lst getVars(){ return this->vars; }
 	lst getParams(){ return this->params; }
 	lst getDyns(){ return this->dyns; }
+	Bundle* getReachSet(){ return this->reachSet; }
 
 	virtual ~Model();
 };

@@ -440,9 +440,13 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 				// compute control points
 				lst sub, fog;
 
+
+				int pio = 0;
+
 				for(int k=0; k<(signed)vars.nops(); k++){
 					sub.append(vars[k] == genFun[k]);
 				}
+
 				for(int k=0; k<(signed)vars.nops(); k++){
 					fog.append(f[k].subs(sub));
 				}
@@ -466,9 +470,9 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 			// find the maximum coefficient
 			double maxCoeffp = -DBL_MAX;
 			double maxCoeffm = -DBL_MAX;
-			for(int k=0; k<actbernCoeffs.nops(); k++){
+			for (lst::const_iterator c = actbernCoeffs.begin(); c != actbernCoeffs.end(); ++c){
 				ex paraBernCoeff;
-				paraBernCoeff = actbernCoeffs[k].subs(subParatope);
+				paraBernCoeff = (*c).subs(subParatope);
 				maxCoeffp = max(maxCoeffp,paraSet->maxLinearSystem(params,paraBernCoeff));
 				maxCoeffm = max(maxCoeffm,paraSet->maxLinearSystem(params,-paraBernCoeff));
 			}
