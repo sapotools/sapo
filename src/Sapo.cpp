@@ -100,6 +100,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 		flowpipe->append(X);			// store result
 	}
+
 	cout<<"Time taken (parametric reachability) "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
 
 	return flowpipe;

@@ -1,6 +1,6 @@
 /**
- * @file demo_sir_reach.cpp
- * Demo: Reachability analysis of SIR epidemic model
+ * @file main.cpp
+ * Demo: Reachability analysis demos
  *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @version 0.1
@@ -13,7 +13,12 @@
 #include "Bundle.h"
 #include "Sapo.h"
 
+#include "VanDerPol.h"
+#include "Rossler.h"
 #include "SIR.h"
+#include "LotkaVolterra.h"
+#include "Phosphorelay.h"
+#include "Quadcopter.h"
 
 using namespace std;
 
@@ -23,10 +28,39 @@ using namespace std;
  */
 int main(int argc,char** argv){
 
-    // Init model
-    Model *model = new SIR();
+    if(argc != 2){
+      cerr<<"One argument expected (demo model ID)\n";
+      exit(EXIT_FAILURE);
+    }
 
-    ///// SAPO core /////
+    // Init model
+    int reach_steps;
+    Model *model;
+
+    switch(atoi(argv[1])){
+      case 0:
+        model = new VanDerPol(); reach_steps = 300;
+      break;
+      case 1:
+        model = new Rossler(); reach_steps = 250;
+      break;
+      case 2:
+        model = new SIR(); reach_steps = 300;
+      break;
+      case 3:
+        model = new LotkaVolterra(); reach_steps = 500;
+      break;
+      case 4:
+        model = new Phosphorelay(); reach_steps = 200;
+      break;
+      case 5:
+        model = new Quadcopter(); reach_steps = 300;
+      break;
+      default:
+        cerr<<"Unknown demo ID\n";
+        exit(EXIT_FAILURE);
+    }
+
 
     // Sapo's options
     sapo_opt options;
@@ -36,11 +70,7 @@ int main(int argc,char** argv){
     options.verbose = false;
 
     Sapo *sapo = new Sapo(model,options);
-    int reach_steps = 300;
     Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
 
-    // Store the constructed flowpipe in file sir.m (in Matlab format)
-    char file_name[] = "sir_flowpipe.m";
-    flowpipe->plotRegionToFile(file_name,'w');
-
+    exit(EXIT_SUCCESS);
 }
