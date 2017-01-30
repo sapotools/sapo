@@ -362,14 +362,14 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 			// find the maximum coefficient
 			double maxCoeffp = -DBL_MAX;
 			double maxCoeffm = -DBL_MAX;
-			for(int k=0; k<actbernCoeffs.nops(); k++){
-				double actCoeffp = ex_to<numeric>(evalf(actbernCoeffs[k].subs(subParatope))).to_double();
-				double actCoeffm = ex_to<numeric>(evalf((-actbernCoeffs[k]).subs(subParatope))).to_double();
+			for (lst::const_iterator c = actbernCoeffs.begin(); c != actbernCoeffs.end(); ++c){
+				double actCoeffp = ex_to<numeric>((*c).subs(subParatope)).to_double();
+				double actCoeffm = ex_to<numeric>((-(*c)).subs(subParatope)).to_double();
 				maxCoeffp = max(maxCoeffp,actCoeffp);
 				maxCoeffm = max(maxCoeffm,actCoeffm);
 			}
 			newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]],maxCoeffp);
-			newDm[dirs_to_bound[j]]  = min(newDm[dirs_to_bound[j]],maxCoeffm);
+			newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]],maxCoeffm);
 		}
 	}
 
@@ -793,4 +793,3 @@ bool Bundle::validTemp(vector< vector<int> > T, int card, vector<int> dirs){
 Bundle::~Bundle() {
 	// TODO Auto-generated destructor stub
 }
-
