@@ -18,18 +18,15 @@ protected:
 	lst vars;		// variables
 	lst params;		// parameters
 	lst dyns;		// dynamics
-
-	Bundle *reachSet; // Initial set
+	Bundle *reachSet; // Initial reach set
 
 public:
-	Model();
 
 	lst getVars(){ return this->vars; }
 	lst getParams(){ return this->params; }
 	lst getDyns(){ return this->dyns; }
 	Bundle* getReachSet(){ return this->reachSet; }
 
-	virtual ~Model();
 };
 
 #endif /* MODEL_H_ */
