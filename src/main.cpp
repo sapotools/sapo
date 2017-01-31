@@ -82,7 +82,7 @@ int main(int argc,char** argv){
     //options.alpha = 0.5;		// Weight for bundle size/orthgonal proximity
     options.verbose = false;
 
-    if(atoi(argv[1]) < 10){
+    if(atoi(argv[1]) < 20){
       Sapo *sapo = new Sapo(model,options);
       Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
     }else{
