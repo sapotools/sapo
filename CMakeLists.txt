@@ -5,8 +5,8 @@ project (sapo CXX)
 set ( PROJECT_LINK_LIBS libginac.so.6 libglpk.so)
 link_directories( usr/local/lib )
  
-include_directories(include include/models)
-file(GLOB SOURCES ./src/*.cpp ./src/models/*.cpp)
+include_directories(include include/models include/STL)
+file(GLOB_RECURSE SOURCES src/*.cpp src/models/*.cpp src/STL/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
  
