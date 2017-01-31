@@ -27,32 +27,18 @@ The flowpipe representing the reachable set consists in a series of sets. The se
 The parameter synthesis produces a refined set of parameters represented by:
 - Polytopes, i.e., n-dimensional polygon
 
-## Installation instructions
-### Prerequisites
+## Required Packages
 
-- GiNaC (http://www.ginac.de/), for the symbolic manipulation of polynomials
-- GLPK (https://www.gnu.org/software/glpk/), for solving linear programming problems
+- C++11-compatible compiler, <a href="https://cmake.org/">cmake</a>, <a href="https://www.gnu.org/software/make/">make</a>, <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
+- <a href="https://www.gnu.org/software/glpk/">GLPK</a>, <a href="http://www.ginac.de/CLN/">CLN</a>, <a href="http://www.ginac.de/">GiNaC</a>
 
-###Download
-Sapo is maintained as a GitHub repository at the address https://github.com/tommasodreossi/sapo.git
+## Build Sapo
+``` sh
+git https://github.com/tommasodreossi/sapo
+cd sapo
+cmake .
+make
+```
 
-It can be obtained either by typing the shell command:
-
-$ git clone https://github.com/tommasodreossi/sapo.git
-
-or by downloading the ZIP archive at https://github.com/tommasodreossi/sapo.git
-
-###Installation
-To install from the source type:
-
-$ cmake .
-$ make
-
-This creates a binary called sapo in /bin
-
-To run Sapo, move to /bin and launch the binary with the command:
-
-$ ./sapo
-
-###Visualization
+## Visualization
 2D/3D or projections of higher dimensional reachable and parameter sets computed by Sapo can be visualized using the Matlab package plotregion.
