@@ -23,14 +23,14 @@
    // List of state variables
    symbol s("s"), i("i"), r("r");
    lst vars;
-   vars = s, i, r;
+   vars = {s, i, r};
 
    // System's dynamics
    ex ds = s - (0.34*s*i)*0.1;				// susceptible
    ex di = i + (0.34*s*i - 0.05*i)*0.1;	// infected
    ex dr = r + 0.05*i*0.1;					// removed
    lst dyns;
-   dyns = ds,di,dr;
+   dyns = {ds,di,dr};
 
    this->vars = vars;
    this->dyns = dyns;

@@ -24,13 +24,13 @@
  	int dim_sys = 2;
  	// List of state variables
  	symbol x("x"), y("y");
-  this->vars = x, y;
+  this->vars = {x, y};
 
  	// System's dynamics
  	ex dx = x + (y)*0.02;
  	ex dy = y + (0.5*(1-x*x)*y - x)*0.02;
  	lst dyns;
- 	this->dyns = dx,dy;
+ 	this->dyns = {dx,dy};
 
 
  	///// Parallelotope bundle for reachable set representation /////

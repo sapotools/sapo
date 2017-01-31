@@ -23,8 +23,8 @@
    // List of state variables and parameters
    symbol s("s"), e("e"), q("q"), i("i"), r("r"), kappa1("kappa1"), gamma1("gamma1");
    lst vars, dyns, params;
-   vars = s, e,q, i, r;
-   params = kappa1, gamma1;
+   vars = {s, e,q, i, r};
+   params = {kappa1, gamma1};
 
    // Systems's fixed parameters
    ex beta = 0.35;
@@ -40,7 +40,7 @@
    ex di = i + (gamma2*q + kappa2*e - sigma*i)*Delta;
    ex dr = r + (sigma*i)*Delta;
 
-   dyns = ds,de,dq,di,dr;
+   dyns = {ds,de,dq,di,dr};
 
    this->vars = vars;
    this->params = params;

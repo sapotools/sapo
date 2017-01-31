@@ -22,8 +22,8 @@
  	// List of state variables and parameters
  	symbol s("s"), i("i"), t("t"), r("r"), tau("tau"), dist("dist");
  	lst vars, dyns, params;
- 	vars = s, i, t, r;
- 	params = tau, dist;
+ 	vars = {s, i, t, r};
+ 	params = {tau, dist};
 
  	// Systems's fixed parameters
  	ex sigma1 = 0.1428;
@@ -38,7 +38,7 @@
  	ex di = (1-tau)*(1-sigma1)*(1-delta)*i +s*g;
  	ex dt = (1-sigma2)*t + tau*(1-sigma1)*(1-delta)*i;
  	ex dr = r + sigma1*(1-delta)*i +sigma2*t;
- 	dyns = ds,di,dt,dr;
+ 	dyns = {ds,di,dt,dr};
 
  	this->vars = vars;
   this->params = params;

@@ -33,7 +33,7 @@ using namespace std;
 int main(int argc,char** argv){
 
     if(argc != 2){
-      cerr<<"One argument expected (demo model ID)\n";
+      cerr<<"One argument expected (case study ID)\n";
       exit(EXIT_FAILURE);
     }
 
@@ -42,35 +42,35 @@ int main(int argc,char** argv){
     Model *model;
 
     switch(atoi(argv[1])){
-      case 0:
+      case 11:
         model = new VanDerPol(); reach_steps = 300;
       break;
-      case 1:
+      case 12:
         model = new Rossler(); reach_steps = 250;
       break;
-      case 2:
+      case 13:
         model = new SIR(); reach_steps = 300;
       break;
-      case 3:
+      case 14:
         model = new LotkaVolterra(); reach_steps = 500;
       break;
-      case 4:
+      case 15:
         model = new Phosphorelay(); reach_steps = 200;
       break;
-      case 5:
+      case 16:
         model = new Quadcopter(); reach_steps = 300;
       break;
-      case 10:
+      case 21:
         model = new SIRp();
       break;
-      case 11:
+      case 22:
         model = new Influenza();
       break;
-      case 12:
+      case 23:
         model = new Ebola();
       break;
       default:
-        cerr<<"Unknown demo ID\n";
+        cerr<<"Unknown case study ID\n";
         exit(EXIT_FAILURE);
     }
 

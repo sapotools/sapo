@@ -24,7 +24,7 @@
    // List of state variables and parameters
    symbol pn("pn"), pe("pe"), h("h"), u("u"), v("v"), w("w"), q0v("q0v"), q1v("q1v"), q2v("q2v"), q3v("q3v"), p("p"), q("q"), r("r"), hI("hI"), uI("uI"), vI("vI"), psiI("psiI");
    lst vars, dyns;
-   vars = pn, pe, h, u, v, w, q0v, q1v, q2v, q3v, p, q, r, hI, uI, vI, psiI;
+   vars = {pn, pe, h, u, v, w, q0v, q1v, q2v, q3v, p, q, r, hI, uI, vI, psiI};
 
    ex M = 0.0015;
    ex mr = 0.001;
@@ -78,7 +78,7 @@
    ex dvI = vI + (v - vr)*delta;
    ex dpsiI = psiI + (psi - psir)*delta;
 
-   dyns = dpn,dpe,dh,du,dv,dw,dq0v,dq1v,dq2v,dq3v,dp,dq,dr,dhI,duI,dvI,dpsiI;
+   dyns = {dpn,dpe,dh,du,dv,dw,dq0v,dq1v,dq2v,dq3v,dp,dq,dr,dhI,duI,dvI,dpsiI};
 
    this->vars = vars;
    this->dyns = dyns;

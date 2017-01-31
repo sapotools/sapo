@@ -25,14 +25,14 @@
  	// List of state variables
  	symbol x("x"), y("y"), z("z");
  	lst vars;
- 	vars = x, y, z;
+ 	vars = {x, y, z};
 
  	// System's dynamics
  	ex dx = x + (-y-z)*0.025;
  	ex dy = y + (x + 0.1*y)*0.025;
  	ex dz = z + (0.1 + z*(x-14))*0.025;
  	lst dyns;
- 	dyns = dx,dy,dz;
+ 	dyns = {dx,dy,dz};
 
   this->vars = vars;
   this->dyns = dyns;

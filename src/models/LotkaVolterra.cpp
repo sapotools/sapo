@@ -25,7 +25,7 @@
  	// List of state variables
  	symbol x1("x1"), x2("x2"), x3("x3"), x4("x4"), x5("x5");
  	lst vars;
- 	vars = x1, x2, x3, x4, x5;
+ 	vars = {x1, x2, x3, x4, x5};
 
  	ex alpha = 0.85; ex beta = 0.5;
  	ex delta = 0.01;
@@ -37,7 +37,7 @@
  	ex dx4 = x4 + (x4*(1 - (x4 + alpha*x5 + beta*x3)) )*delta;
  	ex dx5 = x5 + (x5*(1 - (x5 + alpha*x1 + beta*x4)) )*delta;
  	lst dyns;
- 	dyns = dx1,dx2,dx3,dx4,dx5;
+ 	dyns = {dx1,dx2,dx3,dx4,dx5};
 
  	this->vars = vars;
   this->dyns = dyns;

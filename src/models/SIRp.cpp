@@ -28,15 +28,15 @@
  	symbol beta("beta"), gamma("gamma");
 
  	lst vars, params;
- 	vars = s, i, r;
- 	params = beta, gamma;
+ 	vars = {s, i, r};
+ 	params = {beta, gamma};
 
  	// System's dynamics
  	ex ds = s - (beta*s*i)*0.1;				// susceptible
  	ex di = i + (beta*s*i - gamma*i)*0.1;	// infected
  	ex dr = r + gamma*i*0.1;				// removed
  	lst dyns;
- 	dyns = ds,di,dr;
+ 	dyns = {ds,di,dr};
 
  	this->vars = vars;
   this->params = params;
