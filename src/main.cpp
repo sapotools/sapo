@@ -37,11 +37,13 @@ int main(int argc,char** argv){
       exit(EXIT_FAILURE);
     }
 
+    int caseID = atoi(argv[1]);
+
     // Init model
     int reach_steps;
     Model *model;
 
-    switch(atoi(argv[1])){
+    switch(caseID){
       case 11:
         model = new VanDerPol(); reach_steps = 300;
       break;
@@ -49,7 +51,7 @@ int main(int argc,char** argv){
         model = new Rossler(); reach_steps = 250;
       break;
       case 13:
-        model = new SIR(); reach_steps = 300;
+        model = new SIR(false); reach_steps = 300;
       break;
       case 14:
         model = new LotkaVolterra(); reach_steps = 500;
@@ -69,6 +71,12 @@ int main(int argc,char** argv){
       case 23:
         model = new Ebola();
       break;
+      case 31:
+        model = new SIR(true); reach_steps = 300;
+      break;
+      case 32:
+        model = new SIR(false); reach_steps = 300;
+      break;
       default:
         cerr<<"Unknown case study ID\n";
         exit(EXIT_FAILURE);
@@ -82,12 +90,41 @@ int main(int argc,char** argv){
     //options.alpha = 0.5;		// Weight for bundle size/orthgonal proximity
     options.verbose = false;
 
-    if(atoi(argv[1]) < 20){
+    if(caseID < 20){
       Sapo *sapo = new Sapo(model,options);
       Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
-    }else{
+      char file_name[] = "chiurlo.m";
+      flowpipe->plotRegionToFile(file_name,'w');
+
+      exit(EXIT_SUCCESS);
+    }
+
+    if(caseID < 30){
       Sapo *sapo = new Sapo(model,options);
     	LinearSystemSet *synth_parameter_set = sapo->synthesize(model->getReachSet(),model->getParaSet(),model->getSpec());	// parameter synthesis
+      exit(EXIT_SUCCESS);
+    }
+
+    if(caseID < 40){ // Box-based SIR (Figure 3a)
+      Sapo *sapo = new Sapo(model,options);
+      Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
+
+      //	// Store the constructed flowpipe in file sir.m (in Matlab format)
+      char file_name[] = "plotFigure.m";
+      flowpipe->plotRegionToFile(file_name,'w');
+
+      // Set picture appearence
+      ofstream matlab_script;
+    	matlab_script.open (file_name, ios_base::app);
+      matlab_script<<"xlabel('s');\n";
+      matlab_script<<"ylabel('i');\n";
+      matlab_script<<"zlabel('r');\n";
+      matlab_script<<"axis([0 1 0 0.7 0 0.8]);\n";
+      matlab_script<<"view([74 23]);\n";
+      matlab_script<<"grid on;";
+      matlab_script.close();
+
+      exit(EXIT_SUCCESS);
     }
 
     exit(EXIT_SUCCESS);

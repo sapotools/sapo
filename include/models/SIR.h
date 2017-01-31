@@ -16,7 +16,7 @@ class SIR : public Model {
 private:
 
 public:
-	SIR();
+	SIR(bool box);
 };
 
 #endif /* SIR_H_ */

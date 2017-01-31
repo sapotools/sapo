@@ -15,7 +15,7 @@
  * @param[in] u collection of generator versors
  */
 
- SIR::SIR(){
+ SIR::SIR(bool box){
 
 
    // Initialize model
@@ -37,6 +37,33 @@
 
 
    // Init reach set
+   Bundle *B;
+   if(box){
+     int num_dirs = 3;		// number of bundle directions
+     int num_temps = 1;		// number of bundle templates
+
+     // Directions matrix
+     vector< double > Li (dim_sys,0);
+     vector< vector< double > > L (num_dirs,Li);
+     L[0][0] = 1;
+     L[1][1] = 1;
+     L[2][2] = 1;
+
+     // Template matrix
+     vector< int > Ti (dim_sys,0);
+     vector< vector< int > > T (num_temps,Ti);
+     T[0][0] = 0; T[0][1] = 1; T[0][2] = 2;
+
+
+     // Offsets for the set of initial conditions
+     vector< double > offp (num_dirs,0);
+     vector< double > offm (num_dirs,0);
+     offp[0] = 0.8; offm[0] = -0.79;
+     offp[1] = 0.2; offm[1] = -0.19;
+     offp[2] = 0.0001; offm[2] = -0.000099;
+
+     B = new Bundle(L,offp,offm,T);
+ }else{
    int num_dirs = 5;		// number of bundle directions
    int num_temps = 3;		// number of bundle templates
 
@@ -65,7 +92,9 @@
    offp[3] = 1; offm[3] = 0;
    offp[4] = 1; offm[4] = 0;
 
-   Bundle *B = new Bundle(L,offp,offm,T);
-   this->reachSet = B;
-
+   B = new Bundle(L,offp,offm,T);
  }
+
+ this->reachSet = B;
+
+}
