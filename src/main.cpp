@@ -20,6 +20,10 @@
 #include "Phosphorelay.h"
 #include "Quadcopter.h"
 
+#include "SIRp.h"
+#include "Influenza.h"
+#include "Ebola.h"
+
 using namespace std;
 
 /**
@@ -56,6 +60,15 @@ int main(int argc,char** argv){
       case 5:
         model = new Quadcopter(); reach_steps = 300;
       break;
+      case 10:
+        model = new SIRp();
+      break;
+      case 11:
+        model = new Influenza();
+      break;
+      case 12:
+        model = new Ebola();
+      break;
       default:
         cerr<<"Unknown demo ID\n";
         exit(EXIT_FAILURE);
@@ -69,8 +82,13 @@ int main(int argc,char** argv){
     //options.alpha = 0.5;		// Weight for bundle size/orthgonal proximity
     options.verbose = false;
 
-    Sapo *sapo = new Sapo(model,options);
-    Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
+    if(atoi(argv[1]) < 10){
+      Sapo *sapo = new Sapo(model,options);
+      Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
+    }else{
+      Sapo *sapo = new Sapo(model,options);
+    	LinearSystemSet *synth_parameter_set = sapo->synthesize(model->getReachSet(),model->getParaSet(),model->getSpec());	// parameter synthesis
+    }
 
     exit(EXIT_SUCCESS);
 }

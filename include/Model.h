@@ -10,6 +10,9 @@
 #define MODEL_H_
 
 #include "Bundle.h"
+#include "LinearSystemSet.h"
+#include "STL.h"
+
 #include "Common.h"
 
 class Model {
@@ -18,14 +21,21 @@ protected:
 	lst vars;		// variables
 	lst params;		// parameters
 	lst dyns;		// dynamics
+
 	Bundle *reachSet; // Initial reach set
+	LinearSystemSet *paraSet;
+
+	STL *spec;
 
 public:
 
 	lst getVars(){ return this->vars; }
 	lst getParams(){ return this->params; }
 	lst getDyns(){ return this->dyns; }
+
 	Bundle* getReachSet(){ return this->reachSet; }
+	LinearSystemSet* getParaSet(){ return this->paraSet; }
+	STL* getSpec(){ return this->spec; }
 
 };
 

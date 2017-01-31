@@ -1,0 +1,22 @@
+/**
+ * @file SARS.h
+ * Parametric SARS epidemic model
+ *
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @version 0.1
+ */
+
+#ifndef SARS_H_
+#define SARS_H_
+
+#include "Model.h"
+
+class SARS : public Model {
+
+private:
+
+public:
+	SARS();
+};
+
+#endif /* SARS_H_ */
