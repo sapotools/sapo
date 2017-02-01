@@ -32,9 +32,6 @@ using namespace std;
  */
 int main(int argc,char** argv){
 
-  vector< Model* > models;
-  vector< int > reach_steps;
-
   // Sapo's options
   sapo_opt options;
   options.trans = 1;			 // Set transformation (0=OFO, 1=AFO)
@@ -42,17 +39,39 @@ int main(int argc,char** argv){
   //options.alpha = 0.5;		// Weight for bundle size/orthgonal proximity
   options.verbose = false;
 
-  models.push_back(new VanDerPol());      reach_steps.push_back(300);
-  models.push_back(new Rossler());        reach_steps.push_back(250);
-  models.push_back(new SIR(false));       reach_steps.push_back(300);
-  models.push_back(new LotkaVolterra());  reach_steps.push_back(500);
-  models.push_back(new Phosphorelay());   reach_steps.push_back(200);
-  models.push_back(new Quadcopter());     reach_steps.push_back(300);
 
+  /*vector< Model* > reach_models;
+  vector< int > reach_steps;
+  reach_models.push_back(new VanDerPol());      reach_steps.push_back(300);
+  reach_models.push_back(new Rossler());        reach_steps.push_back(250);
+  reach_models.push_back(new SIR(false));       reach_steps.push_back(300);
+  reach_models.push_back(new LotkaVolterra());  reach_steps.push_back(500);
+  reach_models.push_back(new Phosphorelay());   reach_steps.push_back(200);
+  reach_models.push_back(new Quadcopter());     reach_steps.push_back(300);
+
+  cout<<"TABLE 1"<<endl;
   for(int i=0; i<models.size(); i++){
-    cout<<"Model: "<<models[i]->getName()<<"\tReach steps: "<<reach_steps[i]<<"\t";
-    Sapo *sapo = new Sapo(models[i],options);
-    Flowpipe* flowpipe = sapo->reach(models[i]->getReachSet(),reach_steps[i]);	// reachability analysis
+
+    cout<<"Model: "<<reach_models[i]->getName()<<"\tReach steps: "<<reach_steps[i]<<"\t";
+
+    Sapo *sapo = new Sapo(reach_models[i],options);
+    Flowpipe* flowpipe = sapo->reach(reach_models[i]->getReachSet(),reach_steps[i]);	// reachability analysis
+  }*/
+
+
+  vector< Model* > synth_models;
+  vector< int > reach_steps;
+  synth_models.push_back(new SIRp());
+  synth_models.push_back(new Influenza());
+  synth_models.push_back(new Ebola());
+
+  cout<<"TABLE 2"<<endl;
+  for(int i=0; i<synth_models.size(); i++){
+
+    cout<<"Model: "<<synth_models[i]->getName()<<"\t";
+
+    Sapo *sapo = new Sapo(synth_models[i],options);
+    LinearSystemSet *synth_parameter_set = sapo->synthesize(synth_models[i]->getReachSet(),synth_models[i]->getParaSet(),synth_models[i]->getSpec());	// parameter synthesis
   }
 
 

@@ -57,7 +57,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 
 		flowpipe->append(X);			// store result
 	}
-	cout<<"Done. \t Time taken:"<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+	cout<<"Done.\tTime taken:"<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
 
 	return flowpipe;
 }
@@ -117,9 +117,11 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
  */
 LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
 
+	cout<<"Synthesizing parameters..."<<flush;
+
 	clock_t tStart = clock();
 	LinearSystemSet *res = this->synthesizeSTL(reachSet,parameterSet,formula);
-	cout<<"Time taken (parameter synthesis) "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+	cout<<"Done.\tTime taken: "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
 
 	return res;
 }
