@@ -8,14 +8,7 @@
 
 #include "SIRp.h"
 
-/**
- * Constructor that instantiates a parallelotope
- *
- * @param[in] vars vector with the list of variables used for the generator functions
- * @param[in] u collection of generator versors
- */
-
- SIRp::SIRp(){
+SIRp::SIRp(){
 
 
    ///// The dynamical system /////
