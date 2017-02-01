@@ -32,6 +32,32 @@ using namespace std;
  */
 int main(int argc,char** argv){
 
+  vector< Model* > models;
+  vector< int > reach_steps;
+
+  // Sapo's options
+  sapo_opt options;
+  options.trans = 1;			 // Set transformation (0=OFO, 1=AFO)
+  options.decomp = 0;			  // Template decomposition (0=no, 1=yes)
+  //options.alpha = 0.5;		// Weight for bundle size/orthgonal proximity
+  options.verbose = false;
+
+  models.push_back(new VanDerPol());      reach_steps.push_back(300);
+  models.push_back(new Rossler());        reach_steps.push_back(250);
+  models.push_back(new SIR(false));       reach_steps.push_back(300);
+  models.push_back(new LotkaVolterra());  reach_steps.push_back(500);
+  models.push_back(new Phosphorelay());   reach_steps.push_back(200);
+  models.push_back(new Quadcopter());     reach_steps.push_back(300);
+
+  for(int i=0; i<models.size(); i++){
+    cout<<"Model: "<<models[i]->getName()<<"\tReach steps: "<<reach_steps[i]<<"\t";
+    Sapo *sapo = new Sapo(models[i],options);
+    Flowpipe* flowpipe = sapo->reach(models[i]->getReachSet(),reach_steps[i]);	// reachability analysis
+  }
+
+
+
+    /*
     if(argc != 2){
       cerr<<"One argument expected (case study ID)\n";
       exit(EXIT_FAILURE);
@@ -166,7 +192,7 @@ int main(int argc,char** argv){
 
          exit(EXIT_SUCCESS);
        }
-    }
+    }*/
 
 
     exit(EXIT_SUCCESS);

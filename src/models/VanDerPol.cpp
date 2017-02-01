@@ -14,6 +14,7 @@
    ///// The dynamical system /////
 
  	// System dimension (number of variables)
+  strcpy(this->name,"Van der Pol");
  	int dim_sys = 2;
  	// List of state variables
  	symbol x("x"), y("y");

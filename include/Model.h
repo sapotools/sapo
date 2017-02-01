@@ -29,6 +29,9 @@ protected:
 
 public:
 
+	char name[64];
+
+	char* getName(){ return this->name; }
 	lst getVars(){ return this->vars; }
 	lst getParams(){ return this->params; }
 	lst getDyns(){ return this->dyns; }

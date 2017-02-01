@@ -12,6 +12,7 @@
 
 
    // Initialize model
+   strcpy(this->name,"SIR");
    int dim_sys = 3;
    // List of state variables
    symbol s("s"), i("i"), r("r");

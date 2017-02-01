@@ -14,6 +14,7 @@
    ///// The dynamical system /////
 
  	// System dimension (number of variables)
+  strcpy(this->name,"Rossler");
  	int dim_sys = 3;
  	// List of state variables
  	symbol x("x"), y("y"), z("z");

@@ -10,6 +10,7 @@
 
  Influenza::Influenza(){
 
+   strcpy(this->name,"Influenza");
    int dim_sys = 4;
 
  	// List of state variables and parameters

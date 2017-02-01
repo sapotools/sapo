@@ -14,6 +14,7 @@ SIRp::SIRp(){
    ///// The dynamical system /////
 
  	// System dimension (number of variables)
+  strcpy(this->name,"SIR");
  	int dim_sys = 3;
 
  	// List of state variables and parameters

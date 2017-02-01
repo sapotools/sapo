@@ -13,6 +13,7 @@
    ///// The dynamical system /////
 
    // System dimension (number of variables)
+   strcpy(this->name,"Quadcopter");
    int dim_sys = 17;
    // List of state variables and parameters
    symbol pn("pn"), pe("pe"), h("h"), u("u"), v("v"), w("w"), q0v("q0v"), q1v("q1v"), q2v("q2v"), q3v("q3v"), p("p"), q("q"), r("r"), hI("hI"), uI("uI"), vI("vI"), psiI("psiI");

@@ -11,6 +11,7 @@
  Ebola::Ebola(){
 
    /////////// THE Model /////////////
+   strcpy(this->name,"Ebola");
    int dim_sys = 5;
 
    // List of state variables and parameters
