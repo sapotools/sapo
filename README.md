@@ -34,7 +34,7 @@ The parameter synthesis produces a refined set of parameters represented by:
 
 ## Build Sapo
 ``` sh
-git https://github.com/tommasodreossi/sapo
+git clone https://github.com/tommasodreossi/sapo
 cd sapo
 cmake .
 make
