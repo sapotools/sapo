@@ -40,7 +40,7 @@ int main(int argc,char** argv){
   options.verbose = false;
 
 
-  /*vector< Model* > reach_models;
+  vector< Model* > reach_models;
   vector< int > reach_steps;
   reach_models.push_back(new VanDerPol());      reach_steps.push_back(300);
   reach_models.push_back(new Rossler());        reach_steps.push_back(250);
@@ -50,17 +50,17 @@ int main(int argc,char** argv){
   reach_models.push_back(new Quadcopter());     reach_steps.push_back(300);
 
   cout<<"TABLE 1"<<endl;
-  for(int i=0; i<models.size(); i++){
+  for(int i=0; i<reach_models.size(); i++){
 
     cout<<"Model: "<<reach_models[i]->getName()<<"\tReach steps: "<<reach_steps[i]<<"\t";
 
     Sapo *sapo = new Sapo(reach_models[i],options);
     Flowpipe* flowpipe = sapo->reach(reach_models[i]->getReachSet(),reach_steps[i]);	// reachability analysis
-  }*/
+  }
+  cout<<"\n";
 
 
   vector< Model* > synth_models;
-  vector< int > reach_steps;
   synth_models.push_back(new SIRp());
   synth_models.push_back(new Influenza());
   synth_models.push_back(new Ebola());
@@ -73,146 +73,90 @@ int main(int argc,char** argv){
     Sapo *sapo = new Sapo(synth_models[i],options);
     LinearSystemSet *synth_parameter_set = sapo->synthesize(synth_models[i]->getReachSet(),synth_models[i]->getParaSet(),synth_models[i]->getSpec());	// parameter synthesis
   }
+  cout<<"\n";
+
+  cout<<"FIGURE 3a"<<endl;
+  Model* sir3a = new SIR(true);
+  Sapo *sapo3a = new Sapo(sir3a,options);
+
+  cout<<"Model: "<<sir3a->getName()<<"\tReach steps: 300\t";
+  Flowpipe* flowpipe3a = sapo3a->reach(sir3a->getReachSet(),300);	// reachability analysis
+
+  char fig3a[] = "plotFigure3a.m";
+  flowpipe3a->plotRegionToFile(fig3a,'w');
+  // Set picture appearence
+  ofstream matlab_script;
+  matlab_script.open (fig3a, ios_base::app);
+  matlab_script<<"xlabel('s');\n";
+  matlab_script<<"ylabel('i');\n";
+  matlab_script<<"zlabel('r');\n";
+  matlab_script<<"axis([0 1 0 0.7 0 0.8]);\n";
+  matlab_script<<"view([74 23]);\n";
+  matlab_script<<"grid on;";
+  matlab_script.close();
+  cout<<fig3a<<" generated\n"<<endl;
 
 
+  cout<<"FIGURE 3b"<<endl;
+  Model* sir3b = new SIR(false);
+  Sapo *sapo3b = new Sapo(sir3b,options);
 
-    /*
-    if(argc != 2){
-      cerr<<"One argument expected (case study ID)\n";
-      exit(EXIT_FAILURE);
-    }
+  cout<<"Model: "<<sir3b->getName()<<"\tReach steps: 300\t";
+  Flowpipe* flowpipe3b = sapo3b->reach(sir3b->getReachSet(),300);	// reachability analysis
 
-
-    int caseID = atoi(argv[1]);
-
-    // Init model
-    int reach_steps;
-    Model *model;
-
-    switch(caseID){
-      case 11:
-        model = new VanDerPol(); reach_steps = 300;
-      break;
-      case 12:
-        model = new Rossler(); reach_steps = 250;
-      break;
-      case 13:
-      case 32:
-        model = new SIR(false); reach_steps = 300;
-      break;
-      case 14:
-        model = new LotkaVolterra(); reach_steps = 500;
-      break;
-      case 15:
-        model = new Phosphorelay(); reach_steps = 200;
-      break;
-      case 16:
-        model = new Quadcopter(); reach_steps = 300;
-      break;
-      case 21:
-      case 41:
-      case 42:
-        model = new SIRp(); reach_steps = 300;
-      break;
-      case 22:
-        model = new Influenza();
-      break;
-      case 23:
-        model = new Ebola();
-      break;
-      case 31:
-        model = new SIR(true); reach_steps = 300;
-      break;
-      default:
-        cerr<<"Unknown case study ID\n";
-        exit(EXIT_FAILURE);
-    }
+  char fig3b[] = "plotFigure3b.m";
+  flowpipe3b->plotRegionToFile(fig3b,'w');
+  // Set picture appearence
+  matlab_script.open (fig3b, ios_base::app);
+  matlab_script<<"xlabel('s');\n";
+  matlab_script<<"ylabel('i');\n";
+  matlab_script<<"zlabel('r');\n";
+  matlab_script<<"axis([0 1 0 0.7 0 0.8]);\n";
+  matlab_script<<"view([74 23]);\n";
+  matlab_script<<"grid on;";
+  matlab_script.close();
+  cout<<fig3b<<" generated\n"<<endl;
 
 
-    // Sapo's options
-    sapo_opt options;
-    options.trans = 1;			 // Set transformation (0=OFO, 1=AFO)
-    options.decomp = 0;			  // Template decomposition (0=no, 1=yes)
-    //options.alpha = 0.5;		// Weight for bundle size/orthgonal proximity
-    options.verbose = false;
+  cout<<"FIGURE 4a"<<endl;
+  Model *sirp = new SIRp();
+  Sapo *sapo_synth = new Sapo(sirp,options);
 
-    if(caseID < 20){
-      Sapo *sapo = new Sapo(model,options);
-      Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
-      char file_name[] = "chiurlo.m";
-      flowpipe->plotRegionToFile(file_name,'w');
+  cout<<"Model: "<<sirp->getName()<<"\t";
+  LinearSystemSet *synth_parameter_set = sapo_synth->synthesize(sirp->getReachSet(),sirp->getParaSet(),sirp->getSpec());
 
-      exit(EXIT_SUCCESS);
-    }
-
-    if(caseID < 30){
-      Sapo *sapo = new Sapo(model,options);
-    	LinearSystemSet *synth_parameter_set = sapo->synthesize(model->getReachSet(),model->getParaSet(),model->getSpec());	// parameter synthesis
-      exit(EXIT_SUCCESS);
-    }
-
-    if(caseID < 40){ // Figures 3a 3b
-      Sapo *sapo = new Sapo(model,options);
-      Flowpipe* flowpipe = sapo->reach(model->getReachSet(),reach_steps);	// reachability analysis
-
-      //	// Store the constructed flowpipe in file sir.m (in Matlab format)
-      char file_name[] = "plotFigure.m";
-      flowpipe->plotRegionToFile(file_name,'w');
-
-      // Set picture appearence
-      ofstream matlab_script;
-    	matlab_script.open (file_name, ios_base::app);
-      matlab_script<<"xlabel('s');\n";
-      matlab_script<<"ylabel('i');\n";
-      matlab_script<<"zlabel('r');\n";
-      matlab_script<<"axis([0 1 0 0.7 0 0.8]);\n";
-      matlab_script<<"view([74 23]);\n";
-      matlab_script<<"grid on;";
-      matlab_script.close();
-
-      exit(EXIT_SUCCESS);
-    }
-
-    if(caseID < 50){ // Figures 4a 4b
-      Sapo *sapo = new Sapo(model,options);
-    	LinearSystemSet *synth_parameter_set = sapo->synthesize(model->getReachSet(),model->getParaSet(),model->getSpec());	// parameter synthesis
-
-      // Store the first synthesized parameter set in file sir_synth.m (in Matlab format)
-      char file_name[] = "plotFigure.m";
-
-      if(caseID == 41){
-        model->getParaSet()->at(0)->plotRegionToFile(file_name,'w');
-        synth_parameter_set->at(0)->plotRegionToFile(file_name,'k');
-        // Set picture appearence
-        ofstream matlab_script;
-    	   matlab_script.open (file_name, ios_base::app);
-         matlab_script<<"xlabel('\\beta');\n";
-         matlab_script<<"ylabel('\\gamma');\n";
-         matlab_script<<"axis([0.17 0.21 0.045 0.065]);\n";
-         matlab_script<<"grid on;";
-         matlab_script.close();
-         exit(EXIT_SUCCESS);
-       }
-
-       if(caseID == 42){
-         //Rechability computation under the synthesized parameter set
-         Flowpipe* flowpipe = sapo->reach(model->getReachSet(),synth_parameter_set->at(0),reach_steps);
-         flowpipe->plotRegionToFile(file_name,'w');
-         // Set picture appearence
-         ofstream matlab_script;
-       	 matlab_script.open (file_name, ios_base::app);
-         matlab_script<<"xlabel('s');\n";
-         matlab_script<<"ylabel('i');\n";
-         matlab_script<<"zlabel('r');\n";
-         matlab_script<<"axis([0 1 0 0.7 0 0.8]);\n";
-         matlab_script<<"view([120 40]);\n";
-         matlab_script<<"grid on;";
-         matlab_script.close();
-
-         exit(EXIT_SUCCESS);
-       }
-    }*/
+  char fig4a[] = "plotFigure4a.m";
+  sirp->getParaSet()->at(0)->plotRegionToFile(fig4a,'w');
+  synth_parameter_set->at(0)->plotRegionToFile(fig4a,'k');
+  // Set picture appearence
+  matlab_script.open (fig4a, ios_base::app);
+  matlab_script<<"xlabel('\\beta');\n";
+  matlab_script<<"ylabel('\\gamma');\n";
+  matlab_script<<"axis([0.17 0.21 0.045 0.065]);\n";
+  matlab_script<<"grid on;";
+  matlab_script.close();
+  cout<<fig4a<<" generated\n"<<endl;
 
 
-    exit(EXIT_SUCCESS);
+  cout<<"FIGURE 4b"<<endl;
+  cout<<"Model: "<<sirp->getName()<<"\t";
+
+  Sapo *sapo_reach = new Sapo(sirp,options);
+  Flowpipe* flowpipe = sapo_reach->reach(sirp->getReachSet(),synth_parameter_set->at(0),300);
+
+  char fig4b[] = "plotFigure4b.m";
+  flowpipe->plotRegionToFile(fig4b,'w');
+  // Set picture appearence
+  matlab_script.open (fig4b, ios_base::app);
+  matlab_script<<"xlabel('s');\n";
+  matlab_script<<"ylabel('i');\n";
+  matlab_script<<"zlabel('r');\n";
+  matlab_script<<"axis([0 1 0 1 0 1]);\n";
+  matlab_script<<"view([126 35]);\n";
+  matlab_script<<"grid on;";
+  matlab_script.close();
+  cout<<fig4b<<" generated"<<endl;
+
+
+  exit(EXIT_SUCCESS);
 }
