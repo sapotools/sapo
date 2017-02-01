@@ -261,7 +261,7 @@ ex BaseConverter::bernCoeff(vector<int> mi){
  */
 lst BaseConverter::getBernCoeffs(){
 
-	cout<<"\tComputing Bernstein coefficients...\n";
+	//cout<<"\tComputing Bernstein coefficients...\n";
 
 	lst bern_coeffs;
 
@@ -388,7 +388,7 @@ void BaseConverter::split(int direction, double split_point){
  */
 lst BaseConverter::getBernCoeffsMatrix(){
 
-	cout<<"\tComputing Bernstein coefficients...\n";
+	//cout<<"\tComputing Bernstein coefficients...\n";
 
 	// degrees increased by one
 	vector<int> degrees_p (this->degrees.size(),0);
@@ -773,4 +773,3 @@ void BaseConverter::implicitMaxIndex(){
 BaseConverter::~BaseConverter() {
 	// TODO Auto-generated destructor stub
 }
-

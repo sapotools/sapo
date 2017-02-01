@@ -39,11 +39,11 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 	}
 	flowpipe->append(initSet);
 
-	cout<<"Reachability computation\n";
+	cout<<"Computing reach set..."<<flush;
 
 	for(int i=0; i<k; i++){
 
-		cout<<"Reach step "<<i<<"\n";
+		//cout<<"Reach step "<<i<<"\n";
 
 		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->dyns,this->reachControlPts,this->options.trans);	// transform it
@@ -57,7 +57,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 
 		flowpipe->append(X);			// store result
 	}
-	cout<<"Time taken (reachability) "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+	cout<<"Done. \t Time taken:"<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
 
 	return flowpipe;
 }
