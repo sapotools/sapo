@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * Demo: Reachability analysis demos
+ * main: This main file reproduces the experiments reported in "Sapo: Reachability Computation and Parameter Synthesis of Polynomial Dynamical Systems"
  *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @version 0.1
@@ -26,10 +26,6 @@
 
 using namespace std;
 
-/**
- * Main function
- *
- */
 int main(int argc,char** argv){
 
   // Sapo's options
@@ -40,6 +36,8 @@ int main(int argc,char** argv){
   options.verbose = false;
 
 
+  cout<<"TABLE 1"<<endl;
+  // Load modles
   vector< Model* > reach_models;
   vector< int > reach_steps;
   reach_models.push_back(new VanDerPol());      reach_steps.push_back(300);
@@ -49,7 +47,7 @@ int main(int argc,char** argv){
   reach_models.push_back(new Phosphorelay());   reach_steps.push_back(200);
   reach_models.push_back(new Quadcopter());     reach_steps.push_back(300);
 
-  cout<<"TABLE 1"<<endl;
+  // Compute reach sets
   for(int i=0; i<reach_models.size(); i++){
 
     cout<<"Model: "<<reach_models[i]->getName()<<"\tReach steps: "<<reach_steps[i]<<"\t";
@@ -60,12 +58,14 @@ int main(int argc,char** argv){
   cout<<"\n";
 
 
+  cout<<"TABLE 2"<<endl;
+  // Load models
   vector< Model* > synth_models;
   synth_models.push_back(new SIRp());
   synth_models.push_back(new Influenza());
   synth_models.push_back(new Ebola());
 
-  cout<<"TABLE 2"<<endl;
+  // Synthesize parameters
   for(int i=0; i<synth_models.size(); i++){
 
     cout<<"Model: "<<synth_models[i]->getName()<<"\t";
@@ -75,13 +75,16 @@ int main(int argc,char** argv){
   }
   cout<<"\n";
 
+
   cout<<"FIGURE 3a"<<endl;
   Model* sir3a = new SIR(true);
   Sapo *sapo3a = new Sapo(sir3a,options);
 
+  // Compute reach set with box template
   cout<<"Model: "<<sir3a->getName()<<"\tReach steps: 300\t";
-  Flowpipe* flowpipe3a = sapo3a->reach(sir3a->getReachSet(),300);	// reachability analysis
+  Flowpipe* flowpipe3a = sapo3a->reach(sir3a->getReachSet(),300);
 
+  // Generate matlab script to plot flowpipe
   char fig3a[] = "plotFigure3a.m";
   flowpipe3a->plotRegionToFile(fig3a,'w');
   // Set picture appearence
@@ -101,9 +104,11 @@ int main(int argc,char** argv){
   Model* sir3b = new SIR(false);
   Sapo *sapo3b = new Sapo(sir3b,options);
 
+  // Compute reach set with bundle template
   cout<<"Model: "<<sir3b->getName()<<"\tReach steps: 300\t";
-  Flowpipe* flowpipe3b = sapo3b->reach(sir3b->getReachSet(),300);	// reachability analysis
+  Flowpipe* flowpipe3b = sapo3b->reach(sir3b->getReachSet(),300);
 
+  // Generate matlab script to plot flowpipe
   char fig3b[] = "plotFigure3b.m";
   flowpipe3b->plotRegionToFile(fig3b,'w');
   // Set picture appearence
@@ -122,9 +127,11 @@ int main(int argc,char** argv){
   Model *sirp = new SIRp();
   Sapo *sapo_synth = new Sapo(sirp,options);
 
+  // Synthesize parameters
   cout<<"Model: "<<sirp->getName()<<"\t";
   LinearSystemSet *synth_parameter_set = sapo_synth->synthesize(sirp->getReachSet(),sirp->getParaSet(),sirp->getSpec());
 
+  // Generate matlab script to plot the parameter set
   char fig4a[] = "plotFigure4a.m";
   sirp->getParaSet()->at(0)->plotRegionToFile(fig4a,'w');
   synth_parameter_set->at(0)->plotRegionToFile(fig4a,'k');
@@ -141,9 +148,11 @@ int main(int argc,char** argv){
   cout<<"FIGURE 4b"<<endl;
   cout<<"Model: "<<sirp->getName()<<"\t";
 
+  // Compute reach set with contrained parameters
   Sapo *sapo_reach = new Sapo(sirp,options);
   Flowpipe* flowpipe = sapo_reach->reach(sirp->getReachSet(),synth_parameter_set->at(0),300);
 
+  // Generate matlab script to plot the reach set
   char fig4b[] = "plotFigure4b.m";
   flowpipe->plotRegionToFile(fig4b,'w');
   // Set picture appearence
@@ -156,7 +165,6 @@ int main(int argc,char** argv){
   matlab_script<<"grid on;";
   matlab_script.close();
   cout<<fig4b<<" generated"<<endl;
-
 
   exit(EXIT_SUCCESS);
 }
