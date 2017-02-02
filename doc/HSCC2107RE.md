@@ -6,11 +6,21 @@ Section 4 of the submission “Sapo: A Tool for the Reachability Computation and
 
 The executable ``./bin/sapo`` reproduces the reachbility analysis of Table 1, the parameter synthesis of Table 2, and generates the scripts ``plotFigure3a.m``, ``plotFigure3b.m``, ``plotFigure4a.m``, and ``plotFigure4b.m`` that can be used to plot the Figures 3a, 3b, 4a, 4b.
 
-
 There are two ways to reproduce the data:
 
 1. Using the [Virtual Machine](#virtualmachine)
 2. [Building Sapo](#buildsapo) from source
+
+## Test
+
+Virtual machine tested with:
+- VirtualBox 5.0.32 on OS X El Capitan
+
+Sapo built tested with:
+
+- gcc 5.4.0, clang 8.0.0, cmake >= 3.222, make >= 4.0
+- Ubuntu 15.10, Ubuntu 16.04 LTS
+- OS X El Capitan 10.12.3, macOS Sierra 10.12.3 
 
 ## <a name="virtualmachine">Virtual Machine</a>
 
@@ -112,5 +122,6 @@ figure(4); plotFigure4b;
 ```
 
 Notes:
+
 1. The scripts might take some time (around 20 seconds) to plot the reachable sets
 2. Depending on Matlab or Octave, the color of the plots might differ from those from the paper
