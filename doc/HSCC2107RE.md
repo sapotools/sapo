@@ -14,7 +14,7 @@ There are two ways to reproduce the data:
 ## <a name="virtualmachine">Virtual Machine</a>
 
 1. Download the virtual machine <a href="https://www.dropbox.com/sh/4ex9yqc3y0p1618/AACnl43b9knKovYaHVTwlkxVa?dl=0">here</a>
-2. Launch the virtual machine using <a href="https://www.virtualbox.org/wiki/VirtualBox">VirtualBox</a>
+2. Unzip and launch the virtual machine using <a href="https://www.virtualbox.org/wiki/VirtualBox">VirtualBox</a>
 3. If required, login with usersame ``sapo`` and password ``sapo``
 4. To reproduce the case studies:
 ``` sh
