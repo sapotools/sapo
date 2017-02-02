@@ -75,17 +75,17 @@ cd ..;
 
 Once that the required packages are installed, download, build and install Sapo:
 ``` sh
-git clone https://github.com/tommasodreossi/sapo
-cd sapo
-cmake .
-make
+git clone https://github.com/tommasodreossi/sapo;
+cd sapo;
+cmake .;
+make;
 ```
 
 This generates the executable ``./bin/sapo``. To reproduce the
 case studies:
 ``` sh
-cd bin
-./sapo
+cd bin;
+./sapo;
 ```
 
 To visualize the figures go to the [Visualize Figures](#visfigs) section.
