@@ -34,9 +34,10 @@ To compile the source code, the following packages are required:
 
 ### Install CLN
 
-1. Download latest <a href="http://www.ginac.de/CLN/">CLN</a> and untar
-2. In CLN folder:
+Download latest <a href="http://www.ginac.de/CLN/">CLN</a> and install:
 ``` sh
+curl http://www.ginac.de/CLN/cln-1.3.4.tar.bz2 | tar -xj
+cd cln-1.3.4/
 ./configure
 make
 make check
@@ -45,9 +46,10 @@ sudo make install
 
 ### Install GiNaC
 
-1. Download latest <a href="http://www.ginac.de/">GiNaC</a> and untar
-2. In GiNaC folder:
+Download latest <a href="http://www.ginac.de/">GiNaC</a> and install:
 ``` sh
+curl http://www.ginac.de/ginac-1.7.2.tar.bz2 | tar -xj
+cd ginac-1.7.2/
 ./configure
 make
 make check
@@ -56,9 +58,10 @@ sudo make install
 
 ### Install GLPK
 
-1. Download latest <a href="https://www.gnu.org/software/glpk/">GLPK</a> and untar
-2. In glpk folder:
+Download latest <a href="https://www.gnu.org/software/glpk/">GLPK</a> and install:
 ``` sh
+curl http://ftp.gnu.org/gnu/glpk/glpk-4.61.tar.gz | tar -xz
+cd glpk-4.61/
 ./configure
 make
 make check
