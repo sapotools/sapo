@@ -27,12 +27,48 @@ The flowpipe representing the reachable set consists in a series of sets. The se
 The parameter synthesis produces a refined set of parameters represented by:
 - Polytopes, i.e., n-dimensional polygon
 
-## Required Packages
+## Build Sapo
+To compile the source code, the following packages are required:
 
 - C++11-compatible compiler, <a href="https://cmake.org/">cmake</a>, <a href="https://www.gnu.org/software/make/">make</a>, <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
-- <a href="https://www.gnu.org/software/glpk/">GLPK</a>, <a href="http://www.ginac.de/CLN/">CLN</a>, <a href="http://www.ginac.de/">GiNaC</a>
+- <a href="http://www.ginac.de/CLN/">CLN</a>,  <a href="http://www.ginac.de/">GiNaC</a>, <a href="https://www.gnu.org/software/glpk/">GLPK</a> libraries
 
-## Build Sapo
+### Install CLN
+
+1. Download latest <a href="http://www.ginac.de/CLN/">CLN</a> and untar
+2. In CLN folder:
+``` sh
+./configure
+make
+make check
+sudo make install
+```
+
+### Install GiNaC
+
+1. Download latest <a href="http://www.ginac.de/">GiNaC</a> and untar
+2. In GiNaC folder:
+``` sh
+./configure
+make
+make check
+sudo make install
+```
+
+### Install GLPK
+
+1. Download latest <a href="https://www.gnu.org/software/glpk/">GLPK</a> and untar
+2. In glpk folder:
+``` sh
+./configure
+make
+make check
+sudo make install
+```
+
+### Install Sapo
+
+Once that the required packages are installed, donwload, build and install Sapo:
 ``` sh
 git clone https://github.com/tommasodreossi/sapo
 cd sapo
@@ -40,5 +76,3 @@ cmake .
 make
 ```
 
-## Visualization
-2D/3D or projections of higher dimensional reachable and parameter sets computed by Sapo can be visualized using the Matlab package plotregion.
