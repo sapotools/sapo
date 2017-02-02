@@ -8,6 +8,7 @@ The executable ``./bin/sapo`` reproduces the reachbility analysis of Table 1, th
 
 
 There are two ways to reproduce the data:
+
 1. Using the [Virtual Machine](#virtualmachine)
 2. [Building Sapo](#buildsapo) from source
 
@@ -108,5 +109,6 @@ figure(4); plotFigure4b;
 ```
 
 Notes:
+
 1. The scripts might take some time (around 20 seconds) to plot the reachable sets
 2. Depending on Matlab or Octave, the color of the plots might differ from those from the paper
