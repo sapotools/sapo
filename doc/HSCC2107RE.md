@@ -8,6 +8,7 @@ The executable ``./bin/sapo`` reproduces the reachbility analysis of Table 1, th
 
 
 There are two ways to reproduce the data:
+
 1. Using the [Virtual Machine](#virtualmachine)
 2. [Building Sapo](#buildsapo) from source
 
