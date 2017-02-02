@@ -8,14 +8,13 @@ The executable ``./bin/sapo`` reproduces the reachbility analysis of Table 1, th
 
 
 There are two ways to reproduce the data:
-
 1. Using the [Virtual Machine](#virtualmachine)
 2. [Building Sapo](#buildsapo) from source
 
 ## <a name="virtualmachine">Virtual Machine</a>
 
 1. Download the virtual machine <a href="https://www.dropbox.com/sh/4ex9yqc3y0p1618/AACnl43b9knKovYaHVTwlkxVa?dl=0">here</a>
-2. Launch the virtual machine using <a href="">Virtual Box</a>
+2. Launch the virtual machine using <a href="https://www.virtualbox.org/wiki/VirtualBox">VirtualBox</a>
 3. If required, login with usersame ``sapo`` and password ``sapo``
 4. To reproduce the case studies:
 ``` sh
@@ -31,7 +30,7 @@ To visualize the figures go to the [Visualize Figures](#visfigs) section.
 To compile the source code, the following packages are required:
 
 - C++11-compatible compiler, <a href="https://cmake.org/">cmake</a>, <a href="https://www.gnu.org/software/make/">make</a>, <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
-- <a href="http://www.ginac.de/CLN/">CLN</a>, <a href="https://www.gnu.org/software/glpk/">GLPK</a>, <a href="http://www.ginac.de/">GiNaC</a> libraries
+- <a href="http://www.ginac.de/CLN/">CLN</a>,  <a href="http://www.ginac.de/">GiNaC</a>, <a href="https://www.gnu.org/software/glpk/">GLPK</a> libraries
 
 ### Install CLN
 
@@ -90,7 +89,7 @@ To visualize the figures go to the [Visualize Figures](#visfigs) section.
 The executable ``./bin/sapo`` produces the scripts
 ``plotFigure3a.m``, ``plotFigure3b.m``, ``plotFigure4a.m``, and``plotFigure4b.m`` that can be used to generate the figures
 of the paper. The scripts can be run in both Octave and Matlab
-and require the ``plotregion`` package available at
+and require the ``plotregion`` package available
 <a href="https://www.mathworks.com/matlabcentral/fileexchange/9261-plot-2d-3d-region">here</a> (MatWorks account required) or <a href="https://www.dropbox.com/sh/4ex9yqc3y0p1618/AACnl43b9knKovYaHVTwlkxVa?dl=0">here</a>.
 
 
@@ -109,6 +108,5 @@ figure(4); plotFigure4b;
 ```
 
 Notes:
-
 1. The scripts might take some time (around 20 seconds) to plot the reachable sets
 2. Depending on Matlab or Octave, the color of the plots might differ from those from the paper
