@@ -67,7 +67,7 @@ sudo make install
 
 ### Install Sapo
 
-Once that the required packages are installed, donwload, build and install Sapo:
+Once that the required packages are installed, download, build and install Sapo:
 ``` sh
 git clone https://github.com/tommasodreossi/sapo
 cd sapo
