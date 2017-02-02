@@ -42,7 +42,6 @@ cd cln-1.3.4/;
 make;
 make check;
 sudo make install;
-cd ..;
 ```
 
 ### Install GiNaC
@@ -55,7 +54,6 @@ cd ginac-1.7.2/;
 make;
 make check;
 sudo make install;
-cd ..;
 ```
 
 ### Install GLPK
@@ -68,24 +66,23 @@ cd glpk-4.61/;
 make;
 make check;
 sudo make install;
-cd ..;
 ```
 
 ### Install Sapo
 
 Once that the required packages are installed, download, build and install Sapo:
 ``` sh
-git clone https://github.com/tommasodreossi/sapo;
-cd sapo;
-cmake .;
-make;
+git clone https://github.com/tommasodreossi/sapo
+cd sapo
+cmake .
+make
 ```
 
 This generates the executable ``./bin/sapo``. To reproduce the
 case studies:
 ``` sh
-cd bin;
-./sapo;
+cd bin
+./sapo
 ```
 
 To visualize the figures go to the [Visualize Figures](#visfigs) section.
@@ -106,7 +103,7 @@ octave
 and then from Octave command window, include the ``plotregion`` package and run the scripts. For instance:
 ``` sh
 cd ~/sapo/bin
-addpath("~/Downloads/plotregion")
+addpath("~/Downloads")
 figure(1); plotFigure3a;
 figure(2); plotFigure3b;
 figure(3); plotFigure4a;
