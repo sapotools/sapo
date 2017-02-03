@@ -111,6 +111,3 @@ figure(2); plotFigure3b;
 figure(3); plotFigure4a;
 figure(4); plotFigure4b;
 ```
-sudo make install
-```
-
