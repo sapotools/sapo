@@ -138,7 +138,7 @@ Notes:
 2. Depending on Matlab or Octave, the color of the plots might differ from those from the paper
 
 
-# Experiment Overview
+# Experiments Overview
 The experiments run by the executable ``./bin/sapo`` can be overviewed in the source ``./src/main.cpp``.
 The main file is structured in four main sections: Table 1, Table 2, Figure 3 and Figure 4.
 
