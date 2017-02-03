@@ -17,13 +17,13 @@ There are two ways to reproduce the data:
 
 Virtual machine tested with:
 - VirtualBox 5.0.16 on macOS Sierra 10.12.2
-- VirtualBox 5.0.32 on OS X El Capitan
+- VirtualBox 5.0.32 on OS X El Capitan 10.11.6
 
 Sapo built tested with:
 
 - gcc 5.4.0, clang 8.0.0, cmake >= 3.222, make >= 4.0
 - Ubuntu 15.10, Ubuntu 16.04 LTS
-- OS X El Capitan 10.12.3, macOS Sierra 10.12.3
+- OS X El Capitan 10.11.6, macOS Sierra 10.12.3
 
 # Repeatability Instructions
 
