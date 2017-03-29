@@ -38,36 +38,36 @@ To compile the source code, the following packages are required:
 
 Download latest <a href="http://www.ginac.de/CLN/">CLN</a> and install:
 ``` sh
-curl http://www.ginac.de/CLN/cln-1.3.4.tar.bz2 | tar -xj;
-cd cln-1.3.4/;
-./configure;
-make;
-make check;
-sudo make install;
+curl http://www.ginac.de/CLN/cln-1.3.4.tar.bz2 | tar -xj
+cd cln-1.3.4/
+./configure
+make
+make check
+sudo make install
 ```
 
 ### Install GiNaC
 
 Download latest <a href="http://www.ginac.de/">GiNaC</a> and install:
 ``` sh
-curl http://www.ginac.de/ginac-1.7.2.tar.bz2 | tar -xj;
-cd ginac-1.7.2/;
-./configure;
-make;
-make check;
-sudo make install;
+curl http://www.ginac.de/ginac-1.7.2.tar.bz2 | tar -xj
+cd ginac-1.7.2/
+./configure
+make
+make check
+sudo make install
 ```
 
 ### Install GLPK
 
 Download latest <a href="https://www.gnu.org/software/glpk/">GLPK</a> and install:
 ``` sh
-curl http://ftp.gnu.org/gnu/glpk/glpk-4.61.tar.gz | tar -xz;
-cd glpk-4.61/;
-./configure;
-make;
-make check;
-sudo make install;
+curl http://ftp.gnu.org/gnu/glpk/glpk-4.61.tar.gz | tar -xz
+cd glpk-4.61/
+./configure
+make
+make check
+sudo make install
 ```
 
 ### Install Sapo
