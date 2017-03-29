@@ -12,12 +12,12 @@ For parameter synthesis Sapo computes a refinement of the given set of parameter
 
 In both cases, the analysis can be done on bounded time.
 
-###Models
+### Models
 The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form x_{k+1} = f(x_k,p)
 
 Reachability computation can be carried out also on systems without parameters whose dynamics look like x_{k+1} = f(x_k) with f : R^n to R^n polynomial.
 
-###Set representation
+### Set representation
 The flowpipe representing the reachable set consists in a series of sets. The sets supported by Sapo are:
 
 - Boxes (or hyperrectangles), i.e., n-dimensional rectangles
