@@ -240,7 +240,7 @@ double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< dou
 	}
 
 	glp_load_matrix(lp, size_lp, ia, ja, ar);
-	glp_simplex(lp, &lp_param);
+	glp_exact(lp, &lp_param);
 
 	double res = glp_get_obj_val(lp);
 	glp_delete_prob(lp);
@@ -408,7 +408,7 @@ bool LinearSystem::zeroLine(vector<double> line){
 void LinearSystem::print(){
 	for(int i=0; i<(signed)this->A.size(); i++){
 		for(int j=0; j<(signed)this->A[i].size(); j++){
-			cout<<this->A[i][j]<<" ";
+			cout<<this->A[i][j] << (j == (signed)this->A[i].size()-1 ? "" : " ");
 		}
 		cout<<" <= "<<this->b[i]<<"\n";
 	}
@@ -445,10 +445,10 @@ void LinearSystem::plotRegion(){
  */
 void LinearSystem::plotRegionToFile(char *file_name, char color){
 
-	if(this->dim() > 3){
-		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
-		exit (EXIT_FAILURE);
-	}
+	// if(this->dim() > 3){
+	// 	cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
+	// 	exit (EXIT_FAILURE);
+	// }
 
 
 	ofstream matlab_script;
