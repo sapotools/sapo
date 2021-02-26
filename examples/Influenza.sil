@@ -1,0 +1,30 @@
+problem: synthesis;
+variable_mode: parallelotopes;
+
+iterations: 50;
+
+
+var s, i, t, r;
+
+param tau in [0.001, 0.002];
+param dist in [0.005, 0.01];
+
+const sigma1 = 0.1428;
+const sigma2 = 0.2;
+const epsilon = 0.7;
+const delta = 0.00008;
+const rho = 0.5;
+//const g = rho*(1-dist)*(i+epsilon*t);
+
+dynamic(s) = s*(1-rho*(1-dist)*(i+epsilon*t));
+dynamic(i) = (1-tau)*(1-sigma1)*(1-delta)*i +s*rho*(1-dist)*(i+epsilon*t);
+dynamic(t) = (1-sigma2)*t + tau*(1-sigma1)*(1-delta)*i;
+dynamic(r) = r + sigma1*(1-delta)*i +sigma2*t;
+
+spec: G[0,50] i <= 0.4235;
+
+
+direction <0.7053, 0.7053, 0.7053, 0> in [0.6912, 0.7053];
+direction <0, 0.9806, 0.1961, 0> in [0.0883, 0.0981];
+direction <0, 0, 1, 0> in [0, 0];
+direction <0, 0.7071, 0, 0.7071> in [0.0636, 0.0707];

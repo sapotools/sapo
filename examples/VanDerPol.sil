@@ -1,0 +1,25 @@
+problem: reachability;
+variable_mode: polytopes;
+
+iterations: 30;
+
+
+var x, y;
+
+dynamic(x) = x + (y)*0.02;
+dynamic(y) = y + (0.5*(1-x*x)*y - x)*0.02;
+
+
+direction <1, 0> in [0, 0.01];
+direction <0, 1> in [1.99, 2];
+direction <-1, 1> in [10, 10];
+direction <1, 1> in [10, 10];
+
+template = {
+	{0, 1},
+	{0, 2},
+	{0, 3},
+	{1, 2},
+	{1, 3},
+	{2, 3}
+}

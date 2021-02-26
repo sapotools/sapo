@@ -116,3 +116,21 @@ make
 ```
 
 This generates the executable `./bin/sapo`.
+
+## Execution
+Sapo expects as input a SIL file.
+The SIL language is defined in the SIL.md file in this repo.
+
+Sapo can be invoked passing the path of the input file
+
+```sh
+./bin/sapo path/to/file.sil
+```
+
+or without arguments. In that case, Sapo reads its input from standard input.
+
+```sh
+./bin/sapo
+```
+
+The outputs are written on standard output.
