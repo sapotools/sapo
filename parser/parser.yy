@@ -300,11 +300,11 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| SPEC ":" path_formula ";"
 						{
-							if (drv.m->getProblem() != AbsSyn::problemType::SYNTH)
+							/*if (drv.m->getProblem() != AbsSyn::problemType::SYNTH)
 							{
 								yy::parser::error(@$, "Specification not required when problem is 'reachability'");
 								YYERROR;
-							}
+							}*/
 							
 							if (!$3->simplify())
 							{
@@ -320,11 +320,11 @@ matricesList	: %empty {}
 
 matrices		: direction
 						{
-							if (drv.m->getVarMode() == AbsSyn::modeType::BOX)
+							/*if (drv.m->getVarMode() == AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "Cannot define directions if variable modality is 'boxes'");
 								YYERROR;
-							}
+							}*/
 							
 							if (drv.m->templateRows() != 0)
 							{
@@ -334,11 +334,11 @@ matrices		: direction
 						}
 						| template
 						{
-							if (drv.m->getVarMode() != AbsSyn::modeType::POLY)
+							/*if (drv.m->getVarMode() != AbsSyn::modeType::POLY)
 							{
 								yy::parser::error(@$, "Template matrix can be provided only if variable modality is 'polytopes'");
 								YYERROR;
-							}
+							}*/
 							
 							if (drv.m->directionsNum() == 0)
 							{
@@ -348,11 +348,11 @@ matrices		: direction
 						}
 						| paramDir
 						{
-							if (drv.m->getParamMode() == AbsSyn::modeType::BOX)
+							/*if (drv.m->getParamMode() == AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "Cannot define parameter directions if parameter modality is 'boxes'");
 								YYERROR;
-							}
+							}*/
 						}
 
 direction		: DIR "<" numList ">" IN doubleInterval ";" 
@@ -435,7 +435,7 @@ intInterval			: "[" expr "," expr "]"
 								
 									if (x2 < x1)
 									{
-										yy::parser::error(@$, "Right endpoint must be greater than  or equal to the left one");
+										yy::parser::error(@$, "Right endpoint must be greater than or equal to the left one");
 										YYERROR;
 									}
 									
