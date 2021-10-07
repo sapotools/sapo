@@ -15,8 +15,7 @@ whitespace	[ \t\r\n]
 
 digit				[0-9]
 natural			{digit}+
-negative		\-{natural}
-double			(({negative}|{natural})\.{natural})
+double			(({natural})\.{natural})
 
 letter			[a-zA-Z]
 ident				{letter}({letter}|{digit}|\_-)*
