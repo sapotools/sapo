@@ -314,6 +314,22 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.m->addSpec($3);
 						}
+						| SPEC ":" state_formula ";"
+						{
+							/*if (drv.m->getProblem() != AbsSyn::problemType::SYNTH)
+							{
+								yy::parser::error(@$, "Specification not required when problem is 'reachability'");
+								YYERROR;
+							}*/
+							
+							if (!$3->simplify())
+							{
+								yy::parser::error(@3, "Negations of UNTIL are not allowed");
+								YYERROR;
+							}
+							
+							drv.m->addSpec($3);
+						}
 
 matricesList	: %empty {}
 							| matricesList matrices {}

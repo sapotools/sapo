@@ -136,7 +136,7 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
  * @returns refined sets of parameters
  */
 LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
-
+	
 	//reachSet->getBundle()->plotRegion();
 
 	switch( formula->getType() ){
@@ -174,6 +174,9 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 
 		// Eventually
 		case 5:
+			Atom *a = new Atom(-1, 0);
+			Until *u = new Until(a, ((Eventually *)formula)->getA(), ((Eventually *)formula)->getB(), ((Eventually *)formula)->getSubFormula());
+			return this->synthesizeUntil(reachSet, parameterSet, u);
 			//return this->synthesizeEventually(base_v, lenghts, parameterSet, formula);
 		break;
 
@@ -293,7 +296,8 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 			// Reach step wrt to the i-th linear system of P1
 			for(int i=0; i<P1->size(); i++){
 				// TODO : add the decomposition
-				Bundle *newReachSet;// = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
+				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
+				
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
 				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula);
 				result = result->unionWith(tmpLSset);
@@ -317,7 +321,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 		formula->setB(b-1);
 		for(int i=0; i<P1->size(); i++){
 		// 	TODO : add decomposition
-			Bundle *newReachSet;// = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
+			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
 			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula);
 			result = result->unionWith(tmpLSset);
