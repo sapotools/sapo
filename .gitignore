@@ -1,0 +1,10 @@
+.DS_Store
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+sapo
+parser/include/locations.h
+parser/include/parser.h
+parser/src/parser.cpp
+parser/src/scanner.cpp 

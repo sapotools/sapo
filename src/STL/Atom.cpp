@@ -8,16 +8,18 @@
 
 #include "Atom.h"
 
+int Atom::num_of_atoms = 0;
+
  /**
   * Constructor that instantiates a atomic predicate
   *
   * @param[in] predicate a symbolic expression
   * @param[in] id an identifier for the atomic formula
   */
-Atom::Atom(ex predicate, int id) {
+Atom::Atom(ex predicate) {
 	type=ATOM;
 	this->predicate = predicate;
-	this->id = id;
+	this->id = this->num_of_atoms++;
 }
 
 /**

@@ -31,6 +31,8 @@ Sapo::Sapo(Model *model, sapo_opt options) {
  * @returns flowpipe of bundles
  */
 Flowpipe* Sapo::reach(Bundle* initSet, int k){
+	
+	map< vector<int>,pair<lst,lst> > controlPts;
 
 	Flowpipe *flowpipe = new Flowpipe();
 
@@ -47,7 +49,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 		//cout<<"Reach step "<<i<<"\n";
 
 		Bundle *X = flowpipe->get(i);	// get actual set
-		X = X->transform(this->vars,this->dyns,this->reachControlPts,this->options.trans);	// transform it
+		X = X->transform(this->vars,this->dyns,controlPts,this->options.trans);	// transform it
 
 		if(this->options.decomp > 0){	// eventually decompose it
 			X = X->decompose(this->options.alpha,this->options.decomp);
@@ -73,6 +75,10 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
  */
 Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
+	map< vector<int>,pair<lst,lst> > controlPts; 
+
+	paraSet->simplify();
+	
 	Flowpipe *flowpipe = new Flowpipe();
 
 	cout<<"Computing parametric reach set..."<<flush;
@@ -89,7 +95,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 		//cout<<"Reach step "<<i<<"\n";
 
 		Bundle *X = flowpipe->get(i);	// get actual set
-		X = X->transform(this->vars,this->params, this->dyns, paraSet, this->synthControlPts, this->options.trans);	// transform it
+		X = X->transform(this->vars,this->params, this->dyns, paraSet, controlPts, this->options.trans);	// transform it
 
 		if(this->options.decomp > 0){	// eventually decompose it
 			X = X->decompose(this->options.alpha,this->options.decomp);
@@ -174,7 +180,7 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 
 		// Eventually
 		case 5:
-			Atom *a = new Atom(-1, 0);
+			Atom *a = new Atom(-1);
 			Until *u = new Until(a, ((Eventually *)formula)->getA(), ((Eventually *)formula)->getB(), ((Eventually *)formula)->getSubFormula());
 			return this->synthesizeUntil(reachSet, parameterSet, u);
 			//return this->synthesizeEventually(base_v, lenghts, parameterSet, formula);

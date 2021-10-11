@@ -307,7 +307,7 @@ STL *Formula::toSTL(InputModel& m, const lst& vars, const lst& params)
 	switch(type)
 	{
 		case formulaType::ATOM:
-			return new Atom(ex->toEx(m, vars, params), 0);
+			return new Atom(ex->toEx(m, vars, params));
 		case formulaType::CONJ:
 			return new Conjunction(f1->toSTL(m, vars, params), f2->toSTL(m, vars, params));
 		case formulaType::DISJ:

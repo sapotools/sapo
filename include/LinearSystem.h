@@ -51,6 +51,7 @@ public:
 	// operations on linear system
 	LinearSystem* appendLinearSystem(LinearSystem *LS);
 	vector<bool> redundantCons();
+	LinearSystem *simplify();
 
 	int dim(){ if(!this->isEmpty()){ return this->A[0].size(); }else{ return 0;}	};
 	int size(){ return this->b.size(); };

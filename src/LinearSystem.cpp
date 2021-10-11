@@ -186,7 +186,7 @@ bool LinearSystem::isEmpty(){
 
 	double z = this->solveLinearSystem(extA,this->b,obj_fun,GLP_MIN);
 
-	return (z>=0);
+	return (z>0);
 
 }
 
@@ -352,11 +352,33 @@ vector<bool> LinearSystem::redundantCons(){
 
 	for(int i=0; i<this->size(); i++){
 		double max = this->maxLinearSystem(this->A[i]);
-		if( max != this->b[i]){
+		if (max != this->b[i])
+		{
 			redun[i] = true;
+		} else {
+			auto max_coeff = max_element(std::begin(A[i]), std::end(A[i]));
+			auto min_coeff = min_element(std::begin(A[i]), std::end(A[i]));
+			redun[i] = ((*max_coeff==*min_coeff)&&(*min_coeff==0));
 		}
 	}
 	return redun;
+}
+
+/**
++ * Remove redundant constraints
++ */
+LinearSystem *LinearSystem::simplify() {
+	vector<bool> R = this->redundantCons();
+
+	for (int i = R.size()-1; i>=0; i--) {
+		if (R[i])
+		{
+			(this->A).erase((this->A).begin()+i);
+			(this->b).erase((this->b).begin()+i);
+		}	
+	}
+	
+	return this;
 }
 
 /**

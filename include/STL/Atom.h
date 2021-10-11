@@ -13,14 +13,16 @@
 
 class Atom : public STL {
 private:
-
+	
+	static int num_of_atoms;
+	
 	ex predicate;						// predicate
 	vector<lst> predicateControlPts;	// control points associated to this atom
 	int id;								// identifier
 
 public:
 
-	Atom(ex predicate, int id);
+	Atom(ex predicate);
 
 	ex getPredicate(){ return predicate; };
 	vector<lst> getPredicateControlPts();
