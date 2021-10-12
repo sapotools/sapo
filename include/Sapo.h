@@ -37,9 +37,9 @@ private:
 
 	vector<Bundle*> reachWitDec(Bundle* initSet, int k);	// reachability with template decomposition
 	LinearSystemSet* synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
-	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, STL *sigma);
-	LinearSystemSet* synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, STL *sigma);
-	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
+	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const Atom *formula);
+	LinearSystemSet* synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, Until *formula);
+	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula);
 
 public:
 	Sapo(Model *model, sapo_opt options);

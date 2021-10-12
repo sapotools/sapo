@@ -8,11 +8,5 @@
 
 #include "STL.h"
 
-STL::STL() {
-	// TODO Auto-generated constructor stub
-}
-
-STL::~STL() {
-	// TODO Auto-generated destructor stub
-}
+STL::STL(formula_type type): type(type) {}
 

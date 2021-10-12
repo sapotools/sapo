@@ -16,19 +16,12 @@
  * @param[in] b end of temporal interval
  * @param[in] f2 right subformula
  */
-Until::Until(STL * f1, int a, int b, STL * f2){
-	this->f1=f1;
-	this->f2=f2;
-	this->a = a;
-	this->b = b;
-	type=UNTIL;
-
-};
+Until::Until(STL * f1, int a, int b, STL * f2): STL(UNTIL), f1(f1), f2(f2), a(a), b(b) {}
 
 /**
  * Print the formula
  */
-void Until::print(){
+void Until::print() const {
 	cout<<"(";
 	this->f1->print();
 	cout<<") until_["<<this->a<<","<<this->b<<"] (";

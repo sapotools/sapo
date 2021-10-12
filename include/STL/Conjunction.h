@@ -21,10 +21,10 @@ public:
 	// constructor
 	Conjunction(STL * f1, STL * f2);
 
-	STL * getLeftSubFormula(){return f1;};
-	STL * getRightSubFormula(){return f2;};
+	inline STL * getLeftSubFormula() {return f1;}
+	inline STL * getRightSubFormula() {return f2;}
 
-	void print();
+	void print() const;
 
 	virtual ~Conjunction();
 };
