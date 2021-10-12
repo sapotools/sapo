@@ -69,7 +69,6 @@ double solveLinearSystem(const vector< vector< double > > &A, const vector< doub
 	glp_delete_prob(lp);
 	glp_free_env();
 	return res;
-
 }
 
 /**
