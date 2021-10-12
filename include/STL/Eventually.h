@@ -22,17 +22,17 @@ public:
 
 	Eventually(int a, int b, STL * f);
 
-	STL * getSubFormula(){return f;};
+	inline STL * getSubFormula() { return f; }
 
-	int getA(){return a;};
-	int getB(){return b;};
+	inline int getA() const { return a; }
+	inline int getB() const { return b; }
 
-	void setA(int a){this->a = a;};
-	void setB(int b){this->b = b;};
+	inline void setA(int a){ this->a = a; }
+	inline void setB(int b){ this->b = b; }
 
-	void print();
+	void print() const;
 
-	virtual ~Eventually();
+	~Eventually();
 };
 
 #endif /* Eventually_H */

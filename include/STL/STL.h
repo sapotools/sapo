@@ -14,27 +14,28 @@
 
 class STL {
 public:
-	STL();
-	virtual ~STL();
+	inline const formula_type& getType() const { return type; }
 
-	formula_type getType(){return type;}
+/*
+	virtual inline const ex& getPredicate() const { throw std::logic_error("This object is not equipped with this method."); };
+	virtual inline STL * getSubFormula() { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline STL * getLeftSubFormula() { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline STL * getRightSubFormula() { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline void setPredicateControlPts(const vector<lst>& predicateControlPts) { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline const vector<lst>& getPredicateControlPts() const { throw std::logic_error("This object is not equipped with this method."); }
 
-	virtual ex getPredicate(){ex foo; return foo;};
-	virtual STL * getSubFormula(){return new STL();};
-	virtual STL * getLeftSubFormula(){return new STL();};
-	virtual STL * getRightSubFormula(){return new STL();};
-	virtual void setPredicateControlPts(vector<lst> predicateControlPts){};
-	virtual vector<lst> getPredicateControlPts(){vector<lst> foo; return foo;};
+	virtual inline const int getA() const { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline const int getB() const { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline void setA(const int a) { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline void setB(const int b) { throw std::logic_error("This object is not equipped with this method."); }
+	virtual inline int getID() const { throw std::logic_error("This object is not equipped with this method."); }
+*/
 
-	virtual int getA(){return 0;};
-	virtual int getB(){return 0;};
-	virtual void setA(int a){};
-	virtual void setB(int b){};
-	virtual int getID(){ return -1; }
-
-	virtual void print(){};
+	virtual void print() const = 0;
 
 protected:
+	STL(formula_type type);
+
 	formula_type type;
 };
 
