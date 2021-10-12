@@ -22,17 +22,17 @@ public:
 
 	Always(int a, int b, STL * f);
 
-	STL * getSubFormula(){return f;};
+	inline STL * getSubFormula() { return this->f; }
 
-	int getA(){return a;};
-	int getB(){return b;};
+	inline const int getA() const { return this->a;}
+	inline const int getB() const { return this->b; }
 
-	void setA(int a){this->a = a;};
-	void setB(int b){this->b = b;};
+	inline void setA(const int a){ this->a = a; };
+	inline void setB(const int b){ this->b = b; };
 
-	void print();
+	void print() const;
 
-	virtual ~Always();
+	~Always();
 };
 
 #endif /* ALWAYS_H */

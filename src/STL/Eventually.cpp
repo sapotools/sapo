@@ -15,17 +15,12 @@
  * @param[in] b end of temporal interval
  * @param[in] f subformula
  */
-Eventually::Eventually(int a, int b, STL * f){
-	this->f=f;
-	this->a = a;
-	this->b = b;
-	type=EVENTUALLY;
-};
+Eventually::Eventually(int a, int b, STL * f): STL(EVENTUALLY), f(f), a(a), b(b) {}
 
 /**
  * Print the formula
  */
-void Eventually::print(){
+void Eventually::print() const {
 	cout<<"Eventually_["<<this->a<<","<<this->b<<"] (";
 	this->f->print();
 	cout<<")";

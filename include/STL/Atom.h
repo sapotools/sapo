@@ -22,17 +22,28 @@ private:
 
 public:
 
-	Atom(ex predicate);
+	Atom(const ex& predicate);
 
-	ex getPredicate(){ return predicate; };
-	vector<lst> getPredicateControlPts();
-	void setPredicateControlPts(vector<lst>  predicateControlPts);
-	void print(){ cout<<this->predicate<<" <= 0"; }
-	int getID(){ return this->id; }
+	inline const ex& getPredicate() const { return predicate; };
 
-	virtual ~Atom();
+	/**
+	 * Returns the control points associated with this atom
+	 *
+	 * @ returns vector of control points
+	 */
+	inline const vector<lst>& getPredicateControlPts() const { return this->predicateControlPts; }
+	
+	/**
+	 * Associate a vector of control points to this atom
+	 *
+	 * @param[in] predicateControlPts vector of control points
+	 */
+	inline void setPredicateControlPts(const vector<lst>&  predicateControlPts) { this->predicateControlPts = predicateControlPts; }
 
+	inline void print() const { cout<<this->predicate<<" <= 0"; }
+	inline int getID() const { return this->id; }
 
+	~Atom();
 };
 
 #endif /* ATOM_H_ */

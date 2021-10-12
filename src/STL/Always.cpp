@@ -15,19 +15,12 @@
  * @param[in] b end of temporal interval
  * @param[in] f subformula
  */
-Always::Always(int a, int b, STL * f){
-
-	this->f=f;
-	this->a = a;
-	this->b = b;
-	type=ALWAYS;
-
-};
+Always::Always(int a, int b, STL * f): STL(ALWAYS), f(f), a(a), b(b) {}
 
 /**
  * Print the formula
  */
-void Always::print(){
+void Always::print() const {
 	cout<<"always_["<<this->a<<","<<this->b<<"] (";
 	this->f->print();
 	cout<<")";
