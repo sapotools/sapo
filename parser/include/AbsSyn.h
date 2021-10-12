@@ -251,6 +251,21 @@ protected:
 	double val;					// value
 };
 
+class Definition
+{
+	friend ostream& operator<<(ostream& os, Definition& d) { return os << d.name; }
+	
+public:
+	Definition(string id, Expr *e) { name = id; value = e; }
+	~Definition() {}
+	
+	string getName() { return name; }
+	Expr *getValue() { return value; }
+	
+private:
+	string name;
+	Expr *value;
+};
 
 
 /*
@@ -286,11 +301,13 @@ public:
 	unsigned getVarNum() { return vars.size(); }
 	unsigned getParamNum() { return params.size(); }
 	unsigned getConstNum() { return consts.size(); }
+	unsigned getDefNumber() { return defs.size(); }
 	
 	bool isVarDefined(string name);			// checks if a variable named 'name' already exists
 	bool isParamDefined(string name);		// checks if a parameter named 'name' already exists
 	bool isConstDefined(string name);		// checks if a constant named 'name' already exists
-	bool isSymbolDefined(string name);	// checks if a symbol (var, param or const) named 'name' already exists
+	bool isDefDefined(string name);			// checks if a definition named 'name' already exists
+	bool isSymbolDefined(string name);	// checks if a symbol (var, param, const or def) named 'name' already exists
 	
 	Variable *getVar(int i) { return vars[i]; }
 	Variable *getVar(string name);				// return the variable named 'name', which must exist
@@ -300,10 +317,13 @@ public:
 	int getParamPos(string name);	// return an index i such that params[i] has name 'name'
 	Constant *getConst(int i) { return consts[i]; }
 	Constant *getConst(string name);			// return the constant named 'name', which must exist
+	Definition *getDef(int i) { return defs[i]; }
+	Definition *getDef(string name);			// return the definition named 'name', which must exist
 	
 	void addVariable(Variable *v) { vars.push_back(v); }				// adds a new variable, which name is not already used
 	void addParameter(Parameter *p) { params.push_back(p); }		// adds a new parameter, which name is not already used
 	void addConstant(Constant *c) { consts.push_back(c); }			// adds a new constant, which name is not already used
+	void addDefinition(Definition *d) { defs.push_back(d); }			// adds a new definition, which name is not already used
 	
 	bool isSpecDefined() { return spec != NULL; }
 	void addSpec(Formula *f) { if (spec == NULL) spec = f; else spec = spec->conj(f); }
@@ -360,6 +380,7 @@ protected:
 	vector<Variable *> vars;
 	vector<Parameter *> params;
 	vector<Constant *> consts;
+	vector<Definition *> defs;
 	
 	Formula *spec;
 	

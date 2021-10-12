@@ -342,6 +342,7 @@ InputModel::InputModel()
 	vars.resize(0);
 	params.resize(0);
 	consts.resize(0);
+	defs.resize(0);
 	
 	directions.resize(0);
 	LBoffsets.resize(0);
@@ -438,9 +439,18 @@ bool InputModel::isConstDefined(string name)
 	return false;
 }
 
+bool InputModel::isDefDefined(string name)
+{
+	for (unsigned i = 0; i < defs.size(); i++)
+		if (defs[i]->getName() == name)
+			return true;
+	
+	return false;
+}
+
 bool InputModel::isSymbolDefined(string name)
 {
-	return isVarDefined(name) || isParamDefined(name) || isConstDefined(name);
+	return isVarDefined(name) || isParamDefined(name) || isConstDefined(name) || isDefDefined(name);
 }
 
 Variable *InputModel::getVar(string name)
@@ -484,6 +494,15 @@ Constant *InputModel::getConst(string name)
 	for (unsigned i = 0; i < consts.size(); i++)
 		if (consts[i]->getName() == name)
 			return consts[i];
+	
+	return NULL;
+}
+
+Definition *InputModel::getDef(string name)
+{
+	for (unsigned i = 0; i < defs.size(); i++)
+		if (defs[i]->getName() == name)
+			return defs[i];
 	
 	return NULL;
 }

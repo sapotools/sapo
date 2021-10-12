@@ -39,6 +39,7 @@
 	VAR
 	PARAM
 	CONST
+	DEFINE
 	IN
 	DYN
 	SPEC
@@ -276,6 +277,16 @@ symbol			: VAR identList IN doubleInterval ";"
 							}
 							drv.m->addConstant(new AbsSyn::Constant($2, $4->evaluate()));
 						}
+						| DEFINE IDENT "=" expr ";"
+						{
+							if (drv.m->isSymbolDefined($2))
+							{
+								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
+								YYERROR;
+							}
+							
+							drv.m->addDefinition(new AbsSyn::Definition($2, $4));
+						}
 						| DYN "(" IDENT ")" "=" expr ";"
 						{
 							if (!drv.m->isSymbolDefined($3))
@@ -498,6 +509,8 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 				
 					if (drv.m->isConstDefined($1))
 						$$ = new AbsSyn::Expr(drv.m->getConst($1)->getValue());
+					else if (drv.m->isDefDefined($1))
+						$$ = drv.m->getDef($1)->getValue()->copy();
 					else
 						$$ = new AbsSyn::Expr($1);
 				}
