@@ -132,6 +132,7 @@ double Expr::evaluate(InputModel *im)
 	if (type == exprType::ID_ATOM) return im->getDef(name)->getValue()->evaluate(im);
 	if (type == exprType::NEG) return -left->evaluate(im);
 	if (type == exprType::MUL) return left->evaluate(im) * right->evaluate(im);
+	if (type == exprType::DIV) return left->evaluate(im) / right->evaluate(im);
 	if (type == exprType::SUM) return left->evaluate(im) + right->evaluate(im);
 	if (type == exprType::SUB) return left->evaluate(im) - right->evaluate(im);
 	return -1;
