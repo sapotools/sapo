@@ -65,6 +65,7 @@
 	MINUS				"-"
 	PLUS				"+"
 	STAR				"*"
+	DIV					"/"
 	LPAREN			"("
 	RPAREN			")"
 	LSQUARE			"["
@@ -90,7 +91,7 @@
 %left "U"
 
 %left "+" "-"
-%left "*"
+%left "*" "/"
 %left UMINUS
 
 %nterm <AbsSyn::problemType> problemType
@@ -265,7 +266,7 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| CONST IDENT "=" expr ";"
 						{
-							if (!$4->isNumeric())
+							if (!$4->isNumeric(drv.m))
 							{
 								yy::parser::error(@3, "Expression defining constant must be numeric");
 								YYERROR;
@@ -275,7 +276,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
 								YYERROR;
 							}
-							drv.m->addConstant(new AbsSyn::Constant($2, $4->evaluate()));
+							drv.m->addConstant(new AbsSyn::Constant($2, $4->evaluate(drv.m)));
 						}
 						| DEFINE IDENT "=" expr ";"
 						{
@@ -445,20 +446,20 @@ identList	: IDENT { $$ = vector<string>{$1}; }
 
 intInterval			: "[" expr "," expr "]"
 								{
-									if (!$2->isNumeric())
+									if (!$2->isNumeric(drv.m))
 									{
 										yy::parser::error(@2, "Intervals require numeric expressions");
 										YYERROR;
 									}
 									
-									if (!$4->isNumeric())
+									if (!$4->isNumeric(drv.m))
 									{
 										yy::parser::error(@4, "Intervals require numeric expressions");
 										YYERROR;
 									}
 									
-									int x1 = (int) $2->evaluate();
-									int x2 = (int) $4->evaluate();
+									int x1 = (int) $2->evaluate(drv.m);
+									int x2 = (int) $4->evaluate(drv.m);
 								
 									if (x2 < x1)
 									{
@@ -471,20 +472,20 @@ intInterval			: "[" expr "," expr "]"
 
 doubleInterval	: "[" expr "," expr "]"
 								{
-									if (!$2->isNumeric())
+									if (!$2->isNumeric(drv.m))
 									{
 										yy::parser::error(@2, "Intervals require numeric expressions");
 										YYERROR;
 									}
 									
-									if (!$4->isNumeric())
+									if (!$4->isNumeric(drv.m))
 									{
 										yy::parser::error(@4, "Intervals require numeric expressions");
 										YYERROR;
 									}
 									
-									double x1 = $2->evaluate();
-									double x2 = $4->evaluate();
+									double x1 = $2->evaluate(drv.m);
+									double x2 = $4->evaluate(drv.m);
 									
 									if (x2 < x1)
 									{
@@ -515,6 +516,15 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 						$$ = new AbsSyn::Expr($1);
 				}
 				| expr "*" expr { $$ = $1->mul($3); }
+				| expr "/" expr
+				{
+					if (!$3->isNumeric(drv.m))
+					{
+						yy::parser::error(@3, "cannot divide by non--numeric expression");
+						YYERROR;
+					}
+					$$ = $1->div($3);
+				}
 				| expr "+" expr { $$ = $1->sum($3); }
 				| expr "-" expr { $$ = $1->sub($3); }
 				| "-" expr %prec UMINUS { $$ = $2->neg(); }
@@ -525,21 +535,21 @@ matrixRow	: "{" intList "}" { $$ = $2; }
 
 numList		: expr
 					{
-						if (!$1->isNumeric())
+						if (!$1->isNumeric(drv.m))
 						{
 							yy::parser::error(@1, "Expression must be numeric only");
 							YYERROR;
 						}
-						$$ = std::vector<double>{$1->evaluate()};
+						$$ = std::vector<double>{$1->evaluate(drv.m)};
 					}
 					| numList "," expr
 					{
-						if (!$3->isNumeric())
+						if (!$3->isNumeric(drv.m))
 						{
 							yy::parser::error(@3, "Expression must be numeric only");
 							YYERROR;
 						}
-						$1.push_back($3->evaluate());
+						$1.push_back($3->evaluate(drv.m));
 						$$ = $1;
 					}
 

@@ -26,6 +26,9 @@ ostream& operator<<(ostream& os, Expr& e)
 		case Expr::exprType::MUL:
 			return os << *(e.left) << " * " << *(e.right);
 			break;
+		case Expr::exprType::DIV:
+			return os << *(e.left) << " / " << *(e.right);
+			break;
 		case Expr::exprType::NEG:
 			return os << "-(" << *(e.left) << ")";
 			break;
@@ -39,6 +42,15 @@ Expr *Expr::mul(Expr *e)
 	res->left = this;
 	res->right = e;
 	res->type = exprType::MUL;
+	return res;
+}
+
+Expr *Expr::div(Expr *e)
+{
+	Expr *res = new Expr();
+	res->left = this;
+	res->right = e;
+	res->type = exprType::DIV;
 	return res;
 }
 
@@ -86,6 +98,9 @@ Expr *Expr::copy()
 		case Expr::MUL:
 			res = left->copy()->mul(right->copy());
 			break;
+		case Expr::DIV:
+			res = left->copy()->div(right->copy());
+			break;
 		case Expr::SUM:
 			res = left->copy()->sum(right->copy());
 			break;
@@ -97,21 +112,28 @@ Expr *Expr::copy()
 	return res;
 }
 
-bool Expr::isNumeric()
+bool Expr::isNumeric(InputModel *im)
 {
-	if (type == exprType::ID_ATOM) return false;
+	if (type == exprType::ID_ATOM)
+	{
+		if (im->isDefDefined(name) && im->getDef(name)->getValue()->isNumeric(im))
+			return true;
+		else
+			return false;
+	}
 	if (type == exprType::NUM_ATOM) return true;
 	
-	return left->isNumeric() && (right != NULL ? right->isNumeric() : true);
+	return left->isNumeric(im) && (right != NULL ? right->isNumeric(im) : true);
 }
 
-double Expr::evaluate()
+double Expr::evaluate(InputModel *im)
 {
 	if (type == exprType::NUM_ATOM) return val;
-	if (type == exprType::NEG) return -left->evaluate();
-	if (type == exprType::MUL) return left->evaluate() * right->evaluate();
-	if (type == exprType::SUM) return left->evaluate() + right->evaluate();
-	if (type == exprType::SUB) return left->evaluate() - right->evaluate();
+	if (type == exprType::ID_ATOM) return im->getDef(name)->getValue()->evaluate(im);
+	if (type == exprType::NEG) return -left->evaluate(im);
+	if (type == exprType::MUL) return left->evaluate(im) * right->evaluate(im);
+	if (type == exprType::SUM) return left->evaluate(im) + right->evaluate(im);
+	if (type == exprType::SUB) return left->evaluate(im) - right->evaluate(im);
 	return -1;
 }
 
@@ -124,12 +146,16 @@ ex Expr::toEx(InputModel& m, const lst& vars, const lst& params)
 		case exprType::ID_ATOM:
 			if (m.isVarDefined(name))
 				return vars[m.getVarPos(name)];
-			else
+			else if (m.isParamDefined(name))
 				return params[m.getParamPos(name)];
+			else if (m.isDefDefined(name))
+				return m.getDef(name)->getValue()->toEx(m, vars, params);
 		case exprType::SUM:
 			return left->toEx(m, vars, params) + right->toEx(m, vars, params);
 		case exprType::MUL:
 			return left->toEx(m, vars, params) * right->toEx(m, vars, params);
+		case exprType::DIV:
+			return left->toEx(m, vars, params) / right->toEx(m, vars, params);
 		case exprType::SUB:
 			return left->toEx(m, vars, params) - right->toEx(m, vars, params);
 		case exprType::NEG:
@@ -505,6 +531,15 @@ Definition *InputModel::getDef(string name)
 			return defs[i];
 	
 	return NULL;
+}
+
+int InputModel::getDefPos(string name)
+{
+	for (unsigned i = 0; i < defs.size(); i++)
+		if (defs[i]->getName() == name)
+			return i;
+	
+	return -1;
 }
 
 void InputModel::addDirection(vector<double> d, double LB, double UB)

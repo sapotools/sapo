@@ -70,6 +70,7 @@ public:
 		SUM,					// sum (x + y)
 		SUB,					// subtraction (x - y)
 		MUL,					// multiplication (x * y)
+		DIV,					// division (x / y)
 		NEG						// unary minus (-x)
 	};
 	
@@ -79,6 +80,7 @@ public:
 //	Expr(Expr *e) { type = exprType::NEG; left = e; right = NULL; }										// NEG
 	
 	Expr *mul(Expr *e);
+	Expr *div(Expr *e);
 	Expr *sum(Expr *e);
 	Expr *sub(Expr *e);
 	Expr *neg();
@@ -93,10 +95,10 @@ public:
 	
 	Expr *copy();			// deep copy of expression
 	
-	bool isNumeric();		// checks if the expression contains only numbers
-	double evaluate();	// evaluates the value of a numeric expression
+	bool isNumeric(InputModel *im);		// checks if the expression contains only numbers
+	double evaluate(InputModel *im);	// evaluates the value of a numeric expression
 	
-	ex toEx(InputModel &m, const lst& vars, const lst&params);			// converts an Expr to a GiNaC ex
+	ex toEx(InputModel &m, const lst& vars, const lst& params);			// converts an Expr to a GiNaC ex
 	
 protected:
 	Expr() { left = NULL; right = NULL; };
@@ -319,6 +321,7 @@ public:
 	Constant *getConst(string name);			// return the constant named 'name', which must exist
 	Definition *getDef(int i) { return defs[i]; }
 	Definition *getDef(string name);			// return the definition named 'name', which must exist
+	int getDefPos(string name);	// return an index i such that defs[i] has name 'name'
 	
 	void addVariable(Variable *v) { vars.push_back(v); }				// adds a new variable, which name is not already used
 	void addParameter(Parameter *p) { params.push_back(p); }		// adds a new parameter, which name is not already used
