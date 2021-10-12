@@ -240,8 +240,8 @@ double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< dou
 	}
 
 	glp_load_matrix(lp, size_lp, ia, ja, ar);
-//	glp_exact(lp, &lp_param);
-	glp_simplex(lp, &lp_param);
+	glp_exact(lp, &lp_param);
+//	glp_simplex(lp, &lp_param);
 
 	double res = glp_get_obj_val(lp);
 	glp_delete_prob(lp);
