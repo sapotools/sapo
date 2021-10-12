@@ -9,6 +9,85 @@
 
 #include "LinearSystem.h"
 
+#define MAX_APPROX_ERROR 1e-6  // necessary for double comparison
+
+
+/**
+ * Optimize a linear system
+ *
+ * @param[in] A template matrix of the system to optimize
+ * @param[in] b offset vector of the system to optimize
+ * @param[in] obj_fun objective function
+ * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
+ * @return optimum
+ */
+double solveLinearSystem(const vector< vector< double > > &A, const vector< double > &b, const vector< double > &obj_fun, const int min_max){
+
+	int num_rows = A.size();
+	int num_cols = obj_fun.size();
+	int size_lp = num_rows*num_cols;
+
+	int ia[size_lp+1], ja[size_lp+1];
+	double ar[size_lp+1];
+
+	glp_prob *lp;
+	lp = glp_create_prob();
+	glp_set_obj_dir(lp, min_max);
+
+	// Turn off verbose mode
+	glp_smcp lp_param;
+	glp_init_smcp(&lp_param);
+	lp_param.msg_lev = GLP_MSG_ERR;
+
+	glp_add_rows(lp, num_rows);
+	for(int i=0; i<num_rows; i++){
+		glp_set_row_bnds(lp, i+1, GLP_UP, 0.0, b[i]);
+	}
+
+	glp_add_cols(lp, num_cols);
+	for(int i=0; i<num_cols; i++){
+		glp_set_col_bnds(lp, i+1, GLP_FR, 0.0, 0.0);
+	}
+
+	for(int i=0; i<num_cols; i++){
+		glp_set_obj_coef(lp, i+1, obj_fun[i]);
+	}
+
+	int k=1;
+	for(int i=0; i<num_rows; i++){
+		for(int j=0; j<num_cols; j++){
+			ia[k] = i+1, ja[k] = j+1, ar[k] = A[i][j]; /* a[i+1,j+1] = A[i][j] */
+			k++;
+		}
+	}
+
+	glp_load_matrix(lp, size_lp, ia, ja, ar);
+	glp_exact(lp, &lp_param);
+//	glp_simplex(lp, &lp_param);
+
+	double res = glp_get_obj_val(lp);
+	glp_delete_prob(lp);
+	glp_free_env();
+	return res;
+}
+
+/**
+ * Check if if a vector is null, i.e.,
+ * it's a vector of zeros (used to detected useless constraints)
+ *
+ * @param[in] line vector to test
+ * @return true is the vector is nulle
+ */
+bool zeroLine(const vector<double> &line) {
+
+	bool zeros = true;
+	int i=0;
+	while(zeros && i<(signed)line.size()){
+		zeros = zeros && (abs(line[i]) < MAX_APPROX_ERROR);
+		i++;
+	}
+	return zeros;
+}
 
 /**
  * Constructor that instantiates a linear system
@@ -25,7 +104,7 @@ LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 		this->b = b;
 	}else{
 		for(int i=0; i<(signed)A.size(); i++){
-			if(!this->isIn(A[i],b[i]) && (!this->zeroLine(A[i]))){
+			if(!this->isIn(A[i],b[i]) && (!zeroLine(A[i]))){
 				this->A.push_back(A[i]);
 				this->b.push_back(b[i]);
 			}
@@ -54,9 +133,7 @@ LinearSystem::LinearSystem(){
  * @param[in] bi offset
  * @returns true is Ai x <= b is in the linear system
  */
-bool LinearSystem::isIn(vector< double > Ai, double bi){
-
-	double epsilon = 0.00001;	// necessary for double comparison
+bool LinearSystem::isIn(vector< double > Ai, const double bi) const{
 	Ai.push_back(bi);
 
 	for( int i=0; i<(signed)this->A.size(); i++ ){
@@ -64,7 +141,7 @@ bool LinearSystem::isIn(vector< double > Ai, double bi){
 		line.push_back(this->b[i]);
 		bool is_in = true;
 		for(int j=0; j<(signed)Ai.size(); j++){
-			is_in = is_in && (abs(Ai[j] - line[j]) < epsilon);
+			is_in = is_in && (abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
 		}
 		if(is_in){ return true; }
 	}
@@ -119,31 +196,13 @@ void LinearSystem::initLS(){
 }
 
 /**
- * Return the template matrix
- *
- * @return template matrix
- */
-vector< vector<double> > LinearSystem::getA(){
-	return this->A;
-}
-
-/**
- * Return the offset vector
- *
- * @return offset vector
- */
-vector<double> LinearSystem::getb(){
-	return this->b;
-}
-
-/**
  * Return the (i,j) element of the template matrix
  *
  * @param[in] i row index
  * @param[in] j column index
  * @return (i,j) element
  */
-double LinearSystem::getA(int i, int j){
+const double& LinearSystem::getA(int i, int j) const {
 	if(( 0<= i ) && (i < (signed)this->A.size())){
 		if(( 0<= j ) && (j < (signed)this->A[j].size())){
 			return this->A[i][j];
@@ -159,7 +218,7 @@ double LinearSystem::getA(int i, int j){
  * @param[in] i column index
  * @return i-th element
  */
-double LinearSystem::getb(int i){
+const double& LinearSystem::getb(int i) const {
 	if(( 0<= i ) && (i < (signed)this->b.size())){
 			return this->b[i];
 	}
@@ -171,9 +230,11 @@ double LinearSystem::getb(int i){
  * Determine whether this linear system is empty or not, i.e.,
  * the linear system has solutions
  *
+ * @param[in] strict_inequality specifies whether the linear system is a 
+ * 						strict inequality (i.e., Ax < b)
  * @return true if the linear system is empty
  */
-bool LinearSystem::isEmpty(){
+bool LinearSystem::isEmpty(const bool strict_inequality) const {
 
 	vector< vector< double > > extA = this->A;
 	vector< double > obj_fun (this->n_vars, 0);
@@ -184,70 +245,65 @@ bool LinearSystem::isEmpty(){
 		extA[i].push_back(-1);
 	}
 
-	double z = this->solveLinearSystem(extA,this->b,obj_fun,GLP_MIN);
+	const double z = solveLinearSystem(extA,this->b,obj_fun,GLP_MIN);
 
-	return (z>0);
-
+	return (z>0)||(strict_inequality&&(z>=0));
 }
 
 /**
- * Optimize a linear system
+ * Compute the complementary of a vector of values.
  *
- * @param[in] A template matrix of the system to optimize
- * @param[in] b offset vector of the system to optimize
- * @param[in] obj_fun objective function
- * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
- * @return optimum
+ * @param[in] orig the vector of values to be complementated.
+ * @return A vector containing the complementaries of the parameter values
  */
-double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< double > b, vector< double > obj_fun, int min_max){
+template<typename T>
+std::vector<T> get_complementary(const std::vector<T>& orig)
+{
+   std::vector<T> res{orig};
 
-	int num_rows = A.size();
-	int num_cols = obj_fun.size();
-	int size_lp = num_rows*num_cols;
+   for (typename std::vector<T>::iterator it=std::begin(res); it!=std::end(res); ++it) {
+	   *it = -*it;
+   }
 
-	int ia[size_lp+1], ja[size_lp+1];
-	double ar[size_lp+1];
+   return res;
+}
 
-	glp_prob *lp;
-	lp = glp_create_prob();
-	glp_set_obj_dir(lp, min_max);
+/**
+ * Determine all the solutions of this linear system are also 
+ * solutions for another linear system.
+ *
+ * @param[in] LS a linear system
+ * @return true if all the solutions of this object are also 
+ * 				solutions for the parameter.
+ */
+bool LinearSystem::solutionsAlsoSatisfy(const LinearSystem& LS) const {
 
-	// Turn off verbose mode
-	glp_smcp lp_param;
-	glp_init_smcp(&lp_param);
-	lp_param.msg_lev = GLP_MSG_ERR;
+	LinearSystem extLS(LS.A, LS.b);
+	extLS.A.push_back(vector<double>(1, 0));
+	extLS.b.push_back(0);
 
-	glp_add_rows(lp, num_rows);
-	for(int i=0; i<num_rows; i++){
-		glp_set_row_bnds(lp, i+1, GLP_UP, 0.0, b[i]);
-	}
+	for (int i=0; i<this->size(); i++){
+		extLS.A[LS.size()] = get_complementary(this->A[i]);
+		extLS.b[LS.size()] = -this->b[i];
 
-	glp_add_cols(lp, num_cols);
-	for(int i=0; i<num_cols; i++){
-		glp_set_col_bnds(lp, i+1, GLP_FR, 0.0, 0.0);
-	}
-
-	for(int i=0; i<num_cols; i++){
-		glp_set_obj_coef(lp, i+1, obj_fun[i]);
-	}
-
-	int k=1;
-	for(int i=0; i<num_rows; i++){
-		for(int j=0; j<num_cols; j++){
-			ia[k] = i+1, ja[k] = j+1, ar[k] = A[i][j]; /* a[i+1,j+1] = A[i][j] */
-			k++;
+		if (!extLS.isEmpty(true)) {
+			return false;
 		}
 	}
 
-	glp_load_matrix(lp, size_lp, ia, ja, ar);
-	glp_exact(lp, &lp_param);
-//	glp_simplex(lp, &lp_param);
+	return true;
+}
 
-	double res = glp_get_obj_val(lp);
-	glp_delete_prob(lp);
-	glp_free_env();
-	return res;
 
+/**
+ * Determine whether two linear systems are equivalent
+ *
+ * @param[in] LS a linear system to be compared this object.
+ * @return true if this object is equivalent to the parameter
+ */
+bool LinearSystem::operator==(const LinearSystem& LS) const {
+
+	return this->solutionsAlsoSatisfy(LS) && LS.solutionsAlsoSatisfy(*this);
 }
 
 /**
@@ -257,7 +313,7 @@ double LinearSystem::solveLinearSystem(vector< vector< double > > A, vector< dou
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double LinearSystem::minLinearSystem(lst vars, ex obj_fun){
+double LinearSystem::minLinearSystem(const lst& vars, const ex& obj_fun) const {
 
 	vector< double > obj_fun_coeffs;
 	ex const_term = obj_fun;
@@ -272,8 +328,8 @@ double LinearSystem::minLinearSystem(lst vars, ex obj_fun){
 
 	}
 
-	double c = ex_to<numeric>(evalf(const_term)).to_double();
-	double min = this->solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MIN);
+	const double c = ex_to<numeric>(evalf(const_term)).to_double();
+	const double min = solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MIN);
 
 	return (min+c);
 
@@ -285,8 +341,8 @@ double LinearSystem::minLinearSystem(lst vars, ex obj_fun){
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maxLinearSystem(vector< double > obj_fun_coeffs){
-	return this->solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
+double LinearSystem::maxLinearSystem(const vector< double >& obj_fun_coeffs) const {
+	return solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
 }
 
 /**
@@ -296,7 +352,7 @@ double LinearSystem::maxLinearSystem(vector< double > obj_fun_coeffs){
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
+double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 
 	vector< double > obj_fun_coeffs;
 	ex const_term = obj_fun;
@@ -310,8 +366,8 @@ double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
 
 	}
 
-	double c = ex_to<numeric>(evalf(const_term)).to_double();
-	double max = this->solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
+	const double c = ex_to<numeric>(evalf(const_term)).to_double();
+	const double max = solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
 
 	return (max+c);
 }
@@ -322,23 +378,17 @@ double LinearSystem::maxLinearSystem(lst vars, ex obj_fun){
  * @param[in] LS linear system to be appended
  * @return linear system obtained by merge
  */
-LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS){
-
-	vector< vector<double> > newA = this->A;
-	vector<double> newb = this->b;
-
-	vector< vector<double> > LSA = LS->getA();
-	vector<double> LSb = LS->getb();
+LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS) const {
+	LinearSystem *result = new LinearSystem(this->A, this->b);
 
 	for(int i=0; i<LS->size(); i++){
-		if( !this->isIn(LSA[i],LSb[i]) ){		// check for duplicates
-			newA.push_back( LSA[i] );
-			newb.push_back( LSb[i] );
+		if( !this->isIn(LS->A[i], LS->b[i]) ){		// check for duplicates
+			result->A.push_back( LS->A[i] );
+			result->b.push_back( LS->b[i] );
 		}
 	}
 
-	return new LinearSystem(newA,newb);
-
+	return result;
 }
 
 /**
@@ -346,19 +396,24 @@ LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS){
  *
  * @return boolean vector (true is if i-th constrain is redundant)
  */
-vector<bool> LinearSystem::redundantCons(){
+vector<bool> LinearSystem::redundantCons() const{
 
 	vector<bool> redun (this->size(), false);
 
 	for(int i=0; i<this->size(); i++){
 		double max = this->maxLinearSystem(this->A[i]);
-		if (max != this->b[i])
-		{
+		if (abs(max - this->b[i]) > MAX_APPROX_ERROR) {  /* This should be max != this->b[i], 
+								    however, due to double approximation 
+								    errors, testing whether the distance 
+								    between max and this->b[i] is 
+								    greater than a fixed positive 
+								    approximation constant is more 
+								    conservative */
 			redun[i] = true;
 		} else {
 			auto max_coeff = max_element(std::begin(A[i]), std::end(A[i]));
 			auto min_coeff = min_element(std::begin(A[i]), std::end(A[i]));
-			redun[i] = ((*max_coeff==*min_coeff)&&(*min_coeff==0));
+			redun[i] = ((*max_coeff==*min_coeff)&&(*min_coeff==0)&&(b[i]>=0));
 		}
 	}
 	return redun;
@@ -394,41 +449,19 @@ double LinearSystem::volBoundingBox(){
 	for(int i=0; i<this->dim(); i++){
 		vector<double> facet = zeros;
 		facet[i] = 1;
-		double b_plus = this->solveLinearSystem(this->A,this->b,facet,GLP_MAX);
+		const double b_plus = solveLinearSystem(this->A,this->b,facet,GLP_MAX);
 		facet[i] = -1;
-		double b_minus = this->solveLinearSystem(this->A,this->b,facet,GLP_MAX);
+		const double b_minus = solveLinearSystem(this->A,this->b,facet,GLP_MAX);
 		vol = vol*(b_plus+b_minus);
 	}
 
 	return vol;
 }
 
-
-/**
- * Check if if a vector is null, i.e.,
- * it's a vector of zeros (used to detected useless constraints)
- *
- * @param[in] line vector to test
- * @return true is the vector is nulle
- */
-bool LinearSystem::zeroLine(vector<double> line){
-
-	double epsilon = 0.00001;	// necessary for double comparison
-
-	bool zeros = true;
-	int i=0;
-	while(zeros && i<(signed)line.size()){
-		zeros = zeros && (abs(line[i]) < epsilon);
-		i++;
-	}
-	return zeros;
-
-}
-
 /**
  * Print the linear system
  */
-void LinearSystem::print(){
+void LinearSystem::print() const {
 	for(int i=0; i<(signed)this->A.size(); i++){
 		for(int j=0; j<(signed)this->A[i].size(); j++){
 			cout<<this->A[i][j] << (j == (signed)this->A[i].size()-1 ? "" : " ");
@@ -441,7 +474,7 @@ void LinearSystem::print(){
 /**
  * Print the linear system in Matlab format (for plotregion script)
  */
-void LinearSystem::plotRegion(){
+void LinearSystem::plotRegion() const {
 
 	if(this->dim() > 3){
 		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
@@ -466,7 +499,7 @@ void LinearSystem::plotRegion(){
  * @param[in] file_name name of the file
  * @param[in] color color of the polytope to plot
  */
-void LinearSystem::plotRegionToFile(char *file_name, char color){
+void LinearSystem::plotRegionToFile(const char *file_name, const char color) const {
 
 	if(this->dim() > 3){
 		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
@@ -495,7 +528,7 @@ void LinearSystem::plotRegionToFile(char *file_name, char color){
  *
  * @param[in] t thickness of the set to plot
  */
-void LinearSystem::plotRegionT(double t){
+void LinearSystem::plotRegionT(const double t) const {
 	if(this->dim() > 2){
 		cout<<"LinearSystem::plotRegionT : maximum 2d sets are allowed";
 		exit (EXIT_FAILURE);
@@ -532,7 +565,7 @@ void LinearSystem::plotRegionT(double t){
  * @param[in] rows rows to be plot
  * @param[in] cols colors of the plots
  */
-void LinearSystem::plotRegion(vector<int> rows, vector<int> cols){
+void LinearSystem::plotRegion(const vector<int>& rows, const vector<int>& cols) const{
 
 		if(cols.size() > 3){
 			cout<<"LinearSystem::plotRegion : cols maximum 3d sets are allowed";
