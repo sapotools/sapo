@@ -20,9 +20,20 @@ file(GLOB_RECURSE SOURCES src/*.cpp src/STL/*.cpp parser/src/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
-add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE} ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
+add_executable(sapo ${SOURCES})
 
 set(CMAKE_CXX_FLAGS "-O2")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
+
+enable_testing()
+
+set(sapo_tests Ebola Influenza LotkaVolterra # Phosphorelay does not work
+			   Quadcopter Rossler SIRp SIR VanDerPol )
+
+foreach(test_name ${sapo_tests})
+   add_test(NAME ${test_name}
+	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name}
+			 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtests.cmake)
+endforeach()
