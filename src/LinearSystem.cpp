@@ -373,12 +373,12 @@ double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 }
 
 /**
- * Create a new liner system by merging this LS and the specified one
+ * Create a new linear system by concatenating this LS and the specified one
  *
  * @param[in] LS linear system to be appended
  * @return linear system obtained by merge
  */
-LinearSystem* LinearSystem::appendLinearSystem(LinearSystem *LS) const {
+LinearSystem* LinearSystem::intersectWith(const LinearSystem *LS) const {
 	LinearSystem *result = new LinearSystem(this->A, this->b);
 
 	for(int i=0; i<LS->size(); i++){
