@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.9)
+
 project (sapo CXX)
 
 #For shared libraries:
@@ -26,3 +27,18 @@ set(CMAKE_CXX_FLAGS "-O2")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
+
+execute_process(COMMAND sh ./scripts/install-hooks.bash )
+
+enable_testing()
+
+set(sapo_tests Ebola Influenza LotkaVolterra # Phosphorelay does not work
+			   Quadcopter Rossler SIRp SIR VanDerPol )
+
+add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo)
+foreach(test_name ${sapo_tests})
+   add_test(NAME ${test_name}
+	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name}
+			 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtests.cmake)
+   set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP building_sapo)
+endforeach()
