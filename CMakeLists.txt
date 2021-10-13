@@ -21,7 +21,7 @@ file(GLOB_RECURSE SOURCES src/*.cpp src/STL/*.cpp parser/src/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
-add_executable(sapo ${SOURCES})
+add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE} ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
 
 set(CMAKE_CXX_FLAGS "-O2 -Wall")
 
