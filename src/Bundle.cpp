@@ -440,9 +440,6 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 				// compute control points
 				lst sub, fog;
 
-
-				int pio = 0;
-
 				for(int k=0; k<(signed)vars.nops(); k++){
 					sub.append(vars[k] == genFun[k]);
 				}
