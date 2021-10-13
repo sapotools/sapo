@@ -36,7 +36,6 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 
 	Flowpipe *flowpipe = new Flowpipe();
 
-	clock_t tStart = clock();
 	if(this->options.verbose){
 		initSet->getBundle()->print();
 	}
@@ -60,7 +59,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 
 		flowpipe->append(X);			// store result
 	}
-	cout<<"Done.\tTime taken:"<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+	cout << "done" << endl;
 
 	return flowpipe;
 }
@@ -83,7 +82,6 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 	cout<<"Computing parametric reach set..."<<flush;
 
-	clock_t tStart = clock();
 	if(this->options.verbose){
 		initSet->getBundle()->print();
 	}
@@ -108,7 +106,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 		flowpipe->append(X);			// store result
 	}
 
-	cout<<"Done.\tTime taken:"<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+	cout << "done" << endl;
 
 	return flowpipe;
 
@@ -126,9 +124,8 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
 
 	cout<<"Synthesizing parameters..."<<flush;
 
-	clock_t tStart = clock();
 	LinearSystemSet *res = this->synthesizeSTL(reachSet,parameterSet,formula);
-	cout<<"Done.\tTime taken: "<<double(clock() - tStart) / CLOCKS_PER_SEC<<"\n";
+	cout << "done" << endl;
 
 	return res;
 }
