@@ -318,6 +318,8 @@ STL *Formula::toSTL(InputModel& m, const lst& vars, const lst& params)
 			return new Eventually(i.first, i.second, f1->toSTL(m, vars, params));
 		case formulaType::UNTIL:
 			return new Until(f1->toSTL(m, vars, params), i.first, i.second, f2->toSTL(m, vars, params));
+		default:
+			throw std::logic_error("Unsupported formula type");
 	}
 	return NULL;
 }
