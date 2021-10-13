@@ -22,7 +22,7 @@ const beta = 0.9;
 const kappa2 = 0.5;
 const gamma2 = 0.5;
 const sigma = 0.28;
-const Delta = 0.5;
+const Delta = 0.1;
 
 // dynamics
 dynamic(s) = s - ((s*beta*i) + gamma1*q)*Delta;
