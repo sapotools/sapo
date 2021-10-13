@@ -60,7 +60,7 @@ public:
 	bool solutionsAlsoSatisfy(const LinearSystem& LS) const;
 
 	// operations on linear system
-	LinearSystem* appendLinearSystem(LinearSystem *LS) const;
+	LinearSystem* intersectWith(const LinearSystem *LS) const;
 	vector<bool> redundantCons() const;
 	LinearSystem *simplify();
 
@@ -82,7 +82,7 @@ public:
 	void plotRegionT(const double t) const;
 	void plotRegion(const vector<int>& rows, const vector<int>& cols) const;
 
-	virtual ~LinearSystem();
+	~LinearSystem();
 };
 
 #endif /* LINEARSYSTEM_H_ */

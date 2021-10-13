@@ -12,8 +12,7 @@
 /**
  * Constructor that instantiates an empty set
  */
-LinearSystemSet::LinearSystemSet(){
-}
+LinearSystemSet::LinearSystemSet(): set() {}
 
 /**
  * Constructor that instantiates a singleton set
@@ -79,14 +78,14 @@ void LinearSystemSet::add(LinearSystem *LS){
  * @param[in] LSset set to intersect with
  * @returns intersected sets
  */
-LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset) {
+LinearSystemSet* LinearSystemSet::intersectWith(const LinearSystemSet *LSset) const {
 
 	LinearSystemSet* result = new LinearSystemSet();
 	vector<LinearSystem*> set = LSset->getSet();
 
 	for(int i=0; i<(signed)this->set.size(); i++){
 		for(int j=0; j<(signed)set.size(); j++){
-			LinearSystem *intLS = this->set[i]->appendLinearSystem(set[j]); // intersect
+			LinearSystem *intLS = this->set[i]->intersectWith(set[j]); // intersect
 			result->add(intLS);
 		}
 	}
@@ -102,12 +101,12 @@ LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset) {
 LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
 	LinearSystemSet* result = new LinearSystemSet(this->set);
 
-	for (std::vector<LinearSystem*>::iterator it=std::begin(LSset->set); it!=std::end(LSset->set); ++it) {
+	for (std::vector<LinearSystem*>::iterator it=std::begin(LSset->set); 
+	                                          it!=std::end(LSset->set); ++it) {
 		result->add(*it);
 	}
 
 	return result;
-
 }
 
 /**

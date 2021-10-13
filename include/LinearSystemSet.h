@@ -12,7 +12,7 @@
 
 #include "LinearSystem.h"
 
-#define MINIMIZE_LS_SET_REPRESENTATION false
+#define MINIMIZE_LS_SET_REPRESENTATION true
 
 
 class LinearSystemSet {
@@ -31,7 +31,7 @@ public:
 	void add(LinearSystem *LS);
 
 	// operations on set
-	LinearSystemSet* intersectWith(LinearSystemSet *LSset);
+	LinearSystemSet* intersectWith(const LinearSystemSet *LSset) const;
 	LinearSystemSet* unionWith(LinearSystemSet *LSset);
 	LinearSystemSet* boundedUnionWith(LinearSystemSet *LSset, int bound);
 
@@ -51,7 +51,7 @@ public:
 	bool isEmpty() const;
 	void print() const;
 
-	virtual ~LinearSystemSet();
+	~LinearSystemSet();
 };
 
 #endif /* LINEARSYSTEMSET_H_ */
