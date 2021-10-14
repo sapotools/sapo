@@ -144,48 +144,44 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 	switch( formula->getType() ){
 
 		// Atomic predicate
-		case 0:
+		case ATOM:
 			return this->refineParameters(reachSet, parameterSet, (const Atom *)formula);
-		break;
 
 		// Conjunction
-		case 1:{
+		case CONJUNCTION: {
 			Conjunction *conj = (Conjunction *) formula;
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, conj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, conj->getRightSubFormula());
 			return LS1->intersectWith(LS2);
 		}
-		break;
 
 		// Disjunction
-		case 2:{
+		case DISJUNCTION: {
 			Disjunction *disj = (Disjunction *) formula;
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, disj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, disj->getRightSubFormula());
 			return LS1->unionWith(LS2);
 		}
-		break;
 
 		// Until
-		case 3:
+		case UNTIL:
 			return this->synthesizeUntil(reachSet, parameterSet, (Until *)formula);
-		break;
 
 		// Always
-		case 4:
+		case ALWAYS:
 			return this->synthesizeAlways(reachSet, parameterSet, (Always *)formula);
-		break;
 
 		// Eventually
-		case 5:
+		case EVENTUALLY: {
 			Atom *a = new Atom(-1);
 			Eventually *ev = (Eventually *)formula;
 
 			Until *u = new Until(a, ev->getA(), ev->getB(), ev->getSubFormula());
 			return this->synthesizeUntil(reachSet, parameterSet, u);
 			//return this->synthesizeEventually(base_v, lenghts, parameterSet, formula);
-		break;
-
+		}
+		default:
+			throw std::logic_error("Unsupported formula");
 	}
 
 	return parameterSet;
