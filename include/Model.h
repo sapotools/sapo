@@ -31,15 +31,16 @@ public:
 
 	char name[64];
 
-	char* getName(){ return this->name; }
-	lst getVars(){ return this->vars; }
-	lst getParams(){ return this->params; }
-	lst getDyns(){ return this->dyns; }
+	inline const char* getName() const { return this->name; }
+	inline const lst getVars(){ return this->vars; }
+	inline const lst getParams(){ return this->params; }
+	inline const lst getDyns() const { return this->dyns; }
 
-	Bundle* getReachSet(){ return this->reachSet; }
-	LinearSystemSet* getParaSet(){ return this->paraSet; }
-	STL* getSpec(){ return this->spec; }
+	inline Bundle* getReachSet(){ return this->reachSet; }
+	inline LinearSystemSet* getParaSet(){ return this->paraSet; }
+	inline const STL* getSpec() const { return this->spec; }
 
+	~Model();
 };
 
 #endif /* MODEL_H_ */

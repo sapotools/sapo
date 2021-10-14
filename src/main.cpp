@@ -84,5 +84,7 @@ int main(int argc,char** argv){
 		}
 	}
 
+	delete model;
+
 	exit(EXIT_SUCCESS);
 }
