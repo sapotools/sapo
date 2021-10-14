@@ -15,14 +15,14 @@ class Always : public STL {
 
 private:
 
-	const STL * f;			// subformula
+	const std::shared_ptr<STL> f;			// subformula
 	int a, b;			// temporal interval bounds
 
 public:
 
-	Always(int a, int b, const STL * f);
+	Always(int a, int b, const std::shared_ptr<STL> f);
 
-	inline const STL * getSubFormula() const { return this->f; }
+	inline const std::shared_ptr<STL> getSubFormula() const { return this->f; }
 
 	inline const int getA() const { return this->a;}
 	inline const int getB() const { return this->b; }

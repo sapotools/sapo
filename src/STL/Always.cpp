@@ -15,7 +15,7 @@
  * @param[in] b end of temporal interval
  * @param[in] f subformula
  */
-Always::Always(int a, int b, const STL * f): STL(ALWAYS), f(f), a(a), b(b) {}
+Always::Always(int a, int b, const std::shared_ptr<STL> f): STL(ALWAYS), f(f), a(a), b(b) {}
 
 /**
  * Print the formula
@@ -26,8 +26,5 @@ void Always::print() const {
 	cout<<")";
 }
 
-Always::~Always() {
-	if (this->delete_subformulas()) {
-		delete f;
-	}
-}
+Always::~Always() 
+{}

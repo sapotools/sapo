@@ -28,7 +28,7 @@ set(CMAKE_CXX_FLAGS "-O2 -Wall")
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
 
-execute_process(COMMAND sh ./scripts/install-hooks.bash )
+execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 
 enable_testing()
 

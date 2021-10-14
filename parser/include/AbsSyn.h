@@ -157,7 +157,7 @@ public:
 	 */
 	bool simplify();
 	
-	STL *toSTL(InputData& m, const lst& vars, const lst& params);		// transforms a Formula into a SAPO STL formula
+	std::shared_ptr<STL> toSTL(InputData& m, const lst& vars, const lst& params);		// transforms a Formula into a SAPO STL formula
 	
 protected:
 	Formula() { ex = NULL; f1 = NULL; f2 = NULL; }

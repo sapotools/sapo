@@ -15,15 +15,15 @@ class Until : public STL {
 
 private:
 
-	const STL * f1, * f2;		// subformulas
+	const std::shared_ptr<STL> f1, f2;		// subformulas
 	int a, b;			// interval bounds
 
 public:
 
-	Until(const STL * f1, int a, int b, const STL * f2);
+	Until(const std::shared_ptr<STL> f1, int a, int b, const std::shared_ptr<STL> f2);
 
-	inline const STL * getLeftSubFormula() const {return f1;}
-	inline const STL * getRightSubFormula() const {return f2;}
+	inline const std::shared_ptr<STL> getLeftSubFormula() const {return f1;}
+	inline const std::shared_ptr<STL> getRightSubFormula() const {return f2;}
 
 	inline int getA() const {return a;}
 	inline int getB() const {return b;}
