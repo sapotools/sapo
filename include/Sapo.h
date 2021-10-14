@@ -39,7 +39,7 @@ private:
 	LinearSystemSet* synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
 	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const Atom *formula);
 	LinearSystemSet* synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, Until *formula, const int time=0);
-	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula);
+	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula, const int time=0);
 
 public:
 	Sapo(Model *model, sapo_opt options);

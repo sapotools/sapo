@@ -345,7 +345,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
  * @param[in] sigma STL always formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula){
+LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula, const int time){
 
 	//reachSet->getBundle()->plotRegion();
 
@@ -354,38 +354,29 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 	int b = formula->getB();
 
 	// Always interval far
-	if((a > 0) && (b > 0)){
-
-		// shift always interval
-		formula->setA(a-1);
-		formula->setB(b-1);
-
+	if((a > time) && (b > time)){
 		// Reach step wrt to the i-th linear system of parameterSet
 		for(int i=0; i<parameterSet->size(); i++){
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
-			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula);
+			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
 			result = result->unionWith(tmpLSset);
 		}
 		return result;
 	}
 
 	// Inside Always interval
-	if((a == 0) && (b > 0)){
+	if((a <= time) && (b > time)){
 
 		// Refine wrt phi
 		LinearSystemSet *P = this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 
 		if(!P->isEmpty()){
-
-			// shift until interval
-			formula->setB(b-1);
-
 			// Reach step wrt to the i-th linear system of P
 			for(int i=0; i<P->size(); i++){
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
-				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula);
+				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
 				result = result->unionWith(tmpLSset);
 			}
 
@@ -397,7 +388,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 	}
 
 	// Base case
-	if((a == 0) && (b == 0)){
+	if((a <= time) && (b <= time)){
 		return this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 	}
 
