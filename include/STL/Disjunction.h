@@ -14,14 +14,14 @@
 class Disjunction : public STL {
 
 private:
-	STL * f1, * f2;	// subformulas
+	const STL * f1, * f2;	// subformulas
 
 public:
 
-	Disjunction(STL * f1, STL * f2);
+	Disjunction(const STL * f1, const STL * f2);
 
-	inline STL * getLeftSubFormula() { return f1; }
-	inline STL * getRightSubFormula() { return f2; }
+	inline const STL * getLeftSubFormula() const {return f1;}
+	inline const STL * getRightSubFormula() const {return f2;}
 
 	void print() const;
 

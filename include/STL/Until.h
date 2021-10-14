@@ -15,15 +15,15 @@ class Until : public STL {
 
 private:
 
-	STL * f1, * f2;		// subformulas
+	const STL * f1, * f2;		// subformulas
 	int a, b;			// interval bounds
 
 public:
 
-	Until(STL * f1, int a, int b, STL * f2);
+	Until(const STL * f1, int a, int b, const STL * f2);
 
-	inline STL * getLeftSubFormula() {return f1;}
-	inline STL * getRightSubFormula() {return f2;}
+	inline const STL * getLeftSubFormula() const {return f1;}
+	inline const STL * getRightSubFormula() const {return f2;}
 
 	inline int getA() const {return a;}
 	inline int getB() const {return b;}

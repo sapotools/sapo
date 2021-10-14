@@ -15,7 +15,7 @@
  * @param[in] f1 left conjunct
  * @param[in] f2 right conjunct
  */
-Conjunction::Conjunction(STL * f1, STL * f2): STL(CONJUNCTION), f1(f1), f2(f2) {}
+Conjunction::Conjunction(const STL * f1, const STL * f2): STL(CONJUNCTION), f1(f1), f2(f2) {}
 
 /**
  * Print the formula
@@ -28,4 +28,10 @@ void Conjunction::print() const{
 	cout<<")";
 }
 
-Conjunction::~Conjunction() {}
+Conjunction::~Conjunction() 
+{
+	if (this->delete_subformulas()) {
+		delete f1;
+		delete f2;
+	}
+}

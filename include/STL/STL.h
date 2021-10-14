@@ -12,31 +12,31 @@
 #include "Common.h"
 #include <string.h>
 
+#define DO_NOT_DELETE_SUBFORMULAS 1<<0
+
 class STL {
+	const formula_type type;
+protected:
+
+	int options;
+
+	STL(const formula_type type, const int options=0);
+
+	inline bool delete_subformulas() const
+	{
+		return !(this->options&DO_NOT_DELETE_SUBFORMULAS);
+	}
 public:
-	inline const formula_type& getType() const { return type; }
 
-/*
-	virtual inline const ex& getPredicate() const { throw std::logic_error("This object is not equipped with this method."); };
-	virtual inline STL * getSubFormula() { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline STL * getLeftSubFormula() { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline STL * getRightSubFormula() { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline void setPredicateControlPts(const vector<lst>& predicateControlPts) { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline const vector<lst>& getPredicateControlPts() const { throw std::logic_error("This object is not equipped with this method."); }
+	const STL& set_options(const int options);
 
-	virtual inline const int getA() const { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline const int getB() const { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline void setA(const int a) { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline void setB(const int b) { throw std::logic_error("This object is not equipped with this method."); }
-	virtual inline int getID() const { throw std::logic_error("This object is not equipped with this method."); }
-*/
+	inline const formula_type& getType() const 
+	{ 
+		return type; 
+	}
 
 	virtual void print() const = 0;
-
-protected:
-	STL(formula_type type);
-
-	formula_type type;
+	virtual ~STL();
 };
 
 #endif /* STL_H_ */

@@ -15,14 +15,14 @@ class Always : public STL {
 
 private:
 
-	STL * f;			// subformula
+	const STL * f;			// subformula
 	int a, b;			// temporal interval bounds
 
 public:
 
-	Always(int a, int b, STL * f);
+	Always(int a, int b, const STL * f);
 
-	inline STL * getSubFormula() { return this->f; }
+	inline const STL * getSubFormula() const { return this->f; }
 
 	inline const int getA() const { return this->a;}
 	inline const int getB() const { return this->b; }
@@ -32,7 +32,7 @@ public:
 
 	void print() const;
 
-	~Always();
+	virtual ~Always();
 };
 
 #endif /* ALWAYS_H */
