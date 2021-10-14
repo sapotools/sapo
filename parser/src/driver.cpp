@@ -4,7 +4,7 @@
 driver::driver()
 	: trace_parsing (false), trace_scanning (false)
 {
-	m = new AbsSyn::InputModel();
+	m = new AbsSyn::InputData();
 }
 
 int driver::parse (const std::string &f)

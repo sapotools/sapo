@@ -112,7 +112,7 @@ Expr *Expr::copy()
 	return res;
 }
 
-bool Expr::isNumeric(InputModel *im)
+bool Expr::isNumeric(InputData *im)
 {
 	if (type == exprType::ID_ATOM)
 	{
@@ -126,7 +126,7 @@ bool Expr::isNumeric(InputModel *im)
 	return left->isNumeric(im) && (right != NULL ? right->isNumeric(im) : true);
 }
 
-double Expr::evaluate(InputModel *im)
+double Expr::evaluate(InputData *im)
 {
 	if (type == exprType::NUM_ATOM) return val;
 	if (type == exprType::ID_ATOM) return im->getDef(name)->getValue()->evaluate(im);
@@ -138,7 +138,7 @@ double Expr::evaluate(InputModel *im)
 	return -1;
 }
 
-ex Expr::toEx(InputModel& m, const lst& vars, const lst& params)
+ex Expr::toEx(InputData& m, const lst& vars, const lst& params)
 {
 	switch (type)
 	{
@@ -329,7 +329,7 @@ int Formula::simplifyRec()
 }
 
 // no negations, were eliminated in simplify
-STL *Formula::toSTL(InputModel& m, const lst& vars, const lst& params)
+STL *Formula::toSTL(InputData& m, const lst& vars, const lst& params)
 {
 	switch(type)
 	{
@@ -348,7 +348,6 @@ STL *Formula::toSTL(InputModel& m, const lst& vars, const lst& params)
 		default:
 			throw std::logic_error("Unsupported formula type");
 	}
-	return NULL;
 }
 
 
@@ -358,7 +357,7 @@ STL *Formula::toSTL(InputModel& m, const lst& vars, const lst& params)
  ***********************
  */
 
-InputModel::InputModel()
+InputData::InputData()
 {
 	problem = problemType::P_UNDEF;
 	varMode = modeType::M_UNDEF;
@@ -389,7 +388,7 @@ InputModel::InputModel()
 	alpha = -1;
 }
 
-ostream& operator<<(ostream& os, InputModel& m)
+ostream& operator<<(ostream& os, InputData& m)
 {
 	//TODO: implement
 	os << "Problem: " << m.problem << endl;
@@ -441,7 +440,7 @@ ostream& operator<<(ostream& os, InputModel& m)
 	return os;
 }
 
-bool InputModel::isVarDefined(string name)
+bool InputData::isVarDefined(string name)
 {
 	for (unsigned i = 0; i < vars.size(); i++)
 		if (vars[i]->getName() == name)
@@ -450,7 +449,7 @@ bool InputModel::isVarDefined(string name)
 	return false;
 }
 
-bool InputModel::isParamDefined(string name)
+bool InputData::isParamDefined(string name)
 {
 	for (unsigned i = 0; i < params.size(); i++)
 		if (params[i]->getName() == name)
@@ -459,7 +458,7 @@ bool InputModel::isParamDefined(string name)
 	return false;
 }
 
-bool InputModel::isConstDefined(string name)
+bool InputData::isConstDefined(string name)
 {
 	for (unsigned i = 0; i < consts.size(); i++)
 		if (consts[i]->getName() == name)
@@ -468,7 +467,7 @@ bool InputModel::isConstDefined(string name)
 	return false;
 }
 
-bool InputModel::isDefDefined(string name)
+bool InputData::isDefDefined(string name)
 {
 	for (unsigned i = 0; i < defs.size(); i++)
 		if (defs[i]->getName() == name)
@@ -477,12 +476,12 @@ bool InputModel::isDefDefined(string name)
 	return false;
 }
 
-bool InputModel::isSymbolDefined(string name)
+bool InputData::isSymbolDefined(string name)
 {
 	return isVarDefined(name) || isParamDefined(name) || isConstDefined(name) || isDefDefined(name);
 }
 
-Variable *InputModel::getVar(string name)
+Variable *InputData::getVar(string name)
 {
 	for (unsigned i = 0; i < vars.size(); i++)
 		if (vars[i]->getName() == name)
@@ -491,7 +490,7 @@ Variable *InputModel::getVar(string name)
 	return NULL;
 }
 
-int InputModel::getVarPos(string name)
+int InputData::getVarPos(string name)
 {
 	for (unsigned i = 0; i < vars.size(); i++)
 		if (vars[i]->getName() == name)
@@ -500,7 +499,7 @@ int InputModel::getVarPos(string name)
 	return -1;
 }
 
-Parameter *InputModel::getParam(string name)
+Parameter *InputData::getParam(string name)
 {
 	for (unsigned i = 0; i < params.size(); i++)
 		if (params[i]->getName() == name)
@@ -509,7 +508,7 @@ Parameter *InputModel::getParam(string name)
 	return NULL;
 }
 
-int InputModel::getParamPos(string name)
+int InputData::getParamPos(string name)
 {
 	for (unsigned i = 0; i < params.size(); i++)
 		if (params[i]->getName() == name)
@@ -518,7 +517,7 @@ int InputModel::getParamPos(string name)
 	return -1;
 }
 
-Constant *InputModel::getConst(string name)
+Constant *InputData::getConst(string name)
 {
 	for (unsigned i = 0; i < consts.size(); i++)
 		if (consts[i]->getName() == name)
@@ -527,7 +526,7 @@ Constant *InputModel::getConst(string name)
 	return NULL;
 }
 
-Definition *InputModel::getDef(string name)
+Definition *InputData::getDef(string name)
 {
 	for (unsigned i = 0; i < defs.size(); i++)
 		if (defs[i]->getName() == name)
@@ -536,7 +535,7 @@ Definition *InputModel::getDef(string name)
 	return NULL;
 }
 
-int InputModel::getDefPos(string name)
+int InputData::getDefPos(string name)
 {
 	for (unsigned i = 0; i < defs.size(); i++)
 		if (defs[i]->getName() == name)
@@ -545,42 +544,42 @@ int InputModel::getDefPos(string name)
 	return -1;
 }
 
-void InputModel::addDirection(vector<double> d, double LB, double UB)
+void InputData::addDirection(vector<double> d, double LB, double UB)
 {
 	directions.push_back(d);
 	LBoffsets.push_back(LB);
 	UBoffsets.push_back(UB);
 }
 
-void InputModel::defaultDirections()
+void InputData::defaultDirections()
 {
 	directions.resize(vars.size(), vector<double>(vars.size(), 0));
 	for (unsigned i = 0; i < vars.size(); i++)
 		directions[i][i] = 1;
 }
 
-void InputModel::defaultTemplate()
+void InputData::defaultTemplate()
 {
 	templateMatrix.resize(1, vector<int>(vars.size()));
 	iota(templateMatrix[0].begin(), templateMatrix[0].end(), 0);
 //	templateMatrix.resize(1, vector<int>(vars.size(), 1));
 }
 
-void InputModel::addParamDirection(vector<double> d, double LB, double UB)
+void InputData::addParamDirection(vector<double> d, double LB, double UB)
 {
 	paramDirections.push_back(d);
 	paramLBoffsets.push_back(LB);
 	paramUBoffsets.push_back(UB);
 }
 
-void InputModel::defaultParamDirections()
+void InputData::defaultParamDirections()
 {
 	paramDirections.resize(params.size(), vector<double>(params.size(), 0));
 	for (unsigned i = 0; i < params.size(); i++)
 		paramDirections[i][i] = 1;
 }
 
-int InputModel::getTransValue()
+int InputData::getTransValue()
 {
 	if (trans == transType::AFO)
 		return 1;
@@ -589,7 +588,7 @@ int InputModel::getTransValue()
 }
 
 
-bool InputModel::check()
+bool InputData::check()
 {
 	bool res = true;
 	
