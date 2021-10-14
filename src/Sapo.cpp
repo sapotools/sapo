@@ -277,9 +277,10 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
  * @param[in] reachSet bundle with the initial set
  * @param[in] parameterSet set of sets of parameters
  * @param[in] sigma STL until formula
+ * @param[in] time is the time of the current evaluation
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, Until *formula){
+LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, Until *formula, const int time){
 
 	LinearSystemSet* result = new LinearSystemSet();
 	// get formula temporal interval
@@ -287,23 +288,19 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 	int b = formula->getB();
 
 	// Until interval far
-	if((a > 0) && (b > 0)){
+	if((a > time) && (b > time)){
 		// Synthesize wrt phi1
 		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
 		if( P1->isEmpty() ){
 			return P1;			// false until
 		}else{
-			// shift until interval
-			formula->setA(a-1);
-			formula->setB(b-1);
-
 			// Reach step wrt to the i-th linear system of P1
 			for(int i=0; i<P1->size(); i++){
 				// TODO : add the decomposition
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 				
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
-				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula);
+				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
 				result = result->unionWith(tmpLSset);
 			}
 			return result;
@@ -311,7 +308,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 	}
 
 	// Inside until interval
-	if((a == 0) && (b > 0)){
+	if((a <= time) && (b > time)){
 		// Refine wrt phi1 and phi2
 		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
 		LinearSystemSet *P2 = this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
@@ -321,19 +318,18 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 		}
 
 		// shift until interval
-		formula->setB(b-1);
 		for(int i=0; i<P1->size(); i++){
 		// 	TODO : add decomposition
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
-			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula);
+			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
 			result = result->unionWith(tmpLSset);
 		}
 		return P2->unionWith(result);
 	}
 
 	// Base case
-	if((a == 0) && (b == 0)){
+	if((a <= time) && (b <= time)){
 		return this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 	}
 
