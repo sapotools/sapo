@@ -25,7 +25,7 @@ protected:
 	Bundle *reachSet; // Initial reach set
 	LinearSystemSet *paraSet;
 
-	STL *spec;
+	std::shared_ptr<STL> spec;
 
 public:
 
@@ -38,7 +38,7 @@ public:
 
 	inline Bundle* getReachSet(){ return this->reachSet; }
 	inline LinearSystemSet* getParaSet(){ return this->paraSet; }
-	inline const STL* getSpec() const { return this->spec; }
+	inline const std::shared_ptr<STL>  getSpec() const { return this->spec; }
 
 	~Model();
 };

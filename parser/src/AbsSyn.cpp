@@ -329,22 +329,22 @@ int Formula::simplifyRec()
 }
 
 // no negations, were eliminated in simplify
-STL *Formula::toSTL(InputData& m, const lst& vars, const lst& params)
+std::shared_ptr<STL> Formula::toSTL(InputData& m, const lst& vars, const lst& params)
 {
 	switch(type)
 	{
 		case formulaType::ATOM:
-			return new Atom(ex->toEx(m, vars, params));
+			return std::make_shared<Atom>(ex->toEx(m, vars, params));
 		case formulaType::CONJ:
-			return new Conjunction(f1->toSTL(m, vars, params), f2->toSTL(m, vars, params));
+			return std::make_shared<Conjunction>(f1->toSTL(m, vars, params), f2->toSTL(m, vars, params));
 		case formulaType::DISJ:
-			return new Disjunction(f1->toSTL(m, vars, params), f2->toSTL(m, vars, params));
+			return std::make_shared<Disjunction>(f1->toSTL(m, vars, params), f2->toSTL(m, vars, params));
 		case formulaType::ALW:
-			return new Always(i.first, i.second, f1->toSTL(m, vars, params));
+			return std::make_shared<Always>(i.first, i.second, f1->toSTL(m, vars, params));
 		case formulaType::EVENT:
-			return new Eventually(i.first, i.second, f1->toSTL(m, vars, params));
+			return std::make_shared<Eventually>(i.first, i.second, f1->toSTL(m, vars, params));
 		case formulaType::UNTIL:
-			return new Until(f1->toSTL(m, vars, params), i.first, i.second, f2->toSTL(m, vars, params));
+			return std::make_shared<Until>(f1->toSTL(m, vars, params), i.first, i.second, f2->toSTL(m, vars, params));
 		default:
 			throw std::logic_error("Unsupported formula type");
 	}

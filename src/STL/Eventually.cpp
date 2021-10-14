@@ -15,7 +15,7 @@
  * @param[in] b end of temporal interval
  * @param[in] f subformula
  */
-Eventually::Eventually(int a, int b, const STL * f): STL(EVENTUALLY), f(f), a(a), b(b) {}
+Eventually::Eventually(int a, int b, const std::shared_ptr<STL> f): STL(EVENTUALLY), f(f), a(a), b(b) {}
 
 /**
  * Print the formula
@@ -26,8 +26,5 @@ void Eventually::print() const {
 	cout<<")";
 }
 
-Eventually::~Eventually() {
-	if (this->delete_subformulas()) {
-		delete f;
-	}
-}
+Eventually::~Eventually() 
+{}

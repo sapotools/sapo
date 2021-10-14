@@ -12,20 +12,14 @@
 #include "Common.h"
 #include <string.h>
 
-#define DO_NOT_DELETE_SUBFORMULAS 1<<0
-
 class STL {
 	const formula_type type;
 protected:
 
 	int options;
 
-	STL(const formula_type type, const int options=0);
+	STL(const formula_type type);
 
-	inline bool delete_subformulas() const
-	{
-		return !(this->options&DO_NOT_DELETE_SUBFORMULAS);
-	}
 public:
 
 	const STL& set_options(const int options);

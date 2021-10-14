@@ -119,7 +119,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
  * @param[in] formula STL contraint to impose over the model
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, const STL *formula){
+LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
 
 	cout<<"Synthesizing parameters..."<<flush;
 
@@ -137,7 +137,7 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
  * @param[in] formula STL contraint to impose over the model
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const STL *formula){
+LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
 	
 	//reachSet->getBundle()->plotRegion();
 
@@ -145,11 +145,11 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 
 		// Atomic predicate
 		case ATOM:
-			return this->refineParameters(reachSet, parameterSet, (const Atom *)formula);
+			return this->refineParameters(reachSet, parameterSet, std::dynamic_pointer_cast<Atom>(formula));
 
 		// Conjunction
 		case CONJUNCTION: {
-			Conjunction *conj = (Conjunction *) formula;
+			const std::shared_ptr<Conjunction> conj = std::dynamic_pointer_cast<Conjunction>(formula);
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, conj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, conj->getRightSubFormula());
 			return LS1->intersectWith(LS2);
@@ -157,7 +157,7 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 
 		// Disjunction
 		case DISJUNCTION: {
-			Disjunction *disj = (Disjunction *) formula;
+			const std::shared_ptr<Disjunction> disj = std::dynamic_pointer_cast<Disjunction>(formula);
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, disj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, disj->getRightSubFormula());
 			return LS1->unionWith(LS2);
@@ -165,24 +165,19 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 
 		// Until
 		case UNTIL:
-			return this->synthesizeUntil(reachSet, parameterSet, (const Until *)formula);
+			return this->synthesizeUntil(reachSet, parameterSet, std::dynamic_pointer_cast<Until>(formula));
 
 		// Always
 		case ALWAYS:
-			return this->synthesizeAlways(reachSet, parameterSet, (const Always *)formula);
+			return this->synthesizeAlways(reachSet, parameterSet, std::dynamic_pointer_cast<Always>(formula));
 
 		// Eventually
 		case EVENTUALLY: {
-			Atom *a = new Atom(-1);
-			const Eventually *ev = (const Eventually *)formula;
+			std::shared_ptr<Atom> a = std::make_shared<Atom>(-1);
+			const std::shared_ptr<Eventually> ev = std::dynamic_pointer_cast<Eventually>(formula);
 
-			Until *u = new Until(a, ev->getA(), ev->getB(), ev->getSubFormula());
+			std::shared_ptr<Until> u = std::make_shared<Until>(a, ev->getA(), ev->getB(), ev->getSubFormula());
 			LinearSystemSet* result = this->synthesizeUntil(reachSet, parameterSet, u);
-			
-			u->set_options(DO_NOT_DELETE_SUBFORMULAS);
-
-			delete a;
-			delete u;
 
 			return result;
 			//return this->synthesizeEventually(base_v, lenghts, parameterSet, formula);
@@ -200,7 +195,7 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
  * @param[in] sigma STL atomic formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const Atom *atom){
+LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Atom> atom){
 
 	LinearSystemSet *result = new LinearSystemSet();
 
@@ -280,7 +275,7 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
  * @param[in] time is the time of the current evaluation
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, const Until *formula, const int time){
+LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Until> formula, const int time){
 
 	LinearSystemSet* result = new LinearSystemSet();
 	// get formula temporal interval
@@ -345,7 +340,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
  * @param[in] sigma STL always formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const Always *formula, const int time){
+LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Always> formula, const int time){
 
 	//reachSet->getBundle()->plotRegion();
 

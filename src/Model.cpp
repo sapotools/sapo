@@ -12,5 +12,4 @@ Model::~Model()
 {
     delete this->reachSet;
     delete this->paraSet;
-	delete this->spec;
 }

@@ -16,7 +16,7 @@
  * @param[in] b end of temporal interval
  * @param[in] f2 right subformula
  */
-Until::Until(const STL * f1, int a, int b, const STL * f2): STL(UNTIL), f1(f1), f2(f2), a(a), b(b) {}
+Until::Until(const std::shared_ptr<STL> f1, int a, int b, const std::shared_ptr<STL> f2): STL(UNTIL), f1(f1), f2(f2), a(a), b(b) {}
 
 /**
  * Print the formula
@@ -30,9 +30,4 @@ void Until::print() const {
 }
 
 Until::~Until() 
-{
-	if (this->delete_subformulas()) {
-		delete f1;
-		delete f2;
-	}
-}
+{}

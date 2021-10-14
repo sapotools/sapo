@@ -15,14 +15,14 @@ class Eventually : public STL {
 
 private:
 
-	const STL * f;			// subformula
+	const std::shared_ptr<STL> f;			// subformula
 	int a, b;			// interval bounds
 
 public:
 
-	Eventually(int a, int b, const STL * f);
+	Eventually(int a, int b, const std::shared_ptr<STL> f);
 
-	inline const STL * getSubFormula() const { return f; }
+	inline const std::shared_ptr<STL> getSubFormula() const { return f; }
 
 	inline int getA() const { return a; }
 	inline int getB() const { return b; }

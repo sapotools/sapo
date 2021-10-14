@@ -14,15 +14,15 @@
 class Conjunction : public STL {
 
 private:
-	const STL * f1, * f2;		// subformulas
+	const std::shared_ptr<STL> f1, f2;		// subformulas
 
 public:
 
 	// constructor
-	Conjunction(const STL * f1, const STL * f2);
+	Conjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2);
 
-	inline const STL * getLeftSubFormula() const {return f1;}
-	inline const STL * getRightSubFormula() const {return f2;}
+	inline const std::shared_ptr<STL> getLeftSubFormula() const {return f1;}
+	inline const std::shared_ptr<STL> getRightSubFormula() const {return f2;}
 
 	void print() const;
 
