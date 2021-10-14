@@ -15,14 +15,14 @@ class Eventually : public STL {
 
 private:
 
-	STL * f;			// subformula
+	const STL * f;			// subformula
 	int a, b;			// interval bounds
 
 public:
 
-	Eventually(int a, int b, STL * f);
+	Eventually(int a, int b, const STL * f);
 
-	inline STL * getSubFormula() { return f; }
+	inline const STL * getSubFormula() const { return f; }
 
 	inline int getA() const { return a; }
 	inline int getB() const { return b; }
