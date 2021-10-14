@@ -183,9 +183,6 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 		default:
 			throw std::logic_error("Unsupported formula");
 	}
-
-	return parameterSet;
-
 }
 
 /**
