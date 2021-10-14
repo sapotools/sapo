@@ -22,18 +22,18 @@ public:
 
 	Until(STL * f1, int a, int b, STL * f2);
 
-	STL * getLeftSubFormula(){return f1;};
-	STL * getRightSubFormula(){return f2;};
+	inline STL * getLeftSubFormula() {return f1;}
+	inline STL * getRightSubFormula() {return f2;}
 
-	int getA(){return a;};
-	int getB(){return b;};
+	inline int getA() const {return a;}
+	inline int getB() const {return b;}
 
-	void setA(int a){this->a = a;};
-	void setB(int b){this->b = b;};
+	inline void setA(int a){this->a = a;}
+	inline void setB(int b){this->b = b;}
 
-	void print();
+	void print() const;
 
-	virtual ~Until();
+	~Until();
 };
 
 #endif /* UNTIL_H */

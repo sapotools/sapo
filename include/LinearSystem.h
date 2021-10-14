@@ -25,11 +25,8 @@ private:
 	vector< vector<double> > A; // matrix A
 	vector< double > b; 		// vector b
 
-	bool isIn(vector< double > Ai, double bi);	// check if a constraint is already in
+	bool isIn(vector< double > Ai, const double bi) const;	// check if a constraint is already in
 	void initLS();								// initialize A and b
-	double solveLinearSystem(vector< vector< double > > A, vector< double > b, vector< double > obj_fun, int min_max);
-	bool zeroLine(vector<double> line);
-
 
 public:
 
@@ -37,34 +34,55 @@ public:
 	LinearSystem(vector< vector<double> > A, vector< double > b);
 	LinearSystem(lst vars, lst constraints);
 
-	vector< vector<double> > getA(); 	//return A
-	vector<double> getb(); 				//return b
-	double getA(int i, int j); 			//return A[i][j]
-	double getb(int i); 				//return b[i]
+	/**
+	 * Return the template matrix
+	 *
+	 * @return template matrix
+	 */
+	inline const vector< vector<double> >& getA() const { return this->A; }
+
+	/**
+	 * Return the offset vector
+	 *
+	 * @return offset vector
+	 */
+	inline const vector<double>& getb() const { return this->b; }
+
+	const double& getA(int i, int j) const;
+	const double& getb(int i) const;
 
 	// optimization functions
-	double minLinearSystem(lst vars, ex obj_fun);
-	double maxLinearSystem(lst vars, ex obj_fun);
-	double maxLinearSystem(vector< double > obj_fun_coeffs);
-	bool isEmpty();						// determine this LS is empty
+	double minLinearSystem(const lst& vars, const ex& obj_fun) const;
+	double maxLinearSystem(const lst& vars, const ex& obj_fun) const;
+	double maxLinearSystem(const vector< double >& obj_fun_coeffs) const;
+	bool isEmpty(const bool strict_inequality=false) const;						// determine this LS is empty
+	bool operator==(const LinearSystem& LS) const;  // decide whether two systems are equivalent
+	bool solutionsAlsoSatisfy(const LinearSystem& LS) const;
 
 	// operations on linear system
-	LinearSystem* appendLinearSystem(LinearSystem *LS);
-	vector<bool> redundantCons();
+	LinearSystem* intersectWith(const LinearSystem *LS) const;
+	vector<bool> redundantCons() const;
 	LinearSystem *simplify();
 
-	int dim(){ if(!this->isEmpty()){ return this->A[0].size(); }else{ return 0;}	};
-	int size(){ return this->b.size(); };
+	/**
+	 * Return the number of variables
+	 */
+	inline int dim() const { if(this->isEmpty()){ return 0; } return this->A[0].size(); };
+
+	/**
+	 * Return the number of inequalities
+	 */
+	inline int size() const { return this->b.size(); };
 
 	double volBoundingBox();
 
-	void print();
-	void plotRegion();
-	void plotRegionToFile(char *file_name, char color);
-	void plotRegionT(double t);
-	void plotRegion(vector<int> rows, vector<int> cols);
+	void print() const;
+	void plotRegion() const;
+	void plotRegionToFile(const char *file_name, const char color) const;
+	void plotRegionT(const double t) const;
+	void plotRegion(const vector<int>& rows, const vector<int>& cols) const;
 
-	virtual ~LinearSystem();
+	~LinearSystem();
 };
 
 #endif /* LINEARSYSTEM_H_ */

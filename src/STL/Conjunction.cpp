@@ -15,16 +15,12 @@
  * @param[in] f1 left conjunct
  * @param[in] f2 right conjunct
  */
-Conjunction::Conjunction(STL * f1, STL * f2){
-	this->f1=f1;
-	this->f2=f2;
-	type=CONJUNCTION;
-};
+Conjunction::Conjunction(STL * f1, STL * f2): STL(CONJUNCTION), f1(f1), f2(f2) {}
 
 /**
  * Print the formula
  */
-void Conjunction::print(){
+void Conjunction::print() const{
 	cout<<"(";
 	this->f1->print();
 	cout<<") and (";

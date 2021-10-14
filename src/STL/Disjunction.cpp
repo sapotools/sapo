@@ -14,16 +14,12 @@
   * @param[in] f1 left disjunct
   * @param[in] f2 right disjunct
   */
-Disjunction::Disjunction(STL * f1, STL * f2){
-	this->f1=f1;
-	this->f2=f2;
-	type=DISJUNCTION;
-};
+Disjunction::Disjunction(STL * f1, STL * f2): STL(DISJUNCTION), f1(f1), f2(f2){}
 
 /**
  * Print the formula
  */
-void Disjunction::print(){
+void Disjunction::print() const{
 	cout<<"(";
 	this->f1->print();
 	cout<<") or (";

@@ -344,7 +344,6 @@ void BaseConverter::split(int direction, double split_point){
 
 	// Extract list of multi-indices and max degree of direction
 	vector< vector< int > > multi_index_list = this->getMultiIdxList();
-	int nr = this->degrees[direction];
 
 	lst B;
 	B = this->getBernCoeffs();

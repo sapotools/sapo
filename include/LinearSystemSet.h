@@ -12,6 +12,9 @@
 
 #include "LinearSystem.h"
 
+#define MINIMIZE_LS_SET_REPRESENTATION true
+
+
 class LinearSystemSet {
 
 private:
@@ -22,23 +25,33 @@ public:
 
 	LinearSystemSet();
 	LinearSystemSet(LinearSystem *LS);
-	LinearSystemSet(vector<LinearSystem*> set);
+	LinearSystemSet(const vector<LinearSystem*>& set);
 
-	vector<LinearSystem*> getSet();
+	const vector<LinearSystem*>& getSet() const;
 	void add(LinearSystem *LS);
 
 	// operations on set
-	LinearSystemSet* intersectWith(LinearSystemSet *LSset);
+	LinearSystemSet* intersectWith(const LinearSystemSet *LSset) const;
 	LinearSystemSet* unionWith(LinearSystemSet *LSset);
 	LinearSystemSet* boundedUnionWith(LinearSystemSet *LSset, int bound);
 
-	double boundingVol();
-	int size();
-	LinearSystem* at(int i);
-	bool isEmpty();
-	void print();
+	double boundingVol() const;
 
-	virtual ~LinearSystemSet();
+	/**
+	 * Get the size of this set, i.e,
+	 * the number of linear systems
+	 *
+	 * @returns number of linear systems in the set
+	 */
+	inline int size() const{ return this->set.size(); }
+
+	LinearSystem* at(int i);
+	const LinearSystem* at(int i) const;
+
+	bool isEmpty() const;
+	void print() const;
+
+	~LinearSystemSet();
 };
 
 #endif /* LINEARSYSTEMSET_H_ */

@@ -1,3 +1,4 @@
+.vscode/
 .DS_Store
 CMakeFiles/
 CMakeCache.txt
@@ -8,3 +9,4 @@ parser/include/locations.h
 parser/include/parser.h
 parser/src/parser.cpp
 parser/src/scanner.cpp 
+bin/sapo
