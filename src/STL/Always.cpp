@@ -15,13 +15,14 @@
  * @param[in] b end of temporal interval
  * @param[in] f subformula
  */
-Always::Always(int a, int b, const std::shared_ptr<STL> f): STL(ALWAYS), f(f), a(a), b(b) {}
+Always::Always(int a, int b, const std::shared_ptr<STL> f): 
+	STL(ALWAYS), f(f), t_itvl(a,b) {}
 
 /**
  * Print the formula
  */
 void Always::print() const {
-	cout<<"always_["<<this->a<<","<<this->b<<"] (";
+	cout<<"always_"<< this->t_itvl <<" (";
 	this->f->print();
 	cout<<")";
 }
