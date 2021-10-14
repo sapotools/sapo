@@ -24,7 +24,7 @@ namespace AbsSyn
 {
 
 // forward declaration needed in Expr
-class InputModel;
+class InputData;
 
 // defines the types of problems solved by SAPO
 enum problemType
@@ -95,10 +95,10 @@ public:
 	
 	Expr *copy();			// deep copy of expression
 	
-	bool isNumeric(InputModel *im);		// checks if the expression contains only numbers
-	double evaluate(InputModel *im);	// evaluates the value of a numeric expression
+	bool isNumeric(InputData *im);		// checks if the expression contains only numbers
+	double evaluate(InputData *im);	// evaluates the value of a numeric expression
 	
-	ex toEx(InputModel &m, const lst& vars, const lst& params);			// converts an Expr to a GiNaC ex
+	ex toEx(InputData &m, const lst& vars, const lst& params);			// converts an Expr to a GiNaC ex
 	
 protected:
 	Expr() { left = NULL; right = NULL; };
@@ -157,7 +157,7 @@ public:
 	 */
 	bool simplify();
 	
-	STL *toSTL(InputModel& m, const lst& vars, const lst& params);		// transforms a Formula into a SAPO STL formula
+	STL *toSTL(InputData& m, const lst& vars, const lst& params);		// transforms a Formula into a SAPO STL formula
 	
 protected:
 	Formula() { ex = NULL; f1 = NULL; f2 = NULL; }
@@ -276,14 +276,14 @@ private:
  ***********************
  */
 
-class InputModel
+class InputData
 {
-	friend ostream& operator<<(ostream& os, InputModel& m);
+	friend ostream& operator<<(ostream& os, InputData& m);
 
 public:
-	InputModel();
+	InputData();
 	
-	~InputModel() {}
+	~InputData() {}
 	
 	bool isProblemDefined() { return problem != problemType::P_UNDEF; }
 	problemType getProblem() { return problem; }
