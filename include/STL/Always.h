@@ -19,16 +19,12 @@ private:
 	int a, b;			// temporal interval bounds
 
 public:
-
 	Always(int a, int b, const std::shared_ptr<STL> f);
 
 	inline const std::shared_ptr<STL> getSubFormula() const { return this->f; }
 
 	inline const int getA() const { return this->a;}
 	inline const int getB() const { return this->b; }
-
-	inline void setA(const int a){ this->a = a; };
-	inline void setB(const int b){ this->b = b; };
 
 	void print() const;
 

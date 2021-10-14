@@ -27,9 +27,6 @@ public:
 	inline int getA() const { return a; }
 	inline int getB() const { return b; }
 
-	inline void setA(int a){ this->a = a; }
-	inline void setB(int b){ this->b = b; }
-
 	void print() const;
 
 	~Eventually();
