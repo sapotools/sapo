@@ -39,7 +39,7 @@ set(sapo_tests Ebola Influenza LotkaVolterra Phosphorelay
 add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo)
 foreach(test_name ${sapo_tests})
    add_test(NAME ${test_name}
-	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name}
-			 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtests.cmake)
+	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name} -DTEST_DIR=${CMAKE_SOURCE_DIR}/examples
+			 -P ${CMAKE_SOURCE_DIR}/runtests.cmake)
    set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP building_sapo)
 endforeach()
