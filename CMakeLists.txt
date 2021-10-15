@@ -36,10 +36,10 @@ enable_testing()
 set(sapo_tests Ebola Influenza LotkaVolterra Phosphorelay
 			   Quadcopter Rossler SIRp SIR VanDerPol )
 
-add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo)
+add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo -j 4 -- )
 foreach(test_name ${sapo_tests})
    add_test(NAME ${test_name}
 	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name} -DTEST_DIR=${CMAKE_SOURCE_DIR}/examples
 			 -P ${CMAKE_SOURCE_DIR}/runtests.cmake)
-   set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP building_sapo)
+   set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP sapo_compilation)
 endforeach()
