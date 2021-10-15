@@ -143,7 +143,7 @@ ex Expr::toEx(InputData& m, const lst& vars, const lst& params)
 	switch (type)
 	{
 		case exprType::NUM_ATOM:
-			return val;
+			return numeric(std::to_string(val).c_str());
 		case exprType::ID_ATOM:
 			if (m.isVarDefined(name))
 				return vars[m.getVarPos(name)];
