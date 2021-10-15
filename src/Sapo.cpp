@@ -79,7 +79,10 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 	
 	Flowpipe *flowpipe = new Flowpipe();
 
-	cout<<"Computing parametric reach set..."<<flush;
+	cout << "Parameter set" << endl;
+	paraSet->print();
+
+	cout<< endl <<"Computing parametric reach set..."<<flush;
 
 	if(this->options.verbose){
 		initSet->getBundle()->print();
@@ -120,8 +123,13 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
  * @returns refined sets of parameters
  */
 LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
+	cout << "Initial parameter set" << endl;
+	parameterSet->print();
 
-	cout<<"Synthesizing parameters..."<<flush;
+	cout<< endl <<"Specification: ";
+	formula->print(); 
+
+	cout<< endl << endl << "Synthesizing parameters..."<<flush;
 
 	LinearSystemSet *res = this->synthesizeSTL(reachSet, parameterSet, formula);
 	cout << "done" << endl;

@@ -76,6 +76,7 @@ int main(int argc,char** argv){
 		}
 		else
 		{
+			cout << endl;
 			Flowpipe *F = sapo->reach(model->getReachSet(), synth_parameter_set->at(0), drv.data->getIterations());
 			cout << "RESULTS" << endl;
 			F->print();
