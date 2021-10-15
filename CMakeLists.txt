@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 project (sapo CXX)
 
 #For shared libraries:
-set ( PROJECT_LINK_LIBS ginac glpk)
+set ( PROJECT_LINK_LIBS ginac glpk cln)
 link_directories( /usr/local/Cellar/ginac/1.8.1/lib )
 link_directories( /usr/local/Cellar/glpk/5.0/lib )
 link_directories( /usr/local/lib )
@@ -15,7 +15,7 @@ flex_target(input_scanner parser/scanner.l parser/src/scanner.cpp)
 bison_target(input_parser parser/parser.yy parser/src/parser.cpp
 							DEFINES_FILE parser/include/parser.h)
 
-include_directories(⁨/usr/local/include /usr/local/Cellar/ginac/1.8.1/include /usr/local/Cellar/cln/1.3.4/include /usr/local/Cellar/glpk/4.65/include)
+include_directories(⁨/usr/local/include /usr/local/Cellar/ginac/1.8.1/include /usr/local/Cellar/cln/1.3.6/include /usr/local/Cellar/glpk/5.0/include)
 include_directories(include include/STL parser/include)
 file(GLOB_RECURSE SOURCES src/*.cpp src/STL/*.cpp parser/src/*.cpp)
 
@@ -32,7 +32,7 @@ execute_process(COMMAND sh ./scripts/install-hooks.bash )
 
 enable_testing()
 
-set(sapo_tests Ebola Influenza LotkaVolterra # Phosphorelay does not work
+set(sapo_tests Ebola Influenza LotkaVolterra Phosphorelay
 			   Quadcopter Rossler SIRp SIR VanDerPol )
 
 add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo)
