@@ -21,13 +21,13 @@ private:
 
 public:
 
-	Until(const std::shared_ptr<STL> f1, int a, int b, const std::shared_ptr<STL> f2);
+	Until(const std::shared_ptr<STL> f1, const int begin, const int end, 
+	      const std::shared_ptr<STL> f2);
 
 	inline const std::shared_ptr<STL> getLeftSubFormula() const {return f1;}
 	inline const std::shared_ptr<STL> getRightSubFormula() const {return f2;}
 
-	inline const int& getA() const { return t_itvl.begin(); }
-	inline const int& getB() const { return t_itvl.end(); }
+	inline const TimeInterval& time_bounds() const { return t_itvl; }
 
 	void print() const;
 
