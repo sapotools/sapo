@@ -20,13 +20,11 @@ private:
 	TimeInterval t_itvl;			// temporal formula bounds
 
 public:
-
-	Eventually(int a, int b, const std::shared_ptr<STL> f);
+	Eventually(const int begin, const int end, const std::shared_ptr<STL> f);
 
 	inline const std::shared_ptr<STL> getSubFormula() const { return f; }
 
-	inline const int& getA() const { return t_itvl.begin(); }
-	inline const int& getB() const { return t_itvl.end(); }
+	inline const TimeInterval& time_bounds() const { return t_itvl; }
 
 	void print() const;
 

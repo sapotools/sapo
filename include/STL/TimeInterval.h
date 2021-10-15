@@ -115,7 +115,7 @@ public:
      */
     inline bool isEmpty() const 
     {
-        return this->begin() < this->end();
+        return this->begin() > this->end();
     }
 };
 

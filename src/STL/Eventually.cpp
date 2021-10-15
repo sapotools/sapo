@@ -11,12 +11,12 @@
 /**
  * Constructor that instantiates an Eventually formula (F_[a,b]f)
  *
- * @param[in] a beginning of temporal interval
- * @param[in] b end of temporal interval
+ * @param[in] begin is beginning of temporal interval
+ * @param[in] end is the end of temporal interval
  * @param[in] f subformula
  */
-Eventually::Eventually(int a, int b, const std::shared_ptr<STL> f): 
-	STL(EVENTUALLY), f(f), t_itvl(a,b) {}
+Eventually::Eventually(const int begin, const int end, const std::shared_ptr<STL> f): 
+	STL(EVENTUALLY), f(f), t_itvl(begin,end) {}
 
 /**
  * Print the formula
