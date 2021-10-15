@@ -12,13 +12,13 @@ link_directories( /usr/local/lib )
 find_package(FLEX)
 find_package(BISON)
 
-flex_target(input_scanner parser/scanner.l parser/src/scanner.cpp)
-bison_target(input_parser parser/parser.yy parser/src/parser.cpp
-							DEFINES_FILE parser/include/parser.h)
+flex_target(input_scanner parser/scanner.l ${CMAKE_SOURCE_DIR}/parser/src/scanner.cpp)
+bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
+							DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
 include_directories(⁨/usr/local/include /usr/local/Cellar/ginac/1.8.1/include /usr/local/Cellar/cln/1.3.6/include /usr/local/Cellar/glpk/5.0/include)
-include_directories(include include/STL parser/include)
-file(GLOB_RECURSE SOURCES src/*.cpp src/STL/*.cpp parser/src/*.cpp)
+include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/STL ${CMAKE_SOURCE_DIR}/parser/include)
+file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/STL/*.cpp ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
