@@ -15,7 +15,7 @@
  * @param[in] f1 left conjunct
  * @param[in] f2 right conjunct
  */
-Conjunction::Conjunction(STL * f1, STL * f2): STL(CONJUNCTION), f1(f1), f2(f2) {}
+Conjunction::Conjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2): STL(CONJUNCTION), f1(f1), f2(f2) {}
 
 /**
  * Print the formula
@@ -28,4 +28,5 @@ void Conjunction::print() const{
 	cout<<")";
 }
 
-Conjunction::~Conjunction() {}
+Conjunction::~Conjunction() 
+{}

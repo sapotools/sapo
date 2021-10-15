@@ -36,19 +36,17 @@ private:
 	map< vector<int>,pair<lst,lst> > synthControlPts;		// symbolic control points
 
 	vector<Bundle*> reachWitDec(Bundle* initSet, int k);	// reachability with template decomposition
-	LinearSystemSet* synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);
-	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const Atom *formula);
-	LinearSystemSet* synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, Until *formula);
-	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula);
+	LinearSystemSet* synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula);
+	LinearSystemSet* refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Atom> formula);
+	LinearSystemSet* synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Until> formula, const int time=0);
+	LinearSystemSet* synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Always> formula, const int time=0);
 
 public:
 	Sapo(Model *model, sapo_opt options);
 
 	Flowpipe* reach(Bundle* initSet, int k);													// reachability
 	Flowpipe* reach(Bundle* initSet, LinearSystem* paraSet, int k);								// parameteric reachability
-	LinearSystemSet* synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula);	// parameter synthesis
-
-
+	LinearSystemSet* synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula);	// parameter synthesis
 
 	virtual ~Sapo();
 };

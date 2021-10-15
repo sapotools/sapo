@@ -14,7 +14,7 @@
   * @param[in] f1 left disjunct
   * @param[in] f2 right disjunct
   */
-Disjunction::Disjunction(STL * f1, STL * f2): STL(DISJUNCTION), f1(f1), f2(f2){}
+Disjunction::Disjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2): STL(DISJUNCTION), f1(f1), f2(f2){}
 
 /**
  * Print the formula
@@ -27,4 +27,5 @@ void Disjunction::print() const{
 	cout<<")";
 }
 
-Disjunction::~Disjunction() {}
+Disjunction::~Disjunction() 
+{}

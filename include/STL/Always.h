@@ -10,29 +10,25 @@
 #define ALWAYS_H_
 
 #include "STL.h"
+#include "TimeInterval.h"
 
 class Always : public STL {
 
 private:
 
-	STL * f;			// subformula
-	int a, b;			// temporal interval bounds
+	const std::shared_ptr<STL> f;	// subformula
+	TimeInterval t_itvl;			// temporal formula bounds
 
 public:
+	Always(const int begin, const int end, const std::shared_ptr<STL> f);
 
-	Always(int a, int b, STL * f);
+	inline const std::shared_ptr<STL> getSubFormula() const { return this->f; }
 
-	inline STL * getSubFormula() { return this->f; }
-
-	inline const int getA() const { return this->a;}
-	inline const int getB() const { return this->b; }
-
-	inline void setA(const int a){ this->a = a; };
-	inline void setB(const int b){ this->b = b; };
+	inline const TimeInterval& time_bounds() const { return t_itvl; }
 
 	void print() const;
 
-	~Always();
+	virtual ~Always();
 };
 
 #endif /* ALWAYS_H */

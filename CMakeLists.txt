@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 2.8.9)
 project (sapo CXX)
 
 #For shared libraries:
-set ( PROJECT_LINK_LIBS ginac glpk cln)
+set ( PROJECT_LINK_LIBS ginac glpk cln )
+
 link_directories( /usr/local/Cellar/ginac/1.8.1/lib )
 link_directories( /usr/local/Cellar/glpk/5.0/lib )
 link_directories( /usr/local/lib )
@@ -11,13 +12,13 @@ link_directories( /usr/local/lib )
 find_package(FLEX)
 find_package(BISON)
 
-flex_target(input_scanner parser/scanner.l parser/src/scanner.cpp)
-bison_target(input_parser parser/parser.yy parser/src/parser.cpp
-							DEFINES_FILE parser/include/parser.h)
+flex_target(input_scanner parser/scanner.l ${CMAKE_SOURCE_DIR}/parser/src/scanner.cpp)
+bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
+							DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
 include_directories(⁨/usr/local/include /usr/local/Cellar/ginac/1.8.1/include /usr/local/Cellar/cln/1.3.6/include /usr/local/Cellar/glpk/5.0/include)
-include_directories(include include/STL parser/include)
-file(GLOB_RECURSE SOURCES src/*.cpp src/STL/*.cpp parser/src/*.cpp)
+include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/STL ${CMAKE_SOURCE_DIR}/parser/include)
+file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/STL/*.cpp ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
@@ -28,17 +29,17 @@ set(CMAKE_CXX_FLAGS "-O2 -Wall")
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
 
-execute_process(COMMAND sh ./scripts/install-hooks.bash )
+execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 
 enable_testing()
 
 set(sapo_tests Ebola Influenza LotkaVolterra Phosphorelay
 			   Quadcopter Rossler SIRp SIR VanDerPol )
 
-add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo)
+add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo -j 4 -- )
 foreach(test_name ${sapo_tests})
    add_test(NAME ${test_name}
-	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name}
-			 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtests.cmake)
-   set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP building_sapo)
+	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name} -DTEST_DIR=${CMAKE_SOURCE_DIR}/examples
+			 -P ${CMAKE_SOURCE_DIR}/runtests.cmake)
+   set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP sapo_compilation)
 endforeach()

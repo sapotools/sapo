@@ -8,5 +8,6 @@
 
 #include "STL.h"
 
-STL::STL(formula_type type): type(type) {}
+STL::STL(const formula_type type): type(type) {}
 
+STL::~STL() {}

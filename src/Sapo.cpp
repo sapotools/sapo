@@ -79,7 +79,10 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 	
 	Flowpipe *flowpipe = new Flowpipe();
 
-	cout<<"Computing parametric reach set..."<<flush;
+	cout << "Parameter set" << endl;
+	paraSet->print();
+
+	cout<< endl <<"Computing parametric reach set..."<<flush;
 
 	if(this->options.verbose){
 		initSet->getBundle()->print();
@@ -119,11 +122,16 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
  * @param[in] formula STL contraint to impose over the model
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
+LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
+	cout << "Initial parameter set" << endl;
+	parameterSet->print();
 
-	cout<<"Synthesizing parameters..."<<flush;
+	cout<< endl <<"Specification: ";
+	formula->print(); 
 
-	LinearSystemSet *res = this->synthesizeSTL(reachSet,parameterSet,formula);
+	cout<< endl << endl << "Synthesizing parameters..."<<flush;
+
+	LinearSystemSet *res = this->synthesizeSTL(reachSet, parameterSet, formula);
 	cout << "done" << endl;
 
 	return res;
@@ -137,59 +145,54 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
  * @param[in] formula STL contraint to impose over the model
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, STL *formula){
+LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
 	
 	//reachSet->getBundle()->plotRegion();
 
 	switch( formula->getType() ){
 
 		// Atomic predicate
-		case 0:
-			return this->refineParameters(reachSet, parameterSet, (const Atom *)formula);
-		break;
+		case ATOM:
+			return this->refineParameters(reachSet, parameterSet, std::dynamic_pointer_cast<Atom>(formula));
 
 		// Conjunction
-		case 1:{
-			Conjunction *conj = (Conjunction *) formula;
+		case CONJUNCTION: {
+			const std::shared_ptr<Conjunction> conj = std::dynamic_pointer_cast<Conjunction>(formula);
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, conj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, conj->getRightSubFormula());
 			return LS1->intersectWith(LS2);
 		}
-		break;
 
 		// Disjunction
-		case 2:{
-			Disjunction *disj = (Disjunction *) formula;
+		case DISJUNCTION: {
+			const std::shared_ptr<Disjunction> disj = std::dynamic_pointer_cast<Disjunction>(formula);
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, disj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, disj->getRightSubFormula());
 			return LS1->unionWith(LS2);
 		}
-		break;
 
 		// Until
-		case 3:
-			return this->synthesizeUntil(reachSet, parameterSet, (Until *)formula);
-		break;
+		case UNTIL:
+			return this->synthesizeUntil(reachSet, parameterSet, std::dynamic_pointer_cast<Until>(formula));
 
 		// Always
-		case 4:
-			return this->synthesizeAlways(reachSet, parameterSet, (Always *)formula);
-		break;
+		case ALWAYS:
+			return this->synthesizeAlways(reachSet, parameterSet, std::dynamic_pointer_cast<Always>(formula));
 
 		// Eventually
-		case 5:
-			Atom *a = new Atom(-1);
-			Eventually *ev = (Eventually *)formula;
+		case EVENTUALLY: {
+			std::shared_ptr<Atom> a = std::make_shared<Atom>(-1);
+			const std::shared_ptr<Eventually> ev = std::dynamic_pointer_cast<Eventually>(formula);
 
-			Until *u = new Until(a, ev->getA(), ev->getB(), ev->getSubFormula());
-			return this->synthesizeUntil(reachSet, parameterSet, u);
+			std::shared_ptr<Until> u = std::make_shared<Until>(a, ev->time_bounds().begin(), ev->time_bounds().end(), ev->getSubFormula());
+			LinearSystemSet* result = this->synthesizeUntil(reachSet, parameterSet, u);
+
+			return result;
 			//return this->synthesizeEventually(base_v, lenghts, parameterSet, formula);
-		break;
-
+		}
+		default:
+			throw std::logic_error("Unsupported formula");
 	}
-
-	return parameterSet;
-
 }
 
 /**
@@ -200,7 +203,7 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
  * @param[in] sigma STL atomic formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const Atom *atom){
+LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Atom> atom){
 
 	LinearSystemSet *result = new LinearSystemSet();
 
@@ -277,33 +280,32 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
  * @param[in] reachSet bundle with the initial set
  * @param[in] parameterSet set of sets of parameters
  * @param[in] sigma STL until formula
+ * @param[in] time is the time of the current evaluation
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, Until *formula){
+LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Until> formula, const int time){
 
 	LinearSystemSet* result = new LinearSystemSet();
-	// get formula temporal interval
-	int a = formula->getA();
-	int b = formula->getB();
+	const TimeInterval& t_itvl = formula->time_bounds();
+
+	// Base case
+	if (t_itvl.isEmpty()) 
+		return result;
 
 	// Until interval far
-	if((a > 0) && (b > 0)){
+	if (t_itvl > time) {
 		// Synthesize wrt phi1
 		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
 		if( P1->isEmpty() ){
 			return P1;			// false until
 		}else{
-			// shift until interval
-			formula->setA(a-1);
-			formula->setB(b-1);
-
 			// Reach step wrt to the i-th linear system of P1
 			for(int i=0; i<P1->size(); i++){
 				// TODO : add the decomposition
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 				
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
-				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula);
+				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
 				result = result->unionWith(tmpLSset);
 			}
 			return result;
@@ -311,7 +313,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 	}
 
 	// Inside until interval
-	if((a == 0) && (b > 0)){
+	if (t_itvl.end() > time) { 
 		// Refine wrt phi1 and phi2
 		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
 		LinearSystemSet *P2 = this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
@@ -321,24 +323,19 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 		}
 
 		// shift until interval
-		formula->setB(b-1);
 		for(int i=0; i<P1->size(); i++){
 		// 	TODO : add decomposition
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
-			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula);
+			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
 			result = result->unionWith(tmpLSset);
 		}
 		return P2->unionWith(result);
-	}
-
-	// Base case
-	if((a == 0) && (b == 0)){
-		return this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
-	}
-
-	return result;
-
+	} 
+	
+	// If none of the above condition holds, then it must holds that :
+	// 			t_itvl.begin()<=time and t_itvl.end()==time
+	return this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 }
 
 /**
@@ -349,47 +346,42 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
  * @param[in] sigma STL always formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, Always *formula){
+LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Always> formula, const int time){
 
 	//reachSet->getBundle()->plotRegion();
 
 	LinearSystemSet* result = new LinearSystemSet();
-	int a = formula->getA();
-	int b = formula->getB();
+	const TimeInterval& t_itvl = formula->time_bounds();
+
+	// Base case
+	if (t_itvl.isEmpty()) {
+		return result;
+	}
 
 	// Always interval far
-	if((a > 0) && (b > 0)){
-
-		// shift always interval
-		formula->setA(a-1);
-		formula->setB(b-1);
-
+	if (t_itvl > time) {
 		// Reach step wrt to the i-th linear system of parameterSet
 		for(int i=0; i<parameterSet->size(); i++){
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
-			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula);
+			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
 			result = result->unionWith(tmpLSset);
 		}
 		return result;
 	}
 
 	// Inside Always interval
-	if((a == 0) && (b > 0)){
+	if (t_itvl.end() > time) { 
 
 		// Refine wrt phi
 		LinearSystemSet *P = this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 
 		if(!P->isEmpty()){
-
-			// shift until interval
-			formula->setB(b-1);
-
 			// Reach step wrt to the i-th linear system of P
 			for(int i=0; i<P->size(); i++){
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
-				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula);
+				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
 				result = result->unionWith(tmpLSset);
 			}
 
@@ -400,12 +392,10 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 
 	}
 
-	// Base case
-	if((a == 0) && (b == 0)){
-		return this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
-	}
 
-	return result;
+	// If none of the above condition holds, then it must holds that :
+	// 			t_itvl.begin()<=time and t_itvl.end()==time
+	return this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 }
 
 

@@ -15,8 +15,9 @@ class driver
 {
 public:
   driver();
+  ~driver();
 
-  AbsSyn::InputModel *m;
+  AbsSyn::InputData *data;
 
   // Run the parser on file F.  Return 0 on success.
   int parse (const std::string& f);

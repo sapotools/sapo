@@ -10,3 +10,5 @@ parser/include/parser.h
 parser/src/parser.cpp
 parser/src/scanner.cpp 
 bin/sapo
+CTestTestfile.cmake
+Testing/
