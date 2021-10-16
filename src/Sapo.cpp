@@ -15,12 +15,8 @@
  * @param[in] model model to analyize
  * @param[in] sapo_opt options to tune sapo
  */
-Sapo::Sapo(Model *model, sapo_opt options) {
-	this->vars = model->getVars();
-	this->params = model->getParams();
-	this->dyns = model->getDyns();
-	this->options = options;
-}
+Sapo::Sapo(Model *model, sapo_opt options): dyns(model->getDyns()), vars(model->getVars()),
+											params(model->getParams()), options(options) {}
 
 /**
  * Reachable set computation

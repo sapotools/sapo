@@ -28,10 +28,10 @@
 class Sapo {
 
 private:
-	lst dyns;			// dynamics of the system
-	lst vars;			// variables of the system
-	lst params;			// parameters of the system
-	sapo_opt options;	// options
+	const lst& dyns;			// dynamics of the system
+	const lst& vars;			// variables of the system
+	const lst& params;			// parameters of the system
+	const sapo_opt options;	// options
 	map< vector<int>,pair<lst,lst> > reachControlPts;		// symbolic control points
 	map< vector<int>,pair<lst,lst> > synthControlPts;		// symbolic control points
 
