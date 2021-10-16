@@ -7,8 +7,10 @@
  * @version 0.1
  */
 
-#include "Flowpipe.h"
 #include <string>
+#include <fstream>
+
+#include "Flowpipe.h"
 
 /**
  * Constructor that instantiates Flowpipe
@@ -93,8 +95,7 @@ void Flowpipe::plotProjToFile(int var, double time_step, char *file_name, char c
 		exit (EXIT_FAILURE);
 	}
 
-	ofstream matlab_script;
-	matlab_script.open (file_name, ios_base::app);
+	ofstream matlab_script(file_name, ios_base::app);
 
 	// select figure
 	matlab_script<<"figure("<<var+1<<")\n";

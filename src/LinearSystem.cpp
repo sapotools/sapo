@@ -7,7 +7,13 @@
  * @version 0.1
  */
 
+#include <iostream>
+#include <fstream>
+
+#include <glpk.h>
+
 #include "LinearSystem.h"
+#include "LinearSystemSet.h"
 
 #define MAX_APPROX_ERROR 1e-6  // necessary for double comparison
 

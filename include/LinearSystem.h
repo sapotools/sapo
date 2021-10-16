@@ -11,10 +11,6 @@
 #define LINEARSYSTEM_H_
 
 #include "Common.h"
-#include <glpk.h>
-
-#include <iostream>
-#include <fstream>
 
 class LinearSystem {
 
