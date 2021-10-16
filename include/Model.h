@@ -27,14 +27,13 @@ protected:
 
 	std::shared_ptr<STL> spec;
 
+	std::string name;
 public:
 
-	char name[64];
-
-	inline const char* getName() const { return this->name; }
-	inline const lst getVars(){ return this->vars; }
-	inline const lst getParams(){ return this->params; }
-	inline const lst getDyns() const { return this->dyns; }
+	inline const std::string& getName() const { return this->name; }
+	inline const lst& getVars() const { return this->vars; }
+	inline const lst& getParams() const { return this->params; }
+	inline const lst& getDyns() const { return this->dyns; }
 
 	inline Bundle* getReachSet(){ return this->reachSet; }
 	inline LinearSystemSet* getParaSet(){ return this->paraSet; }
