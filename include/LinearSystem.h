@@ -26,6 +26,10 @@ private:
 	bool isIn(vector< double > Ai, const double bi) const;	// check if a constraint is already in
 	void initLS();								// initialize A and b
 
+	LinearSystemSet* get_a_finer_covering(LinearSystemSet *tmp_covering,
+								          std::vector<std::vector<double> >& A,
+										  std::vector<double>& b) const;
+
 public:
 
 	LinearSystem();
@@ -52,10 +56,16 @@ public:
 	// optimization functions
 	double minLinearSystem(const lst& vars, const ex& obj_fun) const;
 	double maxLinearSystem(const lst& vars, const ex& obj_fun) const;
+
+	double minLinearSystem(const vector< double >& obj_fun_coeffs) const;
 	double maxLinearSystem(const vector< double >& obj_fun_coeffs) const;
-	bool isEmpty(const bool strict_inequality=false) const;						// determine this LS is empty
+
+    // testing methods 
+	bool isEmpty(const bool strict_inequality=false) const;	 // determine this LS is empty
 	bool operator==(const LinearSystem& LS) const;  // decide whether two systems are equivalent
 	bool solutionsAlsoSatisfy(const LinearSystem& LS) const;
+
+	LinearSystemSet* get_a_finer_covering() const;
 
 	// operations on linear system
 	LinearSystem* intersectWith(const LinearSystem *LS) const;

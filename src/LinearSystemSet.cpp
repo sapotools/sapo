@@ -72,6 +72,18 @@ void LinearSystemSet::add(LinearSystem *LS){
 	}
 }
 
+LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
+{
+	LinearSystemSet* covering = new LinearSystemSet();
+
+	for (std::vector<LinearSystem *>::const_iterator it=std::begin(set);
+													 it!=std::end(set); ++it) {
+		covering->unionWith((*it)->get_a_finer_covering());
+	}
+
+	return covering;
+}
+
 /**
  * Intersect to sets of linear systems
  *

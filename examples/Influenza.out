@@ -8,8 +8,7 @@ Initial parameter set
 
 Specification: always_[0,50] (-0.4235+i <= 0)
 
-Synthesizing parameters...done
-
+Synthesizing parameters...
 Parameter set
 1 0 <= 0.002
 0 1 <= 0.01

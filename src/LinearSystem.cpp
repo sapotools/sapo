@@ -282,6 +282,61 @@ bool LinearSystem::solutionsAlsoSatisfy(const LinearSystem& LS) const {
 	return true;
 }
 
+LinearSystemSet* LinearSystem::get_a_finer_covering(LinearSystemSet *tmp_covering, 
+								              	    std::vector<std::vector<double> >& A,
+												    std::vector<double>& b) const
+{
+	if (A.size() == this->A.size()) {
+		LinearSystem *ls = new LinearSystem(A, b);
+		ls->simplify();
+
+		tmp_covering->add(ls);
+
+		return tmp_covering;
+	}
+
+	const int i = A.size();
+
+	A.push_back(this->A[i]);
+	b.push_back(this->b[i]);
+
+	try {
+		const double min_value = minLinearSystem(this->A[i]);
+		const double avg_value = (this->b[i]+min_value)/2;
+
+		A.push_back(get_complementary(this->A[i]));
+		b.push_back(-avg_value);
+
+		tmp_covering = get_a_finer_covering(tmp_covering, A, b);
+
+		b[b.size()-1] = -min_value;
+		b[b.size()-2] = avg_value;
+
+		tmp_covering = get_a_finer_covering(tmp_covering, A, b);
+
+		A.pop_back();
+		b.pop_back();
+
+	} catch (std::logic_error &e) {
+		std::cerr << "The linear system solutions are not a closed polyheadron." << std::endl;
+
+		tmp_covering = get_a_finer_covering(tmp_covering, A, b);
+	}
+	A.pop_back();
+	b.pop_back();
+
+	return tmp_covering;
+}
+
+LinearSystemSet* LinearSystem::get_a_finer_covering() const
+{
+	std::vector<std::vector<double> > A;
+	std::vector<double> b;
+
+	LinearSystemSet *result = new LinearSystemSet();
+ 
+	return get_a_finer_covering(result, A, b);
+}
 
 /**
  * Determine whether two linear systems are equivalent
@@ -321,6 +376,16 @@ double LinearSystem::minLinearSystem(const lst& vars, const ex& obj_fun) const {
 
 	return (min+c);
 
+}
+
+/**
+ * Minimize the linear system
+ *
+ * @param[in] obj_fun objective function
+ * @return minimum
+ */
+double LinearSystem::minLinearSystem(const vector< double >& obj_fun_coeffs) const {
+	return solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MIN);
 }
 
 /**

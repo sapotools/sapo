@@ -116,9 +116,12 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
  * @param[in] reachSet bundle with the initial set
  * @param[in] parameterSet set of sets of parameters
  * @param[in] formula STL contraint to impose over the model
+ * @param[in] max_splits maximum number of splits of the original 
+ *                       parameter set to identify a non-null solution
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
+LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet* parameterSet, 
+								  const std::shared_ptr<STL> formula, const unsigned int max_splits) {
 	cout << "Initial parameter set" << endl;
 	parameterSet->print();
 
@@ -126,9 +129,21 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet *parameterSe
 	formula->print(); 
 
 	cout<< endl << endl << "Synthesizing parameters..."<<flush;
+	LinearSystemSet *splitParamSet = parameterSet;
 
-	LinearSystemSet *res = this->synthesizeSTL(reachSet, parameterSet, formula);
-	cout << "done" << endl;
+	unsigned int num_of_splits = 0;
+	LinearSystemSet *res = this->synthesizeSTL(reachSet, splitParamSet, formula);
+	
+	while (res->isEmpty() && num_of_splits++ < max_splits) {
+		delete res;
+
+		LinearSystemSet* covering = splitParamSet->get_a_finer_covering();
+
+		//delete splitParamSet;
+		splitParamSet = covering;
+
+		res = this->synthesizeSTL(reachSet, splitParamSet, formula);
+	}
 
 	return res;
 }
@@ -169,11 +184,11 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 
 		// Until
 		case UNTIL:
-			return this->synthesizeUntil(reachSet, parameterSet, std::dynamic_pointer_cast<Until>(formula));
+			return this->synthesizeUntil(reachSet, parameterSet, std::dynamic_pointer_cast<Until>(formula), 0);
 
 		// Always
 		case ALWAYS:
-			return this->synthesizeAlways(reachSet, parameterSet, std::dynamic_pointer_cast<Always>(formula));
+			return this->synthesizeAlways(reachSet, parameterSet, std::dynamic_pointer_cast<Always>(formula), 0);
 
 		// Eventually
 		case EVENTUALLY: {
@@ -181,7 +196,7 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 			const std::shared_ptr<Eventually> ev = std::dynamic_pointer_cast<Eventually>(formula);
 
 			std::shared_ptr<Until> u = std::make_shared<Until>(a, ev->time_bounds().begin(), ev->time_bounds().end(), ev->getSubFormula());
-			LinearSystemSet* result = this->synthesizeUntil(reachSet, parameterSet, u);
+			LinearSystemSet* result = this->synthesizeUntil(reachSet, parameterSet, u, 0);
 
 			return result;
 			//return this->synthesizeEventually(base_v, lenghts, parameterSet, formula);

@@ -30,6 +30,8 @@ public:
 	const vector<LinearSystem*>& getSet() const;
 	void add(LinearSystem *LS);
 
+	LinearSystemSet* get_a_finer_covering() const;
+
 	// operations on set
 	LinearSystemSet* intersectWith(const LinearSystemSet *LSset) const;
 	LinearSystemSet* unionWith(LinearSystemSet *LSset);
