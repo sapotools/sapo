@@ -49,7 +49,9 @@ private:
 	double maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists);
 	double maxOffsetDist(vector<int> dirsIdx, vector<double> dists);
 	double maxOffsetDist(vector< vector<int> > T, vector<double> dists);
-	vector< double > negate(vector< double > v);
+	
+	//vector< double > negate(vector< double > v);
+	
 	bool isIn(int n, vector<int> v);
 	bool isIn(vector<int> v, vector< vector< int > > vlist);
 	bool isPermutation(vector<int> v1, vector<int> v2);

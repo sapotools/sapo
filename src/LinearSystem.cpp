@@ -257,24 +257,6 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const {
 }
 
 /**
- * Compute the complementary of a vector of values.
- *
- * @param[in] orig the vector of values to be complementated.
- * @return A vector containing the complementaries of the parameter values
- */
-template<typename T>
-std::vector<T> get_complementary(const std::vector<T>& orig)
-{
-   std::vector<T> res{orig};
-
-   for (typename std::vector<T>::iterator it=std::begin(res); it!=std::end(res); ++it) {
-	   *it = -*it;
-   }
-
-   return res;
-}
-
-/**
  * Determine all the solutions of this linear system are also 
  * solutions for another linear system.
  *

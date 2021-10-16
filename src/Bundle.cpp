@@ -154,7 +154,7 @@ LinearSystem* Bundle::getBundle(){
 		b.push_back(this->offp[i]);
 	}
 	for(int i=0; i<this->getSize(); i++){
-		A.push_back(this->negate(this->L[i]));
+		A.push_back(get_complementary(this->L[i]));
 		b.push_back(this->offm[i]);
 	}
 
@@ -186,7 +186,7 @@ Parallelotope* Bundle::getParallelotope(int i){
 	}
 	// lower facets
 	for(int j=0; j<this->getDim(); j++){
-		Lambda.push_back(this->negate(this->L[this->T[i][j]]));
+		Lambda.push_back(get_complementary(this->L[this->T[i][j]]));
 		d.push_back(this->offm[this->T[i][j]]);
 	}
 
@@ -209,7 +209,7 @@ Bundle* Bundle::canonize(){
 	vector<double> canoffp,canoffm;
 	for(int i=0; i<this->getSize(); i++){
 		canoffp.push_back(bund->maxLinearSystem(this->L[i]));
-		canoffm.push_back(bund->maxLinearSystem(this->negate(this->L[i])));
+		canoffm.push_back(bund->maxLinearSystem(get_complementary(this->L[i])));
 	}
 	return new Bundle(this->vars,this->L,canoffp,canoffm,this->T);
 }
@@ -674,6 +674,7 @@ double Bundle::maxOffsetDist(vector< vector<int> > T, vector<double> dists){
  * @param[in] v vector to reverse
  * @returns reversed vector
  */
+/*
 vector< double > Bundle::negate(vector< double > v){
 
 	vector< double > minus_v;
@@ -682,6 +683,7 @@ vector< double > Bundle::negate(vector< double > v){
 	}
 	return minus_v;
 }
+*/
 
 /**
  * Determine belonging of an element in a vector
