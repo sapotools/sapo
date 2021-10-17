@@ -19,15 +19,15 @@ class LinearSystemSet {
 
 private:
 
-	vector<LinearSystem*> set;	// set of linear systems
+	std::vector<LinearSystem*> set;	// set of linear systems
 
 public:
-
 	LinearSystemSet();
-	LinearSystemSet(LinearSystem *LS);
-	LinearSystemSet(const vector<LinearSystem*>& set);
+	LinearSystemSet(const LinearSystem& ls);
+	LinearSystemSet(LinearSystem* ls);
+	LinearSystemSet(const std::vector<LinearSystem*>& set);
 
-	const vector<LinearSystem*>& getSet() const;
+	const std::vector<LinearSystem*>& getSet() const;
 	void add(LinearSystem *LS);
 
 	LinearSystemSet* get_a_finer_covering() const;

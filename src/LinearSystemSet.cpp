@@ -9,6 +9,9 @@
 
 #include "LinearSystemSet.h"
 
+using namespace std;
+using namespace GiNaC;
+
 /**
  * Constructor that instantiates an empty set
  */
@@ -17,11 +20,23 @@ LinearSystemSet::LinearSystemSet(): set() {}
 /**
  * Constructor that instantiates a singleton set
  *
- * @param[in] LS element of the set
+ * @param[in] ls element of the set
  */
-LinearSystemSet::LinearSystemSet(LinearSystem *LS){
-	if(!LS->isEmpty()){
-		this->set.push_back(LS->simplify());
+LinearSystemSet::LinearSystemSet(const LinearSystem& ls){
+	if(!ls.isEmpty()){
+		this->set.push_back(new LinearSystem(ls.get_simplified()));
+	}
+}
+
+/**
+ * Constructor that instantiates a singleton set
+ *
+ * @param[in] ls element of the set
+ */
+LinearSystemSet::LinearSystemSet(LinearSystem* ls){
+	if(!ls->isEmpty()){
+		ls->simplify();
+		this->set.push_back(ls);
 	}
 }
 
@@ -97,7 +112,7 @@ LinearSystemSet* LinearSystemSet::intersectWith(const LinearSystemSet *LSset) co
 
 	for(int i=0; i<(signed)this->set.size(); i++){
 		for(int j=0; j<(signed)set.size(); j++){
-			LinearSystem *intLS = this->set[i]->intersectWith(set[j]); // intersect
+			LinearSystem *intLS = new LinearSystem(this->set[i]->intersectWith(*set[j])); // intersect
 			result->add(intLS);
 		}
 	}

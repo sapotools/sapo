@@ -17,6 +17,8 @@
 
 #define MAX_APPROX_ERROR 1e-6  // necessary for double comparison
 
+using namespace std;
+using namespace GiNaC;
 
 /**
  * Optimize a linear system
@@ -27,7 +29,9 @@
  * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
  * @return optimum
  */
-double solveLinearSystem(const vector< vector< double > > &A, const vector< double > &b, const vector< double > &obj_fun, const int min_max){
+double solveLinearSystem(const vector< vector< double > > &A, const vector< double > &b,
+						 const vector< double > &obj_fun, const int min_max)
+{
 
 	int num_rows = A.size();
 	int num_cols = obj_fun.size();
@@ -84,8 +88,8 @@ double solveLinearSystem(const vector< vector< double > > &A, const vector< doub
  * @param[in] line vector to test
  * @return true is the vector is nulle
  */
-bool zeroLine(const vector<double> &line) {
-
+bool zeroLine(const vector<double> &line) 
+{
 	bool zeros = true;
 	int i=0;
 	while(zeros && i<(signed)line.size()){
@@ -101,7 +105,8 @@ bool zeroLine(const vector<double> &line) {
  * @param[in] A template matrix
  * @param[in] b offset vector
  */
-LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
+LinearSystem::LinearSystem(const vector< vector<double> >& A, const vector< double >& b)
+{
 
 	bool smart_insert = false;
 
@@ -115,21 +120,32 @@ LinearSystem::LinearSystem(vector< vector<double> > A, vector< double > b){
 				this->b.push_back(b[i]);
 			}
 		}
-
 	}
-	this->n_vars = this->A[0].size();
 }
 
 /**
  * Constructor that instantiates an empty linear system
  */
-LinearSystem::LinearSystem(){
-	vector< vector<double> > A;
-	vector< double > b;
-	this->A = A;
-	this->b = b;
-	this->n_vars = 0;
+LinearSystem::LinearSystem(): A(), b()
+{}
 
+/**
+ * Copy constructor
+ * 
+ * @param[in] orig the original linear system
+ */
+LinearSystem::LinearSystem(const LinearSystem& orig): A(orig.A), b(orig.b) 
+{}
+
+/**
+ * Swap constructor
+ * 
+ * @param[in] orig the original linear system
+ */
+LinearSystem::LinearSystem(LinearSystem&& orig)
+{
+	std::swap(this->A, orig.A);
+	std::swap(this->b, orig.b);
 }
 
 /**
@@ -139,17 +155,18 @@ LinearSystem::LinearSystem(){
  * @param[in] bi offset
  * @returns true is Ai x <= b is in the linear system
  */
-bool LinearSystem::isIn(vector< double > Ai, const double bi) const{
+bool LinearSystem::isIn(vector< double > Ai, const double bi) const
+{
 	Ai.push_back(bi);
 
-	for( int i=0; i<(signed)this->A.size(); i++ ){
+	for (unsigned int i=0; i<this->A.size(); i++){
 		vector< double > line = this->A[i];
 		line.push_back(this->b[i]);
 		bool is_in = true;
-		for(int j=0; j<(signed)Ai.size(); j++){
+		for (unsigned int j=0; j<Ai.size(); j++){
 			is_in = is_in && (abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
 		}
-		if(is_in){ return true; }
+		if (is_in) return true; 
 	}
 	return false;
 }
@@ -160,35 +177,24 @@ bool LinearSystem::isIn(vector< double > Ai, const double bi) const{
  * @param[in] vars list of variables appearing in the constraints
  * @param[in] constraints symbolic constraints
  */
-LinearSystem::LinearSystem(lst vars, lst constraints) {
+LinearSystem::LinearSystem(const lst& vars, const lst& constraints) 
+{
+	lst lconstraints = constraints;
+	lconstraints.unique();
 
-	this->vars = vars;
-	this->constraints = constraints;
-	this->constraints.unique();
-
-	this->n_vars = this->vars.nops();
-
-	initLS();	// initialize Linear System
-}
-
-/**
- * Initialize a linear system extracting template and offsets from symbolic expressions
- */
-void LinearSystem::initLS(){
-
-	for(int i=0; i<(signed)this->constraints.nops(); i++){
-
+	for (lst::const_iterator c_it=begin(lconstraints); c_it!=end(lconstraints); ++c_it)
+	{
 		vector<double> Ai;
-		ex const_term = this->constraints[i];
+		ex const_term(*c_it);
 
-		for(int j=0; j<(signed)this->vars.nops(); j++){
-
+		for (lst::const_iterator v_it=begin(vars); v_it!=end(vars); ++v_it)
+		{
 			// Extract the coefficient of the i-th variable (grade 1)
-			double coeff = ex_to<numeric>(evalf(this->constraints[i].coeff(this->vars[j],1))).to_double();
+			double coeff = ex_to<numeric>(evalf(c_it->coeff(*v_it, 1))).to_double();
 			Ai.push_back(coeff);
 
 			// Project to obtain the constant term
-			const_term = const_term.coeff(this->vars[j],0);
+			const_term = const_term.coeff(*v_it, 0);
 		}
 
 		double bi = ex_to<numeric>(evalf(const_term)).to_double();
@@ -208,9 +214,9 @@ void LinearSystem::initLS(){
  * @param[in] j column index
  * @return (i,j) element
  */
-const double& LinearSystem::getA(int i, int j) const {
-	if(( 0<= i ) && (i < (signed)this->A.size())){
-		if(( 0<= j ) && (j < (signed)this->A[j].size())){
+const double& LinearSystem::getA(unsigned int i, unsigned int j) const {
+	if(( 0<= i ) && (i < this->A.size())){
+		if(( 0<= j ) && (j < this->A[j].size())){
 			return this->A[i][j];
 		}
 	}
@@ -224,8 +230,8 @@ const double& LinearSystem::getA(int i, int j) const {
  * @param[in] i column index
  * @return i-th element
  */
-const double& LinearSystem::getb(int i) const {
-	if(( 0<= i ) && (i < (signed)this->b.size())){
+const double& LinearSystem::getb(unsigned int i) const {
+	if(( 0<= i ) && (i < this->b.size())){
 			return this->b[i];
 	}
 	cout<<"LinearSystem::getb : i and j must be within the LS->b size";
@@ -240,18 +246,23 @@ const double& LinearSystem::getb(int i) const {
  * 						strict inequality (i.e., Ax < b)
  * @return true if the linear system is empty
  */
-bool LinearSystem::isEmpty(const bool strict_inequality) const {
+bool LinearSystem::isEmpty(const bool strict_inequality) const 
+{
+	if (this->A.size()==0) {
+		return false;
+	}
 
-	vector< vector< double > > extA = this->A;
-	vector< double > obj_fun (this->n_vars, 0);
+	vector< vector< double > > extA(this->A);
+	vector< double > obj_fun (this->A[0].size(), 0);
 	obj_fun.push_back(1);
 
 	// Add an extra variable to the linear system
-	for(int i=0; i<(signed)extA.size(); i++){
-		extA[i].push_back(-1);
+	for (vector< vector< double > >::iterator row_it = begin(extA); row_it != end(extA); ++row_it)
+	{
+		row_it->push_back(-1);
 	}
 
-	const double z = solveLinearSystem(extA,this->b,obj_fun,GLP_MIN);
+	const double z = solveLinearSystem(extA, this->b, obj_fun, GLP_MIN);
 
 	return (z>0)||(strict_inequality&&(z>=0));
 }
@@ -260,19 +271,19 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const {
  * Determine all the solutions of this linear system are also 
  * solutions for another linear system.
  *
- * @param[in] LS a linear system
+ * @param[in] ls a linear system
  * @return true if all the solutions of this object are also 
  * 				solutions for the parameter.
  */
-bool LinearSystem::solutionsAlsoSatisfy(const LinearSystem& LS) const {
+bool LinearSystem::solutionsAlsoSatisfy(const LinearSystem& ls) const {
 
-	LinearSystem extLS(LS.A, LS.b);
+	LinearSystem extLS(ls.A, ls.b);
 	extLS.A.push_back(vector<double>(1, 0));
 	extLS.b.push_back(0);
 
 	for (int i=0; i<this->size(); i++){
-		extLS.A[LS.size()] = get_complementary(this->A[i]);
-		extLS.b[LS.size()] = -this->b[i];
+		extLS.A[ls.size()] = get_complementary(this->A[i]);
+		extLS.b[ls.size()] = -this->b[i];
 
 		if (!extLS.isEmpty(true)) {
 			return false;
@@ -341,12 +352,12 @@ LinearSystemSet* LinearSystem::get_a_finer_covering() const
 /**
  * Determine whether two linear systems are equivalent
  *
- * @param[in] LS a linear system to be compared this object.
+ * @param[in] ls a linear system to be compared this object.
  * @return true if this object is equivalent to the parameter
  */
-bool LinearSystem::operator==(const LinearSystem& LS) const {
+bool LinearSystem::operator==(const LinearSystem& ls) const {
 
-	return this->solutionsAlsoSatisfy(LS) && LS.solutionsAlsoSatisfy(*this);
+	return this->solutionsAlsoSatisfy(ls) && ls.solutionsAlsoSatisfy(*this);
 }
 
 /**
@@ -359,23 +370,21 @@ bool LinearSystem::operator==(const LinearSystem& LS) const {
 double LinearSystem::minLinearSystem(const lst& vars, const ex& obj_fun) const {
 
 	vector< double > obj_fun_coeffs;
-	ex const_term = obj_fun;
+	ex const_term(obj_fun);
 
 	// Extract the coefficient of the i-th variable (grade 1)
-	for(int i=0; i<(signed)vars.nops(); i++){
-
-		double coeff = ex_to<numeric>(evalf(obj_fun.coeff(vars[i],1))).to_double();
+	for (lst::const_iterator v_it=begin(vars); v_it!=end(vars); ++v_it)
+	{
+		double coeff = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
 
 		obj_fun_coeffs.push_back(coeff);
-		const_term = const_term.coeff(vars[i],0);
-
+		const_term = const_term.coeff(*v_it, 0);
 	}
 
 	const double c = ex_to<numeric>(evalf(const_term)).to_double();
-	const double min = solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MIN);
+	const double min = solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MIN);
 
 	return (min+c);
-
 }
 
 /**
@@ -384,8 +393,9 @@ double LinearSystem::minLinearSystem(const lst& vars, const ex& obj_fun) const {
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double LinearSystem::minLinearSystem(const vector< double >& obj_fun_coeffs) const {
-	return solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MIN);
+double LinearSystem::minLinearSystem(const vector< double >& obj_fun_coeffs) const 
+{
+	return solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MIN);
 }
 
 /**
@@ -394,8 +404,9 @@ double LinearSystem::minLinearSystem(const vector< double >& obj_fun_coeffs) con
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maxLinearSystem(const vector< double >& obj_fun_coeffs) const {
-	return solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
+double LinearSystem::maxLinearSystem(const vector< double >& obj_fun_coeffs) const 
+{
+	return solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MAX);
 }
 
 /**
@@ -408,19 +419,18 @@ double LinearSystem::maxLinearSystem(const vector< double >& obj_fun_coeffs) con
 double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 
 	vector< double > obj_fun_coeffs;
-	ex const_term = obj_fun;
+	ex const_term(obj_fun);
 
 	// Extract the coefficient of the i-th variable (grade 1)
-	for(int i=0; i<(signed)vars.nops(); i++){
-
-		double coeff = ex_to<numeric>(evalf(obj_fun.coeff(vars[i],1))).to_double();
+	for (lst::const_iterator v_it=begin(vars); v_it!=end(vars); ++v_it)
+	{
+		double coeff = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
 		obj_fun_coeffs.push_back(coeff);
-		const_term = const_term.coeff(vars[i],0);
-
+		const_term = const_term.coeff(*v_it, 0);
 	}
 
 	const double c = ex_to<numeric>(evalf(const_term)).to_double();
-	const double max = solveLinearSystem(this->A,this->b,obj_fun_coeffs,GLP_MAX);
+	const double max = solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MAX);
 
 	return (max+c);
 }
@@ -428,20 +438,39 @@ double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 /**
  * Create a new linear system by concatenating this LS and the specified one
  *
- * @param[in] LS linear system to be appended
+ * @param[in] ls linear system to be appended
  * @return linear system obtained by merge
  */
-LinearSystem* LinearSystem::intersectWith(const LinearSystem *LS) const {
-	LinearSystem *result = new LinearSystem(this->A, this->b);
+LinearSystem LinearSystem::intersectWith(const LinearSystem& ls) const {
+	LinearSystem result(this->A, this->b);
 
-	for(int i=0; i<LS->size(); i++){
-		if( !this->isIn(LS->A[i], LS->b[i]) ){		// check for duplicates
-			result->A.push_back( LS->A[i] );
-			result->b.push_back( LS->b[i] );
+	for(int i=0; i<ls.size(); i++){
+		if( !this->isIn(ls.A[i], ls.b[i]) ){		// check for duplicates
+			(result.A).push_back( ls.A[i] );
+			(result.b).push_back( ls.b[i] );
 		}
 	}
 
 	return result;
+}
+
+bool LinearSystem::isRedundant(const std::vector< double >& Ai, const double bi) const
+{
+	if (size()==0) return false;
+
+	double max = this->maxLinearSystem(Ai);
+	if (abs(max - bi) > MAX_APPROX_ERROR) {  /* This should be max != bi, 
+								however, due to double approximation 
+								errors, testing whether the distance 
+								between max and bi is greater than a 
+								fixed positive approximation constant 
+								is more conservative */
+		return true;
+	} 
+
+	auto max_coeff = max_element(std::begin(Ai), std::end(Ai));
+	auto min_coeff = min_element(std::begin(Ai), std::end(Ai));
+	return ((*max_coeff==*min_coeff)&&(*min_coeff==0)&&(bi>=0));
 }
 
 /**
@@ -454,20 +483,7 @@ vector<bool> LinearSystem::redundantCons() const{
 	vector<bool> redun (this->size(), false);
 
 	for(int i=0; i<this->size(); i++){
-		double max = this->maxLinearSystem(this->A[i]);
-		if (abs(max - this->b[i]) > MAX_APPROX_ERROR) {  /* This should be max != this->b[i], 
-								    however, due to double approximation 
-								    errors, testing whether the distance 
-								    between max and this->b[i] is 
-								    greater than a fixed positive 
-								    approximation constant is more 
-								    conservative */
-			redun[i] = true;
-		} else {
-			auto max_coeff = max_element(std::begin(A[i]), std::end(A[i]));
-			auto min_coeff = min_element(std::begin(A[i]), std::end(A[i]));
-			redun[i] = ((*max_coeff==*min_coeff)&&(*min_coeff==0)&&(b[i]>=0));
-		}
+		redun[i] = isRedundant(A[i], b[i]);
 	}
 	return redun;
 }
@@ -475,7 +491,8 @@ vector<bool> LinearSystem::redundantCons() const{
 /**
 + * Remove redundant constraints
 + */
-LinearSystem *LinearSystem::simplify() {
+LinearSystem& LinearSystem::simplify() 
+{
 	vector<bool> R = this->redundantCons();
 
 	for (int i = R.size()-1; i>=0; i--) {
@@ -486,7 +503,7 @@ LinearSystem *LinearSystem::simplify() {
 		}	
 	}
 	
-	return this;
+	return *this;
 }
 
 /**
@@ -635,9 +652,3 @@ void LinearSystem::plotRegion(const vector<int>& rows, const vector<int>& cols) 
 		cout<<"];\n";
 		cout<<"plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],color);\n";
 }
-
-
-LinearSystem::~LinearSystem() {
-	// TODO Auto-generated destructor stub
-}
-

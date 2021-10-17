@@ -10,55 +10,60 @@
 #ifndef LINEARSYSTEM_H_
 #define LINEARSYSTEM_H_
 
-#include "Common.h"
+#include <vector>
+#include <ginac/ginac.h>
 
 class LinearSystemSet;
 
 class LinearSystem {
 
 private:
-	int n_vars;					// number of variables
-	lst vars;					// 	list of variables
-	lst constraints;			//	list of constraints
-	vector< vector<double> > A; // matrix A
-	vector< double > b; 		// vector b
+	std::vector< std::vector<double> > A; // matrix A
+	std::vector< double > b; 		// vector b
 
-	bool isIn(vector< double > Ai, const double bi) const;	// check if a constraint is already in
-	void initLS();								// initialize A and b
+	bool isIn(std::vector< double > Ai, const double bi) const;	// check if a constraint is already in
+	bool isRedundant(const std::vector< double >& Ai, const double bi) const;
 
 	LinearSystemSet* get_a_finer_covering(LinearSystemSet *tmp_covering,
 								          std::vector<std::vector<double> >& A,
 										  std::vector<double>& b) const;
 
 public:
-
 	LinearSystem();
-	LinearSystem(vector< vector<double> > A, vector< double > b);
-	LinearSystem(lst vars, lst constraints);
+	LinearSystem(const LinearSystem& orig);
+	LinearSystem(LinearSystem&& orig);
+	LinearSystem(const std::vector< std::vector<double> >& A, const std::vector< double >& b);
+	LinearSystem(const GiNaC::lst& vars, const GiNaC::lst& constraints);
 
 	/**
 	 * Return the template matrix
 	 *
 	 * @return template matrix
 	 */
-	inline const vector< vector<double> >& getA() const { return this->A; }
+	inline const std::vector< std::vector<double> >& getA() const
+	{
+		return this->A;
+	}
 
 	/**
 	 * Return the offset vector
 	 *
 	 * @return offset vector
 	 */
-	inline const vector<double>& getb() const { return this->b; }
+	inline const std::vector<double>& getb() const
+	{
+		return this->b;
+	}
 
-	const double& getA(int i, int j) const;
-	const double& getb(int i) const;
+	const double& getA(const unsigned int i, const unsigned int j) const;
+	const double& getb(const unsigned int i) const;
 
 	// optimization functions
-	double minLinearSystem(const lst& vars, const ex& obj_fun) const;
-	double maxLinearSystem(const lst& vars, const ex& obj_fun) const;
+	double minLinearSystem(const GiNaC::lst& vars, const GiNaC::ex& obj_fun) const;
+	double maxLinearSystem(const GiNaC::lst& vars, const GiNaC::ex& obj_fun) const;
 
-	double minLinearSystem(const vector< double >& obj_fun_coeffs) const;
-	double maxLinearSystem(const vector< double >& obj_fun_coeffs) const;
+	double minLinearSystem(const std::vector< double >& obj_fun_coeffs) const;
+	double maxLinearSystem(const std::vector< double >& obj_fun_coeffs) const;
 
     // testing methods 
 	bool isEmpty(const bool strict_inequality=false) const;	 // determine this LS is empty
@@ -68,19 +73,36 @@ public:
 	LinearSystemSet* get_a_finer_covering() const;
 
 	// operations on linear system
-	LinearSystem* intersectWith(const LinearSystem *LS) const;
-	vector<bool> redundantCons() const;
-	LinearSystem *simplify();
+	LinearSystem intersectWith(const LinearSystem& ls) const;
+	std::vector<bool> redundantCons() const;
+	LinearSystem& simplify();
+
+	/**
+	+ * Remove redundant constraints
+	+ */
+	inline LinearSystem get_simplified() const
+	{
+		return LinearSystem(*this).simplify();
+	}
 
 	/**
 	 * Return the number of variables
 	 */
-	inline int dim() const { if(this->isEmpty()){ return 0; } return this->A[0].size(); };
+	inline unsigned int dim() const
+	{
+		if (this->isEmpty()) {
+			return 0;
+		}
+		return this->A[0].size();
+	}
 
 	/**
 	 * Return the number of inequalities
 	 */
-	inline int size() const { return this->b.size(); };
+	inline unsigned int size() const
+	{
+		return this->b.size();
+	}
 
 	double volBoundingBox();
 
@@ -88,9 +110,7 @@ public:
 	void plotRegion() const;
 	void plotRegionToFile(const char *file_name, const char color) const;
 	void plotRegionT(const double t) const;
-	void plotRegion(const vector<int>& rows, const vector<int>& cols) const;
-
-	~LinearSystem();
+	void plotRegion(const std::vector<int>& rows, const std::vector<int>& cols) const;
 };
 
 /**
