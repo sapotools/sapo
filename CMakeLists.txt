@@ -5,9 +5,7 @@ project (sapo CXX)
 #For shared libraries:
 set ( PROJECT_LINK_LIBS ginac glpk cln )
 
-link_directories( /usr/local/Cellar/ginac/1.8.1/lib )
-link_directories( /usr/local/Cellar/glpk/5.0/lib )
-link_directories( /usr/local/lib )
+include_directories(include include/STL parser/include)
 
 find_package(FLEX)
 find_package(BISON)
@@ -16,11 +14,22 @@ flex_target(input_scanner parser/scanner.l ${CMAKE_SOURCE_DIR}/parser/src/scanne
 bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
 							DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
-include_directories(⁨/usr/local/include /usr/local/Cellar/ginac/1.8.1/include /usr/local/Cellar/cln/1.3.6/include /usr/local/Cellar/glpk/5.0/include)
-include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/STL ${CMAKE_SOURCE_DIR}/parser/include)
+# This is to support brew
+include_directories(⁨/usr/local/include) 
+include_directories(/usr/local/Cellar/ginac/1.8.1/include) 
+include_directories(/usr/local/Cellar/cln/1.3.4/include)
+include_directories(/usr/local/Cellar/glpk/5.0/include)
+
+link_directories( /usr/local/lib )
+link_directories( /usr/local/Cellar/ginac/1.8.1/lib )
+link_directories( /usr/local/Cellar/cln/1.3.4/lib )
+link_directories( /usr/local/Cellar/glpk/5.0/lib )
+# end brew support
+
+
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/STL/*.cpp ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE} ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
 
