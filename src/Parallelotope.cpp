@@ -137,9 +137,8 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 
 	ex solLS = lsolve(LS,q);
 	if( solLS.nops() == 0 ){	// the template is singular
-		cout<<"singluar parallelotope\n";
-		constr->print();
-		cout<<LS;
+		cout << "singluar parallelotope" << endl 
+		     << *constr << endl << LS;
 		return;
 	}
 

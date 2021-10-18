@@ -47,7 +47,7 @@ LinearSystemSet::LinearSystemSet(LinearSystem* ls){
  */
 LinearSystemSet::LinearSystemSet(const vector<LinearSystem*>& set){
 
-	for(int i=0; i<(signed)set.size(); i++){
+	for(unsigned int i=0; i<set.size(); i++){
 		if(!set[i]->isEmpty()){
 			this->set.push_back(set[i]);
 		}
@@ -57,17 +57,14 @@ LinearSystemSet::LinearSystemSet(const vector<LinearSystem*>& set){
 /**
  * Get the set of linear systems
  *
- * @returns actual collection of linear systems
+ * @returns the current collection of linear systems
  */
-const vector<LinearSystem*>& LinearSystemSet::getSet() const {
-	return this->set;
-}
 
-bool solutionsProvidedByOneLS(const std::vector<LinearSystem*>& S, const LinearSystem &set) {
+bool satisfiesOneOf(const LinearSystem &set, const std::vector<LinearSystem*>& S) {
 
 #if MINIMIZE_LS_SET_REPRESENTATION
 	for (std::vector<LinearSystem*>::const_iterator it=std::begin(S); it!=std::end(S); ++it) {
-		if ((*it)->solutionsAlsoSatisfy(set)) {
+		if (set.satisfies(*(*it))) {
 			return true;
 		}
 	}
@@ -81,9 +78,10 @@ bool solutionsProvidedByOneLS(const std::vector<LinearSystem*>& S, const LinearS
  *
  * @param[in] LS linear system to add
  */
-void LinearSystemSet::add(LinearSystem *LS){
-	if(!LS->isEmpty()&&!solutionsProvidedByOneLS(this->set, *LS)){
-		this->set.push_back(LS);
+void LinearSystemSet::add(LinearSystem *ls)
+{
+	if ((!ls->isEmpty()) && (!satisfiesOneOf(*ls, this->set))) {
+		this->set.push_back(ls);
 	}
 }
 
@@ -108,7 +106,7 @@ LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
 LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSset) const {
 
 	LinearSystemSet* result = new LinearSystemSet();
-	vector<LinearSystem*> set = LSset->getSet();
+	vector<LinearSystem*> set = LSset->get_set();
 
 	for(int i=0; i<(signed)this->set.size(); i++){
 		for(int j=0; j<(signed)set.size(); j++){
@@ -148,7 +146,7 @@ LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const
 		exit (EXIT_FAILURE);
 	}
 
-	vector<LinearSystem*> set = LSset->getSet();
+	vector<LinearSystem*> set = LSset->get_set();
 	int set_card = set.size();
 	int iters = min(bound-this->size(),set_card);
 
@@ -209,11 +207,11 @@ bool LinearSystemSet::isEmpty() const{
 void LinearSystemSet::print() const {
 
 	if( this->set.size() <= 0){
-		cout<<"--- empty set ----\n";
+		cout<<"--- empty set ----" << endl;
 	}else{
 		for(int i=0; i<(signed)this->set.size(); i++){
-			cout<<"--------------\n";
-			this->set[i]->print();
+			cout << "--------------" << endl 
+			     << *(this->set[i]) << endl << endl;
 		}
 	}
 

@@ -27,7 +27,6 @@ public:
 	LinearSystemSet(LinearSystem* ls);
 	LinearSystemSet(const std::vector<LinearSystem*>& set);
 
-	const std::vector<LinearSystem*>& getSet() const;
 	void add(LinearSystem *LS);
 
 	LinearSystemSet* get_a_finer_covering() const;
@@ -48,6 +47,13 @@ public:
 	 * @returns number of linear systems in the set
 	 */
 	inline int size() const{ return this->set.size(); }
+
+	/**
+	 * Get the set of linear systems
+	 *
+	 * @returns the current collection of linear systems
+	 */
+	inline const std::vector<LinearSystem*>& get_set() const { return set; }
 
 	LinearSystem* at(int i);
 	const LinearSystem* at(int i) const;

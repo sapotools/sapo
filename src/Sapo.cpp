@@ -32,7 +32,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 	Flowpipe *flowpipe = new Flowpipe();
 
 	if(this->options.verbose){
-		initSet->getBundle()->print();
+		cout << initSet->getBundle() << endl << endl;
 	}
 	flowpipe->append(initSet);
 
@@ -49,7 +49,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 			X = X->decompose(this->options.alpha,this->options.decomp);
 		}
 		if(this->options.verbose){
-			X->getBundle()->print();
+			cout << X->getBundle() << endl << endl;
 		}
 
 		flowpipe->append(X);			// store result
@@ -75,13 +75,11 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 	
 	Flowpipe *flowpipe = new Flowpipe();
 
-	cout << "Parameter set" << endl;
-	paraSet->print();
-
-	cout<< endl <<"Computing parametric reach set..."<<flush;
+	cout << "Parameter set" << endl << *paraSet << endl << endl
+	     << endl << "Computing parametric reach set..." << flush;
 
 	if(this->options.verbose){
-		initSet->getBundle()->print();
+		cout << initSet->getBundle() << endl << endl;
 	}
 	flowpipe->append(initSet);
 
@@ -98,7 +96,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 		}
 
 		if(this->options.verbose){
-			X->getBundle()->print();
+			cout << X->getBundle() << endl << endl;
 		}
 
 		flowpipe->append(X);			// store result

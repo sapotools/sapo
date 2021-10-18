@@ -55,7 +55,7 @@ void Flowpipe::append( Bundle* bundle ){
  */
 void Flowpipe::print(){
 	for(int i=0; i<this->size(); i++){
-		this->flowpipe[i]->getBundle()->print();
+		std::cout << this->flowpipe[i]->getBundle() << std::endl << std::endl;
 	}
 }
 
@@ -64,7 +64,7 @@ void Flowpipe::print(){
  */
 void Flowpipe::plotRegion(){
 	for(int i=0; i<this->size(); i++){
-		this->flowpipe[i]->getBundle()->plotRegion();
+		this->flowpipe[i]->getBundle().plotRegion();
 	}
 }
 
@@ -76,7 +76,7 @@ void Flowpipe::plotRegion(){
  */
 void Flowpipe::plotRegionToFile(char *file_name, char color){
 	for(int i=0; i<this->size(); i++){
-		this->flowpipe[i]->getBundle()->plotRegionToFile(file_name,color);
+		this->flowpipe[i]->getBundle().plotRegionToFile(file_name,color);
 	}
 }
 

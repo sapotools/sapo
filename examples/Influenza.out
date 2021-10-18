@@ -11,8 +11,8 @@ Specification: always_[0,50] (-0.4235+i <= 0)
 Synthesizing parameters...
 Parameter set
 1 0 <= 0.002
-0 1 <= 0.01
 -0.353698 -0.0712121 <= -0.00141037
+0 1 <= 0.01
 
 
 Computing parametric reach set...done
@@ -479,6 +479,6 @@ RESULTS
 END RESULTS
 --------------
 1 0 <= 0.002
-0 1 <= 0.01
 -0.353698 -0.0712121 <= -0.00141037
+0 1 <= 0.01
 

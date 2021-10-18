@@ -146,7 +146,7 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
  *
  * @returns polytope represented by a linear system
  */
-LinearSystem* Bundle::getBundle(){
+LinearSystem Bundle::getBundle() {
 	vector< vector< double> > A;
 	vector< double> b;
 	for(int i=0; i<this->getSize(); i++){
@@ -158,9 +158,7 @@ LinearSystem* Bundle::getBundle(){
 		b.push_back(this->offm[i]);
 	}
 
-	LinearSystem* Ab = new LinearSystem(A,b);
-
-	return Ab;
+	return LinearSystem(A,b);
 }
 
 /**
@@ -205,11 +203,11 @@ Parallelotope* Bundle::getParallelotope(int i){
  */
 Bundle* Bundle::canonize(){
 	// get current polytope
-	LinearSystem *bund = this->getBundle();
+	LinearSystem bund = this->getBundle();
 	vector<double> canoffp,canoffm;
 	for(int i=0; i<this->getSize(); i++){
-		canoffp.push_back(bund->maxLinearSystem(this->L[i]));
-		canoffm.push_back(bund->maxLinearSystem(get_complementary(this->L[i])));
+		canoffp.push_back(bund.maxLinearSystem(this->L[i]));
+		canoffm.push_back(bund.maxLinearSystem(get_complementary(this->L[i])));
 	}
 	return new Bundle(this->vars,this->L,canoffp,canoffm,this->T);
 }

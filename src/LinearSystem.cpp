@@ -11,14 +11,34 @@
 #include <fstream>
 
 #include <glpk.h>
+#include <limits>
 
 #include "LinearSystem.h"
 #include "LinearSystemSet.h"
 
-#define MAX_APPROX_ERROR 1e-6  // necessary for double comparison
+#define MAX_APPROX_ERROR 1e-8  // necessary for double comparison
 
 using namespace std;
 using namespace GiNaC;
+
+std::ostream& operator<<(std::ostream& out, const LinearSystem& ls)
+{
+	for (unsigned int row_idx=0; row_idx < ls.size(); row_idx++)
+	{
+		if (row_idx != 0) 
+		{
+			out << std::endl;
+		}
+
+		for (unsigned int col_idx=0; col_idx < ls.dim(); col_idx++)
+		{
+			out << ls.getA(row_idx, col_idx) << " ";
+		}
+		out << "<= " << ls.getb(row_idx);
+	}
+
+	return out;
+}
 
 /**
  * Optimize a linear system
@@ -32,7 +52,6 @@ using namespace GiNaC;
 double solveLinearSystem(const vector< vector< double > > &A, const vector< double > &b,
 						 const vector< double > &obj_fun, const int min_max)
 {
-
 	int num_rows = A.size();
 	int num_cols = obj_fun.size();
 	int size_lp = num_rows*num_cols;
@@ -75,7 +94,16 @@ double solveLinearSystem(const vector< vector< double > > &A, const vector< doub
 	glp_exact(lp, &lp_param);
 //	glp_simplex(lp, &lp_param);
 
-	double res = glp_get_obj_val(lp);
+	double res;
+	if (glp_get_status(lp) == GLP_UNBND) {
+		if (min_max == GLP_MAX) {
+			res = std::numeric_limits<double>::infinity();
+		} else {
+			res = -std::numeric_limits<double>::infinity();
+		}
+	} else {
+		res = glp_get_obj_val(lp);
+	}
 	glp_delete_prob(lp);
 	glp_free_env();
 	return res;
@@ -110,12 +138,12 @@ LinearSystem::LinearSystem(const vector< vector<double> >& A, const vector< doub
 
 	bool smart_insert = false;
 
-	if(!smart_insert){
+	if (!smart_insert) {
 		this->A = A;
 		this->b = b;
-	}else{
-		for(int i=0; i<(signed)A.size(); i++){
-			if(!this->isIn(A[i],b[i]) && (!zeroLine(A[i]))){
+	} else {
+		for (unsigned int i=0; i<A.size(); i++) {
+			if (!this->isIn(A[i], b[i]) && (!zeroLine(A[i]))) {
 				this->A.push_back(A[i]);
 				this->b.push_back(b[i]);
 			}
@@ -144,8 +172,7 @@ LinearSystem::LinearSystem(const LinearSystem& orig): A(orig.A), b(orig.b)
  */
 LinearSystem::LinearSystem(LinearSystem&& orig)
 {
-	std::swap(this->A, orig.A);
-	std::swap(this->b, orig.b);
+	swap(*this, orig);
 }
 
 /**
@@ -199,7 +226,7 @@ LinearSystem::LinearSystem(const lst& vars, const lst& constraints)
 
 		double bi = ex_to<numeric>(evalf(const_term)).to_double();
 
-		if(!this->isIn(Ai,-bi)){
+		if (!this->isIn(Ai, -bi)) {
 			this->A.push_back(Ai);
 			this->b.push_back(-bi);
 		}
@@ -239,16 +266,20 @@ const double& LinearSystem::getb(unsigned int i) const {
 }
 
 /**
- * Determine whether this linear system is empty or not, i.e.,
- * the linear system has solutions
+ * Determine whether this linear system is empty, i.e.,
+ * the linear system has no solutions.
+ * 
+ * Due to approximation errors, it may return false for some empty 
+ * systems too. However, when it returns true, the set is certainly empty.
  *
  * @param[in] strict_inequality specifies whether the linear system is a 
- * 						strict inequality (i.e., Ax < b)
- * @return true if the linear system is empty
+ * 						strict inequality (i.e., Ax < b).
+ * @return a Boolean value. If the returned value is true, then the 
+ *       linear system is empty.
  */
 bool LinearSystem::isEmpty(const bool strict_inequality) const 
 {
-	if (this->A.size()==0) {
+	if (this->size()==0) {
 		return false;
 	}
 
@@ -264,28 +295,33 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const
 
 	const double z = solveLinearSystem(extA, this->b, obj_fun, GLP_MIN);
 
-	return (z>0)||(strict_inequality&&(z>=0));
+	return (z>MAX_APPROX_ERROR)||(strict_inequality&&(z>=MAX_APPROX_ERROR));
 }
 
 /**
- * Determine all the solutions of this linear system are also 
- * solutions for another linear system.
- *
- * @param[in] ls a linear system
- * @return true if all the solutions of this object are also 
- * 				solutions for the parameter.
- */
-bool LinearSystem::solutionsAlsoSatisfy(const LinearSystem& ls) const {
++ * Check whether all the solutions of a linear system are also solutions for 
+  * another linear system.
+  *
+  * This method establishes whether all the solutions of a linear system 
+  * are are also solutions for another linear system. Due to approximation 
+  * errors, it may return false even if this is the case. However, whenever 
+  * it returns true, the all the solutions of the linear system are certainly 
+  * solutions for the linear system passed as parameter.
+  * 
+  * @param[in] ls is the linear system whose set of solutions is compated this
+  * 	that of this linear system.
+  * @return a Boolean value. When some of the solutions of this linear system
+  *     are not solutions for the parameter, the returned value is false. When
+  *     the method returns true, all the solution of the object are also 
+  *     solutions for the parameter. There are cases in which the set of
+  *     object solutions is a subset of the parameter solutions and, still,
+  *     this method returns false.
++ */
+bool LinearSystem::satisfies(const LinearSystem& ls) const 
+{
 
-	LinearSystem extLS(ls.A, ls.b);
-	extLS.A.push_back(vector<double>(1, 0));
-	extLS.b.push_back(0);
-
-	for (int i=0; i<this->size(); i++){
-		extLS.A[ls.size()] = get_complementary(this->A[i]);
-		extLS.b[ls.size()] = -this->b[i];
-
-		if (!extLS.isEmpty(true)) {
+	for (int i=0; i<ls.size(); i++){
+		if (!this->satisfies(ls.A[i], ls.b[i])) {
 			return false;
 		}
 	}
@@ -347,17 +383,6 @@ LinearSystemSet* LinearSystem::get_a_finer_covering() const
 	LinearSystemSet *result = new LinearSystemSet();
  
 	return get_a_finer_covering(result, A, b);
-}
-
-/**
- * Determine whether two linear systems are equivalent
- *
- * @param[in] ls a linear system to be compared this object.
- * @return true if this object is equivalent to the parameter
- */
-bool LinearSystem::operator==(const LinearSystem& ls) const {
-
-	return this->solutionsAlsoSatisfy(ls) && ls.solutionsAlsoSatisfy(*this);
 }
 
 /**
@@ -445,7 +470,7 @@ LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 	LinearSystem result(this->A, this->b);
 
 	for(int i=0; i<ls.size(); i++){
-		if( !this->isIn(ls.A[i], ls.b[i]) ){		// check for duplicates
+		if( !result.satisfies(ls.A[i], ls.b[i]) ){		// check for duplicates
 			(result.A).push_back( ls.A[i] );
 			(result.b).push_back( ls.b[i] );
 		}
@@ -454,12 +479,31 @@ LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 	return result;
 }
 
-bool LinearSystem::isRedundant(const std::vector< double >& Ai, const double bi) const
+/**
++ * Check whether all the solutions of a linear system satisfy a constraint.
+  *
+  * This method establishes whether all the solutions of a linear system 
+  * satisfy a constraint. Due to approximation errors, it may return 
+  * false even if this is the case. However, whenever it returns true, the 
+  * all the solutions of the linear system certainly satisfy the inequality.
+  * 
+  * @param[in] i is the index of the constraint to be checked
+  * @return a Boolean value. When some of the solutions of the linear system 
+  *     do not satisfy the inequality, the returned value is false. When the 
+  *     method returns true, the constraint is certainly satisfied by any of
+  *     the solutions of the system. There are cases in which the constraint 
+  *     is satisfied by all the solutions and this method returns false.
++ */
+bool LinearSystem::satisfies(const std::vector< double >& Ai, const double bi) const
 {
 	if (size()==0) return false;
 
+	if (isIn(Ai, bi)) {
+		return true;
+	}
+
 	double max = this->maxLinearSystem(Ai);
-	if (abs(max - bi) > MAX_APPROX_ERROR) {  /* This should be max != bi, 
+	if (max + MAX_APPROX_ERROR <= bi) {  /* This should be max <= bi, 
 								however, due to double approximation 
 								errors, testing whether the distance 
 								between max and bi is greater than a 
@@ -468,42 +512,100 @@ bool LinearSystem::isRedundant(const std::vector< double >& Ai, const double bi)
 		return true;
 	} 
 
+	return false;
+
 	auto max_coeff = max_element(std::begin(Ai), std::end(Ai));
 	auto min_coeff = min_element(std::begin(Ai), std::end(Ai));
 	return ((*max_coeff==*min_coeff)&&(*min_coeff==0)&&(bi>=0));
 }
 
 /**
- * Determine the redundant constraint of the linear system
- *
- * @return boolean vector (true is if i-th constrain is redundant)
- */
-vector<bool> LinearSystem::redundantCons() const{
++ * Check whether one of the constraints in a linear system is redundant.
+  *
+  * This method establishes whether the i-th constraint of a linear 
+  * system is redundant. Due to approximation errors, it may return 
+  * false even if the constraint is redundant. However, whenever it 
+  * returns true, the constraint is certainly redundant.
+  * 
+  * @param[in] i is the index of the constraint to be checked
+  * @return a Boolean value. When the constraint is non-redundanct, the
+  *     returned value is true. When it returns true, the constraint is 
+  *     certainly redundant. There are cases in which the constraint is 
+  *     redundant and this method returns false.
++ */
+bool LinearSystem::constraintIsRedundant(const unsigned int i) const
+{
+	LinearSystem tmp(*this);
+	std::vector<double> Ai(dim(), 0);
+	double bi(0);
 
-	vector<bool> redun (this->size(), false);
+	// replace the i-th constraint with the empty constraint 
+	std::swap(Ai, tmp.A[i]);
+	std::swap(bi, tmp.b[i]);
 
-	for(int i=0; i<this->size(); i++){
-		redun[i] = isRedundant(A[i], b[i]);
+	// check whether the i-th constraint is redundant
+	bool result(tmp.satisfies(Ai, bi));
+
+	// reinsert the i-th into the system
+	std::swap(Ai, tmp.A[i]);
+	std::swap(bi, tmp.b[i]);
+
+	return result;
+}
+
+/**
++ * Remove redundant constraints from a linear system.
+  *
+  * This method removes redundant constraints from the system. 
+  * The order of the non-redundant constraints can be shuffled after 
+  * the call.
+  * 
+  * @return A reference to this object after removing all the
+  *         redundant constraints.
++ */
+LinearSystem& LinearSystem::simplify()
+{
+	unsigned int i=0, last_non_redundant=size()-1;
+	
+	while (i<last_non_redundant) { //for every unchecked constraint
+
+		// if it is redundant
+		if (constraintIsRedundant(i))
+		{
+			// swap it with the last non-reduntant constraint
+			swap(A[i], A[last_non_redundant]);
+			swap(b[i], b[last_non_redundant]);
+
+			// decrease the number of the non-reduntant constraints
+			last_non_redundant--;
+		} else { //otherwise, i.e. if it is not redundant
+
+			// increase the index of the next constraint to be checked
+			i++;
+		}
 	}
-	return redun;
+
+	// if the last constraint to be checked is redundant
+	if (constraintIsRedundant(last_non_redundant)) {
+		// reduce the number of non-reduntant constraints
+		last_non_redundant--;
+	}
+
+	// remove the redundant constraints that are at the end of the system
+	A.resize(last_non_redundant+1);
+	b.resize(last_non_redundant+1);
+
+	return *this;
 }
 
 /**
 + * Remove redundant constraints
 + */
-LinearSystem& LinearSystem::simplify() 
+LinearSystem LinearSystem::get_simplified() const
 {
-	vector<bool> R = this->redundantCons();
+	LinearSystem simplier(*this);
 
-	for (int i = R.size()-1; i>=0; i--) {
-		if (R[i])
-		{
-			(this->A).erase((this->A).begin()+i);
-			(this->b).erase((this->b).begin()+i);
-		}	
-	}
-	
-	return *this;
+	return simplier.simplify();
 }
 
 /**
@@ -526,19 +628,6 @@ double LinearSystem::volBoundingBox(){
 	}
 
 	return vol;
-}
-
-/**
- * Print the linear system
- */
-void LinearSystem::print() const {
-	for(int i=0; i<(signed)this->A.size(); i++){
-		for(int j=0; j<(signed)this->A[i].size(); j++){
-			cout<<this->A[i][j] << (j == (signed)this->A[i].size()-1 ? "" : " ");
-		}
-		cout<<" <= "<<this->b[i]<<"\n";
-	}
-	cout<<"\n";
 }
 
 /**

@@ -74,7 +74,7 @@ public:
 	vector<int> getTemplate(int i){ return this->T[i]; };
 	double getOffp(int i){ return this->offp[i]; };
 	double getOffm(int i){ return this->offm[i]; };
-	LinearSystem *getBundle();
+	LinearSystem getBundle();
 	Parallelotope* getParallelotope(int i);
 
 	void setTemplate(vector< vector< int > > T);

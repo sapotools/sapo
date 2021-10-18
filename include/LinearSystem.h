@@ -10,8 +10,44 @@
 #ifndef LINEARSYSTEM_H_
 #define LINEARSYSTEM_H_
 
+#include <iostream>
+
+#include <utility>
 #include <vector>
 #include <ginac/ginac.h>
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
+{
+	out << "[";
+	for (auto el_it = std::begin(v); el_it != std::end(v); ++el_it)
+	{
+		if (el_it != std::begin(v))
+		{
+			out << ",";
+		}
+		out << *el_it;
+	}
+	out << "]";
+
+	return out;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& A)
+{
+	for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it)
+	{
+		if (row_it != std::begin(A)) {
+			out << std::endl;
+		}
+
+		out << *row_it;
+	}
+
+	return out;
+}
+
 
 class LinearSystemSet;
 
@@ -22,7 +58,8 @@ private:
 	std::vector< double > b; 		// vector b
 
 	bool isIn(std::vector< double > Ai, const double bi) const;	// check if a constraint is already in
-	bool isRedundant(const std::vector< double >& Ai, const double bi) const;
+	bool satisfies(const std::vector< double >& Ai, const double bi) const;
+	bool constraintIsRedundant(const unsigned int i) const;
 
 	LinearSystemSet* get_a_finer_covering(LinearSystemSet *tmp_covering,
 								          std::vector<std::vector<double> >& A,
@@ -66,31 +103,40 @@ public:
 	double maxLinearSystem(const std::vector< double >& obj_fun_coeffs) const;
 
     // testing methods 
-	bool isEmpty(const bool strict_inequality=false) const;	 // determine this LS is empty
-	bool operator==(const LinearSystem& LS) const;  // decide whether two systems are equivalent
-	bool solutionsAlsoSatisfy(const LinearSystem& LS) const;
+	bool isEmpty(const bool strict_inequality=false) const;
+	bool satisfies(const LinearSystem& ls) const;
 
+	/**
+	 *  Split a linear system in set of linear systems.
+	 * 
+	 *  This method splits a linear system in a set of linear systems 
+	 *  such that the set union of their solutions equals the solution 
+	 *  set of the original linear system.
+	 * 
+	 *  @return A linear system set whose union of solution sets equals the 
+	 *      solution set of the original linear system.
+	 */
 	LinearSystemSet* get_a_finer_covering() const;
 
 	// operations on linear system
 	LinearSystem getIntersectionWith(const LinearSystem& ls) const;
-	std::vector<bool> redundantCons() const;
+
+	/**
+	+ * Remove redundant constraints
+	+ */
 	LinearSystem& simplify();
 
 	/**
 	+ * Remove redundant constraints
 	+ */
-	inline LinearSystem get_simplified() const
-	{
-		return LinearSystem(*this).simplify();
-	}
+	LinearSystem get_simplified() const;
 
 	/**
 	 * Return the number of variables
 	 */
 	inline unsigned int dim() const
 	{
-		if (this->isEmpty()) {
+		if (size()==0) {
 			return 0;
 		}
 		return this->A[0].size();
@@ -106,12 +152,20 @@ public:
 
 	double volBoundingBox();
 
-	void print() const;
 	void plotRegion() const;
 	void plotRegionToFile(const char *file_name, const char color) const;
 	void plotRegionT(const double t) const;
 	void plotRegion(const std::vector<int>& rows, const std::vector<int>& cols) const;
+
+	friend void swap(LinearSystem& ls_1, LinearSystem& ls_2);
 };
+
+inline void swap(LinearSystem& ls_1, LinearSystem& ls_2) {
+	std::swap(ls_1.A, ls_2.A);
+	std::swap(ls_1.b, ls_2.b);
+}
+
+std::ostream& operator<<(std::ostream& out, const LinearSystem& ls);
 
 /**
  * Compute the complementary of a vector of values.
