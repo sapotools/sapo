@@ -105,14 +105,14 @@ LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
  * @param[in] LSset set to intersect with
  * @returns intersected sets
  */
-LinearSystemSet* LinearSystemSet::intersectWith(const LinearSystemSet *LSset) const {
+LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSset) const {
 
 	LinearSystemSet* result = new LinearSystemSet();
 	vector<LinearSystem*> set = LSset->getSet();
 
 	for(int i=0; i<(signed)this->set.size(); i++){
 		for(int j=0; j<(signed)set.size(); j++){
-			LinearSystem *intLS = new LinearSystem(this->set[i]->intersectWith(*set[j])); // intersect
+			LinearSystem *intLS = new LinearSystem(this->set[i]->getIntersectionWith(*set[j])); // intersect
 			result->add(intLS);
 		}
 	}
@@ -125,15 +125,13 @@ LinearSystemSet* LinearSystemSet::intersectWith(const LinearSystemSet *LSset) co
  * @param[in] LSset set to union with
  * @returns merged sets
  */
-LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
-	LinearSystemSet* result = new LinearSystemSet(this->set);
-
+LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet *LSset){
 	for (std::vector<LinearSystem*>::iterator it=std::begin(LSset->set); 
 	                                          it!=std::end(LSset->set); ++it) {
-		result->add(*it);
+		this->add(*it);
 	}
 
-	return result;
+	return *this;
 }
 
 /**
@@ -143,24 +141,22 @@ LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
  * @param[in] bound set size bound
  * @returns merged sets
  */
-LinearSystemSet* LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, int bound){
+LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const int bound){
 
 	if(this->size() > bound){
 		cout<<"LinearSystemSet::boundedUnionWith : size of actual box larger than bound";
 		exit (EXIT_FAILURE);
 	}
 
-	vector<LinearSystem*> uniSet = this->set; 		// new union set
 	vector<LinearSystem*> set = LSset->getSet();
 	int set_card = set.size();
 	int iters = min(bound-this->size(),set_card);
 
 	for(int i=0; i<iters; i++){
-		uniSet.push_back(set[i]);
+		this->set.push_back(set[i]);
 	}
 
-	return new LinearSystemSet(uniSet);
-
+	return *this;
 }
 
 /**

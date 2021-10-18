@@ -441,7 +441,7 @@ double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
  * @param[in] ls linear system to be appended
  * @return linear system obtained by merge
  */
-LinearSystem LinearSystem::intersectWith(const LinearSystem& ls) const {
+LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 	LinearSystem result(this->A, this->b);
 
 	for(int i=0; i<ls.size(); i++){

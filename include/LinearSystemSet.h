@@ -33,9 +33,11 @@ public:
 	LinearSystemSet* get_a_finer_covering() const;
 
 	// operations on set
-	LinearSystemSet* intersectWith(const LinearSystemSet *LSset) const;
-	LinearSystemSet* unionWith(LinearSystemSet *LSset);
-	LinearSystemSet* boundedUnionWith(LinearSystemSet *LSset, int bound);
+	LinearSystemSet* getIntersectionWith(const LinearSystemSet *LSset) const;
+
+	// in-place set operations
+	LinearSystemSet& unionWith(LinearSystemSet *LSset);
+	LinearSystemSet& boundedUnionWith(LinearSystemSet *LSset, const int bound);
 
 	double boundingVol() const;
 

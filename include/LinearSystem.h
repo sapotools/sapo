@@ -73,7 +73,7 @@ public:
 	LinearSystemSet* get_a_finer_covering() const;
 
 	// operations on linear system
-	LinearSystem intersectWith(const LinearSystem& ls) const;
+	LinearSystem getIntersectionWith(const LinearSystem& ls) const;
 	std::vector<bool> redundantCons() const;
 	LinearSystem& simplify();
 

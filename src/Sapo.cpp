@@ -171,7 +171,7 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 			const std::shared_ptr<Conjunction> conj = std::dynamic_pointer_cast<Conjunction>(formula);
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, conj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, conj->getRightSubFormula());
-			return LS1->intersectWith(LS2);
+			return LS1->getIntersectionWith(LS2);
 		}
 
 		// Disjunction
@@ -179,7 +179,9 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
 			const std::shared_ptr<Disjunction> disj = std::dynamic_pointer_cast<Disjunction>(formula);
 			LinearSystemSet *LS1 = this->synthesizeSTL(reachSet, parameterSet, disj->getLeftSubFormula());
 			LinearSystemSet *LS2 = this->synthesizeSTL(reachSet, parameterSet, disj->getRightSubFormula());
-			return LS1->unionWith(LS2);
+			LS1->unionWith(LS2);
+
+			return LS1;
 		}
 
 		// Until
@@ -278,7 +280,7 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 
 		LinearSystem *num_constraintLS = new LinearSystem(this->params, synth_controlPts);
 		LinearSystemSet *controlPtsLS = new LinearSystemSet(num_constraintLS);
-		result = result->unionWith(parameterSet->intersectWith(controlPtsLS));
+		result->unionWith(parameterSet->getIntersectionWith(controlPtsLS));
 	}
 
 	return result;
@@ -317,7 +319,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 				
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
 				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
-				result = result->unionWith(tmpLSset);
+				result->unionWith(tmpLSset);
 			}
 			return result;
 		}
@@ -339,9 +341,11 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
 			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
-			result = result->unionWith(tmpLSset);
+			result->unionWith(tmpLSset);
 		}
-		return P2->unionWith(result);
+		result->unionWith(P2);
+
+		return result;
 	} 
 	
 	// If none of the above condition holds, then it must holds that :
@@ -376,7 +380,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
-			result = result->unionWith(tmpLSset);
+			result->unionWith(tmpLSset);
 		}
 		return result;
 	}
@@ -393,7 +397,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
 				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
-				result = result->unionWith(tmpLSset);
+				result->unionWith(tmpLSset);
 			}
 
 			return result;
