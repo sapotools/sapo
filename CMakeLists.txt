@@ -15,15 +15,15 @@ bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser
 							DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
 # This is to support brew
-include_directories(⁨/usr/local/include) 
 include_directories(/usr/local/Cellar/ginac/1.8.1/include) 
 include_directories(/usr/local/Cellar/cln/1.3.4/include)
 include_directories(/usr/local/Cellar/glpk/5.0/include)
+include_directories(⁨/usr/local/include) 
 
-link_directories( /usr/local/lib )
 link_directories( /usr/local/Cellar/ginac/1.8.1/lib )
 link_directories( /usr/local/Cellar/cln/1.3.4/lib )
 link_directories( /usr/local/Cellar/glpk/5.0/lib )
+link_directories( /usr/local/lib )
 # end brew support
 
 
