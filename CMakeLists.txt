@@ -33,7 +33,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE} ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
 
-set(CMAKE_CXX_FLAGS "-O2 -Wall")
+set(CMAKE_CXX_FLAGS "-O2 -Wall -Werror")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
