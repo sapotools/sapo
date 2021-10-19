@@ -106,11 +106,9 @@ LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
 LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSset) const {
 
 	LinearSystemSet* result = new LinearSystemSet();
-	vector<LinearSystem*> set = LSset->get_set();
-
-	for(int i=0; i<(signed)this->set.size(); i++){
-		for(int j=0; j<(signed)set.size(); j++){
-			LinearSystem *intLS = new LinearSystem(this->set[i]->getIntersectionWith(*set[j])); // intersect
+	for (auto t_it=std::begin(set); t_it!=std::end(set); ++t_it) {
+		for (auto s_it=std::begin(LSset->set); s_it!=std::end(LSset->set); ++s_it) {
+			LinearSystem *intLS = new LinearSystem((*t_it)->getIntersectionWith(*(*s_it))); // intersect
 			result->add(intLS);
 		}
 	}
@@ -139,7 +137,7 @@ LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet *LSset){
  * @param[in] bound set size bound
  * @returns merged sets
  */
-LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const int bound){
+LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const unsigned int bound){
 
 	if(this->size() > bound){
 		cout<<"LinearSystemSet::boundedUnionWith : size of actual box larger than bound";
@@ -147,8 +145,7 @@ LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const
 	}
 
 	vector<LinearSystem*> set = LSset->get_set();
-	int set_card = set.size();
-	int iters = min(bound-this->size(),set_card);
+	int iters = min(bound-this->size(), (unsigned int)set.size());
 
 	for(int i=0; i<iters; i++){
 		this->set.push_back(set[i]);
@@ -165,7 +162,7 @@ LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const
 double LinearSystemSet::boundingVol() const{
 
 	double vol = 0;
-	for(int i=0; i<this->size(); i++){
+	for(unsigned int i=0; i<this->size(); i++){
 		vol = vol + this->set[i]->volBoundingBox();
 	}
 	return vol;
@@ -209,9 +206,9 @@ void LinearSystemSet::print() const {
 	if( this->set.size() <= 0){
 		cout<<"--- empty set ----" << endl;
 	}else{
-		for(int i=0; i<(signed)this->set.size(); i++){
+		for (auto it=std::begin(set); it!=std::end(set); ++it) {
 			cout << "--------------" << endl 
-			     << *(this->set[i]) << endl << endl;
+			     << *(*it) << endl << endl;
 		}
 	}
 

@@ -21,8 +21,8 @@ BaseConverter::BaseConverter(lst vars, ex polynomial) {
 
 	// Put the polynomial in extended form and extract variables degrees
 	this->polynomial = this->polynomial.expand();
-	for(int i=0; i<(signed)this->vars.nops();i++){
-		this->degrees.push_back(this->polynomial.degree(this->vars[i]));
+	for (auto var_it=std::begin(vars); var_it!=end(vars); ++var_it) {
+		this->degrees.push_back(this->polynomial.degree(*var_it));
 	}
 
 	// Initialize the degree shifts
@@ -122,11 +122,11 @@ int BaseConverter::multi_index2pos(vector<int> multi_index){
  * @param[in] position position to convert
  * @returns converted position
  */
-vector<int> BaseConverter::pos2multi_index(int position){
+vector<int> BaseConverter::pos2multi_index(unsigned int position){
 
 	vector<int> multi_index(this->degrees.size(),0);
 
-	for(int i=0; i<(signed)multi_index.size() - 1; i++){
+	for(unsigned int i=0; i<multi_index.size() - 1; i++){
 		multi_index[i] = (int)position / this->shifts[i+1];
 		position = position % this->shifts[i+1];
 	}
@@ -143,13 +143,13 @@ vector<int> BaseConverter::pos2multi_index(int position){
  * @param[in] var_idx vector of variable indices
  * @param[in] multi_index vector of multi-indices associated to the variables
  */
-void BaseConverter::extractCoeffs(ex polynomial,int var_idx,vector<int> multi_index){
+void BaseConverter::extractCoeffs(ex polynomial, unsigned int var_idx, vector<int> multi_index){
 
 	// Get the variable index
 	multi_index.push_back(0);
 
 	// Base case, there's only one variable
-	if( var_idx == (signed)this->vars.nops()-1 ){
+	if( var_idx == this->vars.nops()-1 ){
 
 		for(int i=0; i<=this->degrees[var_idx]; i++){
 			ex coeff = polynomial.coeff(this->vars[var_idx],i); 	// Extract the coefficient
@@ -202,7 +202,7 @@ int BaseConverter::multi_index_nChoosek(vector<int> n, vector<int> k){
 	}
 
 	int res = 1;
-	for(int i=0; i<(signed)n.size(); i++){
+	for(unsigned int i=0; i<n.size(); i++){
 		res = res*nChoosek(n[i],k[i]);
 	}
 
@@ -220,7 +220,7 @@ int BaseConverter::multi_index_nChoosek(vector<int> n, vector<int> k){
 bool BaseConverter::multi_index_leq(vector<int> a, vector<int> b){
 
 	bool leq = true;
-	int i = 0;
+	unsigned int i = 0;
 
 	while(i<a.size() && leq){
 		leq = leq && (a[i] <= b[i]);
@@ -265,7 +265,7 @@ lst BaseConverter::getBernCoeffs(){
 
 	lst bern_coeffs;
 
-	for(int i=0; i<(signed)this->coeffs.size(); i++){
+	for(unsigned int i=0; i<this->coeffs.size(); i++){
 		bern_coeffs.append(bernCoeff(pos2multi_index(i)));
 	}
 
@@ -284,7 +284,7 @@ lst BaseConverter::getRationalBernCoeffs(){
 
 	cout<<"Degrees: ";
 	vector<int> degs;
-	for(int i=0; i<(signed)this->vars.nops();i++){
+	for(unsigned int i=0; i<this->vars.nops();i++){
 		degs.push_back(max(this->num.degree(this->vars[i]),this->denom.degree(this->vars[i])));
 		cout<<degs[i]<<", ";
 	}
@@ -295,7 +295,7 @@ lst BaseConverter::getRationalBernCoeffs(){
 	lst num_bern_coeffs = num_conv->getBernCoeffs();
 	lst denom_bern_coeffs = denom_conv->getBernCoeffs();
 
-	for(int i=0; i<num_bern_coeffs.nops(); i++){
+	for(long unsigned int i=0; i<num_bern_coeffs.nops(); i++){
 		if(denom_bern_coeffs[i] != 0){ // skip negative denominators
 			bern_coeffs.append(num_bern_coeffs[i]/denom_bern_coeffs[i]);
 		}
@@ -317,7 +317,7 @@ vector< vector< int > > BaseConverter::getMultiIdxList(){
 
 	vector< vector< int > > mi_list;
 
-	for(int i=0; i<(signed)this->coeffs.size(); i++){
+	for(unsigned int i=0; i<this->coeffs.size(); i++){
 		mi_list.push_back(pos2multi_index(i));
 	}
 	return mi_list;
@@ -330,7 +330,7 @@ vector< vector< int > > BaseConverter::getMultiIdxList(){
  * @param[in] direction direction in which to split
  * @param[in] split_point splitting point
  */
-void BaseConverter::split(int direction, double split_point){
+void BaseConverter::split(long unsigned int direction, double split_point){
 
 	if(( direction < 0 ) || (direction >= this->vars.nops())){
 		cout<<"BaseConverter::split : split direction must be between 0 and "<<this->vars.nops();
@@ -348,13 +348,13 @@ void BaseConverter::split(int direction, double split_point){
 	lst B;
 	B = this->getBernCoeffs();
 
-	for(int mi=0; mi<B.nops(); mi++ ){
+	for(long unsigned int mi=0; mi<B.nops(); mi++ ){
 
 		vector< int > i = this->pos2multi_index(mi);
 
 		for(int k=1; k<this->degrees[direction]; k++){
 
-			for(int j=0; j<this->degrees.size(); j++){
+			for(long unsigned int j=0; j<this->degrees.size(); j++){
 
 				cout<<"j:"<<j<<" dir: "<<direction<<"\n"<<" dir: "<<direction<<"\n";
 
@@ -391,7 +391,7 @@ lst BaseConverter::getBernCoeffsMatrix(){
 
 	// degrees increased by one
 	vector<int> degrees_p (this->degrees.size(),0);
-	for(int i=0; i<degrees_p.size(); i++){
+	for(long unsigned int i=0; i<degrees_p.size(); i++){
 		degrees_p[i] = this->degrees[i] + 1;
 	}
 
@@ -400,7 +400,7 @@ lst BaseConverter::getBernCoeffsMatrix(){
 	vector< ex > Ai (this->prod(degrees_p,1,degrees_p.size()),0);
 	vector< vector< ex > > A (degrees_p[0],Ai);
 
-	for(int i=0; i<this->coeffs.size(); i++){
+	for(long unsigned int i=0; i<this->coeffs.size(); i++){
 		if(this->coeffs[i] != 0){
 			vector< int > pos2d = this->n2t(this->pos2multi_index(i),degrees_p);
 			A[pos2d[0]][pos2d[1]] = this->coeffs[i];
@@ -408,15 +408,15 @@ lst BaseConverter::getBernCoeffsMatrix(){
 	}
 
 	vector< vector< ex > > UAt = this->transp(this->matrixProd(this->genUtilde(this->degrees[0]),A),degrees_p);
-	for(int i=1; i<this->degrees.size(); i++){
+	for(long unsigned int i=1; i<this->degrees.size(); i++){
 		degrees_p = this->shift(degrees_p);
 		UAt = this->transp(this->matrixProd(this->genUtilde(this->degrees[i]),UAt),degrees_p);
 	}
 
 
 	lst bernCoeffs;
-	for(int i=0; i<UAt.size(); i++){
-		for(int j=0; j<UAt[i].size(); j++){
+	for(long unsigned int i=0; i<UAt.size(); i++){
+		for(long unsigned int j=0; j<UAt[i].size(); j++){
 			bernCoeffs.append(UAt[i][j]);
 		}
 	}
@@ -436,7 +436,7 @@ vector<int> BaseConverter::shift(vector<int> v){
 
 	vector<int> sv (v.size(),0);
 
-	for(int i=1; i<v.size(); i++){
+	for(long unsigned int i=1; i<v.size(); i++){
 		sv[i-1] = v[i];
 	}
 	sv[v.size()-1] = v[0];
@@ -461,12 +461,12 @@ vector< vector<ex> > BaseConverter::matrixProd(vector< vector<ex> > A, vector< v
 	vector<ex> product_i (B[0].size(),0);
 	vector< vector<ex> > product (A.size(),product_i);
 
-	for(int i=0; i<A.size(); i++){
-		for(int j=0; j<B[0].size(); j++){
+	for(long unsigned int i=0; i<A.size(); i++){
+		for(long unsigned int j=0; j<B[0].size(); j++){
 
 			ex inner_prod;
 			inner_prod = 0;
-			for(int k=0; k<A[i].size(); k++){
+			for(long unsigned int k=0; k<A[i].size(); k++){
 				inner_prod = inner_prod + A[i][k]*B[k][j];
 			}
 			product[i][j] = inner_prod;
@@ -495,7 +495,7 @@ vector< int > BaseConverter::n2t( vector<int> a, vector<int> degs ){
 	b[0] = a[0];
 	b[1] = a[1];
 
-	for (int i=2; i<a.size(); i++){
+	for (long unsigned int i=2; i<a.size(); i++){
 		 b[1] = b[1] + (a[i]*this->prod(degs,1,i));
 	}
 	return b;
@@ -574,8 +574,8 @@ vector< vector< ex > > BaseConverter::transp( vector< vector<ex> > M, vector<int
 	vector< ex > M_transp_i(cols_t,0);
 	vector< vector< ex > > M_transp(rows_t,M_transp_i);
 
-	for(int i=0; i<M.size(); i++){
-		for(int j=0; j<M[i].size(); j++){
+	for(long unsigned int i=0; i<M.size(); i++){
+		for(long unsigned int j=0; j<M[i].size(); j++){
 			if(M[i][j] != 0){
 				vector< int > ij(2,0);
 				ij[0] = i; ij[1] = j;
@@ -653,14 +653,14 @@ vector< vector< ex > > BaseConverter::genUtilde(int n){
  */
 void BaseConverter::print(){
 
-	for(int i=0; i<(signed)this->coeffs.size(); i++){
+	for(unsigned int i=0; i<this->coeffs.size(); i++){
 		if(this->coeffs[i] != 0){
-		cout<<this->coeffs[i]<<": ";
-		vector<int> multi_index = pos2multi_index(i);
-		for(int j=0; j<multi_index.size(); j++){
-			cout<<multi_index[j]<<" ";
-		}
-		cout<<"\n";
+			cout<<this->coeffs[i]<<": ";
+			vector<int> multi_index = pos2multi_index(i);
+			for(long unsigned int j=0; j<multi_index.size(); j++){
+				cout<<multi_index[j]<<" ";
+			}
+			cout<<"\n";
 		}
 	}
 
@@ -673,8 +673,8 @@ void BaseConverter::print(){
  */
 void BaseConverter::print( vector< vector< ex > > M){
 
-	for(int i=0; i<M.size(); i++){
-		for(int j=0; j<M[i].size(); j++){
+	for(long unsigned int i=0; i<M.size(); i++){
+		for(long unsigned int j=0; j<M[i].size(); j++){
 			cout<<M[i][j]<<" ";
 		}
 		cout<<"\n";
@@ -694,7 +694,7 @@ pair< vector<ex>, vector< vector<int> > > BaseConverter::compressZeroCoeffs(){
 	vector< vector<int> > comp_degs;
 	pair< vector<ex>, vector< vector<int> > > compression;
 
-	for(int i=0; i<(signed)this->coeffs.size(); i++){
+	for(unsigned int i=0; i<this->coeffs.size(); i++){
 		if(this->coeffs[i] != 0){
 			comp_coeffs.push_back(this->coeffs[i]);
 			comp_degs.push_back(pos2multi_index(i));
@@ -718,9 +718,9 @@ void BaseConverter::implicitMaxIndex(){
 	// Check uniqueness
 	vector< int > unique (this->vars.nops(), 0);
 	vector< int > unique_deg (this->vars.nops(), -1);
-	for(int i=0; i<(signed)this->vars.nops(); i++){
-		int j=0;
-		while(( j< (signed)coeffs.size() ) && ( unique[i] < 2 )){
+	for(unsigned int i=0; i<this->vars.nops(); i++){
+		unsigned int j=0;
+		while(( j< coeffs.size() ) && ( unique[i] < 2 )){
 			if( multi_index[j][i] > 0 ){
 				unique[i] = unique[i] + 1;
 				unique_deg[i] = multi_index[j][i];
@@ -728,7 +728,7 @@ void BaseConverter::implicitMaxIndex(){
 			j++;
 		}
 	}
-	for(int i=0; i<(signed)unique.size(); i++){
+	for(unsigned int i=0; i<unique.size(); i++){
 		if(unique[i] == 1){
 			implicit_max[i] = unique_deg[i];
 		}
@@ -736,9 +736,9 @@ void BaseConverter::implicitMaxIndex(){
 
 	// Check monotonicity
 	vector< int > increase (this->vars.nops(), 0);
-	for(int i=0; i<this->vars.nops(); i++){
-		int j=0;
-		while(( j< (signed)coeffs.size() ) && ( increase[i]) ){
+	for(long unsigned int i=0; i<this->vars.nops(); i++){
+		long unsigned int j=0;
+		while(( j< coeffs.size() ) && ( increase[i]) ){
 			if( multi_index[j][i] > 0 ){
 				increase[i] = increase[i] && (coeffs[j] > 0);
 			}
@@ -746,16 +746,16 @@ void BaseConverter::implicitMaxIndex(){
 		}
 	}
 	vector< int > decrease (this->vars.nops(), 0);
-	for(int i=0; i<this->vars.nops(); i++){
-		int j=0;
-		while(( j< (signed)coeffs.size() ) && ( decrease[i]) ){
+	for(long unsigned int i=0; i<this->vars.nops(); i++){
+		long unsigned int j=0;
+		while(( j< coeffs.size() ) && ( decrease[i]) ){
 			if( multi_index[j][i] > 0 ){
 				decrease[i] = decrease[i] && (coeffs[j] < 0);
 			}
 			j++;
 		}
 	}
-	for(int i=0; i<(signed)increase.size(); i++){
+	for(unsigned int i=0; i<increase.size(); i++){
 		if(increase[i] == 1){
 			implicit_max[i] = this->degrees[i];
 		}

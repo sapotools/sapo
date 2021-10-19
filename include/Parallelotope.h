@@ -15,8 +15,7 @@
 class Parallelotope{
 
 private:
-
-	int dim;								// dimension of the parallelotope
+	unsigned int dim;						// dimension of the parallelotope
 	vector<lst> vars;						// variables appearing in generato function
 											// vars[0] q: base vertex
 											// vars[1] alpha : free variables \in [0,1]
@@ -38,12 +37,62 @@ public:
 	Parallelotope(vector<lst> vars, vector< vector<double> > u);
 	Parallelotope(vector<lst> vars, LinearSystem *LS);
 
-	lst getGeneratorFunction();
-	lst getQ();
-	lst getAlpha();
-	lst getBeta();
-	int getDim();
-	vector< vector< double > > getTemplate();
+	/**
+	 * Get the generator functions
+	 *
+	 * @returns generator functions
+	 */
+	inline const lst& getGeneratorFunction() const
+	{
+		return this->generator_function;
+	}
+
+	/**
+	 * Get variables of base vertex
+	 *
+	 * @returns base vertex variables
+	 */
+	inline const lst& getQ() const
+	{
+		return this->vars[0];
+	}
+
+	/**
+	 * Get free variables
+	 *
+	 * @returns free variables
+	 */
+	inline const lst& getAlpha() const
+	{
+		return this->vars[1];
+	}
+
+	/**
+	 * Get variables of generator lengths
+	 *
+	 * @returns generator lengths variables
+	 */
+	inline const lst& getBeta() const
+	{
+		return this->vars[2];
+	}
+
+	/**
+	 * Get the parallelotope dimension
+	 *
+	 * @returns parallelotope dimension
+	 */
+	inline const unsigned int& getDim() const { return this->dim; }
+
+	/**
+	 * Get the template of the parallelotope
+	 *
+	 * @returns parallelotope template
+	 */
+	inline const vector< vector< double > >& getTemplate() const
+	{
+		return this->template_matrix;
+	}
 
 	// Representation conversion
 	LinearSystem* gen2const(vector<double> q, vector<double> beta);		// from generator to constraints

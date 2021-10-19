@@ -332,7 +332,7 @@ public:
 	void addSpec(Formula *f) { if (spec == NULL) spec = f; else spec = spec->conj(f); }
 	Formula *getSpec() { return spec; }
 	
-	unsigned directionsNum() { return directions.size(); }
+	inline const unsigned int directionsNum() const { return directions.size(); }
 	vector<vector<double>> getDirections() { return directions; }
 	void addDirection(vector<double> d, double LB, double UB);
 	void addDirection(vector<double> d) { directions.push_back(d); }

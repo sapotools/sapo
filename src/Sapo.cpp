@@ -218,7 +218,7 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 
 	LinearSystemSet *result = new LinearSystemSet();
 
-	for(int i=0; i<reachSet->getCard(); i++){	// for each parallelotope
+	for(unsigned int i=0; i<reachSet->getCard(); i++){	// for each parallelotope
 
 		// complete the key
 		vector<int> key = reachSet->getTemplate(i);
@@ -231,16 +231,16 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 		if(this->synthControlPts.count(key) == 0 || (!this->synthControlPts[key].first.is_equal(genFun))){
 			// compose f(gamma(x))
 			lst sub, fog;
-			for(int j=0; j<this->vars.nops(); j++){
+			for(unsigned int j=0; j<this->vars.nops(); j++){
 				sub.append(vars[j] == genFun[j]);
 			}
-			for(int j=0; j<(signed)vars.nops(); j++){
+			for(unsigned int j=0; j<vars.nops(); j++){
 				fog.append(this->dyns[j].subs(sub));
 			}
 
 			// compose sigma(f(gamma(x)))
 			lst sub_sigma;
-			for(int j=0; j<this->vars.nops(); j++){
+			for(unsigned int j=0; j<this->vars.nops(); j++){
 				sub_sigma.append(vars[j] == fog[j]);
 			}
 			ex sofog;
@@ -260,10 +260,10 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 		vector< double > base_vertex = P->getBaseVertex();
 		vector< double > lengths = P->getLenghts();
 
-		lst qvars = P->getQ();
-		lst bvars = P->getBeta();
+		lst qvars(P->getQ());
+		lst bvars(P->getBeta());
 		lst para_sub;
-		for(int j=0; j<this->vars.nops(); j++){
+		for(unsigned int j=0; j<this->vars.nops(); j++){
 			para_sub.append(qvars[j] == base_vertex[j]);
 			para_sub.append(bvars[j] == lengths[j]);
 		}
@@ -311,7 +311,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 			return P1;			// false until
 		}else{
 			// Reach step wrt to the i-th linear system of P1
-			for(int i=0; i<P1->size(); i++){
+			for(unsigned int i=0; i<P1->size(); i++){
 				// TODO : add the decomposition
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 				
@@ -334,7 +334,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 		}
 
 		// shift until interval
-		for(int i=0; i<P1->size(); i++){
+		for(unsigned int i=0; i<P1->size(); i++){
 		// 	TODO : add decomposition
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
@@ -374,7 +374,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 	// Always interval far
 	if (t_itvl > time) {
 		// Reach step wrt to the i-th linear system of parameterSet
-		for(int i=0; i<parameterSet->size(); i++){
+		for(unsigned int i=0; i<parameterSet->size(); i++){
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
@@ -391,7 +391,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 
 		if(!P->isEmpty()){
 			// Reach step wrt to the i-th linear system of P
-			for(int i=0; i<P->size(); i++){
+			for(unsigned int i=0; i<P->size(); i++){
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
 				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);

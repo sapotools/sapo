@@ -33,8 +33,8 @@ Flowpipe::Flowpipe(vector< Bundle* > flowpipe){
  * @param[in] i index
  * @return i-th bundle
  */
-Bundle* Flowpipe::get(int i){
-	if(( 0<= i ) && (i < (signed)this->size())){
+Bundle* Flowpipe::get(unsigned int i){
+	if(( 0<= i ) && (i < this->size())){
 				return this->flowpipe[i];
 		}
 		cout<<"Flowpipe::get : i must be between 0 and the flowpipe size";
@@ -54,8 +54,8 @@ void Flowpipe::append( Bundle* bundle ){
  * Display the flowpipe
  */
 void Flowpipe::print(){
-	for(int i=0; i<this->size(); i++){
-		std::cout << this->flowpipe[i]->getBundle() << std::endl << std::endl;
+	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
+		std::cout << (*it)->getBundle() << std::endl << std::endl;
 	}
 }
 
@@ -63,8 +63,8 @@ void Flowpipe::print(){
  * Display the flowpipe in Matlab formal
  */
 void Flowpipe::plotRegion(){
-	for(int i=0; i<this->size(); i++){
-		this->flowpipe[i]->getBundle().plotRegion();
+	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
+		(*it)->getBundle().plotRegion();
 	}
 }
 
@@ -75,8 +75,8 @@ void Flowpipe::plotRegion(){
  * @param[in] color color of the polytope to plot
  */
 void Flowpipe::plotRegionToFile(char *file_name, char color){
-	for(int i=0; i<this->size(); i++){
-		this->flowpipe[i]->getBundle().plotRegionToFile(file_name,color);
+	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
+		(*it)->getBundle().plotRegionToFile(file_name,color);
 	}
 }
 
@@ -88,7 +88,7 @@ void Flowpipe::plotRegionToFile(char *file_name, char color){
  * @param[in] file_name name of the file
  * @param[in] color color of the polytope to plot
  */
-void Flowpipe::plotProjToFile(int var, double time_step, char *file_name, char color){
+void Flowpipe::plotProjToFile(unsigned int var, double time_step, char *file_name, char color){
 
 	if( var < 0 || var >= this->get(0)->getDim() ){
 		cout<<"Flowpipe::plotProjToFile : i must be between 0 and the system dimension";
@@ -102,21 +102,21 @@ void Flowpipe::plotProjToFile(int var, double time_step, char *file_name, char c
 
 	// print time
 	matlab_script<<"t = [ ";
-	for(int i=0; i<this->size(); i++){
+	for(unsigned int i=0; i<this->size(); i++){
 		matlab_script<<i*time_step<<" ";
 	}
 	matlab_script<<" ];\n";
 
 	// print lower offsets
 	matlab_script<<"varm = [ ";
-	for(int i=0; i<this->size(); i++){
+	for(unsigned int i=0; i<this->size(); i++){
 		matlab_script<<-this->get(i)->getOffm(var)<<" ";
 	}
 	matlab_script<<" ];\n";
 
 	// print upper offsets
 	matlab_script<<"varp = [ ";
-	for(int i=0; i<this->size(); i++){
+	for(unsigned int i=0; i<this->size(); i++){
 		matlab_script<<this->get(i)->getOffp(var)<<" ";
 	}
 	matlab_script<<" ];\n";

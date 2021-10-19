@@ -119,8 +119,8 @@ double solveLinearSystem(const vector< vector< double > > &A, const vector< doub
 bool zeroLine(const vector<double> &line) 
 {
 	bool zeros = true;
-	int i=0;
-	while(zeros && i<(signed)line.size()){
+	unsigned int i=0;
+	while(zeros && i<line.size()){
 		zeros = zeros && (abs(line[i]) < MAX_APPROX_ERROR);
 		i++;
 	}
@@ -320,7 +320,7 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const
 bool LinearSystem::satisfies(const LinearSystem& ls) const 
 {
 
-	for (int i=0; i<ls.size(); i++){
+	for (unsigned int i=0; i<ls.size(); i++){
 		if (!this->satisfies(ls.A[i], ls.b[i])) {
 			return false;
 		}
@@ -470,7 +470,7 @@ double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 	LinearSystem result(this->A, this->b);
 
-	for(int i=0; i<ls.size(); i++){
+	for(unsigned int i=0; i<ls.size(); i++){
 		if( !result.satisfies(ls.A[i], ls.b[i]) ){		// check for duplicates
 			(result.A).push_back( ls.A[i] );
 			(result.b).push_back( ls.b[i] );
@@ -619,7 +619,7 @@ double LinearSystem::volBoundingBox(){
 	vector<double> zeros (this->dim(),0);
 	double vol = 1;
 
-	for(int i=0; i<this->dim(); i++){
+	for(unsigned int i=0; i<this->dim(); i++){
 		vector<double> facet = zeros;
 		facet[i] = 1;
 		const double b_plus = solveLinearSystem(this->A,this->b,facet,GLP_MAX);
@@ -642,9 +642,9 @@ void LinearSystem::plotRegion() const {
 	}
 
 	cout<<"Ab = [\n";
-	for(int i=0; i<(signed)this->A.size(); i++){
-		for(int j=0; j<(signed)this->A[i].size(); j++){
-			cout<<this->A[i][j]<<" ";
+	for (unsigned i=0; i<A.size(); i++) {
+		for (auto el=std::begin(A[i]); el!=std::end(A[i]); ++el) {
+			cout<<*el<<" ";
 		}
 		cout<<" "<<this->b[i]<<";\n";
 	}
@@ -671,9 +671,9 @@ void LinearSystem::plotRegionToFile(const char *file_name, const char color) con
 	matlab_script.open (file_name, ios_base::app);
 
 	matlab_script<<"Ab = [\n";
-	for(int i=0; i<(signed)this->A.size(); i++){
-		for(int j=0; j<(signed)this->A[i].size(); j++){
-			matlab_script<<this->A[i][j]<<" ";
+	for (unsigned i=0; i<A.size(); i++) {
+		for (auto el=std::begin(A[i]); el!=std::end(A[i]); ++el) {
+			matlab_script<<*el<<" ";
 		}
 		matlab_script<<" "<<this->b[i]<<";\n";
 	}
@@ -696,20 +696,21 @@ void LinearSystem::plotRegionT(const double t) const {
 
 	cout<<"Ab = [\n";
 	cout<<" 1 ";
-	for(int j=0; j<(signed)this->A[0].size(); j++){
+	for(unsigned int j=0; j<this->A[0].size(); j++){
 		cout<<" 0 ";
 	}
 	cout<<t<<";\n";
 	cout<<" -1 ";
-	for(int j=0; j<(signed)this->A[0].size(); j++){
+	for(unsigned int j=0; j<this->A[0].size(); j++){
 		cout<<" 0 ";
 	}
 	cout<<-t<<";\n";
 
-	for(int i=0; i<(signed)this->A.size(); i++){
+
+	for (unsigned i=0; i<A.size(); i++) {
 		cout<<" 0 ";
-		for(int j=0; j<(signed)this->A[i].size(); j++){
-			cout<<this->A[i][j]<<" ";
+		for (auto el=std::begin(A[i]); el!=std::end(A[i]); ++el) {
+			cout<<*el<<" ";
 		}
 		cout<<this->b[i]<<";\n";
 	}
@@ -733,11 +734,11 @@ void LinearSystem::plotRegion(const vector<int>& rows, const vector<int>& cols) 
 		}
 
 		cout<<"Ab = [\n";
-		for(int i=0; i<(signed)rows.size(); i++){
-			for(int j=0; j<(signed)cols.size(); j++){
-				cout<<this->A[rows[i]][cols[j]]<<" ";
+		for (auto r_it=std::begin(rows); r_it!=std::end(rows); ++r_it) {
+			for (auto c_it=std::begin(cols); c_it!=std::end(cols); ++c_it) {
+				cout<<this->A[*r_it][*c_it]<<" ";
 			}
-			cout<<" "<<this->b[rows[i]]<<";\n";
+			cout<<" "<<this->b[*r_it]<<";\n";
 		}
 		cout<<"];\n";
 		cout<<"plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],color);\n";

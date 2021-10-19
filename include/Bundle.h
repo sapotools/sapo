@@ -21,7 +21,7 @@
 class Bundle {
 
 private:
-	int dim;							// dimension
+	unsigned int dim;					// dimension
 	vector< vector< double > > L;		// direction matrix
 	vector< double > offp;				// superior offset
 	vector< double > offm;				// inferior offset
@@ -57,7 +57,7 @@ private:
 	bool isPermutation(vector<int> v1, vector<int> v2);
 
 
-	bool validTemp(vector< vector<int> > T, int card, vector<int> dirs);	// check if a template is valid
+	bool validTemp(vector< vector<int> > T, unsigned int card, vector<int> dirs);	// check if a template is valid
 	vector<lst> transformContrPts(lst vars, lst f, int mode);
 
 public:
@@ -66,16 +66,16 @@ public:
 	Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
 	Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
 
-	int getDim(){ return this->dim; };
-	int getSize(){ return L.size(); };
-	int getCard(){ return T.size(); };
-	int getNumDirs(){ return this->L.size(); };
+	inline unsigned int getDim() const { return this->dim; };
+	inline unsigned int getSize() const { return L.size(); };
+	inline unsigned int getCard() const { return T.size(); };
+	inline unsigned int getNumDirs() const { return this->L.size(); };
 
-	vector<int> getTemplate(int i){ return this->T[i]; };
-	double getOffp(int i){ return this->offp[i]; };
-	double getOffm(int i){ return this->offm[i]; };
+	const vector<int>& getTemplate(long unsigned int i) const { return this->T[i]; };
+	inline const double& getOffp(long unsigned int i) const { return this->offp[i]; };
+	inline const double& getOffm(long unsigned int i) const { return this->offm[i]; };
 	LinearSystem getBundle();
-	Parallelotope* getParallelotope(int i);
+	Parallelotope* getParallelotope(unsigned int i) const;
 
 	void setTemplate(vector< vector< int > > T);
 	void setOffsetP(vector< double > offp){ this->offp = offp; }

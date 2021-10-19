@@ -36,7 +36,7 @@ public:
 
 	// in-place set operations
 	LinearSystemSet& unionWith(LinearSystemSet *LSset);
-	LinearSystemSet& boundedUnionWith(LinearSystemSet *LSset, const int bound);
+	LinearSystemSet& boundedUnionWith(LinearSystemSet *LSset, const unsigned int bound);
 
 	double boundingVol() const;
 
@@ -46,7 +46,7 @@ public:
 	 *
 	 * @returns number of linear systems in the set
 	 */
-	inline int size() const{ return this->set.size(); }
+	inline unsigned int size() const{ return this->set.size(); }
 
 	/**
 	 * Get the set of linear systems

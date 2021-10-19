@@ -23,8 +23,8 @@ private:
 
 	void initShifts();														// initialize degrees shifts
 	int multi_index2pos(vector<int> multi_index);							// convert a multi-index to a position
-	vector<int> pos2multi_index(int position);								// convert a position to a multi-index
-	void extractCoeffs(ex polynomial,int var_idx,vector<int> multi_index);	// extract the coefficients of the polynomial
+	vector<int> pos2multi_index(unsigned int position);								// convert a position to a multi-index
+	void extractCoeffs(ex polynomial, unsigned int var_idx,vector<int> multi_index);	// extract the coefficients of the polynomial
 
 	int nChoosek(int n, int k);								// binomial coefficient
 	int multi_index_nChoosek(vector<int> n, vector<int> k);	// binomial coefficient of multi-indices
@@ -64,7 +64,7 @@ public:
 
 	// operations of split
 	vector< vector< int > > getMultiIdxList();
-	void split(int direction, double split_point);
+	void split(long unsigned int direction, double split_point);
 	void print();
 
 	virtual ~BaseConverter();

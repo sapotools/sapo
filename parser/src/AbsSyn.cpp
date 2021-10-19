@@ -82,7 +82,7 @@ Expr *Expr::neg()
 
 Expr *Expr::copy()
 {
-	Expr *res;
+	Expr *res=NULL;
 	
 	switch (type)
 	{
@@ -107,6 +107,8 @@ Expr *Expr::copy()
 		case Expr::SUB:
 			res = left->copy()->sub(right->copy());
 			break;
+		default:
+			std::logic_error("Unsupported expression");
 	}
 	
 	return res;

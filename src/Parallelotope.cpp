@@ -29,7 +29,7 @@ Parallelotope::Parallelotope(vector<lst> vars, vector< vector<double> > u) {
 	this->dim = vars[0].nops();
 	// and store its variable names
 	for(int i=0; i<3; i++){
-		if((signed)vars[i].nops() != this->dim){
+		if(vars[i].nops() != this->dim){
 			cout<<"Parallelotope::Parallelotope : vars["<<i<<"] must have "<<this->dim<<" variables";
 			exit (EXIT_FAILURE);
 		}
@@ -41,15 +41,15 @@ Parallelotope::Parallelotope(vector<lst> vars, vector< vector<double> > u) {
 	lst beta = this->vars[2];
 
 	// initialize generator function
-	for(int i=0; i<this->dim; i++){
-		this->generator_function.append(q[i]);
+	for (auto it=std::begin(q); it!=std::end(q); ++it) {
+		this->generator_function.append(*it);
 	}
 
 	// create the generation function accumulating the versor values
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 
 		// check dimension of versors
-		if((signed)u[i].size() != this->dim){
+		if(u[i].size() != this->dim){
 			cout<<"Parallelotope::Parallelotope : dim and ui dimensions must agree";
 			exit (EXIT_FAILURE);
 		}
@@ -58,7 +58,7 @@ Parallelotope::Parallelotope(vector<lst> vars, vector< vector<double> > u) {
 		//double norm = euclidNorm(u[i]);
 		//vector< double > norm_versor;
 
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			//norm_versor.push_back(u[i][j]/norm);
 			this->generator_function[j] = this->generator_function[j] + alpha[i]*beta[i]*u[i][j];
 		}
@@ -96,15 +96,15 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 	this->dim = vars[0].nops();
 	// and store its variable names
 	for(int i=0; i<3; i++){
-		if((signed)vars[i].nops() != this->dim){
+		if(vars[i].nops() != this->dim){
 			cout<<"Parallelotope::Parallelotope : vars["<<i<<"] must have "<<this->dim<<" variables";
 			exit (EXIT_FAILURE);
 		}
 	}
 
 	// initialize generator function
-	for(int i=0; i<this->dim; i++){
-		this->generator_function.append(this->vars[0][i]);
+	for (auto it=std::begin(vars[0]); it!=std::end(vars[0]); ++it) {
+		this->generator_function.append(*it);
 	}
 
 	// convert the linear system to vectors
@@ -124,9 +124,9 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 //		cout<<"\n";
 //	}
 
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		ex eq = 0;
-		for(int j=0; j<(signed)Lambda[i].size(); j++){
+		for(unsigned int j=0; j<Lambda[i].size(); j++){
 			eq = eq + Lambda[i][j]*q[j];
 		}
 		eq = eq == d[i];
@@ -145,13 +145,13 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 	vertices.push_back( lst2vec((ex)q.subs(solLS)) ); // store the base_vertex
 
 	// Compute the vertices v
-	for(int k=0; k<this->dim; k++){
+	for(unsigned int k=0; k<this->dim; k++){
 		ex a = this->vars[1];
 		lst LS;
 
-		for(int i=0; i<this->dim; i++){
+		for(unsigned int i=0; i<this->dim; i++){
 			ex eq = 0;
-			for(int j=0; j<(signed)Lambda[i].size(); j++){
+			for(unsigned int j=0; j<Lambda[i].size(); j++){
 				eq = eq + Lambda[i][j]*a[j];
 			}
 			if(i != k){
@@ -169,9 +169,9 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 
 	// Compute the generators
 	vector< vector<double> > g;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		vector<double> gi;
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			gi.push_back( vertices[i+1][j] - vertices[0][j] );
 		}
 		g.push_back(gi);
@@ -179,7 +179,7 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 
 	// Compute the generators lengths
 	vector< double > lengths;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		lengths.push_back(euclidNorm(g[i]));
 		//cout<<lengths[i]<<" ";
 	}
@@ -190,10 +190,9 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 	//cout<<"g\n";
 	// Find the versors
 	vector< vector< double > > versors;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		vector<double> versori;
-		for(int j=0; j<this->dim; j++){
-			//cout<<g[i][j]<<" ";
+		for(unsigned int j=0; j<this->dim; j++){
 			if(lengths[i] != 0){
 				versori.push_back( floor((g[i][j]/lengths[i]) * 100000000000.0f) / 100000000000.0f );
 			}else{
@@ -216,10 +215,10 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 	// create the generation function accumulating the versor values
 	lst alpha = this->vars[1];
 	lst beta = this->vars[2];
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 
 		// check dimension of versors
-		if((signed)u[i].size() != this->dim){
+		if(u[i].size() != this->dim){
 			cout<<"Parallelotope::Parallelotope : dim and ui dimensions must agree";
 			exit (EXIT_FAILURE);
 		}
@@ -228,7 +227,7 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
 		//double norm = euclidNorm(u[i]);
 		//vector< double > norm_versor;
 
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			//norm_versor.push_back(u[i][j]/norm);
 			this->generator_function[j] = this->generator_function[j] + alpha[i]*beta[i]*this->u[i][j];
 		}
@@ -246,7 +245,7 @@ Parallelotope::Parallelotope(vector<lst> vars, LinearSystem *constr) {
  */
 LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 
-	if((signed)q.size() != this->dim){
+	if(q.size() != this->dim){
 		cout<<"Parallelotope::gen2const : q must have dimension "<<this->dim;
 		exit (EXIT_FAILURE);
 	}
@@ -255,15 +254,15 @@ LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 	vector< vector<double> > hps;	// hyperplane equations
 
 	// first set of hyperplanes
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 
 		vector< vector<double> > pts;
 		pts.push_back(q);							// add base vertex
 
-		for(int j=0; j<this->dim; j++){ 			// for all the generators u
+		for(unsigned int j=0; j<this->dim; j++){ 			// for all the generators u
 			if( i != j ){
 				vector<double> p;
-				for(int k =0; k<this->dim; k++){	// coordinate of the point
+				for(unsigned int k =0; k<this->dim; k++){	// coordinate of the point
 					p.push_back(q[k] + this->u[j][k]*beta[j]);
 				}
 				pts.push_back(p);
@@ -273,20 +272,20 @@ LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 	}
 
 	//second set of hyperplanes
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 
 			vector< vector<double> > pts;
 
 			vector<double> qt; // traslate q
-			for(int j=0; j<this->dim; j++){
+			for(unsigned int j=0; j<this->dim; j++){
 				qt.push_back(q[j] + beta[i]*this->u[i][j]);
 			}
 			pts.push_back(qt);							// add base vertex
 
-			for(int j=0; j<this->dim; j++){ 			// for all the generators u
+			for(unsigned int j=0; j<this->dim; j++){ 			// for all the generators u
 				if( i != j ){
 					vector<double> p;
-					for(int k =0; k<this->dim; k++){	// coordinate of the point
+					for(unsigned int k =0; k<this->dim; k++){	// coordinate of the point
 						p.push_back( (q[k] + this->u[j][k]*beta[j]) + beta[i]*this->u[i][k]);
 					}
 					pts.push_back(p);
@@ -302,11 +301,11 @@ LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 
 	// initialize template Lambda
 	vector<double> Lambda_i (this->dim,0);
-	for(int i=0; i<(this->dim)*2; i++){
+	for(unsigned int i=0; i<(this->dim)*2; i++){
 		Lambda.push_back(Lambda_i);
 	}
 
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 
 		// find hyperplane with smaller direction
 		double b1 = -hps[i][hps[i].size()-1];
@@ -315,14 +314,14 @@ LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 		if(b1 > b2){
 			d[i] = b1;
 			d[i+this->dim] = -b2;
-			for(int j=0; j<this->dim; j++){
+			for(unsigned int j=0; j<this->dim; j++){
 				Lambda[i][j] = hps[i][j];
 				Lambda[i+this->dim][j] = -hps[i+this->dim][j];
 			}
 		}else{
 			d[i] = -b1;
 			d[i+this->dim] = b2;
-			for(int j=0; j<this->dim; j++){
+			for(unsigned int j=0; j<this->dim; j++){
 				Lambda[i][j] = -hps[i][j];
 				Lambda[i+this->dim][j] = hps[i+this->dim][j];
 			}
@@ -333,49 +332,6 @@ LinearSystem* Parallelotope::gen2const(vector<double> q, vector<double> beta){
 
 	return LS;
 }
-
-/**
- * Get variables of base vertex
- *
- * @returns base vertex variables
- */
-lst Parallelotope::getQ(){ return this->vars[0]; }
-
-/**
- * Get free variables
- *
- * @returns free variables
- */
-lst Parallelotope::getAlpha(){ return this->vars[1]; }
-
-/**
- * Get variables of generator lengths
- *
- * @returns generator lengths variables
- */
-lst Parallelotope::getBeta(){  return this->vars[2]; }
-
-/**
- * Get the generator functions
- *
- * @returns generator functions
- */
-lst Parallelotope::getGeneratorFunction(){	return this->generator_function; }
-
-/**
- * Get the parallelotope dimension
- *
- * @returns parallelotope dimension
- */
-int Parallelotope::getDim(){ return this->dim; }
-
-/**
- * Get the template of the parallelotope
- *
- * @returns parallelotope template
- */
-vector< vector< double > > Parallelotope::getTemplate(){ return this->template_matrix; }
-
 
 /**
  * Determine the equation of the hyperplane passing through some points, i.e.,
@@ -393,9 +349,9 @@ vector<double> Parallelotope::hyperplaneThroughPts(vector< vector<double> > pts)
 
 	vector< vector<double> > A;
 	// build the linear system Ax = 0
-	for(int i=1; i<(signed)pts.size(); i++){
+	for(unsigned int i=1; i<pts.size(); i++){
 		vector<double> Ai;
-		for(int j=0; j < this->dim; j++){
+		for(unsigned int j=0; j < this->dim; j++){
 			Ai.push_back(pts[0][j] - pts[i][j]);
 		}
 		A.push_back(Ai);
@@ -405,12 +361,12 @@ vector<double> Parallelotope::hyperplaneThroughPts(vector< vector<double> > pts)
 	lst LS;
 	lst a = this->vars[1];
 
-	for(int i=0; i<this->dim-1; i++){
+	for(unsigned int i=0; i<this->dim-1; i++){
 
 		ex eq = 0;
 		lst sub;
 
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			eq = eq + A[i][j]*a[j];
 		}
 
@@ -428,9 +384,9 @@ vector<double> Parallelotope::hyperplaneThroughPts(vector< vector<double> > pts)
 	vector<double> lambda (this->dim+1,0);
 
 	ex sub;
-	int sub_idx;
+	unsigned int sub_idx;
 	// search for the tautology
-	for(int i=0; i<(signed)solLS.nops(); i++){
+	for(unsigned int i=0; i<solLS.nops(); i++){
 		if(solLS[i].is_equal(a[i] == a[i])){
 			sub = a[i] == 1;
 			sub_idx = i;
@@ -438,7 +394,7 @@ vector<double> Parallelotope::hyperplaneThroughPts(vector< vector<double> > pts)
 	}
 
 	lambda[sub_idx] = 1;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		if(i != sub_idx){
 			lambda[i] = ex_to<numeric>(evalf(a[i].subs(solLS[i].subs(sub)))).to_double();
 		}
@@ -468,9 +424,9 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 	ex q = this->vars[0];
 	lst LS;
 
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		ex eq = 0;
-		for(int j=0; j<(signed)Lambda[i].size(); j++){
+		for(unsigned int j=0; j<Lambda[i].size(); j++){
 			eq = eq + Lambda[i][j]*q[j];
 		}
 		eq = eq == d[i];
@@ -481,13 +437,13 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 	vertices.push_back( lst2vec(q.subs(solLS)) ); // store the base_vertex
 
 	// Compute the vertices v
-	for(int k=0; k<this->dim; k++){
+	for(unsigned int k=0; k<this->dim; k++){
 		ex a = this->vars[1];
 		lst LS;
 
-		for(int i=0; i<this->dim; i++){
+		for(unsigned int i=0; i<this->dim; i++){
 			ex eq = 0;
-			for(int j=0; j<(signed)Lambda[i].size(); j++){
+			for(unsigned int j=0; j<Lambda[i].size(); j++){
 				eq = eq + Lambda[i][j]*a[j];
 			}
 			if(i != k){
@@ -504,9 +460,9 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 
 	// Compute the generators
 	vector< vector<double> > g;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		vector<double> gi;
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			gi.push_back( vertices[i+1][j] - vertices[0][j] );
 		}
 		g.push_back(gi);
@@ -514,16 +470,16 @@ poly_values Parallelotope::const2gen(LinearSystem *constr){
 
 	// Compute the generators lengths
 	vector< double > lengths;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		lengths.push_back(euclidNorm(g[i]));
 	}
 
 
 	// Find the versors (optional since versors are specified by the user)
 	vector< vector< double > > versors;
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		vector<double> versori;
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			versori.push_back( g[i][j]/lengths[i] );
 		}
 		versors.push_back(versori);
@@ -548,7 +504,7 @@ vector<double> Parallelotope::lst2vec(ex list){
 
 	vector< double > res;
 
-	for(int i=0; i<(signed)list.nops(); i++)
+	for(unsigned int i=0; i<list.nops(); i++)
 		res.push_back( ex_to<numeric>(evalf( list[i] )).to_double() );
 
 	return res;
@@ -564,7 +520,7 @@ double Parallelotope::euclidNorm(vector<double> v){
 
 	double norm = 0;
 
-	for(int i=0; i<(signed)v.size(); i++){
+	for(unsigned int i=0; i<v.size(); i++){
 		norm = norm + (v[i]*v[i]);
 	}
 

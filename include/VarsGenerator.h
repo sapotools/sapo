@@ -16,8 +16,7 @@
 class VarsGenerator {
 
 private:
-
-	int dim;
+	unsigned int dim;
 
 	lst qs;	// base vertex
 	lst as; // alphas (free variables)
@@ -26,13 +25,13 @@ private:
 	vector<lst> us; // genertor versors
 
 public:
-	VarsGenerator(int dim);
+	VarsGenerator(const unsigned int dim);
 
-	lst getBaseVertex(){ return this->qs; };
-	lst getFreeVars(){ return this->as; };
-	lst getLenghts(){ return this->bs; };
-	lst getDirections(){ return this->ls; };
-	vector<lst> getVersors(){ return this->us; };
+	inline const lst& getBaseVertex() const { return this->qs; };
+	inline const lst& getFreeVars() const { return this->as; };
+	inline const lst& getLenghts() const { return this->bs; };
+	inline const lst& getDirections(){ return this->ls; };
+	inline const vector<lst>& getVersors() const { return this->us; };
 
 	LinearSystem* genBox(vector<double> b);
 

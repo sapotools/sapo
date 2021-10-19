@@ -36,7 +36,7 @@ Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > 
 		exit (EXIT_FAILURE);
 	}
 	if( T.size() > 0 ){
-		for(int i=0; i<T.size(); i++){
+		for(unsigned int i=0; i<T.size(); i++){
 			if( T[i].size() != this->getDim() ){
 				cout<<"Bundle::Bundle : T must have "<<this->getDim()<<" columns";
 				exit (EXIT_FAILURE);
@@ -54,15 +54,15 @@ Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > 
 	this->T = T;
 
 	// initialize orthogonal proximity
-	for(int i=0; i<this->getNumDirs(); i++){
+	for(unsigned int i=0; i<this->getNumDirs(); i++){
 		vector< double > Thetai (this->getNumDirs(),0);
-		for(int j=i; j<this->getNumDirs(); j++){
+		for(unsigned int j=i; j<this->getNumDirs(); j++){
 			this->Theta.push_back(Thetai);
 		}
 	}
-	for(int i=0; i<this->getNumDirs(); i++){
+	for(unsigned int i=0; i<this->getNumDirs(); i++){
 		this->Theta[i][i] = 0;
-		for(int j=i+1; j<this->getNumDirs(); j++){
+		for(unsigned int j=i+1; j<this->getNumDirs(); j++){
 			double prox = this->orthProx(this->L[i],this->L[j]);
 			this->Theta[i][j] = prox;
 			this->Theta[j][i] = prox;
@@ -94,7 +94,7 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 		exit (EXIT_FAILURE);
 	}
 	if( T.size() > 0 ){
-		for(int i=0; i<T.size(); i++){
+		for(unsigned int i=0; i<T.size(); i++){
 			if( T[i].size() != this->getDim() ){
 				cout<<"Bundle::Bundle : T must have "<<this->getDim()<<" columns";
 				exit (EXIT_FAILURE);
@@ -125,15 +125,15 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 	this->T = T;
 
 	// initialize orthogonal proximity
-	for(int i=0; i<this->getNumDirs(); i++){
+	for(unsigned int i=0; i<this->getNumDirs(); i++){
 		vector< double > Thetai (this->getNumDirs(),0);
-		for(int j=i; j<this->getNumDirs(); j++){
+		for(unsigned int j=i; j<this->getNumDirs(); j++){
 			this->Theta.push_back(Thetai);
 		}
 	}
-	for(int i=0; i<this->getNumDirs(); i++){
+	for(unsigned int i=0; i<this->getNumDirs(); i++){
 		this->Theta[i][i] = 0;
-		for(int j=i+1; j<this->getNumDirs(); j++){
+		for(unsigned int j=i+1; j<this->getNumDirs(); j++){
 			double prox = this->orthProx(this->L[i],this->L[j]);
 			this->Theta[i][j] = prox;
 			this->Theta[j][i] = prox;
@@ -149,11 +149,11 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 LinearSystem Bundle::getBundle() {
 	vector< vector< double> > A;
 	vector< double> b;
-	for(int i=0; i<this->getSize(); i++){
+	for(unsigned int i=0; i<this->getSize(); i++){
 		A.push_back(this->L[i]);
 		b.push_back(this->offp[i]);
 	}
-	for(int i=0; i<this->getSize(); i++){
+	for(unsigned int i=0; i<this->getSize(); i++){
 		A.push_back(get_complementary(this->L[i]));
 		b.push_back(this->offm[i]);
 	}
@@ -167,7 +167,7 @@ LinearSystem Bundle::getBundle() {
  * @param[in] i parallelotope index to fetch
  * @returns i-th parallelotope
  */
-Parallelotope* Bundle::getParallelotope(int i){
+Parallelotope* Bundle::getParallelotope(unsigned int i) const {
 
 	if( i<0 || i>this->T.size() ){
 		cout<<"Bundle::getParallelotope : i must be between 0 and "<<T.size();
@@ -178,12 +178,12 @@ Parallelotope* Bundle::getParallelotope(int i){
 	vector< vector< double > > Lambda;
 
 	// upper facets
-	for(int j=0; j<this->getDim(); j++){
+	for(unsigned int j=0; j<this->getDim(); j++){
 		Lambda.push_back(this->L[this->T[i][j]]);
 		d.push_back(this->offp[this->T[i][j]]);
 	}
 	// lower facets
-	for(int j=0; j<this->getDim(); j++){
+	for(unsigned int j=0; j<this->getDim(); j++){
 		Lambda.push_back(get_complementary(this->L[this->T[i][j]]));
 		d.push_back(this->offm[this->T[i][j]]);
 	}
@@ -205,7 +205,7 @@ Bundle* Bundle::canonize(){
 	// get current polytope
 	LinearSystem bund = this->getBundle();
 	vector<double> canoffp,canoffm;
-	for(int i=0; i<this->getSize(); i++){
+	for(unsigned int i=0; i<this->getSize(); i++){
 		canoffp.push_back(bund.maxLinearSystem(this->L[i]));
 		canoffm.push_back(bund.maxLinearSystem(get_complementary(this->L[i])));
 	}
@@ -233,7 +233,7 @@ Bundle* Bundle::decompose(double alpha, int max_iters){
 		vector< vector<int> > tmpT = curT;
 
 		// generate random coordinates to swap
-		int i1 = rand() % temp_card;
+		unsigned int i1 = rand() % temp_card;
 		int j1 = rand() % this->getDim();
 		int new_element = rand() % this->getSize();
 
@@ -243,7 +243,7 @@ Bundle* Bundle::decompose(double alpha, int max_iters){
 		bool valid = true;
 		// check for duplicates
 		vector<int> newTemp1 = tmpT[i1];
-		for(int j=0; j<tmpT.size(); j++){
+		for(unsigned int j=0; j<tmpT.size(); j++){
 			if( j != i1 ){
 				valid = valid && !(this->isPermutation(newTemp1,tmpT[j]));
 			}
@@ -252,8 +252,8 @@ Bundle* Bundle::decompose(double alpha, int max_iters){
 		if(valid){
 			ex eq1 = 0;
 			lst LS1;
-			for(int j=0; j<this->getDim(); j++){
-				for(int k=0; k<this->getDim(); k++){
+			for(unsigned int j=0; j<this->getDim(); j++){
+				for(unsigned int k=0; k<this->getDim(); k++){
 					eq1 = eq1 + this->vars[0][k]*this->L[tmpT[i1][j]][k];
 				}
 				LS1.append( eq1 == this->offp[j] );
@@ -294,13 +294,12 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 
 	vector<int> dirs_to_bound;
 	if(mode){	// dynamic transformation
-		for(int i=0; i<(signed)this->L.size(); i++){
+		for(unsigned int i=0; i<this->L.size(); i++){
 			dirs_to_bound.push_back(i);
 		}
 	}
 
-	for(int i=0; i<this->getCard(); i++){	// for each parallelotope
-
+	for(unsigned int i=0; i<this->getCard(); i++){	// for each parallelotope
 
 		Parallelotope *P = this->getParallelotope(i);
 		lst genFun = P->getGeneratorFunction();
@@ -310,7 +309,7 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 
 		lst subParatope;
 
-		for(int k=0; k<(signed)this->vars[0].nops(); k++){
+		for(unsigned int k=0; k<this->vars[0].nops(); k++){
 			subParatope.append(this->vars[0][k] == base_vertex[k]);
 			subParatope.append(this->vars[2][k] == lengths[k]);
 		}
@@ -319,7 +318,7 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 			dirs_to_bound = this->T[i];
 		}
 
-		for(int j=0; j<(signed)dirs_to_bound.size(); j++){	// for each direction
+		for(unsigned int j=0; j<dirs_to_bound.size(); j++){	// for each direction
 
 			// key of the control points
 			vector<int> key = this->T[i];
@@ -334,16 +333,16 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 				// compute control points
 				lst sub, fog;
 
-				for(int k=0; k<(signed)vars.nops(); k++){
+				for(unsigned int k=0; k<vars.nops(); k++){
 					sub.append(vars[k] == genFun[k]);
 				}
-				for(int k=0; k<(signed)vars.nops(); k++){
+				for(unsigned int k=0; k<vars.nops(); k++){
 					fog.append(f[k].subs(sub));
 				}
 
 				ex Lfog; Lfog = 0;
 				// upper facets
-				for(int k=0; k<this->getDim(); k++){
+				for(unsigned int k=0; k<this->getDim(); k++){
 					Lfog = Lfog + this->L[dirs_to_bound[j]][k]*fog[k];
 				}
 
@@ -397,13 +396,12 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 
 	vector<int> dirs_to_bound;
 	if(mode){	// dynamic transformation
-		for(int i=0; i<(signed)this->L.size(); i++){
+		for(unsigned int i=0; i<this->L.size(); i++){
 			dirs_to_bound.push_back(i);
 		}
 	}
 
-	for(int i=0; i<this->getCard(); i++){	// for each parallelotope
-
+	for(unsigned int i=0; i<this->getCard(); i++){	// for each parallelotope
 
 		Parallelotope *P = this->getParallelotope(i);
 		lst genFun = P->getGeneratorFunction();
@@ -413,7 +411,7 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 
 		lst subParatope;
 
-		for(int k=0; k<(signed)this->vars[0].nops(); k++){
+		for(unsigned int k=0; k<this->vars[0].nops(); k++){
 			subParatope.append(this->vars[0][k] == base_vertex[k]);
 			subParatope.append(this->vars[2][k] == lengths[k]);
 		}
@@ -423,7 +421,7 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 			dirs_to_bound = this->T[i];
 		}
 
-		for(int j=0; j<(signed)dirs_to_bound.size(); j++){	// for each direction
+		for(unsigned int j=0; j<dirs_to_bound.size(); j++){	// for each direction
 
 			// key of the control points
 			vector<int> key = this->T[i];
@@ -438,17 +436,17 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 				// compute control points
 				lst sub, fog;
 
-				for(int k=0; k<(signed)vars.nops(); k++){
+				for(unsigned int k=0; k<vars.nops(); k++){
 					sub.append(vars[k] == genFun[k]);
 				}
 
-				for(int k=0; k<(signed)vars.nops(); k++){
+				for(unsigned int k=0; k<vars.nops(); k++){
 					fog.append(f[k].subs(sub));
 				}
 
 				ex Lfog; Lfog = 0;
 				// upper facets
-				for(int k=0; k<this->getDim(); k++){
+				for(unsigned int k=0; k<this->getDim(); k++){
 					Lfog = Lfog + this->L[dirs_to_bound[j]][k]*fog[k];
 				}
 
@@ -503,7 +501,7 @@ void Bundle::setTemplate(vector< vector< int > > T){
 vector< double > Bundle::offsetDistances(){
 
 	vector< double > dist;
-	for(int i=0; i<this->getSize(); i++){
+	for(unsigned int i=0; i<this->getSize(); i++){
 		dist.push_back( abs(this->offp[i] - this->offm[i]) / this->norm(this->L[i]) );
 	}
 	return dist;
@@ -518,8 +516,8 @@ vector< double > Bundle::offsetDistances(){
  */
 double Bundle::norm(vector<double> v){
 	double sum = 0;
-	for(int i=0; i<(signed)v.size(); i++){
-		sum = sum + v[i]*v[i];
+	for(auto v_it=std::begin(v); v_it!=std::end(v); ++v_it) {
+		sum = sum + (*v_it)*(*v_it);
 	}
 	return sqrt(sum);
 }
@@ -533,7 +531,7 @@ double Bundle::norm(vector<double> v){
  */
 double Bundle::prod(vector<double> v1, vector<double> v2){
 	double prod = 0;
-	for(int i=0; i<(signed)v1.size(); i++){
+	for(unsigned int i=0; i<v1.size(); i++){
 		prod = prod + v1[i]*v2[i];
 	}
 	return prod;
@@ -576,8 +574,8 @@ double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx){
 	}
 
 	double maxProx = 0;
-	for( int i=0; i<dirsIdx.size(); i++ ){
-		maxProx = max(maxProx, this->orthProx(this->L[vIdx],this->L[dirsIdx[i]]));
+	for (auto d_it=std::begin(dirsIdx); d_it!=std::end(dirsIdx); ++d_it) {
+		maxProx = max(maxProx, this->orthProx(this->L[vIdx],this->L[*d_it]));
 	}
 	return maxProx;
 }
@@ -590,8 +588,8 @@ double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx){
  */
 double Bundle::maxOrthProx(vector<int> dirsIdx){
 	double maxProx = 0;
-	for( int i=0; i<dirsIdx.size(); i++ ){
-		for(int j=i+1; j<dirsIdx.size(); j++){
+	for(unsigned int i=0; i<dirsIdx.size(); i++ ){
+		for(unsigned int j=i+1; j<dirsIdx.size(); j++){
 			maxProx = max(maxProx, this->orthProx(this->L[dirsIdx[i]],this->L[dirsIdx[j]]));
 		}
 	}
@@ -606,8 +604,8 @@ double Bundle::maxOrthProx(vector<int> dirsIdx){
  */
 double Bundle::maxOrthProx(vector< vector<int> > T){
 	double maxorth = -DBL_MAX;
-	for(int i=0; i<T.size(); i++){
-		maxorth = max(maxorth,this->maxOrthProx(T[i]));
+	for(auto T_it=std::begin(T); T_it!=std::end(T); ++T_it) {
+		maxorth = max(maxorth,this->maxOrthProx(*T_it));
 	}
 	return maxorth;
 }
@@ -627,7 +625,7 @@ double Bundle::maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists
 	}
 
 	double dist = dists[vIdx];
-	for(int i=0; i<dirsIdx.size(); i++){
+	for(unsigned int i=0; i<dirsIdx.size(); i++){
 		dist = dist * dists[dirsIdx[i]];
 	}
 	return dist;
@@ -644,7 +642,7 @@ double Bundle::maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists
 double Bundle::maxOffsetDist(vector<int> dirsIdx, vector<double> dists){
 
 	double dist = 1;
-	for(int i=0; i<dirsIdx.size(); i++){
+	for(unsigned int i=0; i<dirsIdx.size(); i++){
 		dist = dist * dists[dirsIdx[i]];
 	}
 	return dist;
@@ -660,7 +658,7 @@ double Bundle::maxOffsetDist(vector<int> dirsIdx, vector<double> dists){
  */
 double Bundle::maxOffsetDist(vector< vector<int> > T, vector<double> dists){
 	double maxdist = -DBL_MAX;
-	for(int i=0; i<T.size(); i++){
+	for(unsigned int i=0; i<T.size(); i++){
 		maxdist = max(maxdist,this->maxOffsetDist(T[i],dists));
 	}
 	return maxdist;
@@ -692,7 +690,7 @@ vector< double > Bundle::negate(vector< double > v){
  */
 bool Bundle::isIn(int n, vector<int> v){
 
-	for(int i=0; i<v.size(); i++){
+	for(unsigned int i=0; i<v.size(); i++){
 		if( n == v[i] ){
 			return true;
 		}
@@ -708,7 +706,7 @@ bool Bundle::isIn(int n, vector<int> v){
  * @returns true is v belongs to vlist
  */
 bool Bundle::isIn(vector<int> v, vector< vector< int > > vlist){
-	for(int i=0; i<vlist.size(); i++){
+	for(unsigned int i=0; i<vlist.size(); i++){
 		if( this->isPermutation(v,vlist[i]) ){
 			return true;
 		}
@@ -724,7 +722,7 @@ bool Bundle::isIn(vector<int> v, vector< vector< int > > vlist){
  * @returns true is v1 is a permutation of v2
  */
 bool Bundle::isPermutation(vector<int> v1, vector<int> v2){
-	for( int i=0; i<v1.size(); i++ ){
+	for (unsigned int i=0; i<v1.size(); i++ ) {
 		if( !this->isIn(v1[i],v2) ){
 			return false;
 		}
@@ -740,18 +738,19 @@ bool Bundle::isPermutation(vector<int> v1, vector<int> v2){
  * @param[in] dirs directions
  * @returns true T is a valid template
  */
-bool Bundle::validTemp(vector< vector<int> > T, int card, vector<int> dirs){
+bool Bundle::validTemp(vector< vector<int> > T, unsigned int card, vector<int> dirs){
 
 	cout<<"dirs: ";
-	for(int i=0; i<dirs.size(); i++){
-		cout<<dirs[i]<<" ";
+	for(auto dir_it=std::begin(dirs); dir_it!=std::end(dirs); ++dir_it) {
+		cout<<*dir_it<<" ";
 	}
 	cout<<"\n";
 
 	cout<<"T:\n";
-	for(int i=0; i<T.size(); i++){
-		for(int j=0; j<T[i].size(); j++){
-			cout<<T[i][j]<<" ";
+
+	for(auto row=std::begin(T); row!=std::end(T); ++row) {
+		for(auto el=std::begin(*row); el!=std::end(*row); ++el) {
+			cout<<*el<<" ";
 		}
 		cout<<"\n";
 	}
@@ -763,13 +762,14 @@ bool Bundle::validTemp(vector< vector<int> > T, int card, vector<int> dirs){
 
 	// check if all the directions appear in T
 	vector< bool > dirIn (dirs.size(), false);
-	for(int i=0; i<dirs.size(); i++){
-		for(int j=0; j<T.size(); j++){
-			dirIn[i] = this->isIn(dirs[i],T[j]);
+	for(unsigned int i=0; i<dirs.size(); i++){
+		for(auto row=std::begin(T); row!=std::end(T); ++row) {
+			dirIn[i] = this->isIn(dirs[i],*row);
 		}
 	}
-	for(int i=0; i<dirIn.size(); i++){
-		if( !dirIn[i] ){
+	
+	for(auto dir_it=std::begin(dirIn); dir_it!=std::end(dirIn); ++dir_it) {
+		if( !*dir_it ){
 			return false;
 		}
 	}

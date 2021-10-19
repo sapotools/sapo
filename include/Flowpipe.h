@@ -24,16 +24,16 @@ public:
 	Flowpipe();
 	Flowpipe(vector< Bundle* >);
 
-	Bundle* get(int i);	// get i-th bundle
+	Bundle* get(unsigned int i);	// get i-th bundle
 
 	void append( Bundle* bundle );
 
-	int size(){ return this->flowpipe.size(); }
+	std::size_t size(){ return this->flowpipe.size(); }
 
 	void print();
 	void plotRegion();
 	void plotRegionToFile(char *file_name, char color);
-	void plotProjToFile(int var, double time_step, char *file_name, char color);
+	void plotProjToFile(unsigned int var, double time_step, char *file_name, char color);
 
 	virtual ~Flowpipe();
 };

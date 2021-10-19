@@ -14,9 +14,7 @@
  *
  * @param[in] dim dimension of the model/parallelotope
  */
-VarsGenerator::VarsGenerator(int dim){
-
-	this->dim = dim;
+VarsGenerator::VarsGenerator(const unsigned int dim): dim(dim){
 
 	symbol q1("q1"), q2("q2"), q3("q3"), q4("q4"), q5("q5"), q6("q6"), q7("q7"), q8("q8"), q9("q9"), q10("q10"), q11("q11"), q12("q12"), q13("q13"), q14("q14"), q15("q15"), q16("q16"), q17("q17"), q18("q18"), q19("q19"), q20("q20");
 	symbol a1("a1"), a2("a2"), a3("a3"), a4("a4"), a5("a5"), a6("a6"), a7("a7"), a8("a8"), a9("a9"), a10("a10"), a11("a11"), a12("a12"), a13("a13"), a14("a14"), a15("a15"), a16("a16"), a17("a17"), a18("a18"), a19("a19"), a20("a20");
@@ -75,16 +73,16 @@ VarsGenerator::VarsGenerator(int dim){
 	us.push_back(u16s); us.push_back(u17s);
 
 
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		this->qs.append(qs[i]);
 		this->as.append(as[i]);
 		this->bs.append(bs[i]);
 		this->ls.append(ls[i]);
 	}
 
-	for(int i=0; i<this->dim; i++){
+	for(unsigned int i=0; i<this->dim; i++){
 		lst us_i;
-		for(int j=0; j<this->dim; j++){
+		for(unsigned int j=0; j<this->dim; j++){
 			us_i.append(us[i][j]);
 		}
 		this->us.push_back(us_i);
@@ -99,11 +97,11 @@ VarsGenerator::VarsGenerator(int dim){
  * @returns generatred box
  */
 LinearSystem* VarsGenerator::genBox(vector<double> b){
-	int n = b.size()/2;
+	unsigned int n = b.size()/2;
 	vector<double> Ai(n,0);
 	vector< vector<double> > A(2*n,Ai);
 
-	for(int i=0; i<n; i++){
+	for(unsigned int i=0; i<n; i++){
 		A[2*i][i] = 1;
 		A[2*i+1][i] = -1;
 	}

@@ -412,7 +412,7 @@ template		: TEMPL "=" _matrix
 							{
 								for (unsigned j = 0; j < $3[i].size(); j++)
 								{
-									if ($3[i][j] < 0 || $3[i][j] >= drv.data->directionsNum())
+									if ($3[i][j] < 0 || (unsigned int)$3[i][j] >= drv.data->directionsNum())
 									{
 										yy::parser::error(@3, "Unknown direction");
 										YYERROR;
@@ -555,7 +555,7 @@ numList		: expr
 
 intList		: INTEGER
 					{
-						if ($1 < 0 || $1 >= drv.data->directionsNum())
+						if ($1 < 0 || (unsigned int)$1 >= drv.data->directionsNum())
 						{
 							yy::parser::error(@1, "Unknown direction");
 							YYERROR;
@@ -564,7 +564,7 @@ intList		: INTEGER
 					}
 					| intList "," INTEGER
 					{
-						if ($3 < 0 || $3 >= drv.data->directionsNum())
+						if ($3 < 0 || (unsigned int)$3 >= drv.data->directionsNum())
 						{
 							yy::parser::error(@3, "Unknown direction");
 							YYERROR;

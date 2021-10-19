@@ -26,9 +26,9 @@ struct synthesizer_opt{
 };
 
 struct sapo_opt{
-	int trans;				// transformation (0: static, 1: dynamic)
+	unsigned char trans;	// transformation (0: static, 1: dynamic)
 	double alpha;			// decomposition weight
-	int decomp;				// number of decompositions (0: none, >0: yes)
+	unsigned int decomp;	// number of decompositions (0: none, >0: yes)
 	string plot;			// the name of the file were to plot the reach set
 	bool verbose;			// display info
 };
