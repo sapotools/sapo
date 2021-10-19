@@ -42,7 +42,7 @@ execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 
 enable_testing()
 
-set(sapo_tests Ebola Influenza LotkaVolterra Phosphorelay
+set(sapo_tests Ebola Influenza Influenza-splits LotkaVolterra Phosphorelay
 			   Quadcopter Rossler SIRp SIR VanDerPol )
 
 add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target sapo -j 4 -- )

@@ -68,7 +68,9 @@ private:
 	 */
 	bool constraintIsRedundant(const unsigned int i) const;
 
-	LinearSystemSet* get_a_finer_covering(LinearSystemSet *tmp_covering,
+	LinearSystemSet* get_a_finer_covering(const std::vector<bool> & bvect_base,
+										  const unsigned int cidx, 
+										  LinearSystemSet *tmp_covering,
 								          std::vector<std::vector<double> >& A,
 										  std::vector<double>& b) const;
 

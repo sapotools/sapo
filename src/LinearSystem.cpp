@@ -329,60 +329,138 @@ bool LinearSystem::satisfies(const LinearSystem& ls) const
 	return true;
 }
 
-LinearSystemSet* LinearSystem::get_a_finer_covering(LinearSystemSet *tmp_covering, 
+template<typename T>
+bool are_independent(const std::vector<T>& v1, const std::vector<T>& v2)
+{
+	if (v1.size()!=v2.size()) {
+		return true;
+	}
+
+	if (v1.size()==0) {
+		return false;
+	}
+
+	unsigned int fnz_v1(0);
+	while (fnz_v1<v1.size() && v1[fnz_v1]==0) fnz_v1++;
+
+	unsigned int fnz_v2(0);
+	while (fnz_v2<v2.size() && v2[fnz_v2]==0) fnz_v2++;
+
+	if (fnz_v1!=fnz_v2) {
+		return true;
+	}
+
+	for (unsigned int i=1; i<v1.size(); ++i) {
+		if (v1[fnz_v1]*v2[i]!=v2[fnz_v2]*v1[i]) {  // this is to avoid numerical errors,
+		                                 // but it can produce overflows
+			return true;
+		}
+	}
+
+	return false;
+}
+
+std::vector<unsigned int> get_a_linear_system_base(const std::vector<std::vector<double> >& A)
+{
+	if (A.size()==0) {
+		return std::vector<unsigned int>();
+	}
+
+	std::vector<unsigned int> base{0};
+
+	unsigned int row_idx=1;
+	while (row_idx<A.size()) {
+		bool indep_from_base = true;
+		auto b_it=std::begin(base); 
+		while (indep_from_base && b_it!=std::end(base)) {
+			indep_from_base = are_independent(A[row_idx], A[*b_it]);
+			++b_it;
+		}
+
+		if (indep_from_base) {
+			base.push_back(row_idx);
+		}
+		++row_idx;
+	}
+
+	return base;
+}
+
+inline std::vector<bool> get_a_ls_base_bit_vector(const std::vector<std::vector<double> >& A)
+{
+	std::vector<unsigned int> base = get_a_linear_system_base(A);
+
+	std::vector<bool> bvect_base(A.size(), false);
+
+	for (auto it=std::begin(base); it!=std::end(base); ++it) {
+		bvect_base[*it]=true;
+	}
+
+	return bvect_base;
+}
+
+LinearSystemSet* LinearSystem::get_a_finer_covering(const std::vector<bool> & bvect_base,
+													const unsigned int cidx, 
+													LinearSystemSet *tmp_covering, 
 								              	    std::vector<std::vector<double> >& A,
 												    std::vector<double>& b) const
 {
-	if (A.size() == this->A.size()) {
+	if (this->A.size() == cidx) {
 		LinearSystem *ls = new LinearSystem(A, b);
 		ls->simplify();
 
 		tmp_covering->add(ls);
-
 		return tmp_covering;
 	}
 
-	const int i = A.size();
+	if (bvect_base[cidx]) {
+		A.push_back(this->A[cidx]);
+		b.push_back(this->b[cidx]);
 
-	A.push_back(this->A[i]);
-	b.push_back(this->b[i]);
+		try {
+			const double min_value = minLinearSystem(this->A[cidx]);
+			const double avg_value = (this->b[cidx]+min_value)/2;
 
-	try {
-		const double min_value = minLinearSystem(this->A[i]);
-		const double avg_value = (this->b[i]+min_value)/2;
+			A.push_back(get_complementary(this->A[cidx]));
+			b.push_back(-avg_value);
 
-		A.push_back(get_complementary(this->A[i]));
-		b.push_back(-avg_value);
+			get_a_finer_covering(bvect_base, cidx+1, tmp_covering, A, b);
 
-		tmp_covering = get_a_finer_covering(tmp_covering, A, b);
+			b[b.size()-1] = -min_value;
+			b[b.size()-2] = avg_value;
 
-		b[b.size()-1] = -min_value;
-		b[b.size()-2] = avg_value;
+			get_a_finer_covering(bvect_base, cidx+1, tmp_covering, A, b);
 
-		tmp_covering = get_a_finer_covering(tmp_covering, A, b);
+			A.pop_back();
+			b.pop_back();
+
+		} catch (std::logic_error &e) {
+			std::cerr << "The linear system solutions are not a closed polyheadron." << std::endl;
+
+			get_a_finer_covering(bvect_base, cidx+1, tmp_covering, A, b);
+		}
 
 		A.pop_back();
 		b.pop_back();
-
-	} catch (std::logic_error &e) {
-		std::cerr << "The linear system solutions are not a closed polyheadron." << std::endl;
-
-		tmp_covering = get_a_finer_covering(tmp_covering, A, b);
+	} else {
+		get_a_finer_covering(bvect_base, cidx+1, tmp_covering, A, b);
 	}
-	A.pop_back();
-	b.pop_back();
 
 	return tmp_covering;
 }
 
 LinearSystemSet* LinearSystem::get_a_finer_covering() const
 {
+	LinearSystemSet *result = new LinearSystemSet();
+
+	std::vector<bool> bvect_base = get_a_ls_base_bit_vector(this->A);
+
 	std::vector<std::vector<double> > A;
 	std::vector<double> b;
+	
+	get_a_finer_covering(bvect_base, 0, result, A, b);
 
-	LinearSystemSet *result = new LinearSystemSet();
- 
-	return get_a_finer_covering(result, A, b);
+	return result;
 }
 
 /**
