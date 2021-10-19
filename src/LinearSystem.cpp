@@ -299,7 +299,7 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const
 }
 
 /**
-+ * Check whether all the solutions of a linear system are also solutions for 
+  * Check whether all the solutions of a linear system are also solutions for
   * another linear system.
   *
   * This method establishes whether all the solutions of a linear system 
@@ -316,7 +316,7 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const
   *     solutions for the parameter. There are cases in which the set of
   *     object solutions is a subset of the parameter solutions and, still,
   *     this method returns false.
-+ */
+  */
 bool LinearSystem::satisfies(const LinearSystem& ls) const 
 {
 
@@ -461,10 +461,11 @@ double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 }
 
 /**
- * Create a new linear system by concatenating this LS and the specified one
+ * Create a new linear system by joining the constraints of two linear system
  *
- * @param[in] ls linear system to be appended
- * @return linear system obtained by merge
+ * @param[in] ls a linear system 
+ * @return linear system obtained by joining the constraints of this object and 
+ *      those of of the parameter.
  */
 LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 	LinearSystem result(this->A, this->b);
@@ -480,7 +481,7 @@ LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 }
 
 /**
-+ * Check whether all the solutions of a linear system satisfy a constraint.
+  * Check whether all the solutions of a linear system satisfy a constraint.
   *
   * This method establishes whether all the solutions of a linear system 
   * satisfy a constraint. Due to approximation errors, it may return 
@@ -493,7 +494,7 @@ LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
   *     method returns true, the constraint is certainly satisfied by any of
   *     the solutions of the system. There are cases in which the constraint 
   *     is satisfied by all the solutions and this method returns false.
-+ */
+  */
 bool LinearSystem::satisfies(const std::vector< double >& Ai, const double bi) const
 {
 	if (size()==0) return false;
@@ -520,7 +521,7 @@ bool LinearSystem::satisfies(const std::vector< double >& Ai, const double bi) c
 }
 
 /**
-+ * Check whether one of the constraints in a linear system is redundant.
+  * Check whether one of the constraints in a linear system is redundant.
   *
   * This method establishes whether the i-th constraint of a linear 
   * system is redundant. Due to approximation errors, it may return 
@@ -532,7 +533,7 @@ bool LinearSystem::satisfies(const std::vector< double >& Ai, const double bi) c
   *     returned value is true. When it returns true, the constraint is 
   *     certainly redundant. There are cases in which the constraint is 
   *     redundant and this method returns false.
-+ */
+  */
 bool LinearSystem::constraintIsRedundant(const unsigned int i) const
 {
 	LinearSystem tmp(*this);
@@ -554,7 +555,7 @@ bool LinearSystem::constraintIsRedundant(const unsigned int i) const
 }
 
 /**
-+ * Remove redundant constraints from a linear system.
+  * Remove redundant constraints from a linear system.
   *
   * This method removes redundant constraints from the system. 
   * The order of the non-redundant constraints can be shuffled after 
@@ -562,7 +563,7 @@ bool LinearSystem::constraintIsRedundant(const unsigned int i) const
   * 
   * @return A reference to this object after removing all the
   *         redundant constraints.
-+ */
+  */
 LinearSystem& LinearSystem::simplify()
 {
 	unsigned int i=0, last_non_redundant=size()-1;
@@ -599,8 +600,8 @@ LinearSystem& LinearSystem::simplify()
 }
 
 /**
-+ * Remove redundant constraints
-+ */
+  * Remove redundant constraints
+  */
 LinearSystem LinearSystem::get_simplified() const
 {
 	LinearSystem simplier(*this);
