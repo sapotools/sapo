@@ -30,19 +30,20 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 	map< vector<int>,pair<lst,lst> > controlPts;
 
 	Flowpipe *flowpipe = new Flowpipe();
+	flowpipe->append(initSet);
 
 	if(this->options.verbose){
 		cout << initSet->getBundle() << endl << endl;
 	}
-	flowpipe->append(initSet);
 
 	cout<<"Computing reach set..."<<flush;
+
+	Bundle *X = initSet;
 
 	for(int i=0; i<k; i++){
 
 		//cout<<"Reach step "<<i<<"\n";
 
-		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->dyns,controlPts,this->options.trans);	// transform it
 
 		if(this->options.decomp > 0){	// eventually decompose it
@@ -70,10 +71,9 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 
 	map< vector<int>,pair<lst,lst> > controlPts; 
-
-	paraSet->simplify();
 	
 	Flowpipe *flowpipe = new Flowpipe();
+	flowpipe->append(initSet);
 
 	cout << "Parameter set" << endl << *paraSet << endl << endl
 	     << endl << "Computing parametric reach set..." << flush;
@@ -81,14 +81,13 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 	if(this->options.verbose){
 		cout << initSet->getBundle() << endl << endl;
 	}
-	flowpipe->append(initSet);
 
+	Bundle *X = initSet;
 
 	for(int i=0; i<k; i++){
 
 		//cout<<"Reach step "<<i<<"\n";
 
-		Bundle *X = flowpipe->get(i);	// get actual set
 		X = X->transform(this->vars,this->params, this->dyns, paraSet, controlPts, this->options.trans);	// transform it
 
 		if(this->options.decomp > 0){	// eventually decompose it
@@ -142,6 +141,8 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet* parameterSe
 
 		res = this->synthesizeSTL(reachSet, splitParamSet, formula);
 	}
+
+	res->simplify();
 
 	return res;
 }

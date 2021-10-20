@@ -33,7 +33,7 @@ Flowpipe::Flowpipe(vector< Bundle* > flowpipe){
  * @param[in] i index
  * @return i-th bundle
  */
-Bundle* Flowpipe::get(unsigned int i){
+const Bundle* Flowpipe::get(const unsigned int i) const{
 	if(( 0<= i ) && (i < this->size())){
 				return this->flowpipe[i];
 		}
@@ -53,7 +53,7 @@ void Flowpipe::append( Bundle* bundle ){
 /**
  * Display the flowpipe
  */
-void Flowpipe::print(){
+void Flowpipe::print() const {
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
 		std::cout << (*it)->getBundle() << std::endl << std::endl;
 	}
@@ -62,7 +62,7 @@ void Flowpipe::print(){
 /**
  * Display the flowpipe in Matlab formal
  */
-void Flowpipe::plotRegion(){
+void Flowpipe::plotRegion() const{
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
 		(*it)->getBundle().plotRegion();
 	}
@@ -74,7 +74,7 @@ void Flowpipe::plotRegion(){
  * @param[in] file_name name of the file
  * @param[in] color color of the polytope to plot
  */
-void Flowpipe::plotRegionToFile(char *file_name, char color){
+void Flowpipe::plotRegionToFile(const char *file_name, const char color) const {
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
 		(*it)->getBundle().plotRegionToFile(file_name,color);
 	}
@@ -88,9 +88,9 @@ void Flowpipe::plotRegionToFile(char *file_name, char color){
  * @param[in] file_name name of the file
  * @param[in] color color of the polytope to plot
  */
-void Flowpipe::plotProjToFile(unsigned int var, double time_step, char *file_name, char color){
+void Flowpipe::plotProjToFile(const unsigned int var, const double time_step, const char *file_name, const char color) const {
 
-	if( var < 0 || var >= this->get(0)->getDim() ){
+	if( var < 0 || var >= this->flowpipe[0]->getDim() ){
 		cout<<"Flowpipe::plotProjToFile : i must be between 0 and the system dimension";
 		exit (EXIT_FAILURE);
 	}
@@ -109,15 +109,15 @@ void Flowpipe::plotProjToFile(unsigned int var, double time_step, char *file_nam
 
 	// print lower offsets
 	matlab_script<<"varm = [ ";
-	for(unsigned int i=0; i<this->size(); i++){
-		matlab_script<<-this->get(i)->getOffm(var)<<" ";
+	for(auto it=std::begin(this->flowpipe); it!=std::end(this->flowpipe); ++it){
+		matlab_script<<-(*it)->getOffm(var)<<" ";
 	}
 	matlab_script<<" ];\n";
 
 	// print upper offsets
 	matlab_script<<"varp = [ ";
-	for(unsigned int i=0; i<this->size(); i++){
-		matlab_script<<this->get(i)->getOffp(var)<<" ";
+	for(auto it=std::begin(this->flowpipe); it!=std::end(this->flowpipe); ++it){
+		matlab_script<<(*it)->getOffp(var)<<" ";
 	}
 	matlab_script<<" ];\n";
 
