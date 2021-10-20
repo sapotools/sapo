@@ -75,8 +75,9 @@ void Flowpipe::plotRegion() const{
  * @param[in] color color of the polytope to plot
  */
 void Flowpipe::plotRegionToFile(const char *file_name, const char color) const {
+	std::ofstream outstream(file_name, ios_base::app);
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		(*it)->getLinearSystem().plotRegionToFile(file_name,color);
+		(*it)->getLinearSystem().plotRegion(outstream, color);
 	}
 }
 

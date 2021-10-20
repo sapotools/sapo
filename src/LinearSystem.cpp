@@ -8,7 +8,6 @@
  */
 
 #include <iostream>
-#include <fstream>
 
 #include <glpk.h>
 #include <limits>
@@ -247,7 +246,7 @@ const double& LinearSystem::getA(unsigned int i, unsigned int j) const {
 			return this->A[i][j];
 		}
 	}
-	cout<<"LinearSystem::getA : i and j must be within the LS->A size";
+	std::cerr << "LinearSystem::getA : i and j must be within the LS->A size" << std::endl;
 	exit (EXIT_FAILURE);
 }
 
@@ -261,7 +260,7 @@ const double& LinearSystem::getb(unsigned int i) const {
 	if(( 0<= i ) && (i < this->b.size())){
 			return this->b[i];
 	}
-	cout<<"LinearSystem::getb : i and j must be within the LS->b size";
+	std::cerr <<"LinearSystem::getb : i and j must be within the LS->b size" << std::endl;
 	exit (EXIT_FAILURE);
 }
 
@@ -711,54 +710,34 @@ double LinearSystem::volBoundingBox(){
 
 /**
  * Print the linear system in Matlab format (for plotregion script)
- */
-void LinearSystem::plotRegion() const {
-
-	if(this->dim() > 3){
-		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
-		exit (EXIT_FAILURE);
-	}
-
-	cout<<"Ab = [\n";
-	for (unsigned i=0; i<A.size(); i++) {
-		for (auto el=std::begin(A[i]); el!=std::end(A[i]); ++el) {
-			cout<<*el<<" ";
-		}
-		cout<<" "<<this->b[i]<<";\n";
-	}
-	cout<<"];\n";
-	cout<<"plotregion(-Ab(:,1:"<< this->A[0].size() <<"),-Ab(:,"<<this->A[0].size()+1<<"),[],[],color);\n";
-
-}
-
-/**
- * Print the linear system in Matlab format (for plotregion script) into a file
- *
- * @param[in] file_name name of the file
+ * 
+ * @param[in] os is the outout stream
  * @param[in] color color of the polytope to plot
  */
-void LinearSystem::plotRegionToFile(const char *file_name, const char color) const {
+void LinearSystem::plotRegion(std::ostream& os, const char color) const {
 
 	if(this->dim() > 3){
-		cout<<"LinearSystem::plotRegion : maximum 3d sets are allowed";
+		std::cerr << "LinearSystem::plotRegion : maximum 3d sets are allowed" << std::endl;
 		exit (EXIT_FAILURE);
 	}
 
-
-	ofstream matlab_script;
-	matlab_script.open (file_name, ios_base::app);
-
-	matlab_script<<"Ab = [\n";
+	os <<"Ab = [" << std::endl;
 	for (unsigned i=0; i<A.size(); i++) {
 		for (auto el=std::begin(A[i]); el!=std::end(A[i]); ++el) {
-			matlab_script<<*el<<" ";
+			os << *el << " ";
 		}
-		matlab_script<<" "<<this->b[i]<<";\n";
+		os << " "<< this->b[i]<<";" << std::endl;
 	}
-	matlab_script<<"];\n";
-	matlab_script<<"plotregion(-Ab(:,1:"<< this->A[0].size() <<"),-Ab(:,"<<this->A[0].size()+1<<"),[],[],'"<<color<<"');\n";
-	matlab_script.close();
+	os << "];" << std::endl;
+	os << "plotregion(-Ab(:,1:"<< this->A[0].size()
+	   << "),-Ab(:,"<<this->A[0].size()+1<<"),[],[],";
 
+	if (color==' ') {
+		os << "color";
+	} else {
+		os << color;
+	}
+	os << ");" << std::endl;
 }
 
 /**
@@ -766,36 +745,35 @@ void LinearSystem::plotRegionToFile(const char *file_name, const char color) con
  *
  * @param[in] t thickness of the set to plot
  */
-void LinearSystem::plotRegionT(const double t) const {
+void LinearSystem::plotRegionT(std::ostream& os, const double t) const {
 	if(this->dim() > 2){
-		cout<<"LinearSystem::plotRegionT : maximum 2d sets are allowed";
+		std::cerr  << "LinearSystem::plotRegionT : maximum 2d sets are allowed" << std::endl;
 		exit (EXIT_FAILURE);
 	}
 
-	cout<<"Ab = [\n";
-	cout<<" 1 ";
+	os << "Ab = [" << std::endl;
+	os << " 1 ";
 	for(unsigned int j=0; j<this->A[0].size(); j++){
-		cout<<" 0 ";
+		os << " 0 ";
 	}
-	cout<<t<<";\n";
-	cout<<" -1 ";
+	os << t << ";" << std::endl;
+	os << " -1 ";
 	for(unsigned int j=0; j<this->A[0].size(); j++){
-		cout<<" 0 ";
+		os << " 0 ";
 	}
-	cout<<-t<<";\n";
+	os << -t << ";" << std::endl;
 
 
 	for (unsigned i=0; i<A.size(); i++) {
-		cout<<" 0 ";
+		os << " 0 ";
 		for (auto el=std::begin(A[i]); el!=std::end(A[i]); ++el) {
-			cout<<*el<<" ";
+			os << *el << " ";
 		}
-		cout<<this->b[i]<<";\n";
+		os << this->b[i] << ";" << std::endl;
 	}
 
-	cout<<"];\n";
-	cout<<"plotregion(-Ab(:,1:3),-Ab(:,4),[],[],color);\n";
-
+	os << "];" << std::endl;
+	os << "plotregion(-Ab(:,1:3),-Ab(:,4),[],[],color);" << std::endl;
 }
 
 /**
@@ -804,20 +782,20 @@ void LinearSystem::plotRegionT(const double t) const {
  * @param[in] rows rows to be plot
  * @param[in] cols colors of the plots
  */
-void LinearSystem::plotRegion(const vector<int>& rows, const vector<int>& cols) const{
+void LinearSystem::plotRegion(std::ostream& os, const vector<int>& rows, const vector<int>& cols) const{
 
 		if(cols.size() > 3){
-			cout<<"LinearSystem::plotRegion : cols maximum 3d sets are allowed";
+			std::cerr << "LinearSystem::plotRegion : cols maximum 3d sets are allowed" << std::endl;
 			exit (EXIT_FAILURE);
 		}
 
-		cout<<"Ab = [\n";
+		os << "Ab = [" << std::endl;
 		for (auto r_it=std::begin(rows); r_it!=std::end(rows); ++r_it) {
 			for (auto c_it=std::begin(cols); c_it!=std::end(cols); ++c_it) {
-				cout<<this->A[*r_it][*c_it]<<" ";
+				os << this->A[*r_it][*c_it]<<" ";
 			}
-			cout<<" "<<this->b[*r_it]<<";\n";
+			os << " " << this->b[*r_it]<<";" << std::endl;
 		}
-		cout<<"];\n";
-		cout<<"plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],color);\n";
+		os << "];" << std::endl;
+		os << "plotregion(-Ab(:,1:"<< cols.size() <<"),-Ab(:,"<<cols.size()+1<<"),[],[],color);" << std::endl;
 }

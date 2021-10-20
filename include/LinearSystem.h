@@ -69,7 +69,7 @@ private:
 	bool constraintIsRedundant(const unsigned int i) const;
 
 	LinearSystemSet* get_a_finer_covering(const std::vector<bool> & bvect_base,
-										  const unsigned int cidx, 
+										  const unsigned int cidx,
 										  LinearSystemSet *tmp_covering,
 								          std::vector<std::vector<double> >& A,
 										  std::vector<double>& b) const;
@@ -182,7 +182,7 @@ public:
 	 */
 	double maxLinearSystem(const std::vector< double >& obj_fun_coeffs) const;
 
-    // testing methods 
+    // testing methods
 
 	/**
 	 * Establish whether a linear system has no solutions
@@ -199,7 +199,7 @@ public:
 	bool isEmpty(const bool strict_inequality=false) const;
 
 	/**
-	 * Check whether all the solutions of a linear system are also solutions 
+	 * Check whether all the solutions of a linear system are also solutions
 	 * for another linear system.
 	 *
 	 * This method establishes whether all the solutions of a linear system
@@ -208,7 +208,7 @@ public:
 	 * However, whenever it returns true, the all the solutions of the
 	 * linear system are certainly solutions for the linear system passed
 	 * as parameter.
-	 * 
+	 *
 	 * @param[in] ls is the linear system whose solution set is compared to
 	 *     that of this linear system.
 	 * @return a Boolean value. When some of the solutions of this linear
@@ -222,11 +222,11 @@ public:
 
 	/**
 	 *  Split a linear system in set of linear systems.
-	 * 
+	 *
 	 *  This method splits a linear system in a set of linear systems such
 	 *  that the set union of their solutions equals the solution set of the
 	 *  original linear system.
-	 * 
+	 *
 	 *  @return A linear system set whose union of solution sets equals
 	 *      the solution set of the original linear system.
 	 */
@@ -287,10 +287,20 @@ public:
 	 */
 	double volBoundingBox();
 
-	void plotRegion() const;
-	void plotRegionToFile(const char *file_name, const char color) const;
-	void plotRegionT(const double t) const;
-	void plotRegion(const std::vector<int>& rows, const std::vector<int>& cols) const;
+	inline void plotRegion() const
+	{
+		this->plotRegion(std::cout);
+	}
+
+	inline void plotRegion(const char color) const
+	{
+		this->plotRegion(std::cout, color);
+	}
+
+	void plotRegion(std::ostream& os, const char color=' ') const;
+
+	void plotRegionT(std::ostream& os, const double t) const;
+	void plotRegion(std::ostream& os, const std::vector<int>& rows, const std::vector<int>& cols) const;
 
 	friend void swap(LinearSystem& ls_1, LinearSystem& ls_2);
 };
