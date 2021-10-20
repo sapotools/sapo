@@ -223,6 +223,13 @@ void LinearSystemSet::print() const {
 
 }
 
+void LinearSystemSet::plotRegion(std::ostream& os, const char color) const
+{
+	for (auto it=std::begin(set); it!=std::end(set); ++it) {
+		(*it)->plotRegion(os, color);
+	}
+}
+
 LinearSystemSet::~LinearSystemSet() {
 	// TODO Auto-generated destructor stub
 }

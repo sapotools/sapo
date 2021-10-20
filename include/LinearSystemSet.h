@@ -63,6 +63,19 @@ public:
 	bool isEmpty() const;
 	void print() const;
 
+
+	inline void plotRegion() const
+	{
+		this->plotRegion(std::cout);
+	}
+
+	inline void plotRegion(const char color) const
+	{
+		this->plotRegion(std::cout, color);
+	}
+
+	void plotRegion(std::ostream& os, const char color=' ') const;
+
 	~LinearSystemSet();
 };
 
