@@ -85,6 +85,15 @@ void LinearSystemSet::add(LinearSystem *ls)
 	}
 }
 
+LinearSystemSet& LinearSystemSet::simplify()
+{
+	for (auto it=std::begin(set); it!=std::end(set); ++it) {
+		(*it)->simplify();
+	}
+
+	return *this;
+}
+
 LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
 {
 	LinearSystemSet* covering = new LinearSystemSet();

@@ -29,6 +29,8 @@ public:
 
 	void add(LinearSystem *LS);
 
+	LinearSystemSet& simplify();
+
 	LinearSystemSet* get_a_finer_covering() const;
 
 	// operations on set
