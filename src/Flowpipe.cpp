@@ -55,7 +55,7 @@ void Flowpipe::append( Bundle* bundle ){
  */
 void Flowpipe::print() const {
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		std::cout << (*it)->getBundle() << std::endl << std::endl;
+		std::cout << (*it)->getLinearSystem() << std::endl << std::endl;
 	}
 }
 
@@ -64,7 +64,7 @@ void Flowpipe::print() const {
  */
 void Flowpipe::plotRegion() const{
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		(*it)->getBundle().plotRegion();
+		(*it)->getLinearSystem().plotRegion();
 	}
 }
 
@@ -76,7 +76,7 @@ void Flowpipe::plotRegion() const{
  */
 void Flowpipe::plotRegionToFile(const char *file_name, const char color) const {
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		(*it)->getBundle().plotRegionToFile(file_name,color);
+		(*it)->getLinearSystem().plotRegionToFile(file_name,color);
 	}
 }
 

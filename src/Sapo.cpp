@@ -33,7 +33,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 	flowpipe->append(initSet);
 
 	if(this->options.verbose){
-		cout << initSet->getBundle() << endl << endl;
+		cout << initSet->getLinearSystem() << endl << endl;
 	}
 
 	cout<<"Computing reach set..."<<flush;
@@ -50,7 +50,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
 			X = X->decompose(this->options.alpha,this->options.decomp);
 		}
 		if(this->options.verbose){
-			cout << X->getBundle() << endl << endl;
+			cout << X->getLinearSystem() << endl << endl;
 		}
 
 		flowpipe->append(X);			// store result
@@ -79,7 +79,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 	     << endl << "Computing parametric reach set..." << flush;
 
 	if(this->options.verbose){
-		cout << initSet->getBundle() << endl << endl;
+		cout << initSet->getLinearSystem() << endl << endl;
 	}
 
 	Bundle *X = initSet;
@@ -95,7 +95,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
 		}
 
 		if(this->options.verbose){
-			cout << X->getBundle() << endl << endl;
+			cout << X->getLinearSystem() << endl << endl;
 		}
 
 		flowpipe->append(X);			// store result
@@ -157,7 +157,7 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet* parameterSe
  */
 LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
 	
-	//reachSet->getBundle()->plotRegion();
+	//reachSet->getLinearSystem()->plotRegion();
 
 	switch( formula->getType() ){
 
@@ -362,7 +362,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
  */
 LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Always> formula, const int time){
 
-	//reachSet->getBundle()->plotRegion();
+	//reachSet->getLinearSystem()->plotRegion();
 
 	LinearSystemSet* result = new LinearSystemSet();
 	const TimeInterval& t_itvl = formula->time_bounds();

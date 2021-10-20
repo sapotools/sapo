@@ -74,7 +74,7 @@ public:
 	const vector<int>& getTemplate(long unsigned int i) const { return this->T[i]; };
 	inline const double& getOffp(long unsigned int i) const { return this->offp[i]; };
 	inline const double& getOffm(long unsigned int i) const { return this->offm[i]; };
-	LinearSystem getBundle();
+	LinearSystem getLinearSystem() const;
 	Parallelotope* getParallelotope(unsigned int i) const;
 
 	void setTemplate(vector< vector< int > > T);

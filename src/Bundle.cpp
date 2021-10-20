@@ -146,7 +146,7 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
  *
  * @returns polytope represented by a linear system
  */
-LinearSystem Bundle::getBundle() {
+LinearSystem Bundle::getLinearSystem() const {
 	vector< vector< double> > A;
 	vector< double> b;
 	for(unsigned int i=0; i<this->getSize(); i++){
@@ -203,7 +203,7 @@ Parallelotope* Bundle::getParallelotope(unsigned int i) const {
  */
 Bundle* Bundle::canonize(){
 	// get current polytope
-	LinearSystem bund = this->getBundle();
+	LinearSystem bund = this->getLinearSystem();
 	vector<double> canoffp,canoffm;
 	for(unsigned int i=0; i<this->getSize(); i++){
 		canoffp.push_back(bund.maxLinearSystem(this->L[i]));
