@@ -63,23 +63,64 @@ private:
 public:
 
 	// constructors
+	Bundle(const Bundle &orig);
+	Bundle(Bundle&& orig);
 	Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
 	Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
 
-	inline unsigned int getDim() const { return this->dim; };
-	inline unsigned int getSize() const { return L.size(); };
-	inline unsigned int getCard() const { return T.size(); };
-	inline unsigned int getNumDirs() const { return this->L.size(); };
+	inline unsigned int getDim() const
+	{
+		return this->dim;
+	}
 
-	const vector<int>& getTemplate(long unsigned int i) const { return this->T[i]; };
-	inline const double& getOffp(long unsigned int i) const { return this->offp[i]; };
-	inline const double& getOffm(long unsigned int i) const { return this->offm[i]; };
+	inline unsigned int getSize() const
+	{
+		return L.size();
+	}
+
+	inline unsigned int getCard() const
+	{
+		return T.size();
+	}
+
+	inline unsigned int getNumDirs() const
+	{
+		return this->L.size();
+	}
+
+	inline const vector<int>& getTemplate(long unsigned int i) const
+	{
+		return this->T[i];
+	}
+
+	inline const std::vector< std::vector<double> >& getDirectionMatrix() const
+	{ 
+		return this->L;
+	}
+
+	inline const double& getOffp(long unsigned int i) const
+	{
+		return this->offp[i];
+	}
+
+	inline const double& getOffm(long unsigned int i) const
+	{
+		return this->offm[i];
+	}
+
 	LinearSystem getLinearSystem() const;
 	Parallelotope* getParallelotope(unsigned int i) const;
 
 	void setTemplate(vector< vector< int > > T);
-	void setOffsetP(vector< double > offp){ this->offp = offp; }
-	void setOffsetM(vector< double > offm){ this->offm = offm; }
+	inline void setOffsetP(vector< double > offp)
+	{
+		this->offp = offp;
+	}
+
+	void setOffsetM(vector< double > offm)
+	{
+		this->offm = offm;
+	}
 
 	// operations on bundles
 	Bundle* canonize();
@@ -88,6 +129,10 @@ public:
 	Bundle* transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
 
 	virtual ~Bundle();
+
+	friend void swap(Bundle& A, Bundle& B);
 };
+
+void swap(Bundle& A, Bundle& B);
 
 #endif /* BUNDLE_H_ */

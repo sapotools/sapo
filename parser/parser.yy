@@ -147,7 +147,7 @@ s		: headerList
 			if (!drv.data->isTransModeDefined())
 				drv.data->setTransMode(AbsSyn::transType::AFO);
 			
-			if(!drv.data->isAlphaDefined())
+			if (!drv.data->isAlphaDefined())
 				drv.data->setAlpha(0.5);
 		}
 		| END { yy::parser::error(@1, "Empty file"); YYERROR; }

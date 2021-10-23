@@ -720,7 +720,7 @@ ostream& operator<<(ostream& os, const AbsSyn::problemType t)
 {
 	if (t == AbsSyn::problemType::P_UNDEF)
 		return os << "UNDEF";
-	else if(t == AbsSyn::problemType::REACH)
+	else if (t == AbsSyn::problemType::REACH)
 		return os << "reachability";
 	else
 		return os << "synthesis";

@@ -27,7 +27,9 @@ public:
 	LinearSystemSet(LinearSystem* ls);
 	LinearSystemSet(const std::vector<LinearSystem*>& set);
 
-	void add(LinearSystem *LS);
+	void add(LinearSystem *ls);
+	void add(const LinearSystem& ls);
+	void add(LinearSystem&& ls);
 
 	LinearSystemSet& simplify();
 
@@ -51,6 +53,13 @@ public:
 	inline unsigned int size() const{ return this->set.size(); }
 
 	/**
+	 * Get the number of variables
+	 * 
+	 * @returns number of columns of linear systems in the set
+	 */
+	unsigned int dim() const;
+
+	/**
 	 * Get the set of linear systems
 	 *
 	 * @returns the current collection of linear systems
@@ -61,22 +70,23 @@ public:
 	const LinearSystem* at(int i) const;
 
 	bool isEmpty() const;
+
+	/**
+	 * Print the set of linear systems
+	 */
 	void print() const;
 
-
-	inline void plotRegion() const
-	{
-		this->plotRegion(std::cout);
-	}
-
-	inline void plotRegion(const char color) const
-	{
-		this->plotRegion(std::cout, color);
-	}
-
-	void plotRegion(std::ostream& os, const char color=' ') const;
+	/**
+	 * Print the linear system set in Matlab format (for plotregion script)
+	 * 
+	 * @param[in] os is the output stream
+	 * @param[in] color color of the polytope to plot
+	 */
+	void plotRegion(std::ostream& os=std::cout, const char color=' ') const;
 
 	~LinearSystemSet();
 };
+
+std::ostream& operator<<(std::ostream& out, const LinearSystemSet& ls);
 
 #endif /* LINEARSYSTEMSET_H_ */

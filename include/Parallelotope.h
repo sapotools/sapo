@@ -97,15 +97,15 @@ public:
 	// Representation conversion
 	LinearSystem* gen2const(vector<double> q, vector<double> beta);		// from generator to constraints
 	poly_values const2gen(LinearSystem *LS);							// from constraints to generators
-	LinearSystem* getLS(){ return this->gen2const(this->actual_base_vertex, this->actual_lenghts); };
+	LinearSystem* getLS() { return this->gen2const(this->actual_base_vertex, this->actual_lenghts); };
 
-	vector< double > getBaseVertex(){ return this->actual_base_vertex; };
-	vector< double > getLenghts(){ return this->actual_lenghts; };
+	vector< double > getBaseVertex() { return this->actual_base_vertex; };
+	vector< double > getLenghts() { return this->actual_lenghts; };
 
-	vector< vector<double> > getVersors(){ return this->u; };
+	vector< vector<double> > getVersors() { return this->u; };
 
-	int getMaxSize(){ return 0; };
-	vector<ex> getConvCombs(int i){ vector<ex> c; return c; };
+	int getMaxSize() { return 0; };
+	vector<ex> getConvCombs(int i) { vector<ex> c; return c; };
 
 	virtual ~Parallelotope();
 };

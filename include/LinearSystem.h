@@ -287,17 +287,7 @@ public:
 	 */
 	double volBoundingBox();
 
-	inline void plotRegion() const
-	{
-		this->plotRegion(std::cout);
-	}
-
-	inline void plotRegion(const char color) const
-	{
-		this->plotRegion(std::cout, color);
-	}
-
-	void plotRegion(std::ostream& os, const char color=' ') const;
+	void plotRegion(std::ostream& os=std::cout, const char color=' ') const;
 
 	void plotRegionT(std::ostream& os, const double t) const;
 	void plotRegion(std::ostream& os, const std::vector<int>& rows, const std::vector<int>& cols) const;

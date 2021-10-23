@@ -25,36 +25,39 @@ Sapo::Sapo(Model *model, sapo_opt options): dyns(model->getDyns()), vars(model->
  * @param[in] k time horizon
  * @returns flowpipe of bundles
  */
-Flowpipe* Sapo::reach(Bundle* initSet, int k){
+Flowpipe* Sapo::reach(Bundle* initSet, unsigned int k) {
 	
 	map< vector<int>,pair<lst,lst> > controlPts;
 
-	Flowpipe *flowpipe = new Flowpipe();
-	flowpipe->append(initSet);
+	Flowpipe *flowpipe = new Flowpipe(initSet->getDirectionMatrix());
 
-	if(this->options.verbose){
+	if (this->options.verbose) {
 		cout << initSet->getLinearSystem() << endl << endl;
 	}
 
 	cout<<"Computing reach set..."<<flush;
 
 	Bundle *X = initSet;
+	LinearSystem Xls = X->getLinearSystem();
+	flowpipe->append(Xls);
 
-	for(int i=0; i<k; i++){
-
-		//cout<<"Reach step "<<i<<"\n";
+	unsigned int i=0;
+	while (i<k && !Xls.isEmpty()) {
+		i++;
 
 		X = X->transform(this->vars,this->dyns,controlPts,this->options.trans);	// transform it
 
-		if(this->options.decomp > 0){	// eventually decompose it
+		if (this->options.decomp > 0) {	// eventually decompose it
 			X = X->decompose(this->options.alpha,this->options.decomp);
 		}
-		if(this->options.verbose){
-			cout << X->getLinearSystem() << endl << endl;
-		}
 
-		flowpipe->append(X);			// store result
+		flowpipe->append(X->getLinearSystem()); // store result
+
+		if (this->options.verbose) {
+			cout << flowpipe->get(i) << endl << endl;
+		}
 	}
+
 	cout << "done" << endl;
 
 	return flowpipe;
@@ -68,37 +71,43 @@ Flowpipe* Sapo::reach(Bundle* initSet, int k){
  * @param[in] k time horizon
  * @returns flowpipe of bundles
  */
-Flowpipe* Sapo::reach(Bundle* initSet, LinearSystem* paraSet, int k){
+Flowpipe* Sapo::reach(Bundle* initSet, LinearSystemSet* paraSet, unsigned int k) {
 
 	map< vector<int>,pair<lst,lst> > controlPts; 
-	
-	Flowpipe *flowpipe = new Flowpipe();
-	flowpipe->append(initSet);
 
 	cout << "Parameter set" << endl << *paraSet << endl << endl
 	     << endl << "Computing parametric reach set..." << flush;
 
-	if(this->options.verbose){
+	if (this->options.verbose) {
 		cout << initSet->getLinearSystem() << endl << endl;
 	}
 
-	Bundle *X = initSet;
+	std::vector<Bundle *> cbundles(paraSet->size(), initSet);
+	LinearSystemSet Xls(new LinearSystem(initSet->getLinearSystem()));
+		
+	Flowpipe *flowpipe = new Flowpipe(initSet->getDirectionMatrix());
+	flowpipe->append(*initSet);
+	
+	unsigned int i=0;
+	while (i<k && !Xls.isEmpty()) {
+		i++;
 
-	for(int i=0; i<k; i++){
+		Xls = LinearSystemSet();
+		for (unsigned int b_idx=0; b_idx<cbundles.size(); b_idx++) {
+			cbundles[b_idx] = cbundles[b_idx]->transform(this->vars, this->params, this->dyns, 
+												         paraSet->at(b_idx), controlPts, this->options.trans);	// transform it
 
-		//cout<<"Reach step "<<i<<"\n";
-
-		X = X->transform(this->vars,this->params, this->dyns, paraSet, controlPts, this->options.trans);	// transform it
-
-		if(this->options.decomp > 0){	// eventually decompose it
-			X = X->decompose(this->options.alpha,this->options.decomp);
+			if (this->options.decomp > 0) {	// eventually decompose it
+				cbundles[b_idx] = cbundles[b_idx]->decompose(this->options.alpha,this->options.decomp);
+			}
+			Xls.add(cbundles[b_idx]->getLinearSystem());
 		}
 
-		if(this->options.verbose){
-			cout << X->getLinearSystem() << endl << endl;
-		}
+		flowpipe->append(Xls); // store result
 
-		flowpipe->append(X);			// store result
+		if (this->options.verbose) {
+			cout << flowpipe->get(i) << endl << endl;
+		}
 	}
 
 	cout << "done" << endl;
@@ -155,11 +164,11 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet* parameterSe
  * @param[in] formula STL contraint to impose over the model
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula){
+LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<STL> formula) {
 	
 	//reachSet->getLinearSystem()->plotRegion();
 
-	switch( formula->getType() ){
+	switch( formula->getType() ) {
 
 		// Atomic predicate
 		case ATOM:
@@ -215,11 +224,11 @@ LinearSystemSet* Sapo::synthesizeSTL(Bundle *reachSet, LinearSystemSet *paramete
  * @param[in] sigma STL atomic formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Atom> atom){
+LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Atom> atom) {
 
 	LinearSystemSet *result = new LinearSystemSet();
 
-	for(unsigned int i=0; i<reachSet->getCard(); i++){	// for each parallelotope
+	for (unsigned int i=0; i<reachSet->getCard(); i++) {	// for each parallelotope
 
 		// complete the key
 		vector<int> key = reachSet->getTemplate(i);
@@ -229,19 +238,19 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 		lst genFun = P->getGeneratorFunction();
 		lst controlPts;
 
-		if(this->synthControlPts.count(key) == 0 || (!this->synthControlPts[key].first.is_equal(genFun))){
+		if (this->synthControlPts.count(key) == 0 || (!this->synthControlPts[key].first.is_equal(genFun))) {
 			// compose f(gamma(x))
 			lst sub, fog;
-			for(unsigned int j=0; j<this->vars.nops(); j++){
+			for (unsigned int j=0; j<this->vars.nops(); j++) {
 				sub.append(vars[j] == genFun[j]);
 			}
-			for(unsigned int j=0; j<vars.nops(); j++){
+			for (unsigned int j=0; j<vars.nops(); j++) {
 				fog.append(this->dyns[j].subs(sub));
 			}
 
 			// compose sigma(f(gamma(x)))
 			lst sub_sigma;
-			for(unsigned int j=0; j<this->vars.nops(); j++){
+			for (unsigned int j=0; j<this->vars.nops(); j++) {
 				sub_sigma.append(vars[j] == fog[j]);
 			}
 			ex sofog;
@@ -264,14 +273,14 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 		lst qvars(P->getQ());
 		lst bvars(P->getBeta());
 		lst para_sub;
-		for(unsigned int j=0; j<this->vars.nops(); j++){
+		for (unsigned int j=0; j<this->vars.nops(); j++) {
 			para_sub.append(qvars[j] == base_vertex[j]);
 			para_sub.append(bvars[j] == lengths[j]);
 		}
 		ex num_sofog;
 		lst synth_controlPts;
-		//for(int j=0; j<controlPts.nops(); j++){
-		for (lst::const_iterator j = controlPts.begin(); j != controlPts.end(); ++j){
+		//for (int j=0; j<controlPts.nops(); j++) {
+		for (lst::const_iterator j = controlPts.begin(); j != controlPts.end(); ++j) {
 			synth_controlPts.append((*j).subs(para_sub));
 		}
 
@@ -295,8 +304,8 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
  * @param[in] time is the time of the current evaluation
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Until> formula, const int time){
-
+LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Until> formula, const int time)
+{
 	LinearSystemSet* result = new LinearSystemSet();
 	const TimeInterval& t_itvl = formula->time_bounds();
 
@@ -308,11 +317,11 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 	if (t_itvl > time) {
 		// Synthesize wrt phi1
 		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
-		if( P1->isEmpty() ){
+		if ( P1->isEmpty() ) {
 			return P1;			// false until
 		}else{
 			// Reach step wrt to the i-th linear system of P1
-			for(unsigned int i=0; i<P1->size(); i++){
+			for (unsigned int i=0; i<P1->size(); i++) {
 				// TODO : add the decomposition
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 				
@@ -330,12 +339,12 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 		LinearSystemSet *P1 = this->synthesizeSTL(reachSet, parameterSet, formula->getLeftSubFormula());
 		LinearSystemSet *P2 = this->synthesizeSTL(reachSet, parameterSet, formula->getRightSubFormula());
 
-		if( P1->isEmpty() ){
+		if ( P1->isEmpty() ) {
 			return P2;
 		}
 
 		// shift until interval
-		for(unsigned int i=0; i<P1->size(); i++){
+		for (unsigned int i=0; i<P1->size(); i++) {
 		// 	TODO : add decomposition
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
@@ -360,7 +369,7 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
  * @param[in] sigma STL always formula
  * @returns refined sets of parameters
  */
-LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Always> formula, const int time){
+LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *parameterSet, const std::shared_ptr<Always> formula, const int time) {
 
 	//reachSet->getLinearSystem()->plotRegion();
 
@@ -375,7 +384,7 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 	// Always interval far
 	if (t_itvl > time) {
 		// Reach step wrt to the i-th linear system of parameterSet
-		for(unsigned int i=0; i<parameterSet->size(); i++){
+		for (unsigned int i=0; i<parameterSet->size(); i++) {
 			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
 			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
 			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
@@ -390,9 +399,9 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 		// Refine wrt phi
 		LinearSystemSet *P = this->synthesizeSTL(reachSet, parameterSet, formula->getSubFormula());
 
-		if(!P->isEmpty()){
+		if (!P->isEmpty()) {
 			// Reach step wrt to the i-th linear system of P
-			for(unsigned int i=0; i<P->size(); i++){
+			for (unsigned int i=0; i<P->size(); i++) {
 				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
 				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
 				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);

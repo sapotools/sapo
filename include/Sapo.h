@@ -46,8 +46,8 @@ private:
 public:
 	Sapo(Model *model, sapo_opt options);
 
-	Flowpipe* reach(Bundle* initSet, int k);							// reachability
-	Flowpipe* reach(Bundle* initSet, LinearSystem* paraSet, int k);		// parameteric reachability
+	Flowpipe* reach(Bundle* initSet, unsigned int k);								// reachability
+	Flowpipe* reach(Bundle* initSet, LinearSystemSet* paraSet, unsigned int k);		// parameteric reachability
 	LinearSystemSet* synthesize(Bundle *reachSet, LinearSystemSet *parameterSet, 
 	                            const std::shared_ptr<STL> formula, const unsigned int max_splits=4);	// parameter synthesis
 

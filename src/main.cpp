@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 
 #include "Common.h"
 #include "Bundle.h"
@@ -16,7 +17,7 @@
 
 using namespace std;
 
-int main(int argc,char** argv){
+int main(int argc,char** argv) {
 	
 	driver drv;
 	string file;
@@ -52,13 +53,13 @@ int main(int argc,char** argv){
 	if (drv.data->getProblem() == AbsSyn::problemType::REACH)
 	{
 		Flowpipe *flowpipe;
-		if(model->getParams().nops() == 0)
+		if (model->getParams().nops() == 0)
 		{
 			flowpipe = sapo->reach(model->getReachSet(), drv.data->getIterations());	// reachability analysis
 		}
 		else
 		{
-			flowpipe = sapo->reach(model->getReachSet(), model->getParaSet()->at(0), drv.data->getIterations());	// reachability analysis
+			flowpipe = sapo->reach(model->getReachSet(), model->getParaSet(), drv.data->getIterations());	// reachability analysis
 		}
 		cout << "RESULTS" << endl;
 		flowpipe->print();
@@ -72,12 +73,11 @@ int main(int argc,char** argv){
 		{
 			cout << "RESULTS" << endl;
 			cout << "END RESULTS" << endl;
-			synth_parameter_set->print();
 		}
 		else
 		{
 			cout << endl;
-			Flowpipe *F = sapo->reach(model->getReachSet(), synth_parameter_set->at(0), drv.data->getIterations());
+			Flowpipe *F = sapo->reach(model->getReachSet(), synth_parameter_set, drv.data->getIterations());
 			cout << "RESULTS" << endl;
 			F->print();
 			cout << "END RESULTS" << endl;

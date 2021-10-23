@@ -35,8 +35,8 @@ public:
 	inline const lst& getParams() const { return this->params; }
 	inline const lst& getDyns() const { return this->dyns; }
 
-	inline Bundle* getReachSet(){ return this->reachSet; }
-	inline LinearSystemSet* getParaSet(){ return this->paraSet; }
+	inline Bundle* getReachSet() { return this->reachSet; }
+	inline LinearSystemSet* getParaSet() { return this->paraSet; }
 	inline const std::shared_ptr<STL>  getSpec() const { return this->spec; }
 
 	~Model();

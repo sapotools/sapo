@@ -15,29 +15,21 @@
 /**
  * Constructor that instantiates Flowpipe
  */
-Flowpipe::Flowpipe() {
-}
+Flowpipe::Flowpipe(const std::vector<std::vector <double> >& variable_templates): v_templates(variable_templates), flowpipe() 
+{}
 
 /**
- * Constructor that instantiates Flowpipe
- *
- * @param[in] flowpipe vector of bundles
- */
-Flowpipe::Flowpipe(vector< Bundle* > flowpipe){
-	this->flowpipe = flowpipe;
-}
-
-/**
- * Return the i-th bundle
+ * Return the i-th linear system
  *
  * @param[in] i index
- * @return i-th bundle
+ * @return i-th linear system
  */
-const Bundle* Flowpipe::get(const unsigned int i) const{
+const LinearSystemSet& Flowpipe::get(const unsigned int i) const
+{
 	if(( 0<= i ) && (i < this->size())){
 				return this->flowpipe[i];
 		}
-		cout<<"Flowpipe::get : i must be between 0 and the flowpipe size";
+		cout << "Flowpipe::get : i must be between 0 and the flowpipe size";
 		exit (EXIT_FAILURE);
 }
 
@@ -46,8 +38,28 @@ const Bundle* Flowpipe::get(const unsigned int i) const{
  *
  * @param[in] bundle bundle to append
  */
-void Flowpipe::append( Bundle* bundle ){
-	this->flowpipe.push_back(bundle);
+void Flowpipe::append( const Bundle& bundle )
+{
+	this->flowpipe.push_back(LinearSystemSet(bundle.getLinearSystem()));
+}
+
+/**
+ * Append a linear system set to the flowpipe
+ *
+ * @param[in] ls is the linear system to append
+ */
+void Flowpipe::append( const LinearSystemSet& ls )
+{
+	this->flowpipe.push_back(ls);
+}
+
+unsigned int Flowpipe::dim() const
+{
+	if (this->flowpipe.empty()) {
+		return 0;
+	}
+
+	return (this->flowpipe[0]).dim();
 }
 
 /**
@@ -55,77 +67,89 @@ void Flowpipe::append( Bundle* bundle ){
  */
 void Flowpipe::print() const {
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		std::cout << (*it)->getLinearSystem() << std::endl << std::endl;
+		std::cout << *it << std::endl << std::endl;
 	}
 }
 
 /**
- * Display the flowpipe in Matlab formal
- */
-void Flowpipe::plotRegion() const{
-	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		(*it)->getLinearSystem().plotRegion();
-	}
-}
-
-/**
- * Print the linear system in Matlab format (for plotregion script) into a file
- *
- * @param[in] file_name name of the file
+ * Print the linear system in Matlab format (for plotregion script)
+ * 
+ * @param[in] os is the output stream
  * @param[in] color color of the polytope to plot
  */
-void Flowpipe::plotRegionToFile(const char *file_name, const char color) const {
-	std::ofstream outstream(file_name, ios_base::app);
+void Flowpipe::plotRegion(std::ostream& os, const char color) const{
 	for (auto it=std::begin(flowpipe); it!=std::end(flowpipe); ++it) {
-		(*it)->getLinearSystem().plotRegion(outstream, color);
+		it->plotRegion(os, color);
 	}
 }
 
 /**
  * Print the projection of the variable in time using Matlab format into a file
  *
+ * @param[in] os is the output stream
  * @param[in] var variable to be plotted
  * @param[in] time_step time step for time projection
- * @param[in] file_name name of the file
  * @param[in] color color of the polytope to plot
  */
-void Flowpipe::plotProjToFile(const unsigned int var, const double time_step, const char *file_name, const char color) const {
+void Flowpipe::plotProj(std::ostream& os, const unsigned int var,
+				  	    const double time_step, const char color) const {
 
-	if( var < 0 || var >= this->flowpipe[0]->getDim() ){
-		cout<<"Flowpipe::plotProjToFile : i must be between 0 and the system dimension";
+    if (size()==0 || this->flowpipe[0].isEmpty()) {
+		std::cerr << "Flowpipe::plotProjToFile : i must be between "
+		          << "0 and the system dimension" << std::endl;
+		exit (EXIT_FAILURE);		
+	}
+
+	if ( var < 0 || var >= this->flowpipe[0].dim()) {
+		std::cerr << "Flowpipe::plotProjToFile : i must be between "
+		          << "0 and the system dimension" << std::endl;
 		exit (EXIT_FAILURE);
 	}
 
-	ofstream matlab_script(file_name, ios_base::app);
-
 	// select figure
-	matlab_script<<"figure("<<var+1<<")\n";
+	os << "figure("<<var+1 << ")" << std::endl;
 
 	// print time
-	matlab_script<<"t = [ ";
+	os << "t = [ ";
 	for(unsigned int i=0; i<this->size(); i++){
-		matlab_script<<i*time_step<<" ";
+		os << i*time_step << " ";
 	}
-	matlab_script<<" ];\n";
+	os << " ];" << std::endl;
 
 	// print lower offsets
-	matlab_script<<"varm = [ ";
+	os << "varm = [";
 	for(auto it=std::begin(this->flowpipe); it!=std::end(this->flowpipe); ++it){
-		matlab_script<<-(*it)->getOffm(var)<<" ";
+		double min_value = it->at(0)->minLinearSystem(v_templates[var]);
+
+		for (unsigned int i=1; i<it->size(); i++) {
+			double min_var_value = it->at(i)->minLinearSystem(v_templates[var]);
+
+			min_value = std::min(min_var_value, min_value);
+		}
+		os << " " << min_value;
 	}
-	matlab_script<<" ];\n";
+	os << " ];" << std::endl;
 
 	// print upper offsets
-	matlab_script<<"varp = [ ";
+	os << "varp = [";
 	for(auto it=std::begin(this->flowpipe); it!=std::end(this->flowpipe); ++it){
-		matlab_script<<(*it)->getOffp(var)<<" ";
-	}
-	matlab_script<<" ];\n";
+		std::vector<double> obj_funct(dim(), 0.0);
+		obj_funct[var]=1.0;
 
-	matlab_script<<"T = [t,fliplr(t)];\n";
-	matlab_script<<"X = [varm,fliplr(varp)];\n";
-	matlab_script<<"fill(T,X,'"<<color<<"');\n";
-	matlab_script.close();
+		double max_value = it->at(0)->maxLinearSystem(v_templates[var]);
+
+		for (unsigned int i=1; i<it->size(); i++) {
+			double max_var_value = it->at(i)->maxLinearSystem(v_templates[var]);
+
+			max_value = std::min(max_var_value, max_value);
+		}
+		os << " " << max_value;
+	}
+	os << " ];" << std::endl;
+
+	os << "T = [t,fliplr(t)];" << std::endl;
+	os << "X = [varm,fliplr(varp)];" << std::endl;
+	os << "fill(T,X,'"<<color << "');" << std::endl;
 
 }
 

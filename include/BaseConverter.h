@@ -9,8 +9,9 @@
 #ifndef BASECONVERTER_H_
 #define BASECONVERTER_H_
 
-#include "Common.h"
 #include <math.h>
+
+#include "Common.h"
 
 class BaseConverter {
 private:

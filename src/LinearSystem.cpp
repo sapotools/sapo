@@ -68,22 +68,22 @@ double solveLinearSystem(const vector< vector< double > > &A, const vector< doub
 	lp_param.msg_lev = GLP_MSG_ERR;
 
 	glp_add_rows(lp, num_rows);
-	for(int i=0; i<num_rows; i++){
+	for (int i=0; i<num_rows; i++) {
 		glp_set_row_bnds(lp, i+1, GLP_UP, 0.0, b[i]);
 	}
 
 	glp_add_cols(lp, num_cols);
-	for(int i=0; i<num_cols; i++){
+	for (int i=0; i<num_cols; i++) {
 		glp_set_col_bnds(lp, i+1, GLP_FR, 0.0, 0.0);
 	}
 
-	for(int i=0; i<num_cols; i++){
+	for (int i=0; i<num_cols; i++) {
 		glp_set_obj_coef(lp, i+1, obj_fun[i]);
 	}
 
 	int k=1;
-	for(int i=0; i<num_rows; i++){
-		for(int j=0; j<num_cols; j++){
+	for (int i=0; i<num_rows; i++) {
+		for (int j=0; j<num_cols; j++) {
 			ia[k] = i+1, ja[k] = j+1, ar[k] = A[i][j]; /* a[i+1,j+1] = A[i][j] */
 			k++;
 		}
@@ -119,7 +119,7 @@ bool zeroLine(const vector<double> &line)
 {
 	bool zeros = true;
 	unsigned int i=0;
-	while(zeros && i<line.size()){
+	while(zeros && i<line.size()) {
 		zeros = zeros && (abs(line[i]) < MAX_APPROX_ERROR);
 		i++;
 	}
@@ -185,11 +185,11 @@ bool LinearSystem::isIn(vector< double > Ai, const double bi) const
 {
 	Ai.push_back(bi);
 
-	for (unsigned int i=0; i<this->A.size(); i++){
+	for (unsigned int i=0; i<this->A.size(); i++) {
 		vector< double > line = this->A[i];
 		line.push_back(this->b[i]);
 		bool is_in = true;
-		for (unsigned int j=0; j<Ai.size(); j++){
+		for (unsigned int j=0; j<Ai.size(); j++) {
 			is_in = is_in && (abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
 		}
 		if (is_in) return true; 
@@ -241,8 +241,8 @@ LinearSystem::LinearSystem(const lst& vars, const lst& constraints)
  * @return (i,j) element
  */
 const double& LinearSystem::getA(unsigned int i, unsigned int j) const {
-	if(( 0<= i ) && (i < this->A.size())){
-		if(( 0<= j ) && (j < this->A[j].size())){
+	if (( 0<= i ) && (i < this->A.size())) {
+		if (( 0<= j ) && (j < this->A[j].size())) {
 			return this->A[i][j];
 		}
 	}
@@ -257,7 +257,7 @@ const double& LinearSystem::getA(unsigned int i, unsigned int j) const {
  * @return i-th element
  */
 const double& LinearSystem::getb(unsigned int i) const {
-	if(( 0<= i ) && (i < this->b.size())){
+	if (( 0<= i ) && (i < this->b.size())) {
 			return this->b[i];
 	}
 	std::cerr <<"LinearSystem::getb : i and j must be within the LS->b size" << std::endl;
@@ -319,7 +319,7 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const
 bool LinearSystem::satisfies(const LinearSystem& ls) const 
 {
 
-	for (unsigned int i=0; i<ls.size(); i++){
+	for (unsigned int i=0; i<ls.size(); i++) {
 		if (!this->satisfies(ls.A[i], ls.b[i])) {
 			return false;
 		}
@@ -547,8 +547,8 @@ double LinearSystem::maxLinearSystem(const lst& vars, const ex& obj_fun) const {
 LinearSystem LinearSystem::getIntersectionWith(const LinearSystem& ls) const {
 	LinearSystem result(this->A, this->b);
 
-	for(unsigned int i=0; i<ls.size(); i++){
-		if( !result.satisfies(ls.A[i], ls.b[i]) ){		// check for duplicates
+	for (unsigned int i=0; i<ls.size(); i++) {
+		if ( !result.satisfies(ls.A[i], ls.b[i]) ) {		// check for duplicates
 			(result.A).push_back( ls.A[i] );
 			(result.b).push_back( ls.b[i] );
 		}
@@ -691,12 +691,12 @@ LinearSystem LinearSystem::get_simplified() const
  *
  * @return volume of the bounding box
  */
-double LinearSystem::volBoundingBox(){
+double LinearSystem::volBoundingBox() {
 
 	vector<double> zeros (this->dim(),0);
 	double vol = 1;
 
-	for(unsigned int i=0; i<this->dim(); i++){
+	for (unsigned int i=0; i<this->dim(); i++) {
 		vector<double> facet = zeros;
 		facet[i] = 1;
 		const double b_plus = solveLinearSystem(this->A,this->b,facet,GLP_MAX);
@@ -711,12 +711,12 @@ double LinearSystem::volBoundingBox(){
 /**
  * Print the linear system in Matlab format (for plotregion script)
  * 
- * @param[in] os is the outout stream
+ * @param[in] os is the output stream
  * @param[in] color color of the polytope to plot
  */
 void LinearSystem::plotRegion(std::ostream& os, const char color) const {
 
-	if(this->dim() > 3){
+	if (this->dim() > 3) {
 		std::cerr << "LinearSystem::plotRegion : maximum 3d sets are allowed" << std::endl;
 		exit (EXIT_FAILURE);
 	}
@@ -743,22 +743,23 @@ void LinearSystem::plotRegion(std::ostream& os, const char color) const {
 /**
  * Print the 2d linear system in Matlab format (for plotregion script) over time
  *
+ * @param[in] os is the output stream
  * @param[in] t thickness of the set to plot
  */
 void LinearSystem::plotRegionT(std::ostream& os, const double t) const {
-	if(this->dim() > 2){
+	if (this->dim() > 2) {
 		std::cerr  << "LinearSystem::plotRegionT : maximum 2d sets are allowed" << std::endl;
 		exit (EXIT_FAILURE);
 	}
 
 	os << "Ab = [" << std::endl;
 	os << " 1 ";
-	for(unsigned int j=0; j<this->A[0].size(); j++){
+	for (unsigned int j=0; j<this->A[0].size(); j++) {
 		os << " 0 ";
 	}
 	os << t << ";" << std::endl;
 	os << " -1 ";
-	for(unsigned int j=0; j<this->A[0].size(); j++){
+	for (unsigned int j=0; j<this->A[0].size(); j++) {
 		os << " 0 ";
 	}
 	os << -t << ";" << std::endl;
@@ -779,12 +780,13 @@ void LinearSystem::plotRegionT(std::ostream& os, const double t) const {
 /**
  * Print the specified projections in Matlab format (for plotregion script) into a file
  *
+ * @param[in] os is the output stream
  * @param[in] rows rows to be plot
  * @param[in] cols colors of the plots
  */
 void LinearSystem::plotRegion(std::ostream& os, const vector<int>& rows, const vector<int>& cols) const{
 
-		if(cols.size() > 3){
+		if (cols.size() > 3) {
 			std::cerr << "LinearSystem::plotRegion : cols maximum 3d sets are allowed" << std::endl;
 			exit (EXIT_FAILURE);
 		}
