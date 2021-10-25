@@ -11,7 +11,8 @@ Initial parameter set
 
 Specification: always_[0,100] (0.404-r <= 0)
 
-Synthesizing parameters...
+Synthesizing parameters...done
+
 Parameter set
 --------------
 1 0 0 0 <= 0.1

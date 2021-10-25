@@ -7,7 +7,8 @@ Initial parameter set
 
 Specification: (-0.045+q <= 0) until_[10,15] (-0.23+i <= 0)
 
-Synthesizing parameters...
+Synthesizing parameters...done
+
 Parameter set
 --------------
 1 0 <= 0.3

@@ -76,6 +76,7 @@ int main(int argc,char** argv) {
 		if (synth_params->size() == 0)
 		{
 			cout << "RESULTS" << endl;
+			synth_params->print();
 			cout << "END RESULTS" << endl;
 		}
 		else
@@ -86,8 +87,8 @@ int main(int argc,char** argv) {
 			cout << "RESULTS" << endl;
 			F->print();
 			cout << "END RESULTS" << endl;
-			synth_params->print();
 		}
+		synth_params->print();
 	}
 
 	delete model;

@@ -153,6 +153,8 @@ LinearSystemSet* Sapo::synthesize(Bundle *reachSet, LinearSystemSet* parameterSe
 
 	res->simplify();
 
+	cout << "done" << endl;
+
 	return res;
 }
 
