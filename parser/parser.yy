@@ -44,6 +44,7 @@
 	DYN
 	SPEC
 	ITER
+	PSPLITS
 	DIR
 	TEMPL
 	PDIR
@@ -127,7 +128,7 @@ s		: headerList
 					if (!drv.data->isParamModeDefined())
 						drv.data->setParamMode(AbsSyn::modeType::BOX);
 					
-					if (drv.data->getIterations() < 0)
+					if (!drv.data->isIterationSet())
 					{
 						yy::parser::error(@1, "Iteration number must be defined");
 						YYERROR;
@@ -184,7 +185,7 @@ header			: PROB ":" problemType ";"
 						}
 						| ITER ":" INTEGER ";"
 						{
-							if (drv.data->getIterations() >= 0)
+							if (drv.data->isIterationSet())
 							{
 								yy::parser::error(@4, "Iteration number already defined");
 								YYERROR;
@@ -192,7 +193,16 @@ header			: PROB ":" problemType ";"
 							
 							drv.data->setIterations($3);
 						}
+						| PSPLITS ":" INTEGER ";"
+						{
+							if (drv.data->getMaxParameterSplits() > 0)
+							{
+								yy::parser::error(@4, "The maximum number of parameter splits has been already defined");
+								YYERROR;
+							}
 
+							drv.data->setMaxParameterSplits($3);
+						}
 symbolList	: symbol {}
 						| symbolList symbol {}
 

@@ -59,7 +59,8 @@ int main(int argc,char** argv) {
 		}
 		else
 		{
-			flowpipe = sapo->reach(model->getReachSet(), model->getParaSet(), drv.data->getIterations());	// reachability analysis
+			flowpipe = sapo->reach(model->getReachSet(), model->getParaSet(), 
+					       drv.data->getIterations());	// reachability analysis
 		}
 		cout << "RESULTS" << endl;
 		flowpipe->print();
@@ -68,8 +69,11 @@ int main(int argc,char** argv) {
 	else
 	{
 		// Synthesize parameters
-		LinearSystemSet *synth_parameter_set = sapo->synthesize(model->getReachSet(), model->getParaSet(), model->getSpec());
-		if (synth_parameter_set->size() == 0)
+		LinearSystemSet *synth_params = sapo->synthesize(model->getReachSet(),
+								 model->getParaSet(),
+								 model->getSpec(),
+								 drv.data->getMaxParameterSplits());
+		if (synth_params->size() == 0)
 		{
 			cout << "RESULTS" << endl;
 			cout << "END RESULTS" << endl;
@@ -77,11 +81,12 @@ int main(int argc,char** argv) {
 		else
 		{
 			cout << endl;
-			Flowpipe *F = sapo->reach(model->getReachSet(), synth_parameter_set, drv.data->getIterations());
+			Flowpipe *F = sapo->reach(model->getReachSet(), synth_params,
+						  drv.data->getIterations());
 			cout << "RESULTS" << endl;
 			F->print();
 			cout << "END RESULTS" << endl;
-			synth_parameter_set->print();
+			synth_params->print();
 		}
 	}
 

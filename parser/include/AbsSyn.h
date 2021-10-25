@@ -297,8 +297,30 @@ public:
 	modeType getParamMode() { return paramMode; }
 	void setParamMode(modeType t) { paramMode = t; }
 	
-	int getIterations() { return iterations; }
-	void setIterations(int n) { iterations = n; }
+	bool isIterationSet() const {
+		return iter_set;
+	}
+
+	const unsigned int& getIterations() const
+	{
+		return iterations;
+	}
+
+	void setIterations(unsigned int n)
+	{
+		iter_set = true;
+		iterations = n;
+	}
+
+	const unsigned int& getMaxParameterSplits() const
+	{
+		return max_param_splits;
+	}
+
+	void setMaxParameterSplits(unsigned int n)
+	{
+		max_param_splits = n;
+	}
 	
 	unsigned getVarNum() { return vars.size(); }
 	unsigned getParamNum() { return params.size(); }
@@ -378,7 +400,10 @@ protected:
 	modeType varMode;
 	modeType paramMode;
 	
-	int iterations;
+	unsigned int iterations;
+	bool iter_set;
+
+	unsigned int max_param_splits;
 	
 	vector<Variable *> vars;
 	vector<Parameter *> params;

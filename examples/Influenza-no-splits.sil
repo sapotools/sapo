@@ -2,7 +2,6 @@ problem: synthesis;
 variable_mode: parallelotopes;
 parameter_mode: boxes;
 iterations: 100;
-max_parameter_splits: 4;
 
 var s;
 var i;

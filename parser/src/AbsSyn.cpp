@@ -365,7 +365,8 @@ InputData::InputData()
 	varMode = modeType::M_UNDEF;
 	paramMode = modeType::M_UNDEF;
 	
-	iterations = -1;
+	iterations = 0;
+	iter_set = false;
 	
 	spec = NULL;
 	
@@ -594,7 +595,7 @@ bool InputData::check()
 {
 	bool res = true;
 	
-	if (iterations == -1)
+	if (!isIterationSet())
 	{
 		cerr << "Number of iterations is mandatory" << endl;
 		res = false;
