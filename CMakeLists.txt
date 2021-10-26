@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.7)
 
 project (sapo CXX)
 
@@ -7,8 +7,8 @@ set ( PROJECT_LINK_LIBS ginac glpk cln )
 
 include_directories(include include/STL parser/include)
 
-find_package(FLEX)
-find_package(BISON)
+find_package(FLEX 2.6.3 REQUIRED)
+find_package(BISON REQUIRED)
 
 flex_target(input_scanner parser/scanner.l ${CMAKE_SOURCE_DIR}/parser/src/scanner.cpp)
 bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
