@@ -27,8 +27,29 @@ public:
 
 	const LinearSystemSet& get(const unsigned int i) const;	// get i-th LinearSystemSet
 
-	void append( const LinearSystemSet& ls );
-	void append( const Bundle& bundle );
+	/**
+	 * Append a linear system to the flowpipe
+	 *
+	 * @param[in] ls is the linear system set to be appended
+	 * @return a reference to the new flowpipe
+	 */
+	Flowpipe& append( const LinearSystem& ls );
+
+	/**
+	 * Append a linear system set to the flowpipe
+	 *
+	 * @param[in] ls is the linear system set to be appended
+	 * @return a reference to the new flowpipe
+	 */
+	Flowpipe& append( const LinearSystemSet& ls );
+
+	/**
+	 * Append a bundle to the flowpipe
+	 *
+	 * @param[in] bundle bundle to be appended
+	 * @return a reference to the new flowpipe
+	 */
+	Flowpipe& append( const Bundle& bundle );
 
 	inline std::size_t size() const { return this->flowpipe.size(); }
 

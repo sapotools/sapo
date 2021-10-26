@@ -36,21 +36,40 @@ const LinearSystemSet& Flowpipe::get(const unsigned int i) const
 /**
  * Append a bundle to the flowpipe
  *
- * @param[in] bundle bundle to append
+ * @param[in] bundle bundle to be appended
+ * @return a reference to the new flowpipe
  */
-void Flowpipe::append( const Bundle& bundle )
+Flowpipe& Flowpipe::append( const Bundle& bundle )
 {
 	this->flowpipe.push_back(LinearSystemSet(bundle.getLinearSystem()));
+
+	return *this;
 }
 
 /**
  * Append a linear system set to the flowpipe
  *
- * @param[in] ls is the linear system to append
+ * @param[in] ls is the linear system set to be appended
+ * @return a reference to the new flowpipe
  */
-void Flowpipe::append( const LinearSystemSet& ls )
+Flowpipe& Flowpipe::append( const LinearSystemSet& ls )
 {
 	this->flowpipe.push_back(ls);
+
+	return *this;
+}
+
+/**
+ * Append a linear system to the flowpipe
+ *
+ * @param[in] ls is the linear system set to be appended
+ * @return a reference to the new flowpipe
+ */
+Flowpipe& Flowpipe::append( const LinearSystem& ls )
+{
+	this->flowpipe.push_back(LinearSystemSet(ls));
+
+	return *this;
 }
 
 unsigned int Flowpipe::dim() const
