@@ -212,9 +212,11 @@ double LinearSystemSet::boundingVol() const{
  * @param[in] index of the linear system to fetch
  * @returns i-th linear system
  */
+/*
 LinearSystem* LinearSystemSet::at(int i) {
 	return this->set[i];
 }
+*/
 
 /**
  * Get the i-th linear system
@@ -222,9 +224,11 @@ LinearSystem* LinearSystemSet::at(int i) {
  * @param[in] index of the linear system to fetch
  * @returns i-th linear system
  */
+/*
 const LinearSystem* LinearSystemSet::at(int i) const {
 	return this->set[i];
 }
+*/
 
 unsigned int LinearSystemSet::dim() const
 {

@@ -93,9 +93,11 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystemSet* paraSet, unsigned int k)
 		i++;
 
 		Xls = LinearSystemSet();
+
+		LinearSystemSet::iterator pset_it(paraSet->begin());
 		for (unsigned int b_idx=0; b_idx<cbundles.size(); b_idx++) {
 			cbundles[b_idx] = cbundles[b_idx]->transform(this->vars, this->params, this->dyns, 
-												         paraSet->at(b_idx), controlPts, this->options.trans);	// transform it
+												         *(pset_it++), controlPts, this->options.trans);	// transform it
 
 			if (this->options.decomp > 0) {	// eventually decompose it
 				cbundles[b_idx] = cbundles[b_idx]->decompose(this->options.alpha,this->options.decomp);
@@ -323,11 +325,11 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 			return P1;			// false until
 		}else{
 			// Reach step wrt to the i-th linear system of P1
-			for (unsigned int i=0; i<P1->size(); i++) {
+			for (LinearSystemSet::iterator P1_it = P1->begin(); P1_it!=P1->end(); ++P1_it) {
 				// TODO : add the decomposition
-				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
+				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,*P1_it, this->reachControlPts, this->options.trans);
 				
-				LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
+				LinearSystemSet* tmpLSset = new LinearSystemSet(*P1_it);
 				tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
 				result->unionWith(tmpLSset);
 			}
@@ -346,10 +348,10 @@ LinearSystemSet* Sapo::synthesizeUntil(Bundle *reachSet, LinearSystemSet *parame
 		}
 
 		// shift until interval
-		for (unsigned int i=0; i<P1->size(); i++) {
+		for (LinearSystemSet::iterator P1_it = P1->begin(); P1_it!=P1->end(); ++P1_it) {
 		// 	TODO : add decomposition
-			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P1->at(i), this->reachControlPts, this->options.trans);
-			LinearSystemSet* tmpLSset = new LinearSystemSet(P1->at(i));
+			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,*P1_it, this->reachControlPts, this->options.trans);
+			LinearSystemSet* tmpLSset = new LinearSystemSet(*P1_it);
 			tmpLSset = synthesizeUntil(newReachSet, tmpLSset, formula, time+1);
 			result->unionWith(tmpLSset);
 		}
@@ -386,9 +388,9 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 	// Always interval far
 	if (t_itvl > time) {
 		// Reach step wrt to the i-th linear system of parameterSet
-		for (unsigned int i=0; i<parameterSet->size(); i++) {
-			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,parameterSet->at(i), this->reachControlPts, options.trans);
-			LinearSystemSet* tmpLSset = new LinearSystemSet(parameterSet->at(i));
+		for (LinearSystemSet::iterator pset_it = parameterSet->begin(); pset_it!=parameterSet->end(); ++pset_it) {
+			Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,*pset_it, this->reachControlPts, options.trans);
+			LinearSystemSet* tmpLSset = new LinearSystemSet(*pset_it);
 			tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
 			result->unionWith(tmpLSset);
 		}
@@ -403,9 +405,9 @@ LinearSystemSet* Sapo::synthesizeAlways(Bundle *reachSet, LinearSystemSet *param
 
 		if (!P->isEmpty()) {
 			// Reach step wrt to the i-th linear system of P
-			for (unsigned int i=0; i<P->size(); i++) {
-				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,P->at(i), this->reachControlPts, options.trans);
-				LinearSystemSet* tmpLSset = new LinearSystemSet(P->at(i));
+			for (LinearSystemSet::iterator P_it = P->begin(); P_it!=P->end(); ++P_it) {
+				Bundle *newReachSet = reachSet->transform(this->vars,this->params,this->dyns,*P_it, this->reachControlPts, options.trans);
+				LinearSystemSet* tmpLSset = new LinearSystemSet(*P_it);
 				tmpLSset = synthesizeAlways(newReachSet, tmpLSset, formula, time+1);
 				result->unionWith(tmpLSset);
 			}

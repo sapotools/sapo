@@ -424,7 +424,7 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode) {
+Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem& paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode) {
 
 	vector<double> newDp (this->getSize(),DBL_MAX);
 	vector<double> newDm (this->getSize(),DBL_MAX);
@@ -501,8 +501,8 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem *paraSet, ma
 			for (lst::const_iterator c = actbernCoeffs.begin(); c != actbernCoeffs.end(); ++c) {
 				ex paraBernCoeff;
 				paraBernCoeff = (*c).subs(subParatope);
-				maxCoeffp = max(maxCoeffp,paraSet->maxLinearSystem(params,paraBernCoeff));
-				maxCoeffm = max(maxCoeffm,paraSet->maxLinearSystem(params,-paraBernCoeff));
+				maxCoeffp = max(maxCoeffp,paraSet.maxLinearSystem(params,paraBernCoeff));
+				maxCoeffm = max(maxCoeffm,paraSet.maxLinearSystem(params,-paraBernCoeff));
 			}
 			newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]],maxCoeffp);
 			newDm[dirs_to_bound[j]]  = min(newDm[dirs_to_bound[j]],maxCoeffm);

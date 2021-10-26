@@ -18,10 +18,196 @@
 class LinearSystemSet {
 
 private:
-
-	std::vector<LinearSystem*> set;	// set of linear systems
+	using container = std::vector<LinearSystem*>;
+	container set;	// set of linear systems
 
 public:
+
+	/**
+	 * An iterator class for linear system set
+	 */
+	class iterator {
+	
+	private:
+		container::iterator iit;
+
+	public:
+		using iterator_category = container::iterator::iterator_category;
+		using difference_type = container::iterator::difference_type;
+		using value_type = LinearSystem;
+		using pointer = LinearSystem*;
+		using reference = LinearSystem&;
+
+		/**
+		 *  Constructor
+		 */
+		inline iterator(const container::iterator& it): iit(it) {}
+
+		/**
+		 *  Copy constructor
+		 */
+		inline iterator(const iterator &orig): iit(orig.iit) {}
+
+		/**
+		 *  Swap constructor
+		 */
+		inline iterator(iterator&& orig) {
+			std::swap(iit, orig.iit);
+		}
+
+		/**
+		 *  Reference operator
+		 *
+		 * @return a reference to the pointed linear system.
+		 */
+		inline reference operator*() const
+		{
+			return *(*iit); 
+		}
+
+		/**
+		 *  Pointer operator
+		 *
+		 * @return a pointer to the pointed linear system.
+		 */
+		inline pointer operator->() {
+			return *iit;
+		}
+
+		/**
+		 *  Prefix increment
+		 *
+		 * @return this iterator after incrementing it.
+		 */
+		inline iterator& operator++() {
+			iit++; 
+			return *this;
+		}
+
+		/**
+		 *  Postfix increment
+		 *
+		 * @return this iterator before incrementing it.
+		 */
+		iterator operator++(int) {
+			return iterator(iit++);
+		}
+
+		/**
+		 *  Check whether two iterators point the same object.
+		 * 
+		 * @param[in] a is an iterator
+		 * @param[in] b is an iterator
+		 * @return true if and only if the two iterators point the same object.
+		 */
+		friend inline bool operator==(const iterator& a, const iterator& b) { 
+			return a.iit == b.iit; 
+		}
+
+		/**
+		 *  Check whether two iterators point the same object.
+		 * 
+		 * @param[in] a is an iterator
+		 * @param[in] b is an iterator
+		 * @return true if and only if the two iterators point different objects.
+		 */
+		friend inline bool operator!=(const iterator& a, const iterator& b) { 
+			return a.iit != b.iit; 
+		}
+	};
+
+	/**
+	 * A constant iterator class for linear system set
+	 */
+	class const_iterator {
+	private:
+		container::const_iterator iit;
+
+	public:
+		using iterator_category = container::const_iterator::iterator_category;
+		using difference_type = container::const_iterator::difference_type;
+		using value_type = LinearSystem;
+		using pointer = LinearSystem*;
+		using reference = LinearSystem&;
+
+		/**
+		 *  Constructor
+		 */
+		inline const_iterator(const container::const_iterator& it): iit(it) {}
+
+		/**
+		 *  Copy constructor
+		 */
+		inline const_iterator(const const_iterator &orig): iit(orig.iit) {}
+
+		/**
+		 *  Swap constructor
+		 */
+		inline const_iterator(const_iterator&& orig) { 
+			std::swap(iit, orig.iit);
+		}
+
+		/**
+		 *  Reference operator
+		 *
+		 * @return a reference to the pointed linear system.
+		 */
+		inline reference operator*() const
+		{
+			return *(*iit); 
+		}
+
+		/**
+		 *  Pointer operator
+		 *
+		 * @return a pointer to the pointed linear system.
+		 */
+		inline pointer operator->() {
+			return *iit;
+		}
+
+		/**
+		 *  Prefix increment
+		 *
+		 * @return this iterator after incrementing it.
+		 */
+		inline const_iterator& operator++() {
+			iit++; 
+			return *this;
+		}
+
+		/**
+		 *  Postfix increment
+		 *
+		 * @return this iterator before incrementing it.
+		 */
+		const_iterator operator++(int) {
+			return const_iterator(iit++);
+		}
+
+		/**
+		 *  Check whether two iterators point the same object.
+		 * 
+		 * @param[in] a a constant iterator.
+		 * @param[in] b a constant iterator.
+		 * @return true if and only if the two iterators point the same object.
+		 */
+		friend inline bool operator==(const const_iterator& a, const const_iterator& b) { 
+			return a.iit == b.iit; 
+		}
+
+		/**
+		 *  Check whether two constant iterators point the same object.
+		 * 
+		 * @param[in] a is a constant iterator.
+		 * @param[in] b is a constant iterator.
+		 * @return true if and only if the two iterators point different objects.
+		 */
+		friend inline bool operator!=(const const_iterator& a, const const_iterator& b) { 
+			return a.iit != b.iit; 
+		} 
+	};
+
 	LinearSystemSet();
 	LinearSystemSet(const LinearSystem& ls);
 	LinearSystemSet(LinearSystem* ls);
@@ -66,8 +252,11 @@ public:
 	 */
 	inline const std::vector<LinearSystem*>& get_set() const { return set; }
 
-	LinearSystem* at(int i);
-	const LinearSystem* at(int i) const;
+	iterator begin() { iterator res(std::begin(set)); return res;}
+	iterator end() { iterator res(std::end(set)); return res; }
+
+	const_iterator cbegin() const { const_iterator res(std::begin(set)); return res;}
+	const_iterator cend() const { const_iterator res(std::end(set)); return res; }
 
 	bool isEmpty() const;
 

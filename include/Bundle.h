@@ -126,7 +126,7 @@ public:
 	Bundle* canonize();
 	Bundle* decompose(double alpha, int max_iters);
 	Bundle* transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
-	Bundle* transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
+	Bundle* transform(lst vars, lst params, lst f, LinearSystem& paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
 
 	virtual ~Bundle();
 
