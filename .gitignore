@@ -12,3 +12,4 @@ parser/src/scanner.cpp
 bin/sapo
 CTestTestfile.cmake
 Testing/
+build/
