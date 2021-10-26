@@ -94,6 +94,26 @@ public:
 		}
 
 		/**
+		 * Increment
+		 *
+		 * @param[in] a is the increment.
+		 * @return this iterator after incrementing it.
+		 */
+		inline iterator operator+(const int a) {
+			return iterator(iit+a);
+		}
+
+		/**
+		 * Decrement
+		 *
+		 * @param[in] a is the decrement.
+		 * @return this iterator after decrementing it.
+		 */
+		inline iterator operator-(const int a) {
+			return iterator(iit-a);
+		}
+
+		/**
 		 *  Check whether two iterators point the same object.
 		 * 
 		 * @param[in] a is an iterator
@@ -177,6 +197,26 @@ public:
 		}
 
 		/**
+		 * Increment
+		 *
+		 * @param[in] a is the increment.
+		 * @return this iterator after incrementing it.
+		 */
+		inline const_iterator operator+(const int a) {
+			return const_iterator(iit+a);
+		}
+
+		/**
+		 * Decrement
+		 *
+		 * @param[in] a is the decrement.
+		 * @return this iterator after decrementing it.
+		 */
+		inline const_iterator operator-(const int a) {
+			return const_iterator(iit-a);
+		}
+
+		/**
 		 *  Postfix increment
 		 *
 		 * @return this iterator before incrementing it.
@@ -245,18 +285,21 @@ public:
 	 */
 	unsigned int dim() const;
 
-	/**
-	 * Get the set of linear systems
-	 *
-	 * @returns the current collection of linear systems
-	 */
-	inline const std::vector<LinearSystem*>& get_set() const { return set; }
+	inline iterator begin() {
+		return iterator(std::begin(set));
+	}
 
-	iterator begin() { iterator res(std::begin(set)); return res;}
-	iterator end() { iterator res(std::end(set)); return res; }
+	inline iterator end() {
+		return iterator(std::end(set));
+	}
 
-	const_iterator cbegin() const { const_iterator res(std::begin(set)); return res;}
-	const_iterator cend() const { const_iterator res(std::end(set)); return res; }
+	inline const_iterator cbegin() const {
+		return const_iterator(std::begin(set));
+	}
+
+	inline const_iterator cend() const {
+		return const_iterator(std::end(set));
+	}
 
 	bool isEmpty() const;
 

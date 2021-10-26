@@ -62,12 +62,12 @@ LinearSystemSet::LinearSystemSet(const vector<LinearSystem*>& set)
  * @returns the current collection of linear systems
  */
 
-bool satisfiesOneOf(const LinearSystem &set, const std::vector<LinearSystem*>& S)
+bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet& S)
 {
 
 #if MINIMIZE_LS_SET_REPRESENTATION
-	for (std::vector<LinearSystem*>::const_iterator it=std::begin(S); it!=std::end(S); ++it) {
-		if (set.satisfies(*(*it))) {
+	for (LinearSystemSet::const_iterator it=S.cbegin(); it!=S.cend(); ++it) {
+		if (set.satisfies(*it)) {
 			return true;
 		}
 	}
@@ -108,7 +108,7 @@ void LinearSystemSet::add(LinearSystem *ls)
 				  << "linear system having a different dimension" << std::endl;
 	}
 
-	if ((!ls->isEmpty()) && (!satisfiesOneOf(*ls, this->set))) {
+	if ((!ls->isEmpty()) && (!satisfiesOneIn(*ls, *this))) {
 		this->set.push_back(ls);
 	}
 }
@@ -159,8 +159,8 @@ LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSs
  * @returns merged sets
  */
 LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet *LSset) {
-	for (std::vector<LinearSystem*>::iterator it=std::begin(LSset->set); 
-	                                          it!=std::end(LSset->set); ++it) {
+	for (container::iterator it=std::begin(LSset->set);
+	                         it!=std::end(LSset->set); ++it) {
 		this->add(*it);
 	}
 
@@ -181,11 +181,11 @@ LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const
 		exit (EXIT_FAILURE);
 	}
 
-	vector<LinearSystem*> set = LSset->get_set();
-	int iters = min(bound-this->size(), (unsigned int)set.size());
+	int iters = min(bound-this->size(), (unsigned int)LSset->size());
 
-	for (int i=0; i<iters; i++) {
-		this->set.push_back(set[i]);
+	container::iterator it = std::begin(set);
+	for (int i=0; i<iters&&it!=std::end(set); i++) {
+		this->set.push_back(*it);
 	}
 
 	return *this;
@@ -288,13 +288,12 @@ std::ostream& operator<<(std::ostream& out, const LinearSystemSet& ls)
 		out<<"---- empty set ----" << endl;
 	}else{
 		out << "--------------";
-		for (auto it=std::begin(ls.get_set()); 
-				  it!=std::end(ls.get_set()); ++it) {
-			out << endl << *(*it);
-			if (it+1!=std::end(ls.get_set())) {
-				out << endl;
-			}
+		const LinearSystemSet::const_iterator last(ls.cend()-1);
+		for (auto it=ls.cbegin(); it!=last; ++it) {
+			out << endl << *it  << endl;
 		}
+
+		out << endl << *last;
 	}
 
 	return out;
