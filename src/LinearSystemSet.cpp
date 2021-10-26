@@ -25,16 +25,16 @@ LinearSystemSet::LinearSystemSet(): set() {}
 LinearSystemSet::LinearSystemSet(const LinearSystem& ls)
 {
 	if (!ls.isEmpty()) {
-		this->set.push_back(new LinearSystem(ls.get_simplified()));
+		this->set.push_back(std::make_shared<LinearSystem>(ls.get_simplified()));
 	}
 }
 
 /**
  * Constructor that instantiates a singleton set
  *
- * @param[in] ls element of the set
+ * @param[in] ls pointer to the element of the set
  */
-LinearSystemSet::LinearSystemSet(LinearSystem* ls)
+LinearSystemSet::LinearSystemSet(pointer ls)
 {
 	if (!ls->isEmpty()) {
 		ls->simplify();
@@ -47,7 +47,7 @@ LinearSystemSet::LinearSystemSet(LinearSystem* ls)
  *
  * @param[in] set vector of linear systems
  */
-LinearSystemSet::LinearSystemSet(const vector<LinearSystem*>& set)
+LinearSystemSet::LinearSystemSet(const container& set)
 {
 	for (unsigned int i=0; i<set.size(); i++) {
 		if (!set[i]->isEmpty()) {
@@ -81,27 +81,27 @@ bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet& S)
  *
  * @param[in] ls linear system to add
  */
-void LinearSystemSet::add(const LinearSystem& ls)
+LinearSystemSet& LinearSystemSet::add(const LinearSystem& ls)
 {
-	this->add(new LinearSystem(ls));
+	return this->add(std::make_shared<LinearSystem>(ls));
 }
 
 /**
  * Add a linear system to the set
  *
- * @param[in] ls linear system to add
+ * @param[in] ls linear system to be added
  */
-void LinearSystemSet::add(LinearSystem&& ls)
+LinearSystemSet& LinearSystemSet::add(LinearSystem&& ls)
 {
-	this->add(new LinearSystem(ls));
+	return this->add(std::make_shared<LinearSystem>(ls));
 }
 
 /**
  * Add a linear system to the set
  *
- * @param[in] ls linear system to add
+ * @param[in] ls linear system to be added
  */
-void LinearSystemSet::add(LinearSystem *ls)
+LinearSystemSet& LinearSystemSet::add(pointer ls)
 {
 	if (size()!=0 && set[0]->dim()!=ls->dim()) {
 		std::cerr << "Adding to a linear system set a "
@@ -111,6 +111,8 @@ void LinearSystemSet::add(LinearSystem *ls)
 	if ((!ls->isEmpty()) && (!satisfiesOneIn(*ls, *this))) {
 		this->set.push_back(ls);
 	}
+
+	return *this;
 }
 
 LinearSystemSet& LinearSystemSet::simplify()
@@ -126,8 +128,7 @@ LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
 {
 	LinearSystemSet* covering = new LinearSystemSet();
 
-	for (std::vector<LinearSystem *>::const_iterator it=std::begin(set);
-													 it!=std::end(set); ++it) {
+	for (auto it=std::begin(set); it!=std::end(set); ++it) {
 		covering->unionWith((*it)->get_a_finer_covering());
 	}
 
@@ -145,8 +146,7 @@ LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSs
 	LinearSystemSet* result = new LinearSystemSet();
 	for (auto t_it=std::begin(set); t_it!=std::end(set); ++t_it) {
 		for (auto s_it=std::begin(LSset->set); s_it!=std::end(LSset->set); ++s_it) {
-			LinearSystem *intLS = new LinearSystem((*t_it)->getIntersectionWith(*(*s_it))); // intersect
-			result->add(intLS);
+			result->add(std::make_shared<LinearSystem>((*t_it)->getIntersectionWith(*(*s_it))));
 		}
 	}
 	return result;

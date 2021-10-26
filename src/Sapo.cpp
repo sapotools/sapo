@@ -83,7 +83,7 @@ Flowpipe* Sapo::reach(Bundle* initSet, LinearSystemSet* paraSet, unsigned int k)
 	}
 
 	std::vector<Bundle *> cbundles(paraSet->size(), initSet);
-	LinearSystemSet Xls(new LinearSystem(initSet->getLinearSystem()));
+	LinearSystemSet Xls(std::make_shared<LinearSystem>(initSet->getLinearSystem()));
 		
 	Flowpipe *flowpipe = new Flowpipe(initSet->getDirectionMatrix());
 	flowpipe->append(*initSet);
@@ -290,7 +290,7 @@ LinearSystemSet* Sapo::refineParameters(Bundle *reachSet, LinearSystemSet *param
 
 		//cout<<synth_controlPts;
 
-		LinearSystem *num_constraintLS = new LinearSystem(this->params, synth_controlPts);
+		std::shared_ptr<LinearSystem> num_constraintLS = std::make_shared<LinearSystem>(this->params, synth_controlPts);
 		LinearSystemSet *controlPtsLS = new LinearSystemSet(num_constraintLS);
 		result->unionWith(parameterSet->getIntersectionWith(controlPtsLS));
 	}

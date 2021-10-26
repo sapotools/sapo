@@ -10,6 +10,8 @@
 #ifndef LINEARSYSTEMSET_H_
 #define LINEARSYSTEMSET_H_
 
+#include <memory>
+
 #include "LinearSystem.h"
 
 #define MINIMIZE_LS_SET_REPRESENTATION true
@@ -18,7 +20,8 @@
 class LinearSystemSet {
 
 private:
-	using container = std::vector<LinearSystem*>;
+	using pointer = std::shared_ptr<LinearSystem>;
+	using container = std::vector<pointer>;
 	container set;	// set of linear systems
 
 public:
@@ -35,7 +38,7 @@ public:
 		using iterator_category = container::iterator::iterator_category;
 		using difference_type = container::iterator::difference_type;
 		using value_type = LinearSystem;
-		using pointer = LinearSystem*;
+		using pointer = std::shared_ptr<LinearSystem>;
 		using reference = LinearSystem&;
 
 		/**
@@ -147,7 +150,7 @@ public:
 		using iterator_category = container::const_iterator::iterator_category;
 		using difference_type = container::const_iterator::difference_type;
 		using value_type = LinearSystem;
-		using pointer = LinearSystem*;
+		using pointer = std::shared_ptr<LinearSystem>;
 		using reference = LinearSystem&;
 
 		/**
@@ -249,13 +252,51 @@ public:
 	};
 
 	LinearSystemSet();
-	LinearSystemSet(const LinearSystem& ls);
-	LinearSystemSet(LinearSystem* ls);
-	LinearSystemSet(const std::vector<LinearSystem*>& set);
 
-	void add(LinearSystem *ls);
-	void add(const LinearSystem& ls);
-	void add(LinearSystem&& ls);
+	/**
+	 * Constructor that instantiates a singleton set
+	 *
+	 * @param[in] ls element of the set
+	 */
+	LinearSystemSet(const LinearSystem& ls);
+
+	/**
+	 * Constructor that instantiates a singleton set
+	 *
+	 * @param[in] ls a pointer to the element of the set
+	 */
+	LinearSystemSet(pointer ls);
+
+	/**
+	 * Constructor that instantiates a set from a vector of sets
+	 *
+	 * @param[in] set vector of linear systems
+	 */
+	LinearSystemSet(const container& set);
+
+	/**
+	 * Add a linear system to the set
+	 *
+	 * @param[in] ls is a pointer to the linear system to be added
+	 * @return a reference to the new linear system set
+	 */
+	LinearSystemSet& add(pointer ls);
+
+	/**
+	 * Add a linear system to the set
+	 *
+	 * @param[in] ls linear system to be added
+	 * @return a reference to the new linear system set
+	 */
+	LinearSystemSet& add(const LinearSystem& ls);
+
+	/**
+	 * Add a linear system to the set
+	 *
+	 * @param[in] ls linear system to be added
+	 * @return a reference to the new linear system set
+	 */
+	LinearSystemSet& add(LinearSystem&& ls);
 
 	LinearSystemSet& simplify();
 

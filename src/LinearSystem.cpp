@@ -405,7 +405,7 @@ LinearSystemSet* LinearSystem::get_a_finer_covering(const std::vector<bool> & bv
 												    std::vector<double>& b) const
 {
 	if (this->A.size() == cidx) {
-		LinearSystem *ls = new LinearSystem(A, b);
+		std::shared_ptr<LinearSystem> ls = std::make_shared<LinearSystem>(A, b);
 		ls->simplify();
 
 		tmp_covering->add(ls);
