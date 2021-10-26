@@ -15,7 +15,7 @@
 
 class BaseConverter {
 private:
-	lst vars;				// list of variables
+	const lst& vars;		// list of variables
 	ex polynomial;			// polynomial in symbolic form
 	ex num, denom;			// numerator and denominator for rational polynomials
 	vector<int> degrees;	// collection of degrees
@@ -40,9 +40,9 @@ private:
 
 public:
 	// constructors
-	BaseConverter(lst vars, ex polynomial);
-	BaseConverter(lst vars, ex polynomial, vector<int> degrees);
-	BaseConverter(lst vars, ex num, ex denom);
+	BaseConverter(const lst& vars, const ex& polynomial);
+	BaseConverter(const lst& vars, const ex& polynomial, const std::vector<int>& degrees);
+	BaseConverter(const lst& vars, const ex& num, const ex& denom);
 
 	// get Bernstein coefficients
 	ex bernCoeff(vector<int> mi);

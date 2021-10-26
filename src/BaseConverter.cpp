@@ -14,11 +14,9 @@
  * @param[in] vars list of variables appearing the current polynomial
  * @param[in] polynomial polynomial to convert
  */
-BaseConverter::BaseConverter(lst vars, ex polynomial) {
-
-	this->vars = vars;
-	this->polynomial = polynomial;
-
+BaseConverter::BaseConverter(const lst& vars, const ex& polynomial): vars(vars),
+																	 polynomial(polynomial)
+{
 	// Put the polynomial in extended form and extract variables degrees
 	this->polynomial = this->polynomial.expand();
 	for (auto var_it=std::begin(vars); var_it!=end(vars); ++var_it) {
@@ -44,14 +42,11 @@ BaseConverter::BaseConverter(lst vars, ex polynomial) {
  * @param[in] polynomial polynomial to convert
  * @param[in] degrees of variables
  */
-BaseConverter::BaseConverter(lst vars, ex polynomial, vector<int> degrees) {
-
-	this->vars = vars;
-	this->polynomial = polynomial;
-
+BaseConverter::BaseConverter(const lst& vars, const ex& polynomial, const vector<int>& degrees):
+												vars(vars), polynomial(polynomial), degrees(degrees)
+{
 	// Put the polynomial in extended form and extract variables degrees
 	this->polynomial = this->polynomial.expand();
-	this->degrees = degrees;
 
 	// Initialize the degree shifts
 	initShifts();
@@ -72,11 +67,9 @@ BaseConverter::BaseConverter(lst vars, ex polynomial, vector<int> degrees) {
  * @param[in] numerator of the rational polynomial to convert
  * @param[in] denominator of the rational polynomial to convert
  */
-BaseConverter::BaseConverter(lst vars, ex num, ex denom) {
-	this->vars = vars;
-	this->num = num;
-	this->denom = denom;
-}
+BaseConverter::BaseConverter(const lst& vars, const ex& num, const ex& denom): vars(vars), num(num),
+																			   denom(denom)
+{}
 
 /**
  * Initialize the degree shift vector used to extract the multi-indices
@@ -289,11 +282,8 @@ lst BaseConverter::getRationalBernCoeffs() {
 		cout<<degs[i]<<", ";
 	}
 
-	BaseConverter *num_conv = new BaseConverter(this->vars,this->num,degs);
-	BaseConverter *denom_conv = new BaseConverter(this->vars,this->denom,degs);
-
-	lst num_bern_coeffs = num_conv->getBernCoeffs();
-	lst denom_bern_coeffs = denom_conv->getBernCoeffs();
+	lst num_bern_coeffs = BaseConverter(this->vars,this->num,degs).getBernCoeffs();
+	lst denom_bern_coeffs = BaseConverter(this->vars,this->denom,degs).getBernCoeffs();
 
 	for (long unsigned int i=0; i<num_bern_coeffs.nops(); i++) {
 		if (denom_bern_coeffs[i] != 0) { // skip negative denominators

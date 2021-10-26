@@ -141,31 +141,20 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 	}
 
 	//generate the variables
-	VarsGenerator *varsGen = new VarsGenerator(T[0].size());
-	lst qs, as, bs, ls;
-	vector<lst> us;
-	qs = varsGen->getBaseVertex();
-	as = varsGen->getFreeVars();
-	bs = varsGen->getLenghts();
+	VarsGenerator varsGen(T[0].size());
 
-	vector<lst> paraVars;
-	paraVars.push_back(qs);
-	paraVars.push_back(as);
-	paraVars.push_back(bs);
-
-	this->vars = paraVars;
+	this->vars = vector<lst>{varsGen.getBaseVertex(),
+							 varsGen.getFreeVars(),
+							 varsGen.getLenghts()};
 	this->L = L;
 	this->offp = offp;
 	this->offm = offm;
 	this->T = T;
 
 	// initialize orthogonal proximity
-	for (unsigned int i=0; i<this->getNumDirs(); i++) {
-		vector< double > Thetai (this->getNumDirs(),0);
-		for (unsigned int j=i; j<this->getNumDirs(); j++) {
-			this->Theta.push_back(Thetai);
-		}
-	}
+	this->Theta = vector< vector< double > >(this->getNumDirs(),
+											 vector< double >(this->getNumDirs(),0));
+
 	for (unsigned int i=0; i<this->getNumDirs(); i++) {
 		this->Theta[i][i] = 0;
 		for (unsigned int j=i+1; j<this->getNumDirs(); j++) {
@@ -381,8 +370,7 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 					Lfog = Lfog + this->L[dirs_to_bound[j]][k]*fog[k];
 				}
 
-				BaseConverter *BC = new BaseConverter(this->vars[1],Lfog);
-				actbernCoeffs = BC->getBernCoeffsMatrix();
+				actbernCoeffs = BaseConverter(this->vars[1],Lfog).getBernCoeffsMatrix();
 
 				pair<lst,lst> element (genFun,actbernCoeffs);
 				controlPts[key] = element;	// store the computed coefficients
@@ -485,8 +473,7 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem& paraSet, ma
 					Lfog = Lfog + this->L[dirs_to_bound[j]][k]*fog[k];
 				}
 
-				BaseConverter *BC = new BaseConverter(this->vars[1],Lfog);
-				actbernCoeffs = BC->getBernCoeffsMatrix();
+				actbernCoeffs = BaseConverter(this->vars[1],Lfog).getBernCoeffsMatrix();
 
 				pair<lst,lst> element (genFun,actbernCoeffs);
 				controlPts[key] = element;	// store the computed coefficients
