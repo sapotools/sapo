@@ -60,7 +60,7 @@ enum transType
 
 class Expr
 {
-	friend ostream& operator<<(ostream& os, Expr& e);
+	friend ostream& operator<<(ostream& os, const Expr& e);
 
 public:
 	enum exprType
@@ -93,12 +93,12 @@ public:
 	Expr *getLeftOp() { return left; }
 	Expr *getRightOp() { return right; }
 	
-	Expr *copy();			// deep copy of expression
+	Expr *copy() const;			// deep copy of expression
 	
-	bool isNumeric(InputData *im);		// checks if the expression contains only numbers
-	double evaluate(InputData *im);	// evaluates the value of a numeric expression
+	bool isNumeric(const InputData& im) const;		// checks if the expression contains only numbers
+	double evaluate(const InputData& im) const;	// evaluates the value of a numeric expression
 	
-	ex toEx(InputData &m, const lst& vars, const lst& params);			// converts an Expr to a GiNaC ex
+	ex toEx(const InputData &m, const lst& vars, const lst& params) const;			// converts an Expr to a GiNaC ex
 	
 protected:
 	Expr() { left = NULL; right = NULL; };
@@ -120,7 +120,7 @@ protected:
 
 class Formula
 {
-	friend ostream& operator<<(ostream& os, Formula& f);
+	friend ostream& operator<<(ostream& os, const Formula& f);
 
 public:
 	enum formulaType
@@ -157,7 +157,7 @@ public:
 	 */
 	bool simplify();
 	
-	std::shared_ptr<STL> toSTL(InputData& m, const lst& vars, const lst& params);		// transforms a Formula into a SAPO STL formula
+	std::shared_ptr<STL> toSTL(const InputData& m, const lst& vars, const lst& params) const;		// transforms a Formula into a SAPO STL formula
 	
 protected:
 	Formula() { ex = NULL; f1 = NULL; f2 = NULL; }
@@ -194,8 +194,8 @@ public:
 	Variable(string n) { name = n; dynamic = NULL; }
 	~Variable() { delete(dynamic); }
 	
-	string getName() { return name; }
-	Expr *getDynamic() { return dynamic; }
+	const std::string& getName() const { return name; }
+	const Expr *getDynamic() const { return dynamic; }
 	
 	void setDynamic(Expr *e) { dynamic = e; }
 	
@@ -217,13 +217,13 @@ protected:
 
 class Parameter
 {
-	friend ostream& operator<<(ostream& os, Parameter& p) { return os << p.name; }
+	inline friend ostream& operator<<(ostream& os, const Parameter& p) { return os << p.name; }
 
 public:
 	Parameter(string n) { name = n; }
 	~Parameter() {}
 	
-	string getName() { return name; }
+	inline const string& getName() const { return name; }
 	
 protected:
 	string name;				// name of the parameter
@@ -245,8 +245,8 @@ public:
 	Constant(string n, double v) { name = n; val = v; }
 	~Constant() {}
 	
-	string getName() { return name; }
-	double getValue() { return val; }
+	inline string getName() const { return name; }
+	inline double getValue() const { return val; }
 	
 protected:
 	string name;				// name of the constant
@@ -255,14 +255,15 @@ protected:
 
 class Definition
 {
-	friend ostream& operator<<(ostream& os, Definition& d) { return os << d.name; }
+	inline friend ostream& operator<<(ostream& os, const Definition& d) { return os << d.name; }
 	
 public:
 	Definition(string id, Expr *e) { name = id; value = e; }
 	~Definition() {}
 	
-	string getName() { return name; }
-	Expr *getValue() { return value; }
+	inline string getName() { return name; }
+	inline Expr *getValue() { return value; }
+	inline const Expr *getValue() const { return value; }
 	
 private:
 	string name;
@@ -278,119 +279,122 @@ private:
 
 class InputData
 {
-	friend ostream& operator<<(ostream& os, InputData& m);
+	friend ostream& operator<<(ostream& os, const InputData& m);
 
 public:
 	InputData();
 	
-	~InputData() {}
+	~InputData();
 	
-	bool isProblemDefined() { return problem != problemType::P_UNDEF; }
-	problemType getProblem() { return problem; }
-	void setProblem(problemType t) { problem = t; }
+	inline bool isProblemDefined() const { return problem != problemType::P_UNDEF; }
+	inline const problemType& getProblem() const { return problem; }
+	inline void setProblem(problemType t) { problem = t; }
 	
-	bool isVarModeDefined() { return varMode != modeType::M_UNDEF; }
-	modeType getVarMode() { return varMode; }
-	void setVarMode(modeType t) { varMode = t; }
+	inline bool isVarModeDefined() const { return varMode != modeType::M_UNDEF; }
+	inline const modeType& getVarMode() const { return varMode; }
+	inline void setVarMode(modeType t) { varMode = t; }
 	
-	bool isParamModeDefined() { return paramMode != modeType::M_UNDEF; }
-	modeType getParamMode() { return paramMode; }
-	void setParamMode(modeType t) { paramMode = t; }
+	inline bool isParamModeDefined() const { return paramMode != modeType::M_UNDEF; }
+	inline const modeType& getParamMode() const { return paramMode; }
+	inline void setParamMode(modeType t) { paramMode = t; }
 	
-	bool isIterationSet() const {
+	inline bool isIterationSet() const 
+	{
 		return iter_set;
 	}
 
-	const unsigned int& getIterations() const
+	inline const unsigned int& getIterations() const
 	{
 		return iterations;
 	}
 
-	void setIterations(unsigned int n)
+	inline void setIterations(unsigned int n)
 	{
 		iter_set = true;
 		iterations = n;
 	}
 
-	const unsigned int& getMaxParameterSplits() const
+	inline const unsigned int& getMaxParameterSplits() const
 	{
 		return max_param_splits;
 	}
 
-	void setMaxParameterSplits(unsigned int n)
+	inline void setMaxParameterSplits(unsigned int n)
 	{
 		max_param_splits = n;
 	}
 	
-	unsigned getVarNum() { return vars.size(); }
-	unsigned getParamNum() { return params.size(); }
-	unsigned getConstNum() { return consts.size(); }
-	unsigned getDefNumber() { return defs.size(); }
+	inline unsigned getVarNum() const { return vars.size(); }
+	inline unsigned getParamNum() const { return params.size(); }
+	inline unsigned getConstNum() const { return consts.size(); }
+	inline unsigned getDefNumber() const { return defs.size(); }
 	
-	bool isVarDefined(string name);			// checks if a variable named 'name' already exists
-	bool isParamDefined(string name);		// checks if a parameter named 'name' already exists
-	bool isConstDefined(string name);		// checks if a constant named 'name' already exists
-	bool isDefDefined(string name);			// checks if a definition named 'name' already exists
-	bool isSymbolDefined(string name);	// checks if a symbol (var, param, const or def) named 'name' already exists
+	bool isVarDefined(const string& name) const;			// checks if a variable named 'name' already exists
+	bool isParamDefined(const string& name) const;		// checks if a parameter named 'name' already exists
+	bool isConstDefined(const string& name) const;		// checks if a constant named 'name' already exists
+	bool isDefDefined(const string& name) const;			// checks if a definition named 'name' already exists
+	bool isSymbolDefined(const string& name) const;	// checks if a symbol (var, param, const or def) named 'name' already exists
 	
-	Variable *getVar(int i) { return vars[i]; }
-	Variable *getVar(string name);				// return the variable named 'name', which must exist
-	int getVarPos(string name);		// return an index such that vars[i] has name 'name'
-	Parameter *getParam(int i) { return params[i]; }
-	Parameter *getParam(string name);			// return the parameter named 'name', which must exist
-	int getParamPos(string name);	// return an index i such that params[i] has name 'name'
-	Constant *getConst(int i) { return consts[i]; }
-	Constant *getConst(string name);			// return the constant named 'name', which must exist
-	Definition *getDef(int i) { return defs[i]; }
-	Definition *getDef(string name);			// return the definition named 'name', which must exist
-	int getDefPos(string name);	// return an index i such that defs[i] has name 'name'
+	inline const Variable *getVar(int i) const { return vars[i]; }
+	const Variable *getVar(const string& name) const;				// return the variable named 'name', which must exist
+	inline Variable *getVar(int i) { return vars[i]; }
+	Variable *getVar(const string& name);
+	int getVarPos(const string& name) const;		// return an index such that vars[i] has name 'name'
+	inline const Parameter *getParam(int i) const { return params[i]; }
+	const Parameter *getParam(const string& name) const;			// return the parameter named 'name', which must exist
+	int getParamPos(const string& name) const;	// return an index i such that params[i] has name 'name'
+	inline const Constant *getConst(int i) const { return consts[i]; }
+	const Constant *getConst(const string& name) const;			// return the constant named 'name', which must exist
+	inline const Definition *getDef(int i) const { return defs[i]; }
+	const Definition *getDef(const string& name) const;			// return the definition named 'name', which must exist
+	int getDefPos(const string& name) const;	// return an index i such that defs[i] has name 'name'
 	
-	void addVariable(Variable *v) { vars.push_back(v); }				// adds a new variable, which name is not already used
-	void addParameter(Parameter *p) { params.push_back(p); }		// adds a new parameter, which name is not already used
-	void addConstant(Constant *c) { consts.push_back(c); }			// adds a new constant, which name is not already used
-	void addDefinition(Definition *d) { defs.push_back(d); }			// adds a new definition, which name is not already used
+	inline void addVariable(Variable *v) { vars.push_back(v); }				// adds a new variable, which name is not already used
+	inline void addParameter(Parameter *p) { params.push_back(p); }		// adds a new parameter, which name is not already used
+	inline void addConstant(Constant *c) { consts.push_back(c); }			// adds a new constant, which name is not already used
+	inline void addDefinition(Definition *d) { defs.push_back(d); }			// adds a new definition, which name is not already used
 	
-	bool isSpecDefined() { return spec != NULL; }
-	void addSpec(Formula *f) { if (spec == NULL) spec = f; else spec = spec->conj(f); }
-	Formula *getSpec() { return spec; }
+	inline bool isSpecDefined() const { return spec != NULL; }
+	inline void addSpec(Formula *f) { if (spec == NULL) spec = f; else spec = spec->conj(f); }
+	inline const Formula *getSpec() const { return spec; }
 	
 	inline const unsigned int directionsNum() const { return directions.size(); }
-	vector<vector<double>> getDirections() { return directions; }
+	inline const vector<vector<double>>& getDirections() const { return directions; }
 	void addDirection(vector<double> d, double LB, double UB);
 	void addDirection(vector<double> d) { directions.push_back(d); }
 	void addBounds(double LB, double UB) { LBoffsets.push_back(LB); UBoffsets.push_back(UB); }
 	void defaultDirections();
-	vector<double> getLB() { return LBoffsets; }
-	vector<double> getUB() { return UBoffsets; }
+	inline const vector<double>& getLB() const { return LBoffsets; }
+	inline const vector<double>& getUB() const { return UBoffsets; }
 	
-	unsigned templateRows() { return templateMatrix.size(); }
-	unsigned templateCols() { return templateMatrix[0].size(); }
-	void setTemplate(vector<vector<int>> m) { templateMatrix = m; }
+	inline unsigned templateRows() const { return templateMatrix.size(); }
+	inline unsigned templateCols() const { return templateMatrix[0].size(); }
+	inline void setTemplate(vector<vector<int>> m) { templateMatrix = m; }
 	void defaultTemplate();
-	vector<vector<int>> getTemplate() { return templateMatrix; }
+	inline const vector<vector<int>>& getTemplate() const { return templateMatrix; }
 	
-	unsigned paramDirectionsNum() { return paramDirections.size(); }
+	inline unsigned paramDirectionsNum() const { return paramDirections.size(); }
 	void addParamDirection(vector<double> d, double LB, double UB);
 	void addParamDirection(vector<double> d) { paramDirections.push_back(d); }
-	void addParamBounds(double LB, double UB) { paramLBoffsets.push_back(LB); paramUBoffsets.push_back(UB); }
+	inline void addParamBounds(double LB, double UB) { paramLBoffsets.push_back(LB); paramUBoffsets.push_back(UB); }
 	void defaultParamDirections();
-	vector<vector<double>> getParameterDirections() { return paramDirections; }
-	vector<double> getParamDirection(int i) { return paramDirections[i]; }
-	vector<double> getParamLB() { return paramLBoffsets; }
-	vector<double> getParamUB() { return paramUBoffsets; }
-	
-	bool isTransModeDefined() { return trans != transType::T_UNDEF; }
-	void setTransMode(transType t) { trans = t; }
-	transType getTransMode() { return trans; }
+	inline const vector<vector<double>>& getParameterDirections() const { return paramDirections; }
+	inline const vector<double>& getParamDirection(int i) const { return paramDirections[i]; }
+	inline const vector<double>& getParamLB() const { return paramLBoffsets; }
+	inline const vector<double>& getParamUB() const { return paramUBoffsets; }
+
+	inline bool isTransModeDefined() const { return trans != transType::T_UNDEF; }
+	inline void setTransMode(transType t) { trans = t; }
+	inline const transType& getTransMode() const { return trans; }
 	int getTransValue();			// returns int value used by sapo (AFO = 1, OFO = 0)
 	
-	bool isDecompositionDefined() { return decomp_defined; }
-	void setDecomposition() { decomp = true; }
-	bool getDecomposition() { return decomp; }
+	inline const bool& isDecompositionDefined() const { return decomp_defined; }
+	inline void setDecomposition() { decomp = true; }
+	inline const bool& getDecomposition() const { return decomp; }
 	
-	bool isAlphaDefined() { return alpha >= 0; }
-	void setAlpha(double a) { alpha = a; }
-	double getAlpha() { return alpha; }
+	inline bool isAlphaDefined() const { return alpha >= 0; }
+	inline void setAlpha(double a) { alpha = a; }
+	inline const double& getAlpha() const { return alpha; }
 	
 	bool check();				// checks for errors in model
 	

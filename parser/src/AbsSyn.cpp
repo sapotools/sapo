@@ -7,7 +7,7 @@ namespace AbsSyn
 {
 
 
-ostream& operator<<(ostream& os, Expr& e)
+ostream& operator<<(ostream& os, const Expr& e)
 {
 	switch (e.type)
 	{
@@ -80,7 +80,7 @@ Expr *Expr::neg()
 	return res;
 }
 
-Expr *Expr::copy()
+Expr *Expr::copy() const
 {
 	Expr *res=NULL;
 	
@@ -114,11 +114,11 @@ Expr *Expr::copy()
 	return res;
 }
 
-bool Expr::isNumeric(InputData *im)
+bool Expr::isNumeric(const InputData& im) const
 {
 	if (type == exprType::ID_ATOM)
 	{
-		if (im->isDefDefined(name) && im->getDef(name)->getValue()->isNumeric(im))
+		if (im.isDefDefined(name) && im.getDef(name)->getValue()->isNumeric(im))
 			return true;
 		else
 			return false;
@@ -128,10 +128,10 @@ bool Expr::isNumeric(InputData *im)
 	return left->isNumeric(im) && (right != NULL ? right->isNumeric(im) : true);
 }
 
-double Expr::evaluate(InputData *im)
+double Expr::evaluate(const InputData& im) const
 {
 	if (type == exprType::NUM_ATOM) return val;
-	if (type == exprType::ID_ATOM) return im->getDef(name)->getValue()->evaluate(im);
+	if (type == exprType::ID_ATOM) return im.getDef(name)->getValue()->evaluate(im);
 	if (type == exprType::NEG) return -left->evaluate(im);
 	if (type == exprType::MUL) return left->evaluate(im) * right->evaluate(im);
 	if (type == exprType::DIV) return left->evaluate(im) / right->evaluate(im);
@@ -140,7 +140,7 @@ double Expr::evaluate(InputData *im)
 	return -1;
 }
 
-ex Expr::toEx(InputData& m, const lst& vars, const lst& params)
+ex Expr::toEx(const InputData& m, const lst& vars, const lst& params) const
 {
 	switch (type)
 	{
@@ -169,7 +169,7 @@ ex Expr::toEx(InputData& m, const lst& vars, const lst& params)
 
 
 
-ostream& operator<<(ostream& os, Formula& f)
+ostream& operator<<(ostream& os, const Formula& f)
 {
 	switch (f.type)
 	{
@@ -331,7 +331,7 @@ int Formula::simplifyRec()
 }
 
 // no negations, were eliminated in simplify
-std::shared_ptr<STL> Formula::toSTL(InputData& m, const lst& vars, const lst& params)
+std::shared_ptr<STL> Formula::toSTL(const InputData& m, const lst& vars, const lst& params) const
 {
 	switch(type)
 	{
@@ -367,7 +367,9 @@ InputData::InputData()
 	
 	iterations = 0;
 	iter_set = false;
-	
+
+	max_param_splits = 0;
+
 	spec = NULL;
 	
 	vars.resize(0);
@@ -391,7 +393,20 @@ InputData::InputData()
 	alpha = -1;
 }
 
-ostream& operator<<(ostream& os, InputData& m)
+InputData::~InputData()
+{
+	for (auto it=std::begin(vars); it!=std::end(vars); ++it)
+		delete *it;
+
+	for (auto it=std::begin(consts); it!=std::end(consts); ++it)
+		delete *it;
+
+	for (auto it=std::begin(defs); it!=std::end(defs); ++it)
+		delete *it;
+	
+	delete spec;
+}
+ostream& operator<<(ostream& os, const InputData& m)
 {
 	//TODO: implement
 	os << "Problem: " << m.problem << endl;
@@ -443,7 +458,7 @@ ostream& operator<<(ostream& os, InputData& m)
 	return os;
 }
 
-bool InputData::isVarDefined(string name)
+bool InputData::isVarDefined(const string& name) const
 {
 	for (unsigned i = 0; i < vars.size(); i++)
 		if (vars[i]->getName() == name)
@@ -452,7 +467,7 @@ bool InputData::isVarDefined(string name)
 	return false;
 }
 
-bool InputData::isParamDefined(string name)
+bool InputData::isParamDefined(const string& name) const
 {
 	for (unsigned i = 0; i < params.size(); i++)
 		if (params[i]->getName() == name)
@@ -461,7 +476,7 @@ bool InputData::isParamDefined(string name)
 	return false;
 }
 
-bool InputData::isConstDefined(string name)
+bool InputData::isConstDefined(const string& name) const
 {
 	for (unsigned i = 0; i < consts.size(); i++)
 		if (consts[i]->getName() == name)
@@ -470,7 +485,7 @@ bool InputData::isConstDefined(string name)
 	return false;
 }
 
-bool InputData::isDefDefined(string name)
+bool InputData::isDefDefined(const string& name) const
 {
 	for (unsigned i = 0; i < defs.size(); i++)
 		if (defs[i]->getName() == name)
@@ -479,21 +494,30 @@ bool InputData::isDefDefined(string name)
 	return false;
 }
 
-bool InputData::isSymbolDefined(string name)
+bool InputData::isSymbolDefined(const string& name) const
 {
 	return isVarDefined(name) || isParamDefined(name) || isConstDefined(name) || isDefDefined(name);
 }
 
-Variable *InputData::getVar(string name)
+const Variable *InputData::getVar(const string& name) const
 {
 	for (unsigned i = 0; i < vars.size(); i++)
 		if (vars[i]->getName() == name)
 			return vars[i];
-	
+
 	return NULL;
 }
 
-int InputData::getVarPos(string name)
+Variable *InputData::getVar(const string& name)
+{
+	for (unsigned i = 0; i < vars.size(); i++)
+		if (vars[i]->getName() == name)
+			return vars[i];
+
+	return NULL;
+}
+
+int InputData::getVarPos(const string& name) const
 {
 	for (unsigned i = 0; i < vars.size(); i++)
 		if (vars[i]->getName() == name)
@@ -502,43 +526,44 @@ int InputData::getVarPos(string name)
 	return -1;
 }
 
-Parameter *InputData::getParam(string name)
+const Parameter *InputData::getParam(const string& name) const
 {
 	for (unsigned i = 0; i < params.size(); i++)
 		if (params[i]->getName() == name)
 			return params[i];
-	
+
 	return NULL;
 }
 
-int InputData::getParamPos(string name)
+int InputData::getParamPos(const string& name) const
 {
 	for (unsigned i = 0; i < params.size(); i++)
 		if (params[i]->getName() == name)
 			return i;
-	
+
 	return -1;
 }
 
-Constant *InputData::getConst(string name)
+const Constant *InputData::getConst(const string& name) const
 {
 	for (unsigned i = 0; i < consts.size(); i++)
 		if (consts[i]->getName() == name)
 			return consts[i];
-	
+
 	return NULL;
 }
 
-Definition *InputData::getDef(string name)
+const Definition *InputData::getDef(const string& name) const
 {
+	// TODO: replaced this and analoguous code by using maps
 	for (unsigned i = 0; i < defs.size(); i++)
 		if (defs[i]->getName() == name)
 			return defs[i];
-	
+
 	return NULL;
 }
 
-int InputData::getDefPos(string name)
+int InputData::getDefPos(const string& name) const
 {
 	for (unsigned i = 0; i < defs.size(); i++)
 		if (defs[i]->getName() == name)
