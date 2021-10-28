@@ -119,7 +119,7 @@ This generates the executable `./bin/sapo`.
 
 ## Execution
 Sapo expects as input a SIL file.
-The SIL language is defined in the SIL.md file in this repo.
+The SIL language is defined in the [SIL.md](SIL.md) file in this repository.
 
 Sapo can be invoked passing the path of the input file
 
