@@ -1,8 +1,6 @@
 # Sapo
 
-## Description
-
-Sapo is a C++ tool for the formal analysis of discrete-time polynomial dynamical systems.
+Sapo is a tool for the formal analysis of discrete-time polynomial dynamical systems.
 
 The problems treated by Sapo are:
 
@@ -14,11 +12,15 @@ For parameter synthesis Sapo computes a refinement of the given set of parameter
 
 In both cases, the analysis can be done on bounded time.
 
+Sapo is provided as both a C++ library, to promote integration by other projects, and a stand-alone tool, to ease its usability.
+
+A web user interface for Sapo is avaiable [here](https://github.com/LucaDorigo/webSapo).
+
 ### Models
 
-The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form x\_{k+1} = f(x_k,p)
+The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form <!-- $x_{k+1} = f(x_k,p)$ --> <img style="transform: translateY(0.1em); background: white;" src="svg/kukKgGlU7t.svg"/>.
 
-Reachability computation can be carried out also on systems without parameters whose dynamics look like x\_{k+1} = f(x_k) with f : R^n to R^n polynomial.
+Reachability computation can be carried out also on systems without parameters whose dynamics look like <!-- $x_{k+1} = f(x_k)$ --> <img style="transform: translateY(0.1em); background: white;" src="svg/O2tXhyFGXU.svg"/>  with <!-- $f : R^n \rightarrow R^n$ --> <img style="transform: translateY(0.1em); background: white;" src="svg/6nV9NfgdJZ.svg"/> polynomial.
 
 ### Set representation
 
@@ -36,9 +38,9 @@ The parameter synthesis produces a refined set of parameters represented by:
 
 To compile the source code, the following packages are required:
 
-- C++11-compatible compiler, <a href="https://cmake.org/">cmake</a>, <a href="https://www.gnu.org/software/make/">make</a>, <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
-- <a href="http://www.ginac.de/CLN/">CLN</a>, <a href="http://www.ginac.de/">GiNaC</a>, <a href="https://www.gnu.org/software/glpk/">GLPK</a> libraries
-- <a href="https://github.com/westes/flex">Flex</a> and <a href="https://www.gnu.org/software/bison/manual">Bison</a>
+- C++11-compatible compiler, <a href="https://cmake.org/">cmake</a> (version>=3.6), <a href="https://www.gnu.org/software/make/">make</a>, <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
+- <a href="http://www.ginac.de/CLN/">CLN</a> (version>=1.3.6), <a href="http://www.ginac.de/">GiNaC</a> (version>=1.7.8), <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >=5.0) libraries
+- <a href="https://github.com/westes/flex">Flex</a> (version >=2.6.3) and <a href="https://www.gnu.org/software/bison/manual">Bison</a>
 
 ### Install CLN
 
@@ -117,17 +119,17 @@ make
 
 This generates the executable `./bin/sapo`.
 
-## Execution
-Sapo expects as input a SIL file.
+## Using Sapo stand-alone application
+The Sapo stand-alone application `sapo` expects as input a SIL file.
 The SIL language is defined in the [SIL.md](SIL.md) file in this repository.
 
-Sapo can be invoked passing the path of the input file
+`sapo` can be invoked passing the path of the input file
 
 ```sh
 ./bin/sapo path/to/file.sil
 ```
 
-or without arguments. In that case, Sapo reads its input from standard input.
+or without arguments. In that case, `sapo` reads its input from standard input.
 
 ```sh
 ./bin/sapo
