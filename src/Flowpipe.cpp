@@ -12,6 +12,13 @@
 
 #include "Flowpipe.h"
 
+
+/**
+ * Constructor that instantiates Flowpipe
+ */
+Flowpipe::Flowpipe(): v_templates(), flowpipe() 
+{}
+
 /**
  * Constructor that instantiates Flowpipe
  */

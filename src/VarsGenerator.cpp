@@ -96,7 +96,8 @@ VarsGenerator::VarsGenerator(const unsigned int dim): dim(dim) {
  * @param[in] b box offsets
  * @returns generatred box
  */
-LinearSystem* VarsGenerator::genBox(vector<double> b) {
+LinearSystem VarsGenerator::genBox(const vector<double>& b) const
+{
 	unsigned int n = b.size()/2;
 	vector<double> Ai(n,0);
 	vector< vector<double> > A(2*n,Ai);
@@ -106,8 +107,7 @@ LinearSystem* VarsGenerator::genBox(vector<double> b) {
 		A[2*i+1][i] = -1;
 	}
 
-	LinearSystem *Ab = new LinearSystem(A,b);
-	return Ab;
+	return LinearSystem(A,b);
 }
 
 

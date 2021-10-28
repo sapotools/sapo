@@ -130,14 +130,25 @@ bool Expr::isNumeric(const InputData& im) const
 
 double Expr::evaluate(const InputData& im) const
 {
-	if (type == exprType::NUM_ATOM) return val;
-	if (type == exprType::ID_ATOM) return im.getDef(name)->getValue()->evaluate(im);
-	if (type == exprType::NEG) return -left->evaluate(im);
-	if (type == exprType::MUL) return left->evaluate(im) * right->evaluate(im);
-	if (type == exprType::DIV) return left->evaluate(im) / right->evaluate(im);
-	if (type == exprType::SUM) return left->evaluate(im) + right->evaluate(im);
-	if (type == exprType::SUB) return left->evaluate(im) - right->evaluate(im);
-	return -1;
+	switch(type) {
+	case exprType::NUM_ATOM:
+		return val;
+	case exprType::ID_ATOM:
+		return im.getDef(name)->getValue()->evaluate(im);
+	case exprType::NEG:
+		return -left->evaluate(im);
+	case exprType::MUL:
+		return left->evaluate(im) * right->evaluate(im);
+	case exprType::DIV:
+		return left->evaluate(im) / right->evaluate(im);
+	case exprType::SUM:
+		return left->evaluate(im) + right->evaluate(im);
+	case exprType::SUB:
+		return left->evaluate(im) - right->evaluate(im);
+	default:
+		std::cerr << "Unknown expression type" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
 ex Expr::toEx(const InputData& m, const lst& vars, const lst& params) const
@@ -398,12 +409,15 @@ InputData::~InputData()
 	for (auto it=std::begin(vars); it!=std::end(vars); ++it)
 		delete *it;
 
+	for (auto it=std::begin(params); it!=std::end(params); ++it)
+		delete *it;
+
 	for (auto it=std::begin(consts); it!=std::end(consts); ++it)
 		delete *it;
 
 	for (auto it=std::begin(defs); it!=std::end(defs); ++it)
 		delete *it;
-	
+
 	delete spec;
 }
 ostream& operator<<(ostream& os, const InputData& m)

@@ -287,6 +287,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								YYERROR;
 							}
 							drv.data.addConstant(new AbsSyn::Constant($2, $4->evaluate(drv.data)));
+							delete $4;
 						}
 						| DEFINE IDENT "=" expr ";"
 						{
@@ -470,7 +471,10 @@ intInterval			: "[" expr "," expr "]"
 									
 									int x1 = (int) $2->evaluate(drv.data);
 									int x2 = (int) $4->evaluate(drv.data);
-								
+
+									delete $2;
+									delete $4;
+
 									if (x2 < x1)
 									{
 										yy::parser::error(@$, "Right endpoint must be greater than or equal to the left one");
@@ -493,10 +497,13 @@ doubleInterval	: "[" expr "," expr "]"
 										yy::parser::error(@4, "Intervals require numeric expressions");
 										YYERROR;
 									}
-									
+
 									double x1 = $2->evaluate(drv.data);
 									double x2 = $4->evaluate(drv.data);
-									
+
+									delete $2;
+									delete $4;
+
 									if (x2 < x1)
 									{
 										yy::parser::error(@$, "Right endpoint must be greater than or equal to the left one");
@@ -551,6 +558,7 @@ numList		: expr
 							YYERROR;
 						}
 						$$ = std::vector<double>{$1->evaluate(drv.data)};
+						delete $1;
 					}
 					| numList "," expr
 					{
@@ -561,6 +569,7 @@ numList		: expr
 						}
 						$1.push_back($3->evaluate(drv.data));
 						$$ = $1;
+						delete $3;
 					}
 
 intList		: INTEGER

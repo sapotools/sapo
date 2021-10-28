@@ -85,7 +85,7 @@ public:
 	Expr *sub(Expr *e);
 	Expr *neg();
 	
-	~Expr() { delete(left); delete(right); }
+	~Expr() {delete(left); delete(right); }
 	
 	exprType getType() { return type; }
 	double getVal() { return val; }
@@ -258,8 +258,11 @@ class Definition
 	inline friend ostream& operator<<(ostream& os, const Definition& d) { return os << d.name; }
 	
 public:
-	Definition(string id, Expr *e) { name = id; value = e; }
-	~Definition() {}
+	Definition(string id, Expr *e): name(id), value(e) {}
+	~Definition()
+	{
+		delete value;
+	}
 	
 	inline string getName() { return name; }
 	inline Expr *getValue() { return value; }

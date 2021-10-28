@@ -13,7 +13,8 @@
 #include "LinearSystem.h"
 
 class Parallelotope{
-
+	using Vector = vector<double>;
+	using Matrix = vector< Vector >;
 private:
 	unsigned int dim;						// dimension of the parallelotope
 	vector<lst> vars;						// variables appearing in generato function
@@ -21,21 +22,22 @@ private:
 											// vars[1] alpha : free variables \in [0,1]
 											// vars[2] beta : generator amplitudes
 	lst generator_function;				// generator function
-	vector< vector<double> > u;			// versors
-	vector< vector<double> > template_matrix;	// Template matrix
+	Matrix u;			// versors
+	Matrix template_matrix;	// Template matrix
 
 
-	vector<double> hyperplaneThroughPts(vector< vector<double> > pts);	// find hyper plane passing through pts
-	vector<double> lst2vec(ex list);									// convert a lst to a vector of doubles
-	double euclidNorm(vector<double> v);								// compute euclidean norm
+	Vector hyperplaneThroughPts(const vector<Vector>& pts) const;	// find hyper plane passing through pts
+	Vector lst2vec(const ex& list) const;						// convert a lst to a vector of doubles
+	double euclidNorm(const Vector& v) const;		// compute euclidean norm
 
 	vector< double > actual_base_vertex;
 	vector< double > actual_lenghts;
 
 public:
 
-	Parallelotope(vector<lst> vars, vector< vector<double> > u);
-	Parallelotope(vector<lst> vars, LinearSystem *LS);
+	Parallelotope(const vector<lst>& vars, const Matrix& u);
+	Parallelotope(const vector<lst>& vars, const Matrix& template_matrix, const Vector& offset);
+	Parallelotope(const vector<lst>& vars, const LinearSystem& ls);
 
 	/**
 	 * Get the generator functions
@@ -95,17 +97,29 @@ public:
 	}
 
 	// Representation conversion
-	LinearSystem* gen2const(vector<double> q, vector<double> beta);		// from generator to constraints
-	poly_values const2gen(LinearSystem *LS);							// from constraints to generators
-	LinearSystem* getLS() { return this->gen2const(this->actual_base_vertex, this->actual_lenghts); };
+	LinearSystem gen2const(const Vector& q, const Vector& beta) const;		// from generator to constraints
+	poly_values const2gen(LinearSystem *LS) const;							// from constraints to generators
+	inline LinearSystem getLinearSystem() const
+	{
+		return this->gen2const(this->actual_base_vertex, this->actual_lenghts);
+	}
 
-	vector< double > getBaseVertex() { return this->actual_base_vertex; };
-	vector< double > getLenghts() { return this->actual_lenghts; };
+	inline const vector< double >& getBaseVertex() const
+	{
+		return this->actual_base_vertex; 
+	}
 
-	vector< vector<double> > getVersors() { return this->u; };
+	inline const vector< double >& getLenghts() const
+	{
+		return this->actual_lenghts;
+	}
 
-	int getMaxSize() { return 0; };
-	vector<ex> getConvCombs(int i) { vector<ex> c; return c; };
+	inline Matrix getVersors() const
+	{
+		return this->u;
+	}
+
+	friend void swap(Parallelotope& A, Parallelotope& B);
 
 	virtual ~Parallelotope();
 };

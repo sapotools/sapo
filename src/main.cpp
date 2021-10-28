@@ -52,43 +52,42 @@ int main(int argc,char** argv) {
 
 	if (drv.data.getProblem() == AbsSyn::problemType::REACH)
 	{
-		Flowpipe *flowpipe;
+		Flowpipe flowpipe;
 		if (model->getParams().nops() == 0)
 		{
-			flowpipe = sapo.reach(model->getReachSet(), drv.data.getIterations());	// reachability analysis
+			flowpipe = sapo.reach(*(model->getReachSet()), drv.data.getIterations());	// reachability analysis
 		}
 		else
 		{
-			flowpipe = sapo.reach(model->getReachSet(), model->getParaSet(), 
-					       drv.data.getIterations());	// reachability analysis
+			flowpipe = sapo.reach(*(model->getReachSet()), *(model->getParaSet()), 
+					       		  drv.data.getIterations());	// reachability analysis
 		}
 		cout << "RESULTS" << endl;
-		flowpipe->print();
+		flowpipe.print();
 		cout << "END RESULTS" << endl;
 	}
 	else
 	{
 		// Synthesize parameters
-		LinearSystemSet *synth_params = sapo.synthesize(model->getReachSet(),
-								 model->getParaSet(),
+		LinearSystemSet synth_params = sapo.synthesize(*(model->getReachSet()),
+								 						*(model->getParaSet()),
 								 model->getSpec(),
 								 drv.data.getMaxParameterSplits());
-		if (synth_params->size() == 0)
+		if (synth_params.size() == 0)
 		{
 			cout << "RESULTS" << endl;
-			synth_params->print();
+			synth_params.print();
 			cout << "END RESULTS" << endl;
 		}
 		else
 		{
 			cout << endl;
-			Flowpipe *F = sapo.reach(model->getReachSet(), synth_params,
-						  drv.data.getIterations());
+			Flowpipe F = sapo.reach(*(model->getReachSet()), synth_params, drv.data.getIterations());
 			cout << "RESULTS" << endl;
-			F->print();
+			F.print();
 			cout << "END RESULTS" << endl;
 		}
-		synth_params->print();
+		synth_params.print();
 	}
 
 	delete model;

@@ -43,6 +43,20 @@ LinearSystemSet::LinearSystemSet(pointer ls)
 }
 
 /**
+ * Constructor that instantiates a singleton set
+ *
+ * @param[in] orig a linear system
+ */
+
+LinearSystemSet::LinearSystemSet(LinearSystem&& ls)
+{
+	if (!ls.isEmpty()) {
+		ls.simplify();
+		this->set.push_back(std::make_shared<LinearSystem>(ls));
+	}
+}
+
+/**
  * Constructor that instantiates a set from a vector of sets
  *
  * @param[in] set vector of linear systems
@@ -55,6 +69,25 @@ LinearSystemSet::LinearSystemSet(const container& set)
 		}
 	}
 }
+
+/**
+ * A copy constructor for a linear system set
+ *
+ * @param[in] orig a linear system set
+ */
+LinearSystemSet::LinearSystemSet(const LinearSystemSet& orig)
+{
+	for (auto it=orig.set.cbegin(); it!=orig.set.cend(); ++it) {
+			this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
+	}
+}
+
+/*
+LinearSystemSet::LinearSystemSet(LinearSystemSet&& orig)
+{
+
+}
+*/
 
 /**
  * Get the set of linear systems
@@ -124,31 +157,62 @@ LinearSystemSet& LinearSystemSet::simplify()
 	return *this;
 }
 
-LinearSystemSet* LinearSystemSet::get_a_finer_covering() const
+LinearSystemSet LinearSystemSet::get_a_finer_covering() const
 {
-	LinearSystemSet* covering = new LinearSystemSet();
+	LinearSystemSet covering;
 
 	for (auto it=std::begin(set); it!=std::end(set); ++it) {
-		covering->unionWith((*it)->get_a_finer_covering());
+		covering.unionWith((*it)->get_a_finer_covering());
 	}
 
 	return covering;
 }
 
 /**
- * Intersect to sets of linear systems
+ * Compute the intersection of two linear systems
  *
- * @param[in] LSset set to intersect with
- * @returns intersected sets
+ * @param[in] A is a linear system
+ * @param[in] B is a linear system
+ * @return the linear system that represents the set of values satisfying both
+ *          the parameters.
  */
-LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSset) const {
+LinearSystemSet intersection(const LinearSystemSet& A, const LinearSystemSet& B)
+{
+	LinearSystemSet result;
 
-	LinearSystemSet* result = new LinearSystemSet();
-	for (auto t_it=std::begin(set); t_it!=std::end(set); ++t_it) {
-		for (auto s_it=std::begin(LSset->set); s_it!=std::end(LSset->set); ++s_it) {
-			result->add(std::make_shared<LinearSystem>((*t_it)->getIntersectionWith(*(*s_it))));
+	for (auto t_it=std::begin(A.set); t_it!=std::end(A.set); ++t_it) {
+		for (auto s_it=std::begin(B.set); s_it!=std::end(B.set); ++s_it) {
+			LinearSystem I = intersection(*(*t_it), *(*s_it));
+
+			if (!I.isEmpty()) {
+				result.add(I);
+			}
 		}
 	}
+
+	return result;
+}
+
+/**
+ * Compute the intersection between a linear system sets and a linear system
+ *
+ * @param[in] A is a linear system set
+ * @param[in] B is a linear system
+ * @return the linear system set that represents the set of values satisfying both
+ *          the parameters
+ */
+LinearSystemSet intersection(const LinearSystemSet& A, const LinearSystem& B)
+{
+	LinearSystemSet result;
+
+	for (auto t_it=std::begin(A.set); t_it!=std::end(A.set); ++t_it) {
+		LinearSystem I = intersection(*(*t_it), B);
+
+		if (!I.isEmpty()) {
+			result.add(I);
+		}
+	}
+
 	return result;
 }
 
@@ -158,13 +222,52 @@ LinearSystemSet* LinearSystemSet::getIntersectionWith(const LinearSystemSet *LSs
  * @param[in] LSset set to union with
  * @returns merged sets
  */
-LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet *LSset) {
-	for (container::iterator it=std::begin(LSset->set);
-	                         it!=std::end(LSset->set); ++it) {
+LinearSystemSet& LinearSystemSet::unionWith(const LinearSystemSet& LSset)
+{
+	for (container::const_iterator it=std::cbegin(LSset.set);
+	                         it!=std::cend(LSset.set); ++it) {
+		this->add(std::make_shared<LinearSystem>(*(*it)));
+	}
+
+	return *this;
+}
+
+LinearSystemSet unionset(const LinearSystemSet& A, const LinearSystemSet& B)
+{
+	return LinearSystemSet(A).unionWith(B);
+}
+
+/**
+ * Union of sets
+ *
+ * @param[in] LSset set to union with
+ * @returns merged sets
+ */
+LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet&& LSset)
+{
+	for (container::iterator it=std::begin(LSset.set);
+	                         it!=std::end(LSset.set); ++it) {
 		this->add(*it);
 	}
 
 	return *this;
+}
+
+/**
+ * Compute the union of two linear systems
+ *
+ * @param[in] A is a linear system
+ * @param[in] B is a linear system
+ * @return the linear system set that represents the set of values satisfying
+ *          at least one of the parameters.
+ */
+LinearSystemSet unionset(const LinearSystem& A, const LinearSystem& B)
+{
+	LinearSystemSet result(A);
+
+	result.add(B);
+
+	return result;
 }
 
 /**
@@ -174,6 +277,7 @@ LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet *LSset) {
  * @param[in] bound set size bound
  * @returns merged sets
  */
+/* // TODO: remove this code
 LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const unsigned int bound) {
 
 	if (this->size() > bound) {
@@ -190,6 +294,7 @@ LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const
 
 	return *this;
 }
+*/
 
 /**
  * Sum of volumes of boxes containing the sets
@@ -205,30 +310,6 @@ double LinearSystemSet::boundingVol() const{
 	return vol;
 
 }
-
-/**
- * Get the i-th linear system
- *
- * @param[in] index of the linear system to fetch
- * @returns i-th linear system
- */
-/*
-LinearSystem* LinearSystemSet::at(int i) {
-	return this->set[i];
-}
-*/
-
-/**
- * Get the i-th linear system
- *
- * @param[in] index of the linear system to fetch
- * @returns i-th linear system
- */
-/*
-const LinearSystem* LinearSystemSet::at(int i) const {
-	return this->set[i];
-}
-*/
 
 unsigned int LinearSystemSet::dim() const
 {
@@ -267,7 +348,7 @@ void LinearSystemSet::print() const {
 
 /**
  * Print the linear system in Matlab format (for plotregion script)
- * 
+ *
  * @param[in] os is the output stream
  * @param[in] color color of the polytope to plot
  */

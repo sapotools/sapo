@@ -230,17 +230,18 @@ public:
 	 *  @return A linear system set whose union of solution sets equals
 	 *      the solution set of the original linear system.
 	 */
-	LinearSystemSet* get_a_finer_covering() const;
+	LinearSystemSet get_a_finer_covering() const;
 
 	// operations on linear system
 	/**
-	 * Create a linear system by joining the constraints of two systems.
+	 * Update a linear system by joining the constraints of a linear system.
 	 *
-	 * @param[in] ls a linear system
-	 * @return linear system obtained by joining the constraints of this
-	 *     object and those of the parameter.
+	 * This method works in-place and changes the calling object.
+	 *
+	 * @param[in] ls a linear system.
+	 * @return a reference to the updated object.
 	 */
-	LinearSystem getIntersectionWith(const LinearSystem& ls) const;
+	LinearSystem& intersectWith(const LinearSystem& ls);
 
 	/**
 	 * Remove redundant constraints from a linear system.
@@ -290,16 +291,27 @@ public:
 	void plotRegion(std::ostream& os=std::cout, const char color=' ') const;
 
 	void plotRegionT(std::ostream& os, const double t) const;
-	void plotRegion(std::ostream& os, const std::vector<int>& rows, const std::vector<int>& cols) const;
+	void plotRegion(std::ostream& os, const std::vector<int>& rows,
+			const std::vector<int>& cols) const;
 
 	friend void swap(LinearSystem& ls_1, LinearSystem& ls_2);
+
+	/**
+	 * Compute the intersection of two linear systems
+	 *
+	 * @param[in] A is a linear system
+	 * @param[in] B is a linear system
+	 * @return the linear system that represents the set of values
+	 * 	    satisfying both the parameters.
+	 */
+	friend LinearSystem intersection(const LinearSystem& A,
+			                 const LinearSystem& B);
 };
 
 inline void swap(LinearSystem& ls_1, LinearSystem& ls_2) {
 	std::swap(ls_1.A, ls_2.A);
 	std::swap(ls_1.b, ls_2.b);
 }
-
 
 /**
  * Compute the complementary of a vector of values.
@@ -312,9 +324,7 @@ std::vector<T> get_complementary(const std::vector<T>& orig)
 {
    std::vector<T> res{orig};
 
-   for (typename std::vector<T>::iterator it=std::begin(res); it!=std::end(res); ++it) {
-	   *it = -*it;
-   }
+   transform(res.begin(), res.end(), res.begin(), std::negate<T>());
 
    return res;
 }

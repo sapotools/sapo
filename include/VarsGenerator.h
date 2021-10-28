@@ -30,10 +30,10 @@ public:
 	inline const lst& getBaseVertex() const { return this->qs; };
 	inline const lst& getFreeVars() const { return this->as; };
 	inline const lst& getLenghts() const { return this->bs; };
-	inline const lst& getDirections() { return this->ls; };
+	inline const lst& getDirections() const { return this->ls; };
 	inline const vector<lst>& getVersors() const { return this->us; };
 
-	LinearSystem* genBox(vector<double> b);
+	LinearSystem genBox(const vector<double>& b) const;
 
 	virtual ~VarsGenerator();
 };

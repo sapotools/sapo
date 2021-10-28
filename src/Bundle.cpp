@@ -50,8 +50,9 @@ void swap(Bundle& A, Bundle& B)
  * @param[in] offm lower offsets
  * @param[in] T templates matrix
  */
-Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T) {
-
+Bundle::Bundle(const vector<lst>& vars, const Matrix& L, const Vector& offp, const Vector& offm, const vector< vector< int > >& T): 
+	L(L), offp(offp), offm(offm), T(T), vars(vars) 
+{
 	if ( L.size() > 0 ) {
 		this->dim = L[0].size();
 	}else{
@@ -77,15 +78,9 @@ Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > 
 		exit (EXIT_FAILURE);
 	}
 
-	this->vars = vars;
-	this->L = L;
-	this->offp = offp;
-	this->offm = offm;
-	this->T = T;
-
 	// initialize orthogonal proximity
 	for (unsigned int i=0; i<this->getNumDirs(); i++) {
-		vector< double > Thetai (this->getNumDirs(),0);
+		Vector Thetai(this->getNumDirs(),0);
 		for (unsigned int j=i; j<this->getNumDirs(); j++) {
 			this->Theta.push_back(Thetai);
 		}
@@ -108,8 +103,9 @@ Bundle::Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > 
  * @param[in] offm lower offsets
  * @param[in] T templates matrix
  */
-Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T) {
-
+Bundle::Bundle(const Matrix& L, const Vector& offp, const Vector& offm, const vector< vector< int > >& T):
+	L(L), offp(offp), offm(offm), T(T)
+{
 	if ( L.size() > 0 ) {
 		this->dim = L[0].size();
 	}else{
@@ -146,10 +142,6 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 	this->vars = vector<lst>{varsGen.getBaseVertex(),
 							 varsGen.getFreeVars(),
 							 varsGen.getLenghts()};
-	this->L = L;
-	this->offp = offp;
-	this->offm = offm;
-	this->T = T;
 
 	// initialize orthogonal proximity
 	this->Theta = vector< vector< double > >(this->getNumDirs(),
@@ -163,6 +155,13 @@ Bundle::Bundle(vector< vector< double > > L, vector< double > offp, vector< doub
 			this->Theta[j][i] = prox;
 		}
 	}
+}
+
+Bundle& Bundle::operator=(Bundle&& orig)
+{
+	swap(*this, orig);
+
+	return *this;
 }
 
 /**
@@ -191,33 +190,31 @@ LinearSystem Bundle::getLinearSystem() const {
  * @param[in] i parallelotope index to fetch
  * @returns i-th parallelotope
  */
-Parallelotope* Bundle::getParallelotope(unsigned int i) const {
+Parallelotope Bundle::getParallelotope(unsigned int i) const {
 
 	if ( i<0 || i>this->T.size() ) {
 		cout<<"Bundle::getParallelotope : i must be between 0 and "<<T.size();
 		exit (EXIT_FAILURE);
 	}
 
-	vector<double> d;
+	vector<double> d(2*this->getDim(), 0);
 	vector< vector< double > > Lambda;
 
+	vector< int >::const_iterator it = std::begin(this->T[i]);
 	// upper facets
 	for (unsigned int j=0; j<this->getDim(); j++) {
-		Lambda.push_back(this->L[this->T[i][j]]);
-		d.push_back(this->offp[this->T[i][j]]);
+		Lambda.push_back(this->L[*it]);
+		d[j] = this->offp[*(it++)];
 	}
+
+	it = std::begin(this->T[i]);
 	// lower facets
-	for (unsigned int j=0; j<this->getDim(); j++) {
-		Lambda.push_back(get_complementary(this->L[this->T[i][j]]));
-		d.push_back(this->offm[this->T[i][j]]);
+	for (unsigned int j=this->getDim(); j<2*this->getDim(); j++) {
+		Lambda.push_back(get_complementary(this->L[*it]));
+		d[j] = this->offm[*(it++)];
 	}
 
-	LinearSystem *Lambdad = new LinearSystem(Lambda,d);
-	Parallelotope *P = new Parallelotope(this->vars, Lambdad);
-
-
-	return P;
-
+	return Parallelotope(this->vars, Lambda, d);
 }
 
 /**
@@ -225,15 +222,15 @@ Parallelotope* Bundle::getParallelotope(unsigned int i) const {
  *
  * @returns canonized bundle
  */
-Bundle* Bundle::canonize() {
+Bundle Bundle::get_canonical() const {
 	// get current polytope
 	LinearSystem bund = this->getLinearSystem();
-	vector<double> canoffp,canoffm;
+	vector<double> canoffp(this->getSize()),canoffm(this->getSize());
 	for (unsigned int i=0; i<this->getSize(); i++) {
-		canoffp.push_back(bund.maxLinearSystem(this->L[i]));
-		canoffm.push_back(bund.maxLinearSystem(get_complementary(this->L[i])));
+		canoffp[i] = bund.maxLinearSystem(this->L[i]);
+		canoffm[i] = bund.maxLinearSystem(get_complementary(this->L[i]));
 	}
-	return new Bundle(this->vars,this->L,canoffp,canoffm,this->T);
+	return Bundle(this->vars,this->L,canoffp,canoffm,this->T);
 }
 
 /**
@@ -243,8 +240,8 @@ Bundle* Bundle::canonize() {
  * @param[in] max_iter maximum number of randomly generated templates
  * @returns new bundle decomposing current symbolic polytope
  */
-Bundle* Bundle::decompose(double alpha, int max_iters) {
-
+Bundle Bundle::decompose(double alpha, int max_iters)
+{
 	vector< double > offDists = this->offsetDistances();
 
 	vector< vector<int> > curT = this->T;		// get actual template and try to improve it
@@ -298,7 +295,7 @@ Bundle* Bundle::decompose(double alpha, int max_iters) {
 		i++;
 	}
 
-	return new Bundle(this->vars,this->L,this->offp,this->offp,bestT);
+	return Bundle(this->vars,this->L,this->offp,this->offp,bestT);
 
 }
 
@@ -311,8 +308,8 @@ Bundle* Bundle::decompose(double alpha, int max_iters) {
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &controlPts, int mode) {
-
+Bundle Bundle::transform(const lst& vars, const lst& f, map< vector<int>,pair<lst,lst> > &controlPts, int mode) const
+{
 	vector<double> newDp (this->getSize(),DBL_MAX);
 	vector<double> newDm (this->getSize(),DBL_MAX);
 
@@ -325,11 +322,11 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 
 	for (unsigned int i=0; i<this->getCard(); i++) {	// for each parallelotope
 
-		Parallelotope *P = this->getParallelotope(i);
-		lst genFun = P->getGeneratorFunction();
+		Parallelotope P = this->getParallelotope(i);
+		const lst& genFun = P.getGeneratorFunction();
 
-		vector< double > base_vertex = P->getBaseVertex();
-		vector< double > lengths = P->getLenghts();
+		const vector< double >& base_vertex = P.getBaseVertex();
+		const vector< double >& lengths = P.getLenghts();
 
 		lst subParatope;
 
@@ -372,8 +369,7 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 
 				actbernCoeffs = BaseConverter(this->vars[1],Lfog).getBernCoeffsMatrix();
 
-				pair<lst,lst> element (genFun,actbernCoeffs);
-				controlPts[key] = element;	// store the computed coefficients
+				controlPts[key] = pair<lst,lst>(genFun, actbernCoeffs);	// store the computed coefficients
 
 			}else{
 				actbernCoeffs = controlPts[key].second;
@@ -393,9 +389,9 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
 		}
 	}
 
-	Bundle *res = new Bundle(this->vars,this->L,newDp,newDm,this->T);
+	Bundle res = Bundle(this->vars,this->L,newDp,newDm,this->T);
 	if (mode == 0) {
-		res = res->canonize();
+		return res.get_canonical();
 	}
 
 	return res;
@@ -412,25 +408,27 @@ Bundle* Bundle::transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &con
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem& paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode) {
-
+Bundle Bundle::transform(const lst& vars, const lst& params, const lst& f, const LinearSystem& paraSet,
+						 map< vector<int>,pair<lst,lst> > &controlPts, int mode) const
+{
 	vector<double> newDp (this->getSize(),DBL_MAX);
 	vector<double> newDm (this->getSize(),DBL_MAX);
 
 	vector<int> dirs_to_bound;
 	if (mode) {	// dynamic transformation
+		dirs_to_bound = vector<int>(this->L.size());
 		for (unsigned int i=0; i<this->L.size(); i++) {
-			dirs_to_bound.push_back(i);
+			dirs_to_bound[i]=i;
 		}
 	}
 
 	for (unsigned int i=0; i<this->getCard(); i++) {	// for each parallelotope
 
-		Parallelotope *P = this->getParallelotope(i);
-		lst genFun = P->getGeneratorFunction();
+		Parallelotope P = this->getParallelotope(i);
+		const lst& genFun = P.getGeneratorFunction();
 
-		vector< double > base_vertex = P->getBaseVertex();
-		vector< double > lengths = P->getLenghts();
+		const vector< double >& base_vertex = P.getBaseVertex();
+		const vector< double >& lengths = P.getLenghts();
 
 		lst subParatope;
 
@@ -475,8 +473,7 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem& paraSet, ma
 
 				actbernCoeffs = BaseConverter(this->vars[1],Lfog).getBernCoeffsMatrix();
 
-				pair<lst,lst> element (genFun,actbernCoeffs);
-				controlPts[key] = element;	// store the computed coefficients
+				controlPts[key] = pair<lst,lst>(genFun,actbernCoeffs);	// store the computed coefficients
 
 			}else{
 				actbernCoeffs = controlPts[key].second;
@@ -496,14 +493,13 @@ Bundle* Bundle::transform(lst vars, lst params, lst f, LinearSystem& paraSet, ma
 		}
 	}
 
-	Bundle *res = new Bundle(this->vars,this->L,newDp,newDm,this->T);
+	Bundle res(this->vars,this->L,newDp,newDm,this->T);
 	if (mode == 0) {
-		res = res->canonize();
+		return res.get_canonical();
 	}
 
 	return res;
 }
-
 
 /**
  * Set the bundle template
@@ -685,23 +681,6 @@ double Bundle::maxOffsetDist(vector< vector<int> > T, vector<double> dists) {
 	}
 	return maxdist;
 }
-
-/**
- * Change sign to all elements of a vector
- *
- * @param[in] v vector to reverse
- * @returns reversed vector
- */
-/*
-vector< double > Bundle::negate(vector< double > v) {
-
-	vector< double > minus_v;
-	for (int i=0; i<v.size(); i++) {
-		minus_v.push_back(-v[i]);
-	}
-	return minus_v;
-}
-*/
 
 /**
  * Determine belonging of an element in a vector

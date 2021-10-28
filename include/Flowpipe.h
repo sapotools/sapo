@@ -17,12 +17,18 @@
 class Flowpipe {
 
 private:
-	const std::vector<std::vector <double> > v_templates;
-	std::vector< LinearSystemSet > flowpipe;			// flowpipe
+	std::vector<std::vector <double> > v_templates;
+	std::vector< LinearSystemSet > flowpipe;	// flowpipe
 
 public:
+	/**
+	 * An empty flowpipe constructor
+	 */
+	Flowpipe();
 
-	// constructors
+	/**
+	 * An empty flowpipe with variable templates constructor
+	 */
 	Flowpipe(const std::vector<std::vector <double> >& variable_templates);
 
 	const LinearSystemSet& get(const unsigned int i) const;	// get i-th LinearSystemSet
@@ -75,6 +81,12 @@ public:
 
 	void plotProj(std::ostream& os, const unsigned int var, 
 				  const double time_step, const char color) const;
+
+	inline friend void swap(Flowpipe &A, Flowpipe &B)
+	{
+		swap(A.flowpipe, B.flowpipe);
+		swap(A.v_templates, B.v_templates);
+	}
 
 	virtual ~Flowpipe();
 };

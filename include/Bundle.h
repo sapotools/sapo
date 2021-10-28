@@ -19,14 +19,17 @@
 #include <cmath>
 
 class Bundle {
+	using Vector = vector<double>;
+	using Matrix = vector<Vector>;
+	using CtrlPointType = map< vector<int>,pair<lst,lst> >;
 
 private:
 	unsigned int dim;					// dimension
-	vector< vector< double > > L;		// direction matrix
-	vector< double > offp;				// superior offset
-	vector< double > offm;				// inferior offset
+	Matrix L;		// direction matrix
+	Vector offp;				// superior offset
+	Vector offm;				// inferior offset
 	vector< vector< int > > T;			// templates matrix
-	vector< vector< double > > Theta;	// matrix of orthogonal proximity
+	Matrix Theta;	// matrix of orthogonal proximity
 	vector<lst> vars;					// variables appearing in generato function
 										// vars[0] q: base vertex
 										// vars[1] alpha : free variables \in [0,1]
@@ -36,7 +39,7 @@ private:
 	map< vector<int>, lst > bernCoeffs;
 
 	double initTheta();
-	vector< double > offsetDistances();
+	Vector offsetDistances();
 
 	// operations on vectors
 	double norm(vector<double> v);
@@ -49,8 +52,6 @@ private:
 	double maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists);
 	double maxOffsetDist(vector<int> dirsIdx, vector<double> dists);
 	double maxOffsetDist(vector< vector<int> > T, vector<double> dists);
-	
-	//vector< double > negate(vector< double > v);
 	
 	bool isIn(int n, vector<int> v);
 	bool isIn(vector<int> v, vector< vector< int > > vlist);
@@ -65,8 +66,10 @@ public:
 	// constructors
 	Bundle(const Bundle &orig);
 	Bundle(Bundle&& orig);
-	Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
-	Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
+	Bundle(const Matrix& L, const Vector& offp, const Vector& offm,
+		   const vector< vector< int > >& T);
+	Bundle(const vector<lst>& vars, const Matrix& L, const Vector& offp,
+		   const Vector& offm, const vector< vector< int > >& T);
 
 	inline unsigned int getDim() const
 	{
@@ -109,24 +112,29 @@ public:
 	}
 
 	LinearSystem getLinearSystem() const;
-	Parallelotope* getParallelotope(unsigned int i) const;
+	Parallelotope getParallelotope(unsigned int i) const;
 
 	void setTemplate(vector< vector< int > > T);
-	inline void setOffsetP(vector< double > offp)
+	inline void setOffsetP(Vector offp)
 	{
 		this->offp = offp;
 	}
 
-	void setOffsetM(vector< double > offm)
+	void setOffsetM(Vector offm)
 	{
 		this->offm = offm;
 	}
 
 	// operations on bundles
-	Bundle* canonize();
-	Bundle* decompose(double alpha, int max_iters);
-	Bundle* transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
-	Bundle* transform(lst vars, lst params, lst f, LinearSystem& paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
+	Bundle get_canonical() const;
+	Bundle decompose(double alpha, int max_iters);
+	Bundle transform(const lst& vars, const lst& f, 
+					 CtrlPointType &controlPts, int mode) const;
+	Bundle transform(const lst& vars, const lst& params, 
+					 const lst& f, const LinearSystem& paraSet,
+					 CtrlPointType &controlPts, int mode) const;
+
+	Bundle& operator=(Bundle&&);
 
 	virtual ~Bundle();
 
