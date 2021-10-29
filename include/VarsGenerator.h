@@ -19,37 +19,37 @@ class VarsGenerator
 private:
   unsigned int dim;
 
-  lst qs;         // base vertex
-  lst as;         // alphas (free variables)
-  lst bs;         // betas (lenghts)
-  lst ls;         // directions (lambdas)
-  vector<lst> us; // genertor versors
+  GiNaC::lst qs;              // base vertex
+  GiNaC::lst as;              // alphas (free variables)
+  GiNaC::lst bs;              // betas (lenghts)
+  GiNaC::lst ls;              // directions (lambdas)
+  std::vector<GiNaC::lst> us; // genertor versors
 
 public:
   VarsGenerator(const unsigned int dim);
 
-  const lst &getBaseVertex() const
+  const GiNaC::lst &getBaseVertex() const
   {
     return this->qs;
   };
-  const lst &getFreeVars() const
+  const GiNaC::lst &getFreeVars() const
   {
     return this->as;
   };
-  const lst &getLenghts() const
+  const GiNaC::lst &getLenghts() const
   {
     return this->bs;
   };
-  const lst &getDirections() const
+  const GiNaC::lst &getDirections() const
   {
     return this->ls;
   };
-  const vector<lst> &getVersors() const
+  const std::vector<GiNaC::lst> &getVersors() const
   {
     return this->us;
   };
 
-  LinearSystem genBox(const vector<double> &b) const;
+  LinearSystem genBox(const std::vector<double> &b) const;
 
   virtual ~VarsGenerator();
 };

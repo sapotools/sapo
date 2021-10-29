@@ -52,11 +52,14 @@ void swap(Bundle &A, Bundle &B)
  * @param[in] offm lower offsets
  * @param[in] T templates matrix
  */
-Bundle::Bundle(const vector<lst> &vars, const Matrix &L, const Vector &offp,
-               const Vector &offm, const vector<vector<int>> &T):
+Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
+               const Vector &offp, const Vector &offm,
+               const std::vector<std::vector<int>> &T):
     L(L),
     offp(offp), offm(offm), T(T), vars(vars)
 {
+  using namespace std;
+
   if (L.size() > 0) {
     this->dim = L[0].size();
   } else {
@@ -109,10 +112,13 @@ Bundle::Bundle(const vector<lst> &vars, const Matrix &L, const Vector &offp,
  * @param[in] T templates matrix
  */
 Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
-               const vector<vector<int>> &T):
+               const std::vector<std::vector<int>> &T):
     L(L),
     offp(offp), offm(offm), T(T)
 {
+  using namespace std;
+  using namespace GiNaC;
+
   if (L.size() > 0) {
     this->dim = L[0].size();
   } else {
@@ -177,6 +183,8 @@ Bundle &Bundle::operator=(Bundle &&orig)
  */
 LinearSystem Bundle::getLinearSystem() const
 {
+  using namespace std;
+
   vector<vector<double>> A;
   vector<double> b;
   for (unsigned int i = 0; i < this->getSize(); i++) {
@@ -199,9 +207,11 @@ LinearSystem Bundle::getLinearSystem() const
  */
 Parallelotope Bundle::getParallelotope(unsigned int i) const
 {
+  using namespace std;
 
   if (i < 0 || i > this->T.size()) {
-    cout << "Bundle::getParallelotope : i must be between 0 and " << T.size();
+    cerr << "Bundle::getParallelotope : i must be between 0 and " << T.size()
+         << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -235,7 +245,7 @@ Bundle Bundle::get_canonical() const
 {
   // get current polytope
   LinearSystem bund = this->getLinearSystem();
-  vector<double> canoffp(this->getSize()), canoffm(this->getSize());
+  std::vector<double> canoffp(this->getSize()), canoffm(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
     canoffp[i] = bund.maxLinearSystem(this->L[i]);
     canoffm[i] = bund.maxLinearSystem(get_complementary(this->L[i]));
@@ -253,6 +263,9 @@ Bundle Bundle::get_canonical() const
  */
 Bundle Bundle::decompose(double alpha, int max_iters)
 {
+  using namespace std;
+  using namespace GiNaC;
+
   vector<double> offDists = this->offsetDistances();
 
   vector<vector<int>> curT
@@ -323,10 +336,14 @@ Bundle Bundle::decompose(double alpha, int max_iters)
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle Bundle::transform(const lst &vars, const lst &f,
-                         map<vector<int>, pair<lst, lst>> &controlPts,
-                         int mode) const
+Bundle Bundle::transform(
+    const GiNaC::lst &vars, const GiNaC::lst &f,
+    std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>> &controlPts,
+    int mode) const
 {
+  using namespace std;
+  using namespace GiNaC;
+
   vector<double> newDp(this->getSize(), DBL_MAX);
   vector<double> newDm(this->getSize(), DBL_MAX);
 
@@ -434,11 +451,15 @@ Bundle Bundle::transform(const lst &vars, const lst &f,
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle Bundle::transform(const lst &vars, const lst &params, const lst &f,
-                         const LinearSystem &paraSet,
-                         map<vector<int>, pair<lst, lst>> &controlPts,
-                         int mode) const
+Bundle Bundle::transform(
+    const GiNaC::lst &vars, const GiNaC::lst &params, const GiNaC::lst &f,
+    const LinearSystem &paraSet,
+    std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>> &controlPts,
+    int mode) const
 {
+  using namespace std;
+  using namespace GiNaC;
+
   vector<double> newDp(this->getSize(), DBL_MAX);
   vector<double> newDm(this->getSize(), DBL_MAX);
 
@@ -542,7 +563,7 @@ Bundle Bundle::transform(const lst &vars, const lst &params, const lst &f,
  *
  * @param[in] T new template
  */
-void Bundle::setTemplate(vector<vector<int>> T)
+void Bundle::setTemplate(std::vector<std::vector<int>> T)
 {
   this->T = T;
 }
@@ -552,13 +573,12 @@ void Bundle::setTemplate(vector<vector<int>> T)
  *
  * @returns vector of distances
  */
-vector<double> Bundle::offsetDistances()
+std::vector<double> Bundle::offsetDistances()
 {
 
-  vector<double> dist;
+  std::vector<double> dist(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    dist.push_back(abs(this->offp[i] - this->offm[i])
-                   / this->norm(this->L[i]));
+    dist[i] = abs(this->offp[i] - this->offm[i]) / this->norm(this->L[i]);
   }
   return dist;
 }
@@ -569,7 +589,7 @@ vector<double> Bundle::offsetDistances()
  * @param[in] v vector to normalize
  * @returns norm of the given vector
  */
-double Bundle::norm(vector<double> v)
+double Bundle::norm(std::vector<double> v)
 {
   double sum = 0;
   for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
@@ -585,7 +605,7 @@ double Bundle::norm(vector<double> v)
  * @param[in] v2 right vector
  * @returns product v1*v2'
  */
-double Bundle::prod(vector<double> v1, vector<double> v2)
+double Bundle::prod(std::vector<double> v1, std::vector<double> v2)
 {
   double prod = 0;
   for (unsigned int i = 0; i < v1.size(); i++) {
@@ -594,6 +614,7 @@ double Bundle::prod(vector<double> v1, vector<double> v2)
   return prod;
 }
 
+// TODO: turn this method in a (inline) function
 /**
  * Compute the angle between two vectors
  *
@@ -601,11 +622,12 @@ double Bundle::prod(vector<double> v1, vector<double> v2)
  * @param[in] v2 vector
  * @returns angle between v1 and v2
  */
-double Bundle::angle(vector<double> v1, vector<double> v2)
+double Bundle::angle(std::vector<double> v1, std::vector<double> v2)
 {
   return acos(this->prod(v1, v2) / (this->norm(v1) * this->norm(v2)));
 }
 
+// TODO: Turn this method in a (inline) function
 /**
  * Orthogonal proximity of v1 and v2, i.e.,
  * how close is the angle between v1 and v2 is to pi/2
@@ -614,7 +636,7 @@ double Bundle::angle(vector<double> v1, vector<double> v2)
  * @param[in] v2 vector
  * @returns orthogonal proximity
  */
-double Bundle::orthProx(vector<double> v1, vector<double> v2)
+double Bundle::orthProx(std::vector<double> v1, std::vector<double> v2)
 {
   return abs(this->angle(v1, v2) - (3.14159265 / 2));
 }
@@ -626,7 +648,7 @@ double Bundle::orthProx(vector<double> v1, vector<double> v2)
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx)
+double Bundle::maxOrthProx(int vIdx, std::vector<int> dirsIdx)
 {
 
   if (dirsIdx.empty()) {
@@ -635,7 +657,7 @@ double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx)
 
   double maxProx = 0;
   for (auto d_it = std::begin(dirsIdx); d_it != std::end(dirsIdx); ++d_it) {
-    maxProx = max(maxProx, this->orthProx(this->L[vIdx], this->L[*d_it]));
+    maxProx = std::max(maxProx, this->orthProx(this->L[vIdx], this->L[*d_it]));
   }
   return maxProx;
 }
@@ -646,13 +668,13 @@ double Bundle::maxOrthProx(int vIdx, vector<int> dirsIdx)
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double Bundle::maxOrthProx(vector<int> dirsIdx)
+double Bundle::maxOrthProx(std::vector<int> dirsIdx)
 {
   double maxProx = 0;
   for (unsigned int i = 0; i < dirsIdx.size(); i++) {
     for (unsigned int j = i + 1; j < dirsIdx.size(); j++) {
-      maxProx = max(maxProx,
-                    this->orthProx(this->L[dirsIdx[i]], this->L[dirsIdx[j]]));
+      maxProx = std::max(
+          maxProx, this->orthProx(this->L[dirsIdx[i]], this->L[dirsIdx[j]]));
     }
   }
   return maxProx;
@@ -664,15 +686,16 @@ double Bundle::maxOrthProx(vector<int> dirsIdx)
  * @param[in] T collection of vectors
  * @returns maximum orthogonal proximity
  */
-double Bundle::maxOrthProx(vector<vector<int>> T)
+double Bundle::maxOrthProx(std::vector<std::vector<int>> T)
 {
   double maxorth = -DBL_MAX;
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
-    maxorth = max(maxorth, this->maxOrthProx(*T_it));
+    maxorth = std::max(maxorth, this->maxOrthProx(*T_it));
   }
   return maxorth;
 }
 
+// TODO: Turn this method in a function
 /**
  * Maximum distance accumulation of a vector w.r.t. a set of vectors
  *
@@ -681,8 +704,8 @@ double Bundle::maxOrthProx(vector<vector<int>> T)
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double Bundle::maxOffsetDist(int vIdx, vector<int> dirsIdx,
-                             vector<double> dists)
+double Bundle::maxOffsetDist(int vIdx, std::vector<int> dirsIdx,
+                             std::vector<double> dists)
 {
 
   if (dirsIdx.empty()) {
@@ -703,7 +726,8 @@ double Bundle::maxOffsetDist(int vIdx, vector<int> dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double Bundle::maxOffsetDist(vector<int> dirsIdx, vector<double> dists)
+double Bundle::maxOffsetDist(std::vector<int> dirsIdx,
+                             std::vector<double> dists)
 {
 
   double dist = 1;
@@ -720,11 +744,12 @@ double Bundle::maxOffsetDist(vector<int> dirsIdx, vector<double> dists)
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double Bundle::maxOffsetDist(vector<vector<int>> T, vector<double> dists)
+double Bundle::maxOffsetDist(std::vector<std::vector<int>> T,
+                             std::vector<double> dists)
 {
   double maxdist = -DBL_MAX;
   for (unsigned int i = 0; i < T.size(); i++) {
-    maxdist = max(maxdist, this->maxOffsetDist(T[i], dists));
+    maxdist = std::max(maxdist, this->maxOffsetDist(T[i], dists));
   }
   return maxdist;
 }
@@ -736,7 +761,7 @@ double Bundle::maxOffsetDist(vector<vector<int>> T, vector<double> dists)
  * @param[in] v vector in which to look for
  * @returns true is n belongs to v
  */
-bool Bundle::isIn(int n, vector<int> v)
+bool Bundle::isIn(int n, std::vector<int> v)
 {
 
   for (unsigned int i = 0; i < v.size(); i++) {
@@ -754,7 +779,7 @@ bool Bundle::isIn(int n, vector<int> v)
  * @param[in] vlist set of vectors in which to look for
  * @returns true is v belongs to vlist
  */
-bool Bundle::isIn(vector<int> v, vector<vector<int>> vlist)
+bool Bundle::isIn(std::vector<int> v, std::vector<std::vector<int>> vlist)
 {
   for (unsigned int i = 0; i < vlist.size(); i++) {
     if (this->isPermutation(v, vlist[i])) {
@@ -771,7 +796,7 @@ bool Bundle::isIn(vector<int> v, vector<vector<int>> vlist)
  * @param[in] v2 second vector
  * @returns true is v1 is a permutation of v2
  */
-bool Bundle::isPermutation(vector<int> v1, vector<int> v2)
+bool Bundle::isPermutation(std::vector<int> v1, std::vector<int> v2)
 {
   for (unsigned int i = 0; i < v1.size(); i++) {
     if (!this->isIn(v1[i], v2)) {
@@ -789,9 +814,10 @@ bool Bundle::isPermutation(vector<int> v1, vector<int> v2)
  * @param[in] dirs directions
  * @returns true T is a valid template
  */
-bool Bundle::validTemp(vector<vector<int>> T, unsigned int card,
-                       vector<int> dirs)
+bool Bundle::validTemp(std::vector<std::vector<int>> T, unsigned int card,
+                       std::vector<int> dirs)
 {
+  using namespace std;
 
   cout << "dirs: ";
   for (auto dir_it = std::begin(dirs); dir_it != std::end(dirs); ++dir_it) {

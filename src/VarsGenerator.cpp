@@ -9,6 +9,7 @@
 
 #include "VarsGenerator.h"
 
+// TODO: clean-up the following constructor
 /**
  * Constructor that instantiates the variable generator
  *
@@ -16,6 +17,7 @@
  */
 VarsGenerator::VarsGenerator(const unsigned int dim): dim(dim)
 {
+  using namespace GiNaC;
 
   symbol q1("q1"), q2("q2"), q3("q3"), q4("q4"), q5("q5"), q6("q6"), q7("q7"),
       q8("q8"), q9("q9"), q10("q10"), q11("q11"), q12("q12"), q13("q13"),
@@ -167,24 +169,8 @@ VarsGenerator::VarsGenerator(const unsigned int dim): dim(dim)
       = {u171,  u172,  u173,  u174,  u175,  u176,  u177,  u178,  u179,  u1710,
          u1711, u1712, u1713, u1714, u1715, u1716, u1717, u1718, u1719, u1720};
 
-  vector<lst> us;
-  us.push_back(u1s);
-  us.push_back(u2s);
-  us.push_back(u3s);
-  us.push_back(u4s);
-  us.push_back(u5s);
-  us.push_back(u6s);
-  us.push_back(u7s);
-  us.push_back(u8s);
-  us.push_back(u9s);
-  us.push_back(u10s);
-  us.push_back(u11s);
-  us.push_back(u12s);
-  us.push_back(u13s);
-  us.push_back(u14s);
-  us.push_back(u15s);
-  us.push_back(u16s);
-  us.push_back(u17s);
+  std::vector<lst> us{u1s,  u2s,  u3s,  u4s,  u5s,  u6s,  u7s,  u8s, u9s,
+                      u10s, u11s, u12s, u13s, u14s, u15s, u16s, u17s};
 
   for (unsigned int i = 0; i < this->dim; i++) {
     this->qs.append(qs[i]);
@@ -208,8 +194,10 @@ VarsGenerator::VarsGenerator(const unsigned int dim): dim(dim)
  * @param[in] b box offsets
  * @returns generatred box
  */
-LinearSystem VarsGenerator::genBox(const vector<double> &b) const
+LinearSystem VarsGenerator::genBox(const std::vector<double> &b) const
 {
+  using namespace std;
+
   unsigned int n = b.size() / 2;
   vector<double> Ai(n, 0);
   vector<vector<double>> A(2 * n, Ai);

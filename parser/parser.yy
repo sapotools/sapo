@@ -452,7 +452,7 @@ modeType	: BOX { $$ = AbsSyn::modeType::BOX; }
 					| PARAL { $$ = AbsSyn::modeType::PARAL; }
 					| POLY { $$ = AbsSyn::modeType::POLY; }
 
-identList	: IDENT { $$ = vector<string>{$1}; }
+identList	: IDENT { $$ = std::vector<std::string>{$1}; }
 					| identList "," IDENT { $1.push_back($3); $$ = $1; }
 
 intInterval			: "[" expr "," expr "]"
@@ -481,7 +481,7 @@ intInterval			: "[" expr "," expr "]"
 										YYERROR;
 									}
 									
-									$$ = pair<int, int>(x1, x2);
+									$$ = std::pair<int, int>(x1, x2);
 								}
 
 doubleInterval	: "[" expr "," expr "]"
@@ -510,7 +510,7 @@ doubleInterval	: "[" expr "," expr "]"
 										YYERROR;
 									}
 									
-									$$ = pair<double, double>(x1, x2);
+									$$ = std::pair<double, double>(x1, x2);
 								}
 
 number		: DOUBLE { $$ = $1; }

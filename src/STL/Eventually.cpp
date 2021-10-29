@@ -27,6 +27,8 @@ Eventually::Eventually(const int begin, const int end,
  */
 void Eventually::print() const
 {
+  using namespace std;
+
   cout << "Eventually_" << this->t_itvl << " (";
   this->f->print();
   cout << ")";

@@ -30,6 +30,9 @@ Sapo::Sapo(Model *model, sapo_opt options):
  */
 Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
 {
+  using namespace std;
+  using namespace GiNaC;
+
   map<vector<int>, pair<lst, lst>> controlPts;
 
   Flowpipe flowpipe(initSet.getDirectionMatrix());
@@ -78,6 +81,9 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
 Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
                      unsigned int k)
 {
+  using namespace std;
+  using namespace GiNaC;
+
   map<vector<int>, pair<lst, lst>> controlPts;
 
   cout << "Parameter set" << endl
@@ -143,6 +149,8 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
                                  const std::shared_ptr<STL> formula,
                                  const unsigned int max_splits)
 {
+  using namespace std;
+
   cout << "Initial parameter set" << endl;
   parameterSet.print();
 
@@ -249,6 +257,9 @@ LinearSystemSet Sapo::refineParameters(Bundle &reachSet,
                                        LinearSystemSet &parameterSet,
                                        const std::shared_ptr<Atom> atom)
 {
+  using namespace std;
+  using namespace GiNaC;
+
   LinearSystemSet result;
 
   for (unsigned int i = 0; i < reachSet.getCard();

@@ -14,39 +14,40 @@
 
 class Parallelotope
 {
-  using Vector = vector<double>;
-  using Matrix = vector<Vector>;
+  using Vector = std::vector<double>;
+  using Matrix = std::vector<Vector>;
 
 private:
-  unsigned int dim;       // dimension of the parallelotope
-  vector<lst> vars;       // variables appearing in generato function
-                          // vars[0] q: base vertex
-                          // vars[1] alpha : free variables \in [0,1]
-                          // vars[2] beta : generator amplitudes
-  lst generator_function; // generator function
-  Matrix u;               // versors
-  Matrix template_matrix; // Template matrix
+  unsigned int dim;              // dimension of the parallelotope
+  std::vector<GiNaC::lst> vars;  // variables appearing in generato function
+                                 // vars[0] q: base vertex
+                                 // vars[1] alpha : free variables \in [0,1]
+                                 // vars[2] beta : generator amplitudes
+  GiNaC::lst generator_function; // generator function
+  Matrix u;                      // versors
+  Matrix template_matrix;        // Template matrix
 
-  Vector hyperplaneThroughPts(
-      const vector<Vector> &pts) const; // find hyper plane passing through pts
-  Vector lst2vec(const ex &list) const; // convert a lst to a vector of doubles
+  Vector hyperplaneThroughPts(const std::vector<Vector> &pts)
+      const; // find hyper plane passing through pts
+  Vector
+  lst2vec(const GiNaC::ex &list) const; // convert a lst to a vector of doubles
   double euclidNorm(const Vector &v) const; // compute euclidean norm
 
-  vector<double> actual_base_vertex;
-  vector<double> actual_lenghts;
+  std::vector<double> actual_base_vertex;
+  std::vector<double> actual_lenghts;
 
 public:
-  Parallelotope(const vector<lst> &vars, const Matrix &u);
-  Parallelotope(const vector<lst> &vars, const Matrix &template_matrix,
-                const Vector &offset);
-  Parallelotope(const vector<lst> &vars, const LinearSystem &ls);
+  Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
+  Parallelotope(const std::vector<GiNaC::lst> &vars,
+                const Matrix &template_matrix, const Vector &offset);
+  Parallelotope(const std::vector<GiNaC::lst> &vars, const LinearSystem &ls);
 
   /**
    * Get the generator functions
    *
    * @returns generator functions
    */
-  const lst &getGeneratorFunction() const
+  const GiNaC::lst &getGeneratorFunction() const
   {
     return this->generator_function;
   }
@@ -56,7 +57,7 @@ public:
    *
    * @returns base vertex variables
    */
-  const lst &getQ() const
+  const GiNaC::lst &getQ() const
   {
     return this->vars[0];
   }
@@ -66,7 +67,7 @@ public:
    *
    * @returns free variables
    */
-  const lst &getAlpha() const
+  const GiNaC::lst &getAlpha() const
   {
     return this->vars[1];
   }
@@ -76,7 +77,7 @@ public:
    *
    * @returns generator lengths variables
    */
-  const lst &getBeta() const
+  const GiNaC::lst &getBeta() const
   {
     return this->vars[2];
   }
@@ -96,7 +97,7 @@ public:
    *
    * @returns parallelotope template
    */
-  const vector<vector<double>> &getTemplate() const
+  const std::vector<std::vector<double>> &getTemplate() const
   {
     return this->template_matrix;
   }
@@ -112,12 +113,12 @@ public:
     return this->gen2const(this->actual_base_vertex, this->actual_lenghts);
   }
 
-  const vector<double> &getBaseVertex() const
+  const std::vector<double> &getBaseVertex() const
   {
     return this->actual_base_vertex;
   }
 
-  const vector<double> &getLenghts() const
+  const std::vector<double> &getLenghts() const
   {
     return this->actual_lenghts;
   }

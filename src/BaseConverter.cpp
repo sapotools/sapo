@@ -14,8 +14,10 @@
  * @param[in] vars list of variables appearing the current polynomial
  * @param[in] polynomial polynomial to convert
  */
-BaseConverter::BaseConverter(const lst &vars, const ex &polynomial):
-    vars(vars), polynomial(polynomial)
+BaseConverter::BaseConverter(const GiNaC::lst &vars,
+                             const GiNaC::ex &polynomial):
+    vars(vars),
+    polynomial(polynomial)
 {
   // Put the polynomial in extended form and extract variables degrees
   this->polynomial = this->polynomial.expand();
@@ -31,7 +33,7 @@ BaseConverter::BaseConverter(const lst &vars, const ex &polynomial):
   }
 
   // Initialize the coefficients vector
-  vector<int> multi_index;
+  std::vector<int> multi_index;
   extractCoeffs(this->polynomial, 0, multi_index);
 }
 
@@ -43,8 +45,9 @@ BaseConverter::BaseConverter(const lst &vars, const ex &polynomial):
  * @param[in] polynomial polynomial to convert
  * @param[in] degrees of variables
  */
-BaseConverter::BaseConverter(const lst &vars, const ex &polynomial,
-                             const vector<int> &degrees):
+BaseConverter::BaseConverter(const GiNaC::lst &vars,
+                             const GiNaC::ex &polynomial,
+                             const std::vector<int> &degrees):
     vars(vars),
     polynomial(polynomial), degrees(degrees)
 {
@@ -59,7 +62,7 @@ BaseConverter::BaseConverter(const lst &vars, const ex &polynomial,
   }
 
   // Initialize the coefficients vector
-  vector<int> multi_index;
+  std::vector<int> multi_index;
   extractCoeffs(this->polynomial, 0, multi_index);
 }
 
@@ -71,8 +74,10 @@ BaseConverter::BaseConverter(const lst &vars, const ex &polynomial,
  * @param[in] numerator of the rational polynomial to convert
  * @param[in] denominator of the rational polynomial to convert
  */
-BaseConverter::BaseConverter(const lst &vars, const ex &num, const ex &denom):
-    vars(vars), num(num), denom(denom)
+BaseConverter::BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &num,
+                             const GiNaC::ex &denom):
+    vars(vars),
+    num(num), denom(denom)
 {
 }
 
@@ -81,8 +86,7 @@ BaseConverter::BaseConverter(const lst &vars, const ex &num, const ex &denom):
  */
 void BaseConverter::initShifts()
 {
-
-  vector<int> shifts(this->degrees.size(), 0);
+  std::vector<int> shifts(this->degrees.size(), 0);
   this->shifts = shifts;
 
   this->shifts[this->degrees.size() - 1]
@@ -99,8 +103,9 @@ void BaseConverter::initShifts()
  * @param[in] multi_index multi-index to convert
  * @returns converted multi-index
  */
-int BaseConverter::multi_index2pos(vector<int> multi_index)
+int BaseConverter::multi_index2pos(std::vector<int> multi_index)
 {
+  using namespace std;
 
   if (multi_index.size() != this->degrees.size()) {
     cout << "BaseConverter::multi_index2pos : multi_index and degrees must "
@@ -123,10 +128,10 @@ int BaseConverter::multi_index2pos(vector<int> multi_index)
  * @param[in] position position to convert
  * @returns converted position
  */
-vector<int> BaseConverter::pos2multi_index(unsigned int position)
+std::vector<int> BaseConverter::pos2multi_index(unsigned int position)
 {
 
-  vector<int> multi_index(this->degrees.size(), 0);
+  std::vector<int> multi_index(this->degrees.size(), 0);
 
   for (unsigned int i = 0; i < multi_index.size() - 1; i++) {
     multi_index[i] = (int)position / this->shifts[i + 1];
@@ -146,9 +151,10 @@ vector<int> BaseConverter::pos2multi_index(unsigned int position)
  * @param[in] var_idx vector of variable indices
  * @param[in] multi_index vector of multi-indices associated to the variables
  */
-void BaseConverter::extractCoeffs(ex polynomial, unsigned int var_idx,
-                                  vector<int> multi_index)
+void BaseConverter::extractCoeffs(GiNaC::ex polynomial, unsigned int var_idx,
+                                  std::vector<int> multi_index)
 {
+  using namespace GiNaC;
 
   // Get the variable index
   multi_index.push_back(0);
@@ -183,7 +189,8 @@ int BaseConverter::nChoosek(int n, int k)
 {
 
   if (k > n) {
-    cout << "BaseConverter::nChoosek : n must be larger equal then k";
+    std::cerr << "BaseConverter::nChoosek : n must be larger equal then k"
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -201,12 +208,13 @@ int BaseConverter::nChoosek(int n, int k)
  * @param[in] k lower multi-index
  * @returns n choose k
  */
-int BaseConverter::multi_index_nChoosek(vector<int> n, vector<int> k)
+int BaseConverter::multi_index_nChoosek(std::vector<int> n, std::vector<int> k)
 {
 
   if (n.size() != k.size()) {
-    cout << "BaseConverter::multi_index_nChoosek : n and k must have same "
-            "dimension";
+    std::cerr << "BaseConverter::multi_index_nChoosek : n and k must have "
+                 "same dimension"
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -225,7 +233,7 @@ int BaseConverter::multi_index_nChoosek(vector<int> n, vector<int> k)
  * @param[in] b multi-index
  * @returns true if a <= b
  */
-bool BaseConverter::multi_index_leq(vector<int> a, vector<int> b)
+bool BaseConverter::multi_index_leq(std::vector<int> a, std::vector<int> b)
 {
 
   bool leq = true;
@@ -244,15 +252,16 @@ bool BaseConverter::multi_index_leq(vector<int> a, vector<int> b)
  * @param[in] mi multi-index
  * @returns mi-th Bernstein coefficient
  */
-ex BaseConverter::bernCoeff(vector<int> mi)
+GiNaC::ex BaseConverter::bernCoeff(std::vector<int> mi)
 {
+  using namespace GiNaC;
 
   int i = multi_index2pos(mi);
   ex coeff = 0;
 
   for (int j = 0; j <= i; j++) {
 
-    vector<int> mj = pos2multi_index(j);
+    std::vector<int> mj = pos2multi_index(j);
     if (multi_index_leq(mj, mi)) {
 
       int ichoosej = multi_index_nChoosek(mi, mj);
@@ -269,12 +278,12 @@ ex BaseConverter::bernCoeff(vector<int> mi)
  *
  * @returns list of Bernstein coefficients
  */
-lst BaseConverter::getBernCoeffs()
+GiNaC::lst BaseConverter::getBernCoeffs()
 {
 
   // cout<<"\tComputing Bernstein coefficients...\n";
 
-  lst bern_coeffs;
+  GiNaC::lst bern_coeffs;
 
   for (unsigned int i = 0; i < this->coeffs.size(); i++) {
     bern_coeffs.append(bernCoeff(pos2multi_index(i)));
@@ -288,10 +297,11 @@ lst BaseConverter::getBernCoeffs()
  *
  * @returns list of rational Bernstein coefficients
  */
-lst BaseConverter::getRationalBernCoeffs()
+GiNaC::lst BaseConverter::getRationalBernCoeffs()
 {
+  using namespace std;
 
-  lst bern_coeffs;
+  GiNaC::lst bern_coeffs;
 
   cout << "Degrees: ";
   vector<int> degs;
@@ -301,9 +311,9 @@ lst BaseConverter::getRationalBernCoeffs()
     cout << degs[i] << ", ";
   }
 
-  lst num_bern_coeffs
+  GiNaC::lst num_bern_coeffs
       = BaseConverter(this->vars, this->num, degs).getBernCoeffs();
-  lst denom_bern_coeffs
+  GiNaC::lst denom_bern_coeffs
       = BaseConverter(this->vars, this->denom, degs).getBernCoeffs();
 
   for (long unsigned int i = 0; i < num_bern_coeffs.nops(); i++) {
@@ -323,8 +333,9 @@ lst BaseConverter::getRationalBernCoeffs()
  *
  * @returns list of multi-indices
  */
-vector<vector<int>> BaseConverter::getMultiIdxList()
+std::vector<std::vector<int>> BaseConverter::getMultiIdxList()
 {
+  using namespace std;
 
   vector<vector<int>> mi_list;
 
@@ -342,10 +353,11 @@ vector<vector<int>> BaseConverter::getMultiIdxList()
  */
 void BaseConverter::split(long unsigned int direction, double split_point)
 {
+  using namespace std;
 
   if ((direction < 0) || (direction >= this->vars.nops())) {
-    cout << "BaseConverter::split : split direction must be between 0 and "
-         << this->vars.nops();
+    cerr << "BaseConverter::split : split direction must be between 0 and "
+         << this->vars.nops() << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -357,7 +369,7 @@ void BaseConverter::split(long unsigned int direction, double split_point)
   // Extract list of multi-indices and max degree of direction
   vector<vector<int>> multi_index_list = this->getMultiIdxList();
 
-  lst B;
+  GiNaC::lst B;
   B = this->getBernCoeffs();
 
   for (long unsigned int mi = 0; mi < B.nops(); mi++) {
@@ -397,9 +409,10 @@ void BaseConverter::split(long unsigned int direction, double split_point)
  *
  * @returns list of Bernstein coefficients
  */
-lst BaseConverter::getBernCoeffsMatrix()
+GiNaC::lst BaseConverter::getBernCoeffsMatrix()
 {
-
+  using namespace std;
+  using namespace GiNaC;
   // cout<<"\tComputing Bernstein coefficients...\n";
 
   // degrees increased by one
@@ -427,7 +440,7 @@ lst BaseConverter::getBernCoeffsMatrix()
         this->matrixProd(this->genUtilde(this->degrees[i]), UAt), degrees_p);
   }
 
-  lst bernCoeffs;
+  GiNaC::lst bernCoeffs;
   for (long unsigned int i = 0; i < UAt.size(); i++) {
     for (long unsigned int j = 0; j < UAt[i].size(); j++) {
       bernCoeffs.append(UAt[i][j]);
@@ -443,10 +456,9 @@ lst BaseConverter::getBernCoeffsMatrix()
  * @param[in] v vector to shift
  * @returns shifted vector
  */
-vector<int> BaseConverter::shift(vector<int> v)
+std::vector<int> BaseConverter::shift(std::vector<int> v)
 {
-
-  vector<int> sv(v.size(), 0);
+  std::vector<int> sv(v.size(), 0);
 
   for (long unsigned int i = 1; i < v.size(); i++) {
     sv[i - 1] = v[i];
@@ -462,12 +474,16 @@ vector<int> BaseConverter::shift(vector<int> v)
  * @param[in] B right matrix to multiply
  * @returns product A*B
  */
-vector<vector<ex>> BaseConverter::matrixProd(vector<vector<ex>> A,
-                                             vector<vector<ex>> B)
+std::vector<std::vector<GiNaC::ex>>
+BaseConverter::matrixProd(std::vector<std::vector<GiNaC::ex>> A,
+                          std::vector<std::vector<GiNaC::ex>> B)
 {
+  using namespace std;
+  using namespace GiNaC;
 
   if (A[0].size() != B.size()) {
-    cout << "BaseConverter::matrixProd : matrices dimensions must agree";
+    cerr << "BaseConverter::matrixProd : matrices dimensions must agree"
+         << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -496,8 +512,9 @@ vector<vector<ex>> BaseConverter::matrixProd(vector<vector<ex>> A,
  * @param[in] degs dimensions of the matrix
  * @returns 2d converted matrix
  */
-vector<int> BaseConverter::n2t(vector<int> a, vector<int> degs)
+std::vector<int> BaseConverter::n2t(std::vector<int> a, std::vector<int> degs)
 {
+  using namespace std;
 
   if (a.size() != degs.size()) {
     cout << "BaseConverter::n2t : a and degs must have the same sizes";
@@ -521,10 +538,10 @@ vector<int> BaseConverter::n2t(vector<int> a, vector<int> degs)
  * @param[in] degs dimensions of the matrix
  * @returns nd converted matrix
  */
-vector<int> BaseConverter::t2n(vector<int> c, vector<int> degs)
+std::vector<int> BaseConverter::t2n(std::vector<int> c, std::vector<int> degs)
 {
 
-  vector<int> a(degs.size(), 0);
+  std::vector<int> a(degs.size(), 0);
 
   a[degs.size() - 1] = floor(c[1] / this->prod(degs, 1, degs.size() - 1));
   for (int i = degs.size() - 1; i > 0; i--) {
@@ -545,11 +562,11 @@ vector<int> BaseConverter::t2n(vector<int> c, vector<int> degs)
  * @param[in] degs_prod product of the dimensions (prod(degs))
  * @returns transposed coordinate
  */
-vector<int> BaseConverter::transp(vector<int> b, vector<int> degs,
-                                  int degs_prod)
+std::vector<int> BaseConverter::transp(std::vector<int> b,
+                                       std::vector<int> degs, int degs_prod)
 {
 
-  vector<int> b_transp(2, 0);
+  std::vector<int> b_transp(2, 0);
 
   b_transp[0] = b[1] % degs[1];
   b_transp[1] = ((b[1] - (b[1] % degs[1])) / degs[1]) + b[0] * degs_prod;
@@ -564,7 +581,8 @@ vector<int> BaseConverter::transp(vector<int> b, vector<int> degs,
  * @param[in] degs dimensions of the coordinate
  * @returns transposed coordinate
  */
-vector<int> BaseConverter::transp_naive(vector<int> b, vector<int> degs)
+std::vector<int> BaseConverter::transp_naive(std::vector<int> b,
+                                             std::vector<int> degs)
 {
 
   return this->n2t(this->shift(this->t2n(b, degs)), this->shift(degs));
@@ -577,9 +595,12 @@ vector<int> BaseConverter::transp_naive(vector<int> b, vector<int> degs)
  * @param[in] degs dimensions of the matrix
  * @returns transposed matrix
  */
-vector<vector<ex>> BaseConverter::transp(vector<vector<ex>> M,
-                                         vector<int> degs)
+std::vector<std::vector<GiNaC::ex>>
+BaseConverter::transp(std::vector<std::vector<GiNaC::ex>> M,
+                      std::vector<int> degs)
 {
+  using namespace std;
+  using namespace GiNaC;
 
   int prod_degs2n = this->prod(degs, 2, degs.size());
 
@@ -613,7 +634,7 @@ vector<vector<ex>> BaseConverter::transp(vector<vector<ex>> M,
  * @param[in] b end of the intevral
  * @returns product v[a]v[a+1]...v[b]
  */
-int BaseConverter::prod(vector<int> v, int a, int b)
+int BaseConverter::prod(std::vector<int> v, int a, int b)
 {
   int prod = 1;
   for (int i = a; i < b; i++) {
@@ -645,8 +666,10 @@ int BaseConverter::nchoosek(int n, int k)
  * @param[in] n dimension of the matrix
  * @returns U tilde matrix
  */
-vector<vector<ex>> BaseConverter::genUtilde(int n)
+std::vector<std::vector<GiNaC::ex>> BaseConverter::genUtilde(int n)
 {
+  using namespace std;
+  using namespace GiNaC;
 
   vector<ex> Ui(n + 1, 0);
   vector<vector<ex>> U(n + 1, Ui);
@@ -670,6 +693,7 @@ vector<vector<ex>> BaseConverter::genUtilde(int n)
  */
 void BaseConverter::print()
 {
+  using namespace std;
 
   for (unsigned int i = 0; i < this->coeffs.size(); i++) {
     if (this->coeffs[i] != 0) {
@@ -688,8 +712,9 @@ void BaseConverter::print()
  *
  * @param[in] M matrix to print
  */
-void BaseConverter::print(vector<vector<ex>> M)
+void BaseConverter::print(std::vector<std::vector<GiNaC::ex>> M)
 {
+  using namespace std;
 
   for (long unsigned int i = 0; i < M.size(); i++) {
     for (long unsigned int j = 0; j < M[i].size(); j++) {
@@ -704,8 +729,11 @@ void BaseConverter::print(vector<vector<ex>> M)
  * coefficients
  */
 
-pair<vector<ex>, vector<vector<int>>> BaseConverter::compressZeroCoeffs()
+std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<int>>>
+BaseConverter::compressZeroCoeffs()
 {
+  using namespace std;
+  using namespace GiNaC;
 
   vector<ex> comp_coeffs;
   vector<vector<int>> comp_degs;
@@ -725,6 +753,8 @@ pair<vector<ex>, vector<vector<int>>> BaseConverter::compressZeroCoeffs()
 
 void BaseConverter::implicitMaxIndex()
 {
+  using namespace std;
+  using namespace GiNaC;
 
   pair<vector<ex>, vector<vector<int>>> compression
       = this->compressZeroCoeffs();

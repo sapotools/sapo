@@ -15,12 +15,15 @@
  * functions
  * @param[in] u collection of generator versors
  */
-Parallelotope::Parallelotope(const vector<lst> &vars, const Matrix &u)
+Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
+                             const Matrix &u)
 {
+  using namespace std;
+  using namespace GiNaC;
 
   if (vars.size() != 3) {
-    std::cerr << "Parallelotope::Parallelotope : vars must contain 3 "
-              << "collections of variable names (q,alpha,beta)" << std::endl;
+    cerr << "Parallelotope::Parallelotope : vars must contain 3 "
+         << "collections of variable names (q,alpha,beta)" << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -86,7 +89,7 @@ Parallelotope::Parallelotope(const vector<lst> &vars, const Matrix &u)
  * functions
  * @param[in] constr linear system constituting the parallelotope
  */
-Parallelotope::Parallelotope(const vector<lst> &vars,
+Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
                              const LinearSystem &constr):
     Parallelotope(vars, constr.getA(), constr.getb())
 {
@@ -100,14 +103,17 @@ Parallelotope::Parallelotope(const vector<lst> &vars,
  * @param[in] template_matrix is the template matrix of the parallelotope
  * @param[in] offset is the offset of the parallelotope
  */
-Parallelotope::Parallelotope(const vector<lst> &vars,
+Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
                              const Matrix &template_matrix,
                              const Vector &offset):
     template_matrix(template_matrix)
 {
+  using namespace std;
+  using namespace GiNaC;
+
   if (vars.size() != 3) {
-    std::cerr << "Parallelotope::Parallelotope : vars must contain "
-              << "3 collections of variable names (q,alpha,beta)" << std::endl;
+    cerr << "Parallelotope::Parallelotope : vars must contain "
+         << "3 collections of variable names (q,alpha,beta)" << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -269,6 +275,9 @@ Parallelotope::Parallelotope(const vector<lst> &vars,
 LinearSystem Parallelotope::gen2const(const Vector &q,
                                       const Vector &beta) const
 {
+  using namespace std;
+  using namespace GiNaC;
+
   if (q.size() != this->dim) {
     std::cerr << "Parallelotope::gen2const : q must have dimension "
               << this->dim << std::endl;
@@ -364,9 +373,11 @@ LinearSystem Parallelotope::gen2const(const Vector &q,
  * @param[in] pts interpolation points
  * @returns interpolating function coefficients
  */
-vector<double>
-Parallelotope::hyperplaneThroughPts(const vector<vector<double>> &pts) const
+std::vector<double> Parallelotope::hyperplaneThroughPts(
+    const std::vector<std::vector<double>> &pts) const
 {
+  using namespace std;
+  using namespace GiNaC;
 
   if (pts.size() != pts[0].size()) {
     std::cerr << "Parallelotope::hyperplaneThroughPts : pts must contain "
@@ -442,6 +453,9 @@ Parallelotope::hyperplaneThroughPts(const vector<vector<double>> &pts) const
  */
 poly_values Parallelotope::const2gen(LinearSystem *constr) const
 {
+  using namespace std;
+  using namespace GiNaC;
+
   const vector<vector<double>> &Lambda = constr->getA();
   const vector<double> &d = constr->getb();
   vector<vector<double>> vertices;
@@ -526,10 +540,11 @@ poly_values Parallelotope::const2gen(LinearSystem *constr) const
  * @param[in] symbolic list
  * @returns numeric list of numbers
  */
-vector<double> Parallelotope::lst2vec(const ex &list) const
+std::vector<double> Parallelotope::lst2vec(const GiNaC::ex &list) const
 {
+  using namespace GiNaC;
 
-  vector<double> res;
+  std::vector<double> res;
 
   for (unsigned int i = 0; i < list.nops(); i++)
     res.push_back(ex_to<numeric>(evalf(list[i])).to_double());

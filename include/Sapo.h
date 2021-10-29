@@ -29,14 +29,16 @@ class Sapo
 {
 
 private:
-  const lst &dyns;                                  // dynamics of the system
-  const lst &vars;                                  // variables of the system
-  const lst &params;                                // parameters of the system
-  const sapo_opt options;                           // options
-  map<vector<int>, pair<lst, lst>> reachControlPts; // symbolic control points
-  map<vector<int>, pair<lst, lst>> synthControlPts; // symbolic control points
+  const GiNaC::lst &dyns;   // dynamics of the system
+  const GiNaC::lst &vars;   // variables of the system
+  const GiNaC::lst &params; // parameters of the system
+  const sapo_opt options;   // options
+  std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>
+      reachControlPts; // symbolic control points
+  std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>
+      synthControlPts; // symbolic control points
 
-  vector<Bundle *>
+  std::vector<Bundle *>
   reachWitDec(Bundle &initSet,
               int k); // reachability with template decomposition
   LinearSystemSet synthesizeSTL(Bundle &reachSet,

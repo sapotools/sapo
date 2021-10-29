@@ -26,6 +26,8 @@ Disjunction::Disjunction(const std::shared_ptr<STL> f1,
  */
 void Disjunction::print() const
 {
+  using namespace std;
+
   cout << "(";
   this->f1->print();
   cout << ") or (";

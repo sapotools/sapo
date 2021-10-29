@@ -10,7 +10,7 @@
 #define STL_H_
 
 #include "Common.h"
-#include <string.h>
+#include <string>
 
 class STL
 {

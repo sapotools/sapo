@@ -17,9 +17,6 @@
 #include "STL.h"
 #include "Until.h"
 
-using namespace std;
-using namespace GiNaC;
-
 namespace AbsSyn
 {
 
@@ -56,7 +53,7 @@ enum transType {
 
 class Expr
 {
-  friend ostream &operator<<(ostream &os, const Expr &e);
+  friend std::ostream &operator<<(std::ostream &os, const Expr &e);
 
 public:
   enum exprType {
@@ -69,7 +66,7 @@ public:
     NEG       // unary minus (-x)
   };
 
-  Expr(string n)
+  Expr(std::string n)
   {
     type = exprType::ID_ATOM;
     name = n;
@@ -104,18 +101,22 @@ public:
   {
     return type;
   }
+
   double getVal()
   {
     return val;
   }
-  string getName()
+
+  std::string getName()
   {
     return name;
   }
+
   Expr *getLeftOp()
   {
     return left;
   }
+
   Expr *getRightOp()
   {
     return right;
@@ -128,8 +129,9 @@ public:
   double evaluate(const InputData &im)
       const; // evaluates the value of a numeric expression
 
-  ex toEx(const InputData &m, const lst &vars,
-          const lst &params) const; // converts an Expr to a GiNaC ex
+  GiNaC::ex
+  toEx(const InputData &m, const GiNaC::lst &vars,
+       const GiNaC::lst &params) const; // converts an Expr to a GiNaC ex
 
 protected:
   Expr()
@@ -138,11 +140,11 @@ protected:
     right = NULL;
   };
 
-  exprType type; // type of expression
-  string name;   // name of ident (if ATOM)
-  double val;    // value of number (if ATOM)
-  Expr *left;    // left operand (if not ATOM)
-  Expr *right;   // right operand (if not ATOM)
+  exprType type;    // type of expression
+  std::string name; // name of ident (if ATOM)
+  double val;       // value of number (if ATOM)
+  Expr *left;       // left operand (if not ATOM)
+  Expr *right;      // right operand (if not ATOM)
 };
 
 /*
@@ -153,7 +155,7 @@ protected:
 
 class Formula
 {
-  friend ostream &operator<<(ostream &os, const Formula &f);
+  friend std::ostream &operator<<(std::ostream &os, const Formula &f);
 
 public:
   enum formulaType {
@@ -182,9 +184,9 @@ public:
   Formula *conj(Formula *f);
   Formula *disj(Formula *f);
   Formula *neg();
-  Formula *always(pair<int, int> in);
-  Formula *eventually(pair<int, int> in);
-  Formula *until(pair<int, int> in, Formula *f);
+  Formula *always(std::pair<int, int> in);
+  Formula *eventually(std::pair<int, int> in);
+  Formula *until(std::pair<int, int> in, Formula *f);
 
   ~Formula()
   {
@@ -197,15 +199,18 @@ public:
   {
     return ex;
   }
+
   Formula *getLeft()
   {
     return f1;
   }
+
   Formula *getRight()
   {
     return f2;
   }
-  pair<int, int> getInterval()
+
+  std::pair<int, int> getInterval()
   {
     return i;
   }
@@ -215,9 +220,9 @@ public:
    */
   bool simplify();
 
-  std::shared_ptr<STL> toSTL(
-      const InputData &m, const lst &vars,
-      const lst &params) const; // transforms a Formula into a SAPO STL formula
+  std::shared_ptr<STL> toSTL(const InputData &m, const GiNaC::lst &vars,
+                             const GiNaC::lst &params)
+      const; // transforms a Formula into a SAPO STL formula
 
 protected:
   Formula()
@@ -227,11 +232,11 @@ protected:
     f2 = NULL;
   }
 
-  formulaType type; // type of formula
-  Expr *ex;         // expression of atomic formula (ex >= 0)
-  Formula *f1;      // left formula
-  Formula *f2;      // right formula
-  pair<int, int> i; // interval of application
+  formulaType type;      // type of formula
+  Expr *ex;              // expression of atomic formula (ex >= 0)
+  Formula *f1;           // left formula
+  Formula *f2;           // right formula
+  std::pair<int, int> i; // interval of application
 
   /*
    * utility for semplification
@@ -250,17 +255,14 @@ protected:
 
 class Variable
 {
-  friend ostream &operator<<(ostream &os, Variable &v)
+  friend std::ostream &operator<<(std::ostream &os, Variable &v)
   {
     return os << v.name;
   }
 
 public:
-  Variable(string n)
-  {
-    name = n;
-    dynamic = NULL;
-  }
+  Variable(const std::string &n): name(n), dynamic(NULL) {}
+
   ~Variable()
   {
     delete (dynamic);
@@ -270,6 +272,7 @@ public:
   {
     return name;
   }
+
   const Expr *getDynamic() const
   {
     return dynamic;
@@ -287,8 +290,8 @@ public:
   }
 
 protected:
-  string name;   // name of the variable
-  Expr *dynamic; // dynamic associated with variable
+  std::string name; // name of the variable
+  Expr *dynamic;    // dynamic associated with variable
 };
 
 /*
@@ -299,25 +302,23 @@ protected:
 
 class Parameter
 {
-  friend ostream &operator<<(ostream &os, const Parameter &p)
+  friend std::ostream &operator<<(std::ostream &os, const Parameter &p)
   {
     return os << p.name;
   }
 
 public:
-  Parameter(string n)
-  {
-    name = n;
-  }
+  Parameter(const std::string &n): name(n) {}
+
   ~Parameter() {}
 
-  const string &getName() const
+  const std::string &getName() const
   {
     return name;
   }
 
 protected:
-  string name; // name of the parameter
+  std::string name; // name of the parameter
 };
 
 /*
@@ -328,20 +329,17 @@ protected:
 
 class Constant
 {
-  friend ostream &operator<<(ostream &os, Constant &c)
+  friend std::ostream &operator<<(std::ostream &os, Constant &c)
   {
     return os << c.name;
   }
 
 public:
-  Constant(string n, double v)
-  {
-    name = n;
-    val = v;
-  }
+  Constant(std::string n, double v): name(n), val(v) {}
+
   ~Constant() {}
 
-  string getName() const
+  std::string getName() const
   {
     return name;
   }
@@ -351,25 +349,26 @@ public:
   }
 
 protected:
-  string name; // name of the constant
-  double val;  // value
+  std::string name; // name of the constant
+  double val;       // value
 };
 
 class Definition
 {
-  friend ostream &operator<<(ostream &os, const Definition &d)
+  friend std::ostream &operator<<(std::ostream &os, const Definition &d)
   {
     return os << d.name;
   }
 
 public:
-  Definition(string id, Expr *e): name(id), value(e) {}
+  Definition(std::string id, Expr *e): name(id), value(e) {}
+
   ~Definition()
   {
     delete value;
   }
 
-  string getName()
+  std::string getName()
   {
     return name;
   }
@@ -383,7 +382,7 @@ public:
   }
 
 private:
-  string name;
+  std::string name;
   Expr *value;
 };
 
@@ -395,7 +394,7 @@ private:
 
 class InputData
 {
-  friend ostream &operator<<(ostream &os, const InputData &m);
+  friend std::ostream &operator<<(std::ostream &os, const InputData &m);
 
 public:
   InputData();
@@ -484,52 +483,52 @@ public:
     return defs.size();
   }
 
-  bool isVarDefined(const string &name)
+  bool isVarDefined(const std::string &name)
       const; // checks if a variable named 'name' already exists
-  bool isParamDefined(const string &name)
+  bool isParamDefined(const std::string &name)
       const; // checks if a parameter named 'name' already exists
-  bool isConstDefined(const string &name)
+  bool isConstDefined(const std::string &name)
       const; // checks if a constant named 'name' already exists
-  bool isDefDefined(const string &name)
+  bool isDefDefined(const std::string &name)
       const; // checks if a definition named 'name' already exists
   bool isSymbolDefined(
-      const string &name) const; // checks if a symbol (var, param, const or
-                                 // def) named 'name' already exists
+      const std::string &name) const; // checks if a symbol (var, param, const
+                                      // or def) named 'name' already exists
 
   const Variable *getVar(int i) const
   {
     return vars[i];
   }
-  const Variable *getVar(const string &name)
+  const Variable *getVar(const std::string &name)
       const; // return the variable named 'name', which must exist
   Variable *getVar(int i)
   {
     return vars[i];
   }
-  Variable *getVar(const string &name);
-  int getVarPos(const string &name)
+  Variable *getVar(const std::string &name);
+  int getVarPos(const std::string &name)
       const; // return an index such that vars[i] has name 'name'
   const Parameter *getParam(int i) const
   {
     return params[i];
   }
-  const Parameter *getParam(const string &name)
+  const Parameter *getParam(const std::string &name)
       const; // return the parameter named 'name', which must exist
-  int getParamPos(const string &name)
+  int getParamPos(const std::string &name)
       const; // return an index i such that params[i] has name 'name'
   const Constant *getConst(int i) const
   {
     return consts[i];
   }
-  const Constant *getConst(const string &name)
+  const Constant *getConst(const std::string &name)
       const; // return the constant named 'name', which must exist
   const Definition *getDef(int i) const
   {
     return defs[i];
   }
-  const Definition *getDef(const string &name)
+  const Definition *getDef(const std::string &name)
       const; // return the definition named 'name', which must exist
-  int getDefPos(const string &name)
+  int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 
   void addVariable(Variable *v)
@@ -569,12 +568,12 @@ public:
   {
     return directions.size();
   }
-  const vector<vector<double>> &getDirections() const
+  const std::vector<std::vector<double>> &getDirections() const
   {
     return directions;
   }
-  void addDirection(vector<double> d, double LB, double UB);
-  void addDirection(vector<double> d)
+  void addDirection(std::vector<double> d, double LB, double UB);
+  void addDirection(std::vector<double> d)
   {
     directions.push_back(d);
   }
@@ -584,11 +583,11 @@ public:
     UBoffsets.push_back(UB);
   }
   void defaultDirections();
-  const vector<double> &getLB() const
+  const std::vector<double> &getLB() const
   {
     return LBoffsets;
   }
-  const vector<double> &getUB() const
+  const std::vector<double> &getUB() const
   {
     return UBoffsets;
   }
@@ -601,12 +600,12 @@ public:
   {
     return templateMatrix[0].size();
   }
-  void setTemplate(vector<vector<int>> m)
+  void setTemplate(std::vector<std::vector<int>> m)
   {
     templateMatrix = m;
   }
   void defaultTemplate();
-  const vector<vector<int>> &getTemplate() const
+  const std::vector<std::vector<int>> &getTemplate() const
   {
     return templateMatrix;
   }
@@ -615,8 +614,8 @@ public:
   {
     return paramDirections.size();
   }
-  void addParamDirection(vector<double> d, double LB, double UB);
-  void addParamDirection(vector<double> d)
+  void addParamDirection(std::vector<double> d, double LB, double UB);
+  void addParamDirection(std::vector<double> d)
   {
     paramDirections.push_back(d);
   }
@@ -626,19 +625,19 @@ public:
     paramUBoffsets.push_back(UB);
   }
   void defaultParamDirections();
-  const vector<vector<double>> &getParameterDirections() const
+  const std::vector<std::vector<double>> &getParameterDirections() const
   {
     return paramDirections;
   }
-  const vector<double> &getParamDirection(int i) const
+  const std::vector<double> &getParamDirection(int i) const
   {
     return paramDirections[i];
   }
-  const vector<double> &getParamLB() const
+  const std::vector<double> &getParamLB() const
   {
     return paramLBoffsets;
   }
-  const vector<double> &getParamUB() const
+  const std::vector<double> &getParamUB() const
   {
     return paramUBoffsets;
   }
@@ -696,22 +695,22 @@ protected:
 
   unsigned int max_param_splits;
 
-  vector<Variable *> vars;
-  vector<Parameter *> params;
-  vector<Constant *> consts;
-  vector<Definition *> defs;
+  std::vector<Variable *> vars;
+  std::vector<Parameter *> params;
+  std::vector<Constant *> consts;
+  std::vector<Definition *> defs;
 
   Formula *spec;
 
-  vector<vector<double>> directions;
-  vector<double> LBoffsets;
-  vector<double> UBoffsets;
+  std::vector<std::vector<double>> directions;
+  std::vector<double> LBoffsets;
+  std::vector<double> UBoffsets;
 
-  vector<vector<int>> templateMatrix;
+  std::vector<std::vector<int>> templateMatrix;
 
-  vector<vector<double>> paramDirections;
-  vector<double> paramLBoffsets;
-  vector<double> paramUBoffsets;
+  std::vector<std::vector<double>> paramDirections;
+  std::vector<double> paramLBoffsets;
+  std::vector<double> paramUBoffsets;
 
   // SAPO options
   transType trans;
@@ -723,16 +722,18 @@ protected:
 
 namespace std
 {
-ostream &operator<<(ostream &os, const AbsSyn::problemType t);
-ostream &operator<<(ostream &os, const AbsSyn::modeType t);
+std::ostream &operator<<(std::ostream &os, const AbsSyn::problemType t);
+std::ostream &operator<<(std::ostream &os, const AbsSyn::modeType t);
 
-ostream &operator<<(ostream &os, const pair<int, int> p);
-ostream &operator<<(ostream &os, const pair<double, double> p);
+std::ostream &operator<<(std::ostream &os, const pair<int, int> p);
+std::ostream &operator<<(std::ostream &os, const pair<double, double> p);
 
-ostream &operator<<(ostream &os, const vector<double> v);
-ostream &operator<<(ostream &os, const vector<string> v);
-ostream &operator<<(ostream &os, const vector<int> v);
-ostream &operator<<(ostream &os, const vector<vector<double>> v);
-ostream &operator<<(ostream &os, const vector<vector<int>> v);
+std::ostream &operator<<(std::ostream &os, const std::vector<double> v);
+std::ostream &operator<<(std::ostream &os, const std::vector<string> v);
+std::ostream &operator<<(std::ostream &os, const std::vector<int> v);
+std::ostream &operator<<(std::ostream &os,
+                         const std::vector<std::vector<double>> v);
+std::ostream &operator<<(std::ostream &os,
+                         const std::vector<std::vector<int>> v);
 }
 #endif

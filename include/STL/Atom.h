@@ -16,14 +16,15 @@ class Atom : public STL
 private:
   static int num_of_atoms;
 
-  ex predicate;                    // predicate
-  vector<lst> predicateControlPts; // control points associated to this atom
-  int id;                          // identifier
+  GiNaC::ex predicate; // predicate
+  std::vector<GiNaC::lst>
+      predicateControlPts; // control points associated to this atom
+  int id;                  // identifier
 
 public:
-  Atom(const ex &predicate);
+  Atom(const GiNaC::ex &predicate);
 
-  const ex &getPredicate() const
+  const GiNaC::ex &getPredicate() const
   {
     return predicate;
   };
@@ -33,7 +34,7 @@ public:
    *
    * @ returns vector of control points
    */
-  const vector<lst> &getPredicateControlPts() const
+  const std::vector<GiNaC::lst> &getPredicateControlPts() const
   {
     return this->predicateControlPts;
   }
@@ -43,14 +44,15 @@ public:
    *
    * @param[in] predicateControlPts vector of control points
    */
-  void setPredicateControlPts(const vector<lst> &predicateControlPts)
+  void
+  setPredicateControlPts(const std::vector<GiNaC::lst> &predicateControlPts)
   {
     this->predicateControlPts = predicateControlPts;
   }
 
   void print() const
   {
-    cout << this->predicate << " <= 0";
+    std::cout << this->predicate << " <= 0";
   }
   int getID() const
   {

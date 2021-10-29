@@ -96,9 +96,9 @@ U			return yy::parser::make_UNTIL(loc);
 ";"			return yy::parser::make_SEMICOLON(loc);
 ","			return yy::parser::make_COMMA(loc);
 
-{natural}		return yy::parser::make_INTEGER(stoi(yytext), loc);
+{natural}		return yy::parser::make_INTEGER(std::stoi(yytext), loc);
 
-{double}		return yy::parser::make_DOUBLE(stof(yytext), loc);
+{double}		return yy::parser::make_DOUBLE(std::stof(yytext), loc);
 
 {ident}			return yy::parser::make_IDENT(yytext, loc);
 

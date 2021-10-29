@@ -19,9 +19,9 @@ class Model
 {
 
 protected:
-  lst vars;   // variables
-  lst params; // parameters
-  lst dyns;   // dynamics
+  GiNaC::lst vars;   // variables
+  GiNaC::lst params; // parameters
+  GiNaC::lst dyns;   // dynamics
 
   Bundle *reachSet; // Initial reach set
   LinearSystemSet *paraSet;
@@ -35,15 +35,15 @@ public:
   {
     return this->name;
   }
-  const lst &getVars() const
+  const GiNaC::lst &getVars() const
   {
     return this->vars;
   }
-  const lst &getParams() const
+  const GiNaC::lst &getParams() const
   {
     return this->params;
   }
-  const lst &getDyns() const
+  const GiNaC::lst &getDyns() const
   {
     return this->dyns;
   }

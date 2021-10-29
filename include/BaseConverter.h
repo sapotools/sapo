@@ -16,64 +16,71 @@
 class BaseConverter
 {
 private:
-  const lst &vars;     // list of variables
-  ex polynomial;       // polynomial in symbolic form
-  ex num, denom;       // numerator and denominator for rational polynomials
-  vector<int> degrees; // collection of degrees
-  vector<int> shifts;  // degree shifts
-  vector<ex> coeffs;   // list of the coefficients
+  const GiNaC::lst &vars; // list of variables
+  GiNaC::ex polynomial;   // polynomial in symbolic form
+  GiNaC::ex num, denom;   // numerator and denominator for rational polynomials
+  std::vector<int> degrees;      // collection of degrees
+  std::vector<int> shifts;       // degree shifts
+  std::vector<GiNaC::ex> coeffs; // list of the coefficients
 
   void initShifts(); // initialize degrees shifts
   int multi_index2pos(
-      vector<int> multi_index); // convert a multi-index to a position
-  vector<int> pos2multi_index(
+      std::vector<int> multi_index); // convert a multi-index to a position
+  std::vector<int> pos2multi_index(
       unsigned int position); // convert a position to a multi-index
-  void extractCoeffs(
-      ex polynomial, unsigned int var_idx,
-      vector<int> multi_index); // extract the coefficients of the polynomial
+  void extractCoeffs(GiNaC::ex polynomial, unsigned int var_idx,
+                     std::vector<int> multi_index); // extract the coefficients
+                                                    // of the polynomial
 
   int nChoosek(int n, int k); // binomial coefficient
   int multi_index_nChoosek(
-      vector<int> n, vector<int> k); // binomial coefficient of multi-indices
-  bool multi_index_leq(vector<int> a,
-                       vector<int> b); // check whether b dominates a
+      std::vector<int> n,
+      std::vector<int> k); // binomial coefficient of multi-indices
+  bool multi_index_leq(std::vector<int> a,
+                       std::vector<int> b); // check whether b dominates a
 
   // auxiliary operations
-  int prod(vector<int> v, int a, int b); // productory of element v[a]*...*v[b]
-  int nchoosek(int n, int k);            // n choose k
-  vector<vector<ex>> matrixProd(vector<vector<ex>> A,
-                                vector<vector<ex>> B); // matrix product
+  int prod(std::vector<int> v, int a,
+           int b);            // productory of element v[a]*...*v[b]
+  int nchoosek(int n, int k); // n choose k
+  std::vector<std::vector<GiNaC::ex>>
+  matrixProd(std::vector<std::vector<GiNaC::ex>> A,
+             std::vector<std::vector<GiNaC::ex>> B); // matrix product
 
-  void print(vector<vector<ex>> M);
+  void print(std::vector<std::vector<GiNaC::ex>> M);
 
 public:
   // constructors
-  BaseConverter(const lst &vars, const ex &polynomial);
-  BaseConverter(const lst &vars, const ex &polynomial,
+  BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &polynomial);
+  BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &polynomial,
                 const std::vector<int> &degrees);
-  BaseConverter(const lst &vars, const ex &num, const ex &denom);
+  BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &num,
+                const GiNaC::ex &denom);
 
   // get Bernstein coefficients
-  ex bernCoeff(vector<int> mi);
-  lst getBernCoeffs();
-  lst getRationalBernCoeffs();
-  lst getBernCoeffsMatrix();
+  GiNaC::ex bernCoeff(std::vector<int> mi);
+  GiNaC::lst getBernCoeffs();
+  GiNaC::lst getRationalBernCoeffs();
+  GiNaC::lst getBernCoeffsMatrix();
 
   // operations on multi-indices
-  vector<int> n2t(vector<int> a, vector<int> degs);
-  vector<int> t2n(vector<int> a, vector<int> degs);
+  std::vector<int> n2t(std::vector<int> a, std::vector<int> degs);
+  std::vector<int> t2n(std::vector<int> a, std::vector<int> degs);
 
   // operations on mutlidimensional matrices
-  vector<vector<ex>> genUtilde(int dim);
-  vector<int> transp(vector<int> b, vector<int> degs, int degs_prod);
-  vector<vector<ex>> transp(vector<vector<ex>> M, vector<int> degs);
-  vector<int> transp_naive(vector<int> b, vector<int> degs);
-  pair<vector<ex>, vector<vector<int>>> compressZeroCoeffs();
+  std::vector<std::vector<GiNaC::ex>> genUtilde(int dim);
+  std::vector<int> transp(std::vector<int> b, std::vector<int> degs,
+                          int degs_prod);
+  std::vector<std::vector<GiNaC::ex>>
+  transp(std::vector<std::vector<GiNaC::ex>> M, std::vector<int> degs);
+  std::vector<int> transp_naive(std::vector<int> b, std::vector<int> degs);
+  std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<int>>>
+  compressZeroCoeffs();
   void implicitMaxIndex();
-  vector<int> shift(vector<int> v);
+  std::vector<int> shift(std::vector<int> v);
 
   // operations of split
-  vector<vector<int>> getMultiIdxList();
+  std::vector<std::vector<int>> getMultiIdxList();
   void split(long unsigned int direction, double split_point);
   void print();
 

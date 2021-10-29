@@ -36,7 +36,8 @@ const LinearSystemSet &Flowpipe::get(const unsigned int i) const
   if ((0 <= i) && (i < this->size())) {
     return this->flowpipe[i];
   }
-  cout << "Flowpipe::get : i must be between 0 and the flowpipe size";
+  std::cerr << "Flowpipe::get : i must be between 0 and the flowpipe size"
+            << std::endl;
   exit(EXIT_FAILURE);
 }
 

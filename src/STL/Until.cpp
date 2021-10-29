@@ -28,6 +28,8 @@ Until::Until(const std::shared_ptr<STL> f1, const int begin, const int end,
  */
 void Until::print() const
 {
+  using namespace std;
+
   cout << "(";
   this->f1->print();
   cout << ") until_" << this->t_itvl << " (";

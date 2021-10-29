@@ -16,9 +16,7 @@
 #include <stdio.h>
 #include <vector>
 
-using namespace std;
-using namespace GiNaC;
-
+// TODO: Move this enum to STL.h
 enum formula_type {
   ATOM,
   CONJUNCTION,
@@ -36,13 +34,13 @@ struct sapo_opt {
   unsigned char trans; // transformation (0: static, 1: dynamic)
   double alpha;        // decomposition weight
   unsigned int decomp; // number of decompositions (0: none, >0: yes)
-  string plot;         // the name of the file were to plot the reach set
+  std::string plot;    // the name of the file were to plot the reach set
   bool verbose;        // display info
 };
 
 struct poly_values { // numerical values for polytopes
-  vector<double> base_vertex;
-  vector<double> lenghts;
+  std::vector<double> base_vertex;
+  std::vector<double> lenghts;
 };
 
 #endif /* COMMON_HPP_ */

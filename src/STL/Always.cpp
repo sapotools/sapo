@@ -25,6 +25,8 @@ Always::Always(const int begin, const int end, const std::shared_ptr<STL> f):
  */
 void Always::print() const
 {
+  using namespace std;
+
   cout << "always_" << this->t_itvl << " (";
   this->f->print();
   cout << ")";
