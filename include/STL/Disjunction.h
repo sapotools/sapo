@@ -11,21 +11,27 @@
 
 #include "STL.h"
 
-class Disjunction : public STL {
+class Disjunction : public STL
+{
 
 private:
-	const std::shared_ptr<STL> f1, f2;	// subformulas
+  const std::shared_ptr<STL> f1, f2; // subformulas
 
 public:
+  Disjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2);
 
-	Disjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2);
+  const std::shared_ptr<STL> getLeftSubFormula() const
+  {
+    return f1;
+  }
+  const std::shared_ptr<STL> getRightSubFormula() const
+  {
+    return f2;
+  }
 
-	inline const std::shared_ptr<STL> getLeftSubFormula() const {return f1;}
-	inline const std::shared_ptr<STL> getRightSubFormula() const {return f2;}
+  void print() const;
 
-	void print() const;
-
-	~Disjunction();
+  ~Disjunction();
 };
 
 #endif /* CONJUNCTION_H_ */

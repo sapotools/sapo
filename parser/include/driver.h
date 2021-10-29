@@ -1,12 +1,11 @@
 #ifndef DRIVER_H
-# define DRIVER_H
-# include <string>
-# include <map>
-# include "parser.h"
+#define DRIVER_H
+#include "parser.h"
+#include <map>
+#include <string>
 
 // Give Flex the prototype of yylex we want ...
-# define YY_DECL \
-  yy::parser::symbol_type yylex (driver& drv)
+#define YY_DECL yy::parser::symbol_type yylex(driver &drv)
 // ... and declare it for the parser's sake.
 YY_DECL;
 
@@ -20,7 +19,7 @@ public:
   AbsSyn::InputData data;
 
   // Run the parser on file F.  Return 0 on success.
-  int parse (const std::string& f);
+  int parse(const std::string &f);
   // The name of the file being parsed.
   std::string file;
   // Whether to generate parser debug traces.

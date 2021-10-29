@@ -10,14 +10,18 @@
 
 int Atom::num_of_atoms = 0;
 
- /**
-  * Constructor that instantiates a atomic predicate
-  *
-  * @param[in] predicate a symbolic expression
-  * @param[in] id an identifier for the atomic formula
-  */
-Atom::Atom(const ex& predicate):STL(ATOM), predicate(predicate), id(this->num_of_atoms++) {}
+/**
+ * Constructor that instantiates a atomic predicate
+ *
+ * @param[in] predicate a symbolic expression
+ * @param[in] id an identifier for the atomic formula
+ */
+Atom::Atom(const ex &predicate):
+    STL(ATOM), predicate(predicate), id(this->num_of_atoms++)
+{
+}
 
-Atom::~Atom() {
-	// TODO Auto-generated destructor stub
+Atom::~Atom()
+{
+  // TODO Auto-generated destructor stub
 }

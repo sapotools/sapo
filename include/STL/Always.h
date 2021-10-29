@@ -12,23 +12,29 @@
 #include "STL.h"
 #include "TimeInterval.h"
 
-class Always : public STL {
+class Always : public STL
+{
 
 private:
-
-	const std::shared_ptr<STL> f;	// subformula
-	TimeInterval t_itvl;			// temporal formula bounds
+  const std::shared_ptr<STL> f; // subformula
+  TimeInterval t_itvl;          // temporal formula bounds
 
 public:
-	Always(const int begin, const int end, const std::shared_ptr<STL> f);
+  Always(const int begin, const int end, const std::shared_ptr<STL> f);
 
-	inline const std::shared_ptr<STL> getSubFormula() const { return this->f; }
+  const std::shared_ptr<STL> getSubFormula() const
+  {
+    return this->f;
+  }
 
-	inline const TimeInterval& time_bounds() const { return t_itvl; }
+  const TimeInterval &time_bounds() const
+  {
+    return t_itvl;
+  }
 
-	void print() const;
+  void print() const;
 
-	virtual ~Always();
+  virtual ~Always();
 };
 
 #endif /* ALWAYS_H */

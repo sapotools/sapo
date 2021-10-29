@@ -16,20 +16,23 @@
  * @param[in] end is the end of temporal interval
  * @param[in] f2 right subformula
  */
-Until::Until(const std::shared_ptr<STL> f1, const int begin, const int end, 
-			 const std::shared_ptr<STL> f2): 
-	STL(UNTIL), f1(f1), f2(f2), t_itvl(begin,end) {}
+Until::Until(const std::shared_ptr<STL> f1, const int begin, const int end,
+             const std::shared_ptr<STL> f2):
+    STL(UNTIL),
+    f1(f1), f2(f2), t_itvl(begin, end)
+{
+}
 
 /**
  * Print the formula
  */
-void Until::print() const {
-	cout<<"(";
-	this->f1->print();
-	cout<<") until_"<< this->t_itvl <<" (";
-	this->f2->print();
-	cout<<")";
+void Until::print() const
+{
+  cout << "(";
+  this->f1->print();
+  cout << ") until_" << this->t_itvl << " (";
+  this->f2->print();
+  cout << ")";
 }
 
-Until::~Until() 
-{}
+Until::~Until() {}

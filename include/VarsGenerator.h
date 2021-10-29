@@ -13,29 +13,45 @@
 #include "Common.h"
 #include "LinearSystem.h"
 
-class VarsGenerator {
+class VarsGenerator
+{
 
 private:
-	unsigned int dim;
+  unsigned int dim;
 
-	lst qs;	// base vertex
-	lst as; // alphas (free variables)
-	lst bs; // betas (lenghts)
-	lst ls; // directions (lambdas)
-	vector<lst> us; // genertor versors
+  lst qs;         // base vertex
+  lst as;         // alphas (free variables)
+  lst bs;         // betas (lenghts)
+  lst ls;         // directions (lambdas)
+  vector<lst> us; // genertor versors
 
 public:
-	VarsGenerator(const unsigned int dim);
+  VarsGenerator(const unsigned int dim);
 
-	inline const lst& getBaseVertex() const { return this->qs; };
-	inline const lst& getFreeVars() const { return this->as; };
-	inline const lst& getLenghts() const { return this->bs; };
-	inline const lst& getDirections() const { return this->ls; };
-	inline const vector<lst>& getVersors() const { return this->us; };
+  const lst &getBaseVertex() const
+  {
+    return this->qs;
+  };
+  const lst &getFreeVars() const
+  {
+    return this->as;
+  };
+  const lst &getLenghts() const
+  {
+    return this->bs;
+  };
+  const lst &getDirections() const
+  {
+    return this->ls;
+  };
+  const vector<lst> &getVersors() const
+  {
+    return this->us;
+  };
 
-	LinearSystem genBox(const vector<double>& b) const;
+  LinearSystem genBox(const vector<double> &b) const;
 
-	virtual ~VarsGenerator();
+  virtual ~VarsGenerator();
 };
 
 #endif /* VARSGENERATOR_H_*/

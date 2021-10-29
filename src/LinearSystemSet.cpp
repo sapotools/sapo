@@ -22,11 +22,11 @@ LinearSystemSet::LinearSystemSet(): set() {}
  *
  * @param[in] ls element of the set
  */
-LinearSystemSet::LinearSystemSet(const LinearSystem& ls)
+LinearSystemSet::LinearSystemSet(const LinearSystem &ls)
 {
-	if (!ls.isEmpty()) {
-		this->set.push_back(std::make_shared<LinearSystem>(ls.get_simplified()));
-	}
+  if (!ls.isEmpty()) {
+    this->set.push_back(std::make_shared<LinearSystem>(ls.get_simplified()));
+  }
 }
 
 /**
@@ -36,10 +36,10 @@ LinearSystemSet::LinearSystemSet(const LinearSystem& ls)
  */
 LinearSystemSet::LinearSystemSet(pointer ls)
 {
-	if (!ls->isEmpty()) {
-		ls->simplify();
-		this->set.push_back(ls);
-	}
+  if (!ls->isEmpty()) {
+    ls->simplify();
+    this->set.push_back(ls);
+  }
 }
 
 /**
@@ -48,12 +48,12 @@ LinearSystemSet::LinearSystemSet(pointer ls)
  * @param[in] orig a linear system
  */
 
-LinearSystemSet::LinearSystemSet(LinearSystem&& ls)
+LinearSystemSet::LinearSystemSet(LinearSystem &&ls)
 {
-	if (!ls.isEmpty()) {
-		ls.simplify();
-		this->set.push_back(std::make_shared<LinearSystem>(ls));
-	}
+  if (!ls.isEmpty()) {
+    ls.simplify();
+    this->set.push_back(std::make_shared<LinearSystem>(ls));
+  }
 }
 
 /**
@@ -61,13 +61,13 @@ LinearSystemSet::LinearSystemSet(LinearSystem&& ls)
  *
  * @param[in] set vector of linear systems
  */
-LinearSystemSet::LinearSystemSet(const container& set)
+LinearSystemSet::LinearSystemSet(const container &set)
 {
-	for (unsigned int i=0; i<set.size(); i++) {
-		if (!set[i]->isEmpty()) {
-			this->set.push_back(set[i]);
-		}
-	}
+  for (unsigned int i = 0; i < set.size(); i++) {
+    if (!set[i]->isEmpty()) {
+      this->set.push_back(set[i]);
+    }
+  }
 }
 
 /**
@@ -75,11 +75,11 @@ LinearSystemSet::LinearSystemSet(const container& set)
  *
  * @param[in] orig a linear system set
  */
-LinearSystemSet::LinearSystemSet(const LinearSystemSet& orig)
+LinearSystemSet::LinearSystemSet(const LinearSystemSet &orig)
 {
-	for (auto it=orig.set.cbegin(); it!=orig.set.cend(); ++it) {
-			this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
-	}
+  for (auto it = orig.set.cbegin(); it != orig.set.cend(); ++it) {
+    this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
+  }
 }
 
 /*
@@ -95,18 +95,18 @@ LinearSystemSet::LinearSystemSet(LinearSystemSet&& orig)
  * @returns the current collection of linear systems
  */
 
-bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet& S)
+bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
 {
 
 #if MINIMIZE_LS_SET_REPRESENTATION
-	for (LinearSystemSet::const_iterator it=S.cbegin(); it!=S.cend(); ++it) {
-		if (set.satisfies(*it)) {
-			return true;
-		}
-	}
+  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
+    if (set.satisfies(*it)) {
+      return true;
+    }
+  }
 #endif
 
-	return false;
+  return false;
 }
 
 /**
@@ -114,9 +114,9 @@ bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet& S)
  *
  * @param[in] ls linear system to add
  */
-LinearSystemSet& LinearSystemSet::add(const LinearSystem& ls)
+LinearSystemSet &LinearSystemSet::add(const LinearSystem &ls)
 {
-	return this->add(std::make_shared<LinearSystem>(ls));
+  return this->add(std::make_shared<LinearSystem>(ls));
 }
 
 /**
@@ -124,9 +124,9 @@ LinearSystemSet& LinearSystemSet::add(const LinearSystem& ls)
  *
  * @param[in] ls linear system to be added
  */
-LinearSystemSet& LinearSystemSet::add(LinearSystem&& ls)
+LinearSystemSet &LinearSystemSet::add(LinearSystem &&ls)
 {
-	return this->add(std::make_shared<LinearSystem>(ls));
+  return this->add(std::make_shared<LinearSystem>(ls));
 }
 
 /**
@@ -134,38 +134,38 @@ LinearSystemSet& LinearSystemSet::add(LinearSystem&& ls)
  *
  * @param[in] ls linear system to be added
  */
-LinearSystemSet& LinearSystemSet::add(pointer ls)
+LinearSystemSet &LinearSystemSet::add(pointer ls)
 {
-	if (size()!=0 && set[0]->dim()!=ls->dim()) {
-		std::cerr << "Adding to a linear system set a "
-				  << "linear system having a different dimension" << std::endl;
-	}
+  if (size() != 0 && set[0]->dim() != ls->dim()) {
+    std::cerr << "Adding to a linear system set a "
+              << "linear system having a different dimension" << std::endl;
+  }
 
-	if ((!ls->isEmpty()) && (!satisfiesOneIn(*ls, *this))) {
-		this->set.push_back(ls);
-	}
+  if ((!ls->isEmpty()) && (!satisfiesOneIn(*ls, *this))) {
+    this->set.push_back(ls);
+  }
 
-	return *this;
+  return *this;
 }
 
-LinearSystemSet& LinearSystemSet::simplify()
+LinearSystemSet &LinearSystemSet::simplify()
 {
-	for (auto it=std::begin(set); it!=std::end(set); ++it) {
-		(*it)->simplify();
-	}
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    (*it)->simplify();
+  }
 
-	return *this;
+  return *this;
 }
 
 LinearSystemSet LinearSystemSet::get_a_finer_covering() const
 {
-	LinearSystemSet covering;
+  LinearSystemSet covering;
 
-	for (auto it=std::begin(set); it!=std::end(set); ++it) {
-		covering.unionWith((*it)->get_a_finer_covering());
-	}
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    covering.unionWith((*it)->get_a_finer_covering());
+  }
 
-	return covering;
+  return covering;
 }
 
 /**
@@ -176,21 +176,22 @@ LinearSystemSet LinearSystemSet::get_a_finer_covering() const
  * @return the linear system that represents the set of values satisfying both
  *          the parameters.
  */
-LinearSystemSet intersection(const LinearSystemSet& A, const LinearSystemSet& B)
+LinearSystemSet intersection(const LinearSystemSet &A,
+                             const LinearSystemSet &B)
 {
-	LinearSystemSet result;
+  LinearSystemSet result;
 
-	for (auto t_it=std::begin(A.set); t_it!=std::end(A.set); ++t_it) {
-		for (auto s_it=std::begin(B.set); s_it!=std::end(B.set); ++s_it) {
-			LinearSystem I = intersection(*(*t_it), *(*s_it));
+  for (auto t_it = std::begin(A.set); t_it != std::end(A.set); ++t_it) {
+    for (auto s_it = std::begin(B.set); s_it != std::end(B.set); ++s_it) {
+      LinearSystem I = intersection(*(*t_it), *(*s_it));
 
-			if (!I.isEmpty()) {
-				result.add(I);
-			}
-		}
-	}
+      if (!I.isEmpty()) {
+        result.add(I);
+      }
+    }
+  }
 
-	return result;
+  return result;
 }
 
 /**
@@ -198,22 +199,22 @@ LinearSystemSet intersection(const LinearSystemSet& A, const LinearSystemSet& B)
  *
  * @param[in] A is a linear system set
  * @param[in] B is a linear system
- * @return the linear system set that represents the set of values satisfying both
- *          the parameters
+ * @return the linear system set that represents the set of values satisfying
+ * both the parameters
  */
-LinearSystemSet intersection(const LinearSystemSet& A, const LinearSystem& B)
+LinearSystemSet intersection(const LinearSystemSet &A, const LinearSystem &B)
 {
-	LinearSystemSet result;
+  LinearSystemSet result;
 
-	for (auto t_it=std::begin(A.set); t_it!=std::end(A.set); ++t_it) {
-		LinearSystem I = intersection(*(*t_it), B);
+  for (auto t_it = std::begin(A.set); t_it != std::end(A.set); ++t_it) {
+    LinearSystem I = intersection(*(*t_it), B);
 
-		if (!I.isEmpty()) {
-			result.add(I);
-		}
-	}
+    if (!I.isEmpty()) {
+      result.add(I);
+    }
+  }
 
-	return result;
+  return result;
 }
 
 /**
@@ -222,19 +223,19 @@ LinearSystemSet intersection(const LinearSystemSet& A, const LinearSystem& B)
  * @param[in] LSset set to union with
  * @returns merged sets
  */
-LinearSystemSet& LinearSystemSet::unionWith(const LinearSystemSet& LSset)
+LinearSystemSet &LinearSystemSet::unionWith(const LinearSystemSet &LSset)
 {
-	for (container::const_iterator it=std::cbegin(LSset.set);
-	                         it!=std::cend(LSset.set); ++it) {
-		this->add(std::make_shared<LinearSystem>(*(*it)));
-	}
+  for (container::const_iterator it = std::cbegin(LSset.set);
+       it != std::cend(LSset.set); ++it) {
+    this->add(std::make_shared<LinearSystem>(*(*it)));
+  }
 
-	return *this;
+  return *this;
 }
 
-LinearSystemSet unionset(const LinearSystemSet& A, const LinearSystemSet& B)
+LinearSystemSet unionset(const LinearSystemSet &A, const LinearSystemSet &B)
 {
-	return LinearSystemSet(A).unionWith(B);
+  return LinearSystemSet(A).unionWith(B);
 }
 
 /**
@@ -243,14 +244,14 @@ LinearSystemSet unionset(const LinearSystemSet& A, const LinearSystemSet& B)
  * @param[in] LSset set to union with
  * @returns merged sets
  */
-LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet&& LSset)
+LinearSystemSet &LinearSystemSet::unionWith(LinearSystemSet &&LSset)
 {
-	for (container::iterator it=std::begin(LSset.set);
-	                         it!=std::end(LSset.set); ++it) {
-		this->add(*it);
-	}
+  for (container::iterator it = std::begin(LSset.set);
+       it != std::end(LSset.set); ++it) {
+    this->add(*it);
+  }
 
-	return *this;
+  return *this;
 }
 
 /**
@@ -261,13 +262,13 @@ LinearSystemSet& LinearSystemSet::unionWith(LinearSystemSet&& LSset)
  * @return the linear system set that represents the set of values satisfying
  *          at least one of the parameters.
  */
-LinearSystemSet unionset(const LinearSystem& A, const LinearSystem& B)
+LinearSystemSet unionset(const LinearSystem &A, const LinearSystem &B)
 {
-	LinearSystemSet result(A);
+  LinearSystemSet result(A);
 
-	result.add(B);
+  result.add(B);
 
-	return result;
+  return result;
 }
 
 /**
@@ -278,21 +279,22 @@ LinearSystemSet unionset(const LinearSystem& A, const LinearSystem& B)
  * @returns merged sets
  */
 /* // TODO: remove this code
-LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const unsigned int bound) {
+LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset,
+const unsigned int bound) {
 
-	if (this->size() > bound) {
-		std::cerr << "LinearSystemSet::boundedUnionWith : size of actual box larger than bound" << std::endl;
-		exit (EXIT_FAILURE);
-	}
+        if (this->size() > bound) {
+                std::cerr << "LinearSystemSet::boundedUnionWith : size of
+actual box larger than bound" << std::endl; exit (EXIT_FAILURE);
+        }
 
-	int iters = min(bound-this->size(), (unsigned int)LSset->size());
+        int iters = min(bound-this->size(), (unsigned int)LSset->size());
 
-	container::iterator it = std::begin(set);
-	for (int i=0; i<iters&&it!=std::end(set); i++) {
-		this->set.push_back(*it);
-	}
+        container::iterator it = std::begin(set);
+        for (int i=0; i<iters&&it!=std::end(set); i++) {
+                this->set.push_back(*it);
+        }
 
-	return *this;
+        return *this;
 }
 */
 
@@ -301,23 +303,23 @@ LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, const
  *
  * @returns sum of bounding boxes
  */
-double LinearSystemSet::boundingVol() const{
+double LinearSystemSet::boundingVol() const
+{
 
-	double vol = 0;
-	for (unsigned int i=0; i<this->size(); i++) {
-		vol = vol + this->set[i]->volBoundingBox();
-	}
-	return vol;
-
+  double vol = 0;
+  for (unsigned int i = 0; i < this->size(); i++) {
+    vol = vol + this->set[i]->volBoundingBox();
+  }
+  return vol;
 }
 
 unsigned int LinearSystemSet::dim() const
 {
-	if (this->set.empty()) {
-		return 0;
-	}
+  if (this->set.empty()) {
+    return 0;
+  }
 
-	return (this->set[0])->dim();
+  return (this->set[0])->dim();
 }
 
 /**
@@ -325,25 +327,27 @@ unsigned int LinearSystemSet::dim() const
  *
  * @returns true if the set is empty
  */
-bool LinearSystemSet::isEmpty() const{
-	if (this->set.empty()) {
-		return true;
-	}
+bool LinearSystemSet::isEmpty() const
+{
+  if (this->set.empty()) {
+    return true;
+  }
 
-	for (auto it=std::begin(set); it!=std::end(set); ++it) {
-		if (!(*it)->isEmpty()) {
-			return false;
-		}
-	}
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    if (!(*it)->isEmpty()) {
+      return false;
+    }
+  }
 
-	return true;
+  return true;
 }
 
 /**
  * Print the set of linear systems
  */
-void LinearSystemSet::print() const {
-	std::cout << *this << std::endl;
+void LinearSystemSet::print() const
+{
+  std::cout << *this << std::endl;
 }
 
 /**
@@ -352,30 +356,31 @@ void LinearSystemSet::print() const {
  * @param[in] os is the output stream
  * @param[in] color color of the polytope to plot
  */
-void LinearSystemSet::plotRegion(std::ostream& os, const char color) const
+void LinearSystemSet::plotRegion(std::ostream &os, const char color) const
 {
-	for (auto it=std::begin(set); it!=std::end(set); ++it) {
-		(*it)->plotRegion(os, color);
-	}
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    (*it)->plotRegion(os, color);
+  }
 }
 
-LinearSystemSet::~LinearSystemSet() {
-	// TODO Auto-generated destructor stub
+LinearSystemSet::~LinearSystemSet()
+{
+  // TODO Auto-generated destructor stub
 }
 
-std::ostream& operator<<(std::ostream& out, const LinearSystemSet& ls)
+std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
 {
-	if ( ls.size() == 0) {
-		out<<"---- empty set ----" << endl;
-	}else{
-		out << "--------------";
-		const LinearSystemSet::const_iterator last(ls.cend()-1);
-		for (auto it=ls.cbegin(); it!=last; ++it) {
-			out << endl << *it  << endl;
-		}
+  if (ls.size() == 0) {
+    out << "---- empty set ----" << endl;
+  } else {
+    out << "--------------";
+    const LinearSystemSet::const_iterator last(ls.cend() - 1);
+    for (auto it = ls.cbegin(); it != last; ++it) {
+      out << endl << *it << endl;
+    }
 
-		out << endl << *last;
-	}
+    out << endl << *last;
+  }
 
-	return out;
+  return out;
 }

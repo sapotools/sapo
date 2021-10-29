@@ -12,25 +12,25 @@
 #include "Common.h"
 #include <string.h>
 
-class STL {
-	const formula_type type;
+class STL
+{
+  const formula_type type;
+
 protected:
+  int options;
 
-	int options;
-
-	STL(const formula_type type);
+  STL(const formula_type type);
 
 public:
+  const STL &set_options(const int options);
 
-	const STL& set_options(const int options);
+  const formula_type &getType() const
+  {
+    return type;
+  }
 
-	inline const formula_type& getType() const 
-	{ 
-		return type; 
-	}
-
-	virtual void print() const = 0;
-	virtual ~STL();
+  virtual void print() const = 0;
+  virtual ~STL();
 };
 
 #endif /* STL_H_ */

@@ -31,7 +31,7 @@ link_directories( /usr/local/lib )
 # end brew support
 
 
-file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/STL/*.cpp ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
+file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
@@ -41,6 +41,19 @@ set(CMAKE_CXX_FLAGS "-O2 -Wall -Werror")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
+
+find_program( CLANG_FORMAT_EXE NAMES "clang-format")
+if(NOT CLANG_FORMAT_EXE)
+   message(STATUS "clang-format not found.")
+else()
+   message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}")
+endif()
+
+if(CLANG_FORMAT_EXE)
+   file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/include/*.h ${CMAKE_SOURCE_DIR}/parser/include/*.h)
+
+   add_custom_target( format-code COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${SOURCES} ${HEADERS} )
+endif()
 
 execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 

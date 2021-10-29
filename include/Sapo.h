@@ -10,48 +10,62 @@
 #ifndef SAPO_H_
 #define SAPO_H_
 
-#include "Common.h"
-#include "BaseConverter.h"
-#include "STL.h"
+#include "Always.h"
 #include "Atom.h"
+#include "BaseConverter.h"
+#include "Bundle.h"
+#include "Common.h"
 #include "Conjunction.h"
 #include "Disjunction.h"
-#include "Always.h"
 #include "Eventually.h"
-#include "Until.h"
+#include "Flowpipe.h"
 #include "LinearSystem.h"
 #include "LinearSystemSet.h"
-#include "Bundle.h"
 #include "Model.h"
-#include "Flowpipe.h"
+#include "STL.h"
+#include "Until.h"
 
-class Sapo {
+class Sapo
+{
 
 private:
-	const lst& dyns;			// dynamics of the system
-	const lst& vars;			// variables of the system
-	const lst& params;			// parameters of the system
-	const sapo_opt options;	// options
-	map< vector<int>,pair<lst,lst> > reachControlPts;		// symbolic control points
-	map< vector<int>,pair<lst,lst> > synthControlPts;		// symbolic control points
+  const lst &dyns;                                  // dynamics of the system
+  const lst &vars;                                  // variables of the system
+  const lst &params;                                // parameters of the system
+  const sapo_opt options;                           // options
+  map<vector<int>, pair<lst, lst>> reachControlPts; // symbolic control points
+  map<vector<int>, pair<lst, lst>> synthControlPts; // symbolic control points
 
-	vector<Bundle*> reachWitDec(Bundle& initSet, int k);	// reachability with template decomposition
-	LinearSystemSet synthesizeSTL(Bundle& reachSet, LinearSystemSet& parameterSet, const std::shared_ptr<STL> formula);
-	LinearSystemSet refineParameters(Bundle& reachSet, LinearSystemSet& parameterSet, const std::shared_ptr<Atom> formula);
-	LinearSystemSet synthesizeUntil(Bundle& reachSet, LinearSystemSet& parameterSet,
-									const std::shared_ptr<Until> formula, const int time);
-	LinearSystemSet synthesizeAlways(Bundle& reachSet, LinearSystemSet& parameterSet,
-									 const std::shared_ptr<Always> formula, const int time);
+  vector<Bundle *>
+  reachWitDec(Bundle &initSet,
+              int k); // reachability with template decomposition
+  LinearSystemSet synthesizeSTL(Bundle &reachSet,
+                                LinearSystemSet &parameterSet,
+                                const std::shared_ptr<STL> formula);
+  LinearSystemSet refineParameters(Bundle &reachSet,
+                                   LinearSystemSet &parameterSet,
+                                   const std::shared_ptr<Atom> formula);
+  LinearSystemSet synthesizeUntil(Bundle &reachSet,
+                                  LinearSystemSet &parameterSet,
+                                  const std::shared_ptr<Until> formula,
+                                  const int time);
+  LinearSystemSet synthesizeAlways(Bundle &reachSet,
+                                   LinearSystemSet &parameterSet,
+                                   const std::shared_ptr<Always> formula,
+                                   const int time);
 
 public:
-	Sapo(Model *model, sapo_opt options);
+  Sapo(Model *model, sapo_opt options);
 
-	Flowpipe reach(const Bundle& initSet, unsigned int k);								// reachability
-	Flowpipe reach(const Bundle& initSet, LinearSystemSet& paraSet, unsigned int k);		// parameteric reachability
-	LinearSystemSet synthesize(Bundle& reachSet, LinearSystemSet& parameterSet, 
-	                           const std::shared_ptr<STL> formula, const unsigned int max_splits=4);	// parameter synthesis
-	
-	virtual ~Sapo();
+  Flowpipe reach(const Bundle &initSet, unsigned int k); // reachability
+  Flowpipe reach(const Bundle &initSet, LinearSystemSet &paraSet,
+                 unsigned int k); // parameteric reachability
+  LinearSystemSet synthesize(Bundle &reachSet, LinearSystemSet &parameterSet,
+                             const std::shared_ptr<STL> formula,
+                             const unsigned int max_splits
+                             = 4); // parameter synthesis
+
+  virtual ~Sapo();
 };
 
 #endif /* SAPO_H_ */
