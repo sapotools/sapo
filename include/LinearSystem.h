@@ -113,6 +113,20 @@ public:
   LinearSystem(const GiNaC::lst &vars, const GiNaC::lst &constraints);
 
   /**
+   * Deep assignament method
+   *
+   * @param[in] orig is the original model of the linear system
+   * @return a reference to the modified object
+   */
+  LinearSystem& operator=(const LinearSystem& orig)
+  {
+    A = orig.A;
+    b = orig.b;
+
+    return *this;
+  }
+
+  /**
    * Return the template matrix
    *
    * @return template matrix
@@ -290,7 +304,7 @@ public:
    *
    * @return volume of the bounding box
    */
-  double volBoundingBox();
+  double volBoundingBox() const;
 
   void plotRegion(std::ostream &os = std::cout, const char color = ' ') const;
 

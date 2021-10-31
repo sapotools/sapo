@@ -9,6 +9,8 @@
 
 #include "Sapo.h"
 
+#include <thread>
+
 /**
  * Constructor that instantiates Sapo
  *
@@ -33,7 +35,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
   using namespace std;
   using namespace GiNaC;
 
-  map<vector<int>, pair<lst, lst>> controlPts;
+  ControlPointStorage controlPts;
 
   Flowpipe flowpipe(initSet.getDirectionMatrix());
 
@@ -84,8 +86,6 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
   using namespace std;
   using namespace GiNaC;
 
-  map<vector<int>, pair<lst, lst>> controlPts;
-
   cout << "Parameter set" << endl
        << paraSet << endl
        << endl
@@ -97,6 +97,20 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
   }
 
   std::vector<Bundle> cbundles(paraSet.size(), initSet);
+  std::vector<ControlPointStorage> controlPtsVect(paraSet.size());
+
+  auto update_bundle = [](const Sapo& obj, Bundle& bundle, 
+                   const LinearSystem& paraSet, ControlPointStorage& controlPts)
+  {
+      bundle = bundle.transform(
+          obj.vars, obj.params, obj.dyns, paraSet, controlPts,
+          obj.options.trans); // transform it
+
+      if (obj.options.decomp > 0) { // eventually decompose it
+        bundle = bundle.decompose(obj.options.alpha, obj.options.decomp);
+      }
+  };
+
   LinearSystemSet Xls(
       std::make_shared<LinearSystem>(initSet.getLinearSystem()));
 
@@ -109,16 +123,25 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
 
     Xls = LinearSystemSet();
 
-    LinearSystemSet::iterator pset_it(paraSet.begin());
+    auto pset_it = paraSet.begin();
+    std::vector<std::thread> threads;
     for (unsigned int b_idx = 0; b_idx < cbundles.size(); b_idx++) {
-      cbundles[b_idx] = cbundles[b_idx].transform(
-          this->vars, this->params, this->dyns, *(pset_it++), controlPts,
-          this->options.trans); // transform it
+      /*
+      threads.push_back(std::thread(update_bundle, std::ref(*this),
+                        std::ref(cbundles[b_idx]), std::ref(*(pset_it++)), 
+                        std::ref(controlPtsVect[b_idx])));
+      //*/
+      update_bundle(std::ref(*this), std::ref(cbundles[b_idx]), std::ref(*(pset_it++)), 
+                        std::ref(controlPtsVect[b_idx]));
+      //*/
+    }
 
-      if (this->options.decomp > 0) { // eventually decompose it
-        cbundles[b_idx] = cbundles[b_idx].decompose(this->options.alpha,
-                                                    this->options.decomp);
-      }
+    for (std::thread & th : threads) {
+      if (th.joinable())
+          th.join();
+    }
+    
+    for (unsigned int b_idx = 0; b_idx < cbundles.size(); b_idx++) {
       Xls.add(cbundles[b_idx].getLinearSystem());
     }
 
@@ -135,7 +158,61 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
 }
 
 /**
- * Parameter synthesis procedure
+ * Parameter synthesis 
+ * 
+ * This method splits synthesis problem whose parameter sets are represented by 
+ * LinearSystemSet in sub-problems whose parameters set can be represented by
+ * LinearSystem and solves them.
+ *
+ * @param[in] reachSet bundle with the initial set
+ * @param[in] parameterSet set of parameters
+ * @param[in] formula STL contraint to impose over the model
+ * @returns refined sets of parameters
+ */
+LinearSystemSet Sapo::synthesize_unpack(Bundle &initialSet,
+                                 LinearSystemSet &parameterSet,
+                                 const std::shared_ptr<STL> formula)
+{
+  LinearSystemSet result;
+
+  auto synthesize_proc = [](Sapo& obj, Bundle initialSet, LinearSystem &parameterSet,
+                   const std::shared_ptr<STL>& formula, LinearSystemSet& result)
+  {
+      result = obj.synthesizeSTL(initialSet, parameterSet, formula);
+  };
+
+  std::vector<LinearSystemSet> results(parameterSet.size());
+  std::vector<std::thread> threads;
+  unsigned int i=0;
+  for (LinearSystemSet::iterator pset_it = parameterSet.begin();
+        pset_it != parameterSet.end(); ++pset_it) {
+    /*
+    threads.push_back(std::thread(synthesize_proc, std::ref(*this), initialSet, std::ref(*pset_it),
+                      std::ref(formula), std::ref(results[i++])));
+    /*/
+    synthesize_proc(std::ref(*this), initialSet, std::ref(*pset_it),
+                      std::ref(formula), std::ref(results[i++]));
+    //*/
+  }
+
+  for (std::thread & th : threads) {
+    if (th.joinable()) {
+        th.join();
+    }
+  }
+
+  for (auto r_it=std::begin(results); r_it!=std::end(results); ++r_it) {
+    // TODO: the parameter can be reversed in the result avoiding the copy
+    result.unionWith(*r_it);
+  }
+
+  result.simplify();
+
+  return result;
+}
+
+/**
+ * Parameter synthesis
  *
  * @param[in] reachSet bundle with the initial set
  * @param[in] parameterSet set of sets of parameters
@@ -161,13 +238,13 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
 
   unsigned int num_of_splits = 0;
   LinearSystemSet splitParamSet = parameterSet;
-  LinearSystemSet res = this->synthesizeSTL(reachSet, parameterSet, formula);
+  LinearSystemSet res = this->synthesize_unpack(reachSet, parameterSet, formula);
 
   while (res.isEmpty() && num_of_splits++ < max_splits) {
     parameterSet = splitParamSet.get_a_finer_covering();
     splitParamSet = parameterSet;
 
-    res = this->synthesizeSTL(reachSet, parameterSet, formula);
+    res = this->synthesize_unpack(reachSet, parameterSet, formula);
   }
 
   res.simplify();
@@ -186,7 +263,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @returns refined sets of parameters
  */
 LinearSystemSet Sapo::synthesizeSTL(Bundle &reachSet,
-                                    LinearSystemSet &parameterSet,
+                                    LinearSystem &parameterSet,
                                     const std::shared_ptr<STL> formula)
 {
   switch (formula->getType()) {
@@ -249,12 +326,12 @@ LinearSystemSet Sapo::synthesizeSTL(Bundle &reachSet,
  * Parameter synthesis w.r.t. an atomic formula
  *
  * @param[in] reachSet bundle with the initial set
- * @param[in] parameterSet set of sets of parameters
+ * @param[in] parameterSet set of parameters
  * @param[in] sigma STL atomic formula
  * @returns refined sets of parameters
  */
 LinearSystemSet Sapo::refineParameters(Bundle &reachSet,
-                                       LinearSystemSet &parameterSet,
+                                       LinearSystem &parameterSet,
                                        const std::shared_ptr<Atom> atom)
 {
   using namespace std;
@@ -273,8 +350,8 @@ LinearSystemSet Sapo::refineParameters(Bundle &reachSet,
     lst genFun = P.getGeneratorFunction();
     lst controlPts;
 
-    if (this->synthControlPts.count(key) == 0
-        || (!this->synthControlPts[key].first.is_equal(genFun))) {
+    if (!this->synthControlPts.contains(key)
+        || (!this->synthControlPts.gen_fun_is_equal_to(key, genFun))) {
       // compose f(gamma(x))
       lst sub, fog;
       for (unsigned int j = 0; j < this->vars.nops(); j++) {
@@ -294,11 +371,10 @@ LinearSystemSet Sapo::refineParameters(Bundle &reachSet,
 
       // compute the Bernstein control points
       controlPts = BaseConverter(P.getAlpha(), sofog).getBernCoeffsMatrix();
-      this->synthControlPts[key].first = genFun;
-      this->synthControlPts[key].second = controlPts;
+      this->synthControlPts.set(key, genFun, controlPts);
 
     } else {
-      controlPts = this->synthControlPts[key].second;
+      controlPts = this->synthControlPts.get_ctrl_pts(key);
     }
 
     // substitute numerical values in sofog
@@ -333,13 +409,13 @@ LinearSystemSet Sapo::refineParameters(Bundle &reachSet,
  * Parameter synthesis w.r.t. an until formula
  *
  * @param[in] reachSet bundle with the initial set
- * @param[in] parameterSet set of sets of parameters
+ * @param[in] parameterSet set of parameters
  * @param[in] sigma STL until formula
  * @param[in] time is the time of the current evaluation
  * @returns refined sets of parameters
  */
 LinearSystemSet Sapo::synthesizeUntil(Bundle &reachSet,
-                                      LinearSystemSet &parameterSet,
+                                      LinearSystem &parameterSet,
                                       const std::shared_ptr<Until> formula,
                                       const int time)
 {
@@ -367,7 +443,7 @@ LinearSystemSet Sapo::synthesizeUntil(Bundle &reachSet,
                                  this->reachControlPts, this->options.trans);
 
         // TODO: Check whether the object tmpLSset can be removed
-        LinearSystemSet tmpLSset(*P1_it);
+        LinearSystem tmpLSset(*P1_it);
         result.unionWith(
             synthesizeUntil(newReachSet, tmpLSset, formula, time + 1));
       }
@@ -393,7 +469,7 @@ LinearSystemSet Sapo::synthesizeUntil(Bundle &reachSet,
       Bundle newReachSet
           = reachSet.transform(this->vars, this->params, this->dyns, *P1_it,
                                this->reachControlPts, this->options.trans);
-      LinearSystemSet tmpLSset(*P1_it);
+      LinearSystem tmpLSset(*P1_it);
 
       /* TODO: Add a constructor that copy the parameter set */
       result.unionWith(
@@ -415,12 +491,12 @@ LinearSystemSet Sapo::synthesizeUntil(Bundle &reachSet,
  * Parameter synthesis w.r.t. an always formula
  *
  * @param[in] reachSet bundle with the initial set
- * @param[in] parameterSet set of sets of parameters
+ * @param[in] parameterSet set of parameters
  * @param[in] sigma STL always formula
  * @returns refined sets of parameters
  */
 LinearSystemSet Sapo::synthesizeAlways(Bundle &reachSet,
-                                       LinearSystemSet &parameterSet,
+                                       LinearSystem &parameterSet,
                                        const std::shared_ptr<Always> formula,
                                        const int time)
 {
@@ -435,19 +511,12 @@ LinearSystemSet Sapo::synthesizeAlways(Bundle &reachSet,
   // Always interval far
   if (t_itvl > time) {
     // Reach step wrt to the i-th linear system of parameterSet
-    for (LinearSystemSet::iterator pset_it = parameterSet.begin();
-         pset_it != parameterSet.end(); ++pset_it) {
-
-      Bundle newReachSet
-          = reachSet.transform(this->vars, this->params, this->dyns, *pset_it,
+    Bundle newReachSet
+          = reachSet.transform(this->vars, this->params, this->dyns, parameterSet,
                                this->reachControlPts, options.trans);
-      LinearSystemSet tmpLSset(*pset_it);
+    LinearSystem tmpLSset(parameterSet);
 
-      /* TODO: Add a constructor that copy the parameter set */
-      result.unionWith(
-          synthesizeAlways(newReachSet, tmpLSset, formula, time + 1));
-    }
-    return result;
+    return synthesizeAlways(newReachSet, tmpLSset, formula, time + 1);
   }
 
   // Inside Always interval
@@ -466,7 +535,7 @@ LinearSystemSet Sapo::synthesizeAlways(Bundle &reachSet,
                                  this->reachControlPts, options.trans);
 
         /* TODO: Add a constructor that copy a const parameter set */
-        LinearSystemSet tmpLSset(*P_it);
+        LinearSystem tmpLSset(*P_it);
         result.unionWith(
             synthesizeAlways(newReachSet, tmpLSset, formula, time + 1));
       }

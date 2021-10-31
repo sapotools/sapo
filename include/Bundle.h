@@ -10,20 +10,23 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
+
+#include <cmath>
+
 #include "BaseConverter.h"
 #include "Common.h"
+#include "ControlPointStorage.h"
 #include "LinearSystem.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
 #include "float.h"
-#include <cmath>
+
+class Sapo;
 
 class Bundle
 {
   using Vector = std::vector<double>;
   using Matrix = std::vector<Vector>;
-  using CtrlPointType
-      = std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>;
 
 private:
   unsigned int dim;                // dimension
@@ -134,10 +137,10 @@ public:
   Bundle get_canonical() const;
   Bundle decompose(double alpha, int max_iters);
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                   CtrlPointType &controlPts, int mode) const;
+                   ControlPointStorage &controlPts, int mode) const;
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
                    const GiNaC::lst &f, const LinearSystem &paraSet,
-                   CtrlPointType &controlPts, int mode) const;
+                   ControlPointStorage &controlPts, int mode) const;
 
   Bundle &operator=(Bundle &&);
 
@@ -147,5 +150,10 @@ public:
 };
 
 void swap(Bundle &A, Bundle &B);
+
+inline std::ostream& operator<<(std::ostream& out, const Bundle& bundle)
+{
+  return out << bundle.getLinearSystem();
+}
 
 #endif /* BUNDLE_H_ */

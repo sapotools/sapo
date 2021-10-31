@@ -16,6 +16,7 @@
 #include "Bundle.h"
 #include "Common.h"
 #include "Conjunction.h"
+#include "ControlPointStorage.h"
 #include "Disjunction.h"
 #include "Eventually.h"
 #include "Flowpipe.h"
@@ -33,26 +34,26 @@ private:
   const GiNaC::lst &vars;   // variables of the system
   const GiNaC::lst &params; // parameters of the system
   const sapo_opt options;   // options
-  std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>
-      reachControlPts; // symbolic control points
-  std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>
-      synthControlPts; // symbolic control points
 
-  std::vector<Bundle *>
-  reachWitDec(Bundle &initSet,
-              int k); // reachability with template decomposition
+  // TODO: check whether the following two members are really Sapo properties
+  ControlPointStorage reachControlPts; // symbolic control points
+  ControlPointStorage synthControlPts; // symbolic control points
+
+  std::vector<Bundle *> reachWitDec(Bundle &initSet, int k); // reachability with template decomposition
+  LinearSystemSet synthesize_unpack(Bundle &reachSet, LinearSystemSet &parameterSet,
+                                    const std::shared_ptr<STL> formula);
   LinearSystemSet synthesizeSTL(Bundle &reachSet,
-                                LinearSystemSet &parameterSet,
+                                LinearSystem &parameterSet,
                                 const std::shared_ptr<STL> formula);
   LinearSystemSet refineParameters(Bundle &reachSet,
-                                   LinearSystemSet &parameterSet,
+                                   LinearSystem &parameterSet,
                                    const std::shared_ptr<Atom> formula);
   LinearSystemSet synthesizeUntil(Bundle &reachSet,
-                                  LinearSystemSet &parameterSet,
+                                  LinearSystem &parameterSet,
                                   const std::shared_ptr<Until> formula,
                                   const int time);
   LinearSystemSet synthesizeAlways(Bundle &reachSet,
-                                   LinearSystemSet &parameterSet,
+                                   LinearSystem &parameterSet,
                                    const std::shared_ptr<Always> formula,
                                    const int time);
 

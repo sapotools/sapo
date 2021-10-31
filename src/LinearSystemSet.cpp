@@ -9,8 +9,8 @@
 
 #include "LinearSystemSet.h"
 
-using namespace std;
-using namespace GiNaC;
+#include <thread>
+#include <shared_mutex>
 
 /**
  * Constructor that instantiates an empty set
@@ -82,28 +82,57 @@ LinearSystemSet::LinearSystemSet(const LinearSystemSet &orig)
   }
 }
 
-/*
-LinearSystemSet::LinearSystemSet(LinearSystemSet&& orig)
-{
-
-}
-*/
 
 /**
  * Get the set of linear systems
  *
  * @returns the current collection of linear systems
  */
-
 bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
 {
 
 #if MINIMIZE_LS_SET_REPRESENTATION
-  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
-    if (set.satisfies(*it)) {
-      return true;
+  class ThreadResult {
+    mutable std::shared_timed_mutex mutex;
+    bool value;
+  public:
+    ThreadResult(): value(false)
+    {}
+
+    bool get() const 
+    {
+      std::shared_lock<std::shared_timed_mutex> rlock(mutex, std::defer_lock);
+
+      return value;
     }
+
+    void set(const bool& value) 
+    {
+      std::unique_lock<std::shared_timed_mutex> wlock(mutex, std::defer_lock);
+
+      this->value = value;
+    }
+  };
+
+  ThreadResult result;
+  
+  auto check_and_update = [&result, &set](const LinearSystem& ls) { 
+    if (!result.get() && set.satisfies(ls)) {
+      result.set(true);
+    }
+  };
+
+  std::vector<std::thread> threads;
+  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
+    threads.push_back(std::thread(check_and_update, std::ref(*it)));
   }
+
+  for (std::thread & th : threads) {
+    if (th.joinable())
+        th.join();
+  }
+
+  return result.get();
 #endif
 
   return false;
@@ -148,11 +177,69 @@ LinearSystemSet &LinearSystemSet::add(pointer ls)
   return *this;
 }
 
+// TODO: parallelize the following method
 LinearSystemSet &LinearSystemSet::simplify()
 {
-  for (auto it = std::begin(set); it != std::end(set); ++it) {
-    (*it)->simplify();
+  class ThreadResult {
+    mutable std::shared_timed_mutex mutex;
+    unsigned int non_empty;
+    std::map<unsigned int, unsigned int> new_position;
+  public:
+    ThreadResult(): non_empty(0)
+    {}
+
+    unsigned int get_non_empty() const 
+    {
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex, std::defer_lock);
+
+      return non_empty;
+    }
+
+    void set_non_empty(const unsigned int& index) 
+    {
+      std::unique_lock<std::shared_timed_mutex> write_lock(mutex, std::defer_lock);
+
+      this->new_position[non_empty++] = index;
+    }
+
+    const unsigned int& old_pos(const unsigned int& new_index) const  
+    {
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex, std::defer_lock);
+
+      return this->new_position.at(new_index);
+    }
+  };
+
+  ThreadResult result;
+
+  auto test_emptiness_and_simplify = [&result](LinearSystem& ls, const unsigned int& i) {
+    if (!ls.isEmpty()) {
+      ls.simplify();
+      result.set_non_empty(i);
+    } 
+  };
+
+  std::vector<bool> non_empty_vect(set.size());
+  std::vector<std::thread> threads;
+  for (unsigned int i=0; i<set.size(); ++i) {
+    /*
+    threads.push_back(std::thread(test_emptiness_and_simplify, std::ref(*set[i]), std::ref(i)));
+    /*/
+    test_emptiness_and_simplify(std::ref(*set[i]), std::ref(i));
+    //*/
   }
+
+  for (std::thread & th : threads) {
+    if (th.joinable())
+        th.join();
+  }
+
+  container new_set(result.get_non_empty());
+  for (unsigned int i=0; i<new_set.size(); ++i) {
+    new_set[i] = set[result.old_pos(i)];
+  }
+
+  swap(set, new_set);
 
   return *this;
 }
@@ -370,6 +457,8 @@ LinearSystemSet::~LinearSystemSet()
 
 std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
 {
+  using namespace std;
+
   if (ls.size() == 0) {
     out << "---- empty set ----" << endl;
   } else {

@@ -713,7 +713,7 @@ LinearSystem LinearSystem::get_simplified() const
  *
  * @return volume of the bounding box
  */
-double LinearSystem::volBoundingBox()
+double LinearSystem::volBoundingBox() const
 {
 
   vector<double> zeros(this->dim(), 0);
