@@ -39,8 +39,8 @@ inline GiNaC::lst get_symbol_lst(const char *basename,
  * @param[in] dim dimension of the model/parallelotope
  */
 VarsGenerator::VarsGenerator(const unsigned int dim):
-    dim(dim), qs(get_symbol_lst("q", dim)), as(get_symbol_lst("q", dim)),
-    bs(get_symbol_lst("q", dim)), ls(get_symbol_lst("q", dim))
+    dim(dim), qs(get_symbol_lst("q", dim)), as(get_symbol_lst("a", dim)),
+    bs(get_symbol_lst("b", dim)), ls(get_symbol_lst("l", dim))
 {
   using namespace GiNaC;
 
@@ -48,9 +48,9 @@ VarsGenerator::VarsGenerator(const unsigned int dim):
 
   for (unsigned int i = 0; i < dim; ++i) {
     std::ostringstream oss;
-    oss << "u" << i;
+    oss << "u" << i << "_";
 
-    this->us.push_back(get_symbol_lst(oss.str(), 20));
+    this->us.push_back(get_symbol_lst(oss.str(), dim));
   }
 }
 
