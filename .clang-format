@@ -112,7 +112,7 @@ PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 #ReferenceAlignment: Pointer
 ReflowComments:  true
-SortIncludes:    true
+SortIncludes:    false 
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false

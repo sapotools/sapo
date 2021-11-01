@@ -150,10 +150,11 @@ Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
   }
 
   // generate the variables
-  VarsGenerator varsGen(T[0].size());
+  const size_t& dim= T[0].size();
 
-  this->vars = vector<lst>{varsGen.getBaseVertex(), varsGen.getFreeVars(),
-                           varsGen.getLenghts()};
+  this->vars = vector<lst>{get_symbol_lst("b", dim),  // Base vertex variables
+                           get_symbol_lst("f", dim),  // Free variables
+                           get_symbol_lst("l", dim)}; // Length variables
 
   // initialize orthogonal proximity
   this->Theta = vector<vector<double>>(this->getNumDirs(),

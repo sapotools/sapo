@@ -19,70 +19,79 @@ private:
   const GiNaC::lst &vars; // list of variables
   GiNaC::ex polynomial;   // polynomial in symbolic form
   GiNaC::ex num, denom;   // numerator and denominator for rational polynomials
-  std::vector<int> degrees;      // collection of degrees
-  std::vector<int> shifts;       // degree shifts
+  std::vector<unsigned int> degrees;      // collection of degrees
+  std::vector<unsigned int> shifts;       // degree shifts
   std::vector<GiNaC::ex> coeffs; // list of the coefficients
 
-  void initShifts(); // initialize degrees shifts
-  int multi_index2pos(
-      std::vector<int> multi_index); // convert a multi-index to a position
-  std::vector<int> pos2multi_index(
-      unsigned int position); // convert a position to a multi-index
-  void extractCoeffs(GiNaC::ex polynomial, unsigned int var_idx,
-                     std::vector<int> multi_index); // extract the coefficients
-                                                    // of the polynomial
+  // TODO: complete two the following methods if necessary. Otherwise, remove them
+  // operations on multidimensional matrices
+  std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<unsigned int>>>
+  compressZeroCoeffs() const;
+  void implicitMaxIndex() const;
 
-  int nChoosek(int n, int k); // binomial coefficient
-  int multi_index_nChoosek(
-      std::vector<int> n,
-      std::vector<int> k); // binomial coefficient of multi-indices
-  bool multi_index_leq(std::vector<int> a,
-                       std::vector<int> b); // check whether b dominates a
+  /**
+   * Encode a multi-index into a coefficient position index
+   *
+   * @param[in] multi_index multi-index to convert
+   * @returns converted multi-index
+   */
+  unsigned int multi_index2pos(const  std::vector<unsigned int> &multi_index) const;
 
-  // auxiliary operations
-  int prod(std::vector<int> v, int a,
-           int b);            // productory of element v[a]*...*v[b]
-  int nchoosek(int n, int k); // n choose k
-  std::vector<std::vector<GiNaC::ex>>
-  matrixProd(std::vector<std::vector<GiNaC::ex>> A,
-             std::vector<std::vector<GiNaC::ex>> B); // matrix product
+  /**
+   * Decode a position into a multi-index
+   *
+   * @param[in] position position to convert
+   * @returns converted position
+   */
+  std::vector<unsigned int> pos2multi_index(unsigned int position) const;
 
-  void print(std::vector<std::vector<GiNaC::ex>> M);
+  /**
+   * Initialize the degree shift vector used to extract the multi-indices
+   */
+  void initShifts();
+
+  /**
+   * Recursively extract the coefficients of the polynomial and populate the
+   * vector of coefficients
+   *
+   * @param[in] polynomial polynomial from which to extract the coefficients
+   */
+  void initCoeffs(const GiNaC::ex& polynomial)
+  {
+    initCoeffs(polynomial, 0, 0);
+  }
+
+  /**
+   * Recursively extract the coefficients of the polynomial and populate the
+   * vector of coefficients
+   *
+   * @param[in] polynomial polynomial from which to extract the coefficients
+   * @param[in] var_idx index of the variable to be considered
+   * @param[in] pos is the position of the next coefficients to be initialized
+   */
+  void initCoeffs(const GiNaC::ex& polynomial, unsigned int var_idx,
+                  const unsigned int pos); // extract and initialize 
+                                                  // the coefficients
+                                                  // of the polynomial
 
 public:
   // constructors
   BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &polynomial);
   BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &polynomial,
-                const std::vector<int> &degrees);
+                const std::vector<unsigned int> &degrees);
   BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &num,
                 const GiNaC::ex &denom);
 
   // get Bernstein coefficients
-  GiNaC::ex bernCoeff(std::vector<int> mi);
-  GiNaC::lst getBernCoeffs();
-  GiNaC::lst getRationalBernCoeffs();
-  GiNaC::lst getBernCoeffsMatrix();
-
-  // operations on multi-indices
-  std::vector<int> n2t(std::vector<int> a, std::vector<int> degs);
-  std::vector<int> t2n(std::vector<int> a, std::vector<int> degs);
-
-  // operations on mutlidimensional matrices
-  std::vector<std::vector<GiNaC::ex>> genUtilde(int dim);
-  std::vector<int> transp(std::vector<int> b, std::vector<int> degs,
-                          int degs_prod);
-  std::vector<std::vector<GiNaC::ex>>
-  transp(std::vector<std::vector<GiNaC::ex>> M, std::vector<int> degs);
-  std::vector<int> transp_naive(std::vector<int> b, std::vector<int> degs);
-  std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<int>>>
-  compressZeroCoeffs();
-  void implicitMaxIndex();
-  std::vector<int> shift(std::vector<int> v);
+  GiNaC::ex bernCoeff(const std::vector<unsigned int>& mi) const;
+  GiNaC::lst getBernCoeffs() const;
+  GiNaC::lst getRationalBernCoeffs() const;
+  GiNaC::lst getBernCoeffsMatrix() const;
 
   // operations of split
-  std::vector<std::vector<int>> getMultiIdxList();
-  void split(long unsigned int direction, double split_point);
-  void print();
+  std::vector<std::vector<unsigned int>> getMultiIdxList() const;
+  void split(unsigned int direction, double split_point) const;
+  void print() const;
 
   virtual ~BaseConverter();
 };
