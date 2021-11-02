@@ -35,6 +35,18 @@ parameter_mode: boxes (default) | parallelotopes;
 iterations: num;
 ```
 
+### maximum number of parameter splits (optional)
+
+```C++
+max_parameter_splits: num;
+```
+
+When parameter synthesis returns an empty set, the result may be due to over-approximation. 
+Since the approximation also directly depends on the size of the parameter set, in order to decrease it, 
+the initial parameter set can be split in subsets and the computation can be repeated for each them.
+The `max_parameter_splits` option declares the maximum number of splits that Sapo can perform 
+searching for a non-empty set satisfying the specification.
+
 ## <a name="symdef">Symbol definitions
 
 In this section, we define variables with dynamics, parameters, constants and the specification (if required).

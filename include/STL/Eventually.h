@@ -12,23 +12,29 @@
 #include "STL.h"
 #include "TimeInterval.h"
 
-class Eventually : public STL {
+class Eventually : public STL
+{
 
 private:
-
-	const std::shared_ptr<STL> f;	// subformula
-	TimeInterval t_itvl;			// temporal formula bounds
+  const std::shared_ptr<STL> f; // subformula
+  TimeInterval t_itvl;          // temporal formula bounds
 
 public:
-	Eventually(const int begin, const int end, const std::shared_ptr<STL> f);
+  Eventually(const int begin, const int end, const std::shared_ptr<STL> f);
 
-	inline const std::shared_ptr<STL> getSubFormula() const { return f; }
+  const std::shared_ptr<STL> getSubFormula() const
+  {
+    return f;
+  }
 
-	inline const TimeInterval& time_bounds() const { return t_itvl; }
+  const TimeInterval &time_bounds() const
+  {
+    return t_itvl;
+  }
 
-	void print() const;
+  void print() const;
 
-	~Eventually();
+  ~Eventually();
 };
 
 #endif /* Eventually_H */

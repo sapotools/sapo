@@ -10,82 +10,142 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-#include "float.h"
-#include "Common.h"
 #include "BaseConverter.h"
-#include "Parallelotope.h"
+#include "Common.h"
 #include "LinearSystem.h"
+#include "Parallelotope.h"
 #include "VarsGenerator.h"
+#include "float.h"
 #include <cmath>
 
-class Bundle {
+class Bundle
+{
+  using Vector = std::vector<double>;
+  using Matrix = std::vector<Vector>;
+  using CtrlPointType
+      = std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>;
 
 private:
-	int dim;							// dimension
-	vector< vector< double > > L;		// direction matrix
-	vector< double > offp;				// superior offset
-	vector< double > offm;				// inferior offset
-	vector< vector< int > > T;			// templates matrix
-	vector< vector< double > > Theta;	// matrix of orthogonal proximity
-	vector<lst> vars;					// variables appearing in generato function
-										// vars[0] q: base vertex
-										// vars[1] alpha : free variables \in [0,1]
-										// vars[2] beta : generator amplitudes
+  unsigned int dim;                // dimension
+  Matrix L;                        // direction matrix
+  Vector offp;                     // superior offset
+  Vector offm;                     // inferior offset
+  std::vector<std::vector<int>> T; // templates matrix
+  Matrix Theta;                    // matrix of orthogonal proximity
+  std::vector<GiNaC::lst> vars;    // variables appearing in generato function
+                                   // vars[0] q: base vertex
+                                   // vars[1] alpha : free variables \in [0,1]
+                                   // vars[2] beta : generator amplitudes
 
-	// map with Bernstein coefficients
-	map< vector<int>, lst > bernCoeffs;
+  // map with Bernstein coefficients
+  std::map<std::vector<int>, GiNaC::lst> bernCoeffs;
 
-	double initTheta();
-	vector< double > offsetDistances();
+  double initTheta();
+  Vector offsetDistances();
 
-	// operations on vectors
-	double norm(vector<double> v);
-	double prod(vector<double> v1, vector<double> v2);
-	double angle(vector<double> v1, vector<double> v2);
-	double orthProx(vector<double> v1, vector<double> v2);
-	double maxOrthProx(int vIdx, vector<int> dirsIdx);
-	double maxOrthProx(vector<int> dirsIdx);
-	double maxOrthProx(vector< vector<int> > T);
-	double maxOffsetDist(int vIdx, vector<int> dirsIdx, vector<double> dists);
-	double maxOffsetDist(vector<int> dirsIdx, vector<double> dists);
-	double maxOffsetDist(vector< vector<int> > T, vector<double> dists);
-	vector< double > negate(vector< double > v);
-	bool isIn(int n, vector<int> v);
-	bool isIn(vector<int> v, vector< vector< int > > vlist);
-	bool isPermutation(vector<int> v1, vector<int> v2);
+  // operations on vectors
+  double norm(std::vector<double> v);
+  double prod(std::vector<double> v1, std::vector<double> v2);
+  double angle(std::vector<double> v1, std::vector<double> v2);
+  double orthProx(std::vector<double> v1, std::vector<double> v2);
+  double maxOrthProx(int vIdx, std::vector<int> dirsIdx);
+  double maxOrthProx(std::vector<int> dirsIdx);
+  double maxOrthProx(std::vector<std::vector<int>> T);
+  double maxOffsetDist(int vIdx, std::vector<int> dirsIdx,
+                       std::vector<double> dists);
+  double maxOffsetDist(std::vector<int> dirsIdx, std::vector<double> dists);
+  double maxOffsetDist(std::vector<std::vector<int>> T,
+                       std::vector<double> dists);
 
+  bool isIn(int n, std::vector<int> v);
+  bool isIn(std::vector<int> v, std::vector<std::vector<int>> vlist);
+  bool isPermutation(std::vector<int> v1, std::vector<int> v2);
 
-	bool validTemp(vector< vector<int> > T, int card, vector<int> dirs);	// check if a template is valid
-	vector<lst> transformContrPts(lst vars, lst f, int mode);
+  bool validTemp(std::vector<std::vector<int>> T, unsigned int card,
+                 std::vector<int> dirs); // check if a template is valid
+  std::vector<GiNaC::lst> transformContrPts(GiNaC::lst vars, GiNaC::lst f,
+                                            int mode);
 
 public:
+  // constructors
+  Bundle(const Bundle &orig);
+  Bundle(Bundle &&orig);
+  Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
+         const std::vector<std::vector<int>> &T);
+  Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
+         const Vector &offp, const Vector &offm,
+         const std::vector<std::vector<int>> &T);
 
-	// constructors
-	Bundle(vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
-	Bundle(vector<lst> vars, vector< vector< double > > L, vector< double > offp, vector< double > offm, 	vector< vector< int > > T);
+  unsigned int getDim() const
+  {
+    return this->dim;
+  }
 
-	int getDim(){ return this->dim; };
-	int getSize(){ return L.size(); };
-	int getCard(){ return T.size(); };
-	int getNumDirs(){ return this->L.size(); };
+  unsigned int getSize() const
+  {
+    return L.size();
+  }
 
-	vector<int> getTemplate(int i){ return this->T[i]; };
-	double getOffp(int i){ return this->offp[i]; };
-	double getOffm(int i){ return this->offm[i]; };
-	LinearSystem *getBundle();
-	Parallelotope* getParallelotope(int i);
+  unsigned int getCard() const
+  {
+    return T.size();
+  }
 
-	void setTemplate(vector< vector< int > > T);
-	void setOffsetP(vector< double > offp){ this->offp = offp; }
-	void setOffsetM(vector< double > offm){ this->offm = offm; }
+  unsigned int getNumDirs() const
+  {
+    return this->L.size();
+  }
 
-	// operations on bundles
-	Bundle* canonize();
-	Bundle* decompose(double alpha, int max_iters);
-	Bundle* transform(lst vars, lst f, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
-	Bundle* transform(lst vars, lst params, lst f, LinearSystem *paraSet, map< vector<int>,pair<lst,lst> > &controlPts, int mode);
+  const std::vector<int> &getTemplate(long unsigned int i) const
+  {
+    return this->T[i];
+  }
 
-	virtual ~Bundle();
+  const std::vector<std::vector<double>> &getDirectionMatrix() const
+  {
+    return this->L;
+  }
+
+  const double &getOffp(long unsigned int i) const
+  {
+    return this->offp[i];
+  }
+
+  const double &getOffm(long unsigned int i) const
+  {
+    return this->offm[i];
+  }
+
+  LinearSystem getLinearSystem() const;
+  Parallelotope getParallelotope(unsigned int i) const;
+
+  void setTemplate(std::vector<std::vector<int>> T);
+  void setOffsetP(Vector offp)
+  {
+    this->offp = offp;
+  }
+
+  void setOffsetM(Vector offm)
+  {
+    this->offm = offm;
+  }
+
+  // operations on bundles
+  Bundle get_canonical() const;
+  Bundle decompose(double alpha, int max_iters);
+  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+                   CtrlPointType &controlPts, int mode) const;
+  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
+                   const GiNaC::lst &f, const LinearSystem &paraSet,
+                   CtrlPointType &controlPts, int mode) const;
+
+  Bundle &operator=(Bundle &&);
+
+  virtual ~Bundle();
+
+  friend void swap(Bundle &A, Bundle &B);
 };
+
+void swap(Bundle &A, Bundle &B);
 
 #endif /* BUNDLE_H_ */

@@ -8,25 +8,31 @@
 
 #include "Conjunction.h"
 
-
 /**
  * Constructor that instantiates a Conjunction STL formula (f1 /\ f2)
  *
  * @param[in] f1 left conjunct
  * @param[in] f2 right conjunct
  */
-Conjunction::Conjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2): STL(CONJUNCTION), f1(f1), f2(f2) {}
+Conjunction::Conjunction(const std::shared_ptr<STL> f1,
+                         const std::shared_ptr<STL> f2):
+    STL(CONJUNCTION),
+    f1(f1), f2(f2)
+{
+}
 
 /**
  * Print the formula
  */
-void Conjunction::print() const{
-	cout<<"(";
-	this->f1->print();
-	cout<<") and (";
-	this->f2->print();
-	cout<<")";
+void Conjunction::print() const
+{
+  using namespace std;
+
+  cout << "(";
+  this->f1->print();
+  cout << ") and (";
+  this->f2->print();
+  cout << ")";
 }
 
-Conjunction::~Conjunction() 
-{}
+Conjunction::~Conjunction() {}

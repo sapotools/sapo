@@ -15,32 +15,53 @@
 
 #include "Common.h"
 
-class Model {
+class Model
+{
 
 protected:
-	lst vars;		// variables
-	lst params;		// parameters
-	lst dyns;		// dynamics
+  GiNaC::lst vars;   // variables
+  GiNaC::lst params; // parameters
+  GiNaC::lst dyns;   // dynamics
 
-	Bundle *reachSet; // Initial reach set
-	LinearSystemSet *paraSet;
+  Bundle *reachSet; // Initial reach set
+  LinearSystemSet *paraSet;
 
-	std::shared_ptr<STL> spec;
+  std::shared_ptr<STL> spec;
+
+  std::string name;
 
 public:
+  const std::string &getName() const
+  {
+    return this->name;
+  }
+  const GiNaC::lst &getVars() const
+  {
+    return this->vars;
+  }
+  const GiNaC::lst &getParams() const
+  {
+    return this->params;
+  }
+  const GiNaC::lst &getDyns() const
+  {
+    return this->dyns;
+  }
 
-	char name[64];
+  Bundle *getReachSet()
+  {
+    return this->reachSet;
+  }
+  LinearSystemSet *getParaSet()
+  {
+    return this->paraSet;
+  }
+  const std::shared_ptr<STL> getSpec() const
+  {
+    return this->spec;
+  }
 
-	inline const char* getName() const { return this->name; }
-	inline const lst getVars(){ return this->vars; }
-	inline const lst getParams(){ return this->params; }
-	inline const lst getDyns() const { return this->dyns; }
-
-	inline Bundle* getReachSet(){ return this->reachSet; }
-	inline LinearSystemSet* getParaSet(){ return this->paraSet; }
-	inline const std::shared_ptr<STL>  getSpec() const { return this->spec; }
-
-	~Model();
+  ~Model();
 };
 
 #endif /* MODEL_H_ */

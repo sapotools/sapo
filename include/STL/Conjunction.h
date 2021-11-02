@@ -11,22 +11,28 @@
 
 #include "STL.h"
 
-class Conjunction : public STL {
+class Conjunction : public STL
+{
 
 private:
-	const std::shared_ptr<STL> f1, f2;		// subformulas
+  const std::shared_ptr<STL> f1, f2; // subformulas
 
 public:
+  // constructor
+  Conjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2);
 
-	// constructor
-	Conjunction(const std::shared_ptr<STL> f1, const std::shared_ptr<STL> f2);
+  const std::shared_ptr<STL> getLeftSubFormula() const
+  {
+    return f1;
+  }
+  const std::shared_ptr<STL> getRightSubFormula() const
+  {
+    return f2;
+  }
 
-	inline const std::shared_ptr<STL> getLeftSubFormula() const {return f1;}
-	inline const std::shared_ptr<STL> getRightSubFormula() const {return f2;}
+  void print() const;
 
-	void print() const;
-
-	~Conjunction();
+  ~Conjunction();
 };
 
 #endif /* CONJUNCTION_H_ */
