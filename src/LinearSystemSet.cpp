@@ -82,6 +82,43 @@ LinearSystemSet::LinearSystemSet(const LinearSystemSet &orig)
   }
 }
 
+/**
+ * A swap constructor for a linear system set
+ *
+ * @param[in] orig is a rvalue linear system set
+ */
+LinearSystemSet::LinearSystemSet(LinearSystemSet &&orig)
+{
+  std::swap(set, orig.set);
+}
+
+/**
+ * A copy assignment for a linear system set
+ *
+ * @param[in] orig a linear system set
+ */
+LinearSystemSet &LinearSystemSet::operator=(const LinearSystemSet &orig)
+{
+  set.resize(0);
+
+  for (auto it = orig.set.cbegin(); it != orig.set.cend(); ++it) {
+    this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
+  }
+
+  return *this;
+}
+
+/**
+ * A swap assignment for a linear system set
+ *
+ * @param[in] orig is a rvalue linear system set
+ */
+LinearSystemSet &LinearSystemSet::operator=(LinearSystemSet &&orig)
+{
+  std::swap(set, orig.set);
+
+  return *this;
+}
 
 /**
  * Get the set of linear systems

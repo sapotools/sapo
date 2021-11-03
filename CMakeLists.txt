@@ -18,7 +18,7 @@ flex_target(input_scanner parser/scanner.l ${CMAKE_SOURCE_DIR}/parser/src/scanne
 bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
 							DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Werror")
+set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
 
 set(WITH_THREADS ON)
 

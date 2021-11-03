@@ -150,7 +150,7 @@ Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
   }
 
   // generate the variables
-  const size_t& dim= T[0].size();
+  const size_t &dim = T[0].size();
 
   this->vars = vector<lst>{get_symbol_lst("b", dim),  // Base vertex variables
                            get_symbol_lst("f", dim),  // Free variables
@@ -210,7 +210,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
 {
   using namespace std;
 
-  if (i < 0 || i > this->T.size()) {
+  if (i > this->T.size()) {
     cerr << "Bundle::getParallelotope : i must be between 0 and " << T.size()
          << endl;
     exit(EXIT_FAILURE);

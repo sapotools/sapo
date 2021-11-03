@@ -121,7 +121,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
   while (i < k && !Xls.isEmpty()) {
     i++;
 
-    Xls = LinearSystemSet();
+    LinearSystemSet Xls;
 
     auto pset_it = paraSet.begin();
 #ifdef WITH_THREADS
