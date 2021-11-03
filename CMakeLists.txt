@@ -18,6 +18,19 @@ flex_target(input_scanner parser/scanner.l ${CMAKE_SOURCE_DIR}/parser/src/scanne
 bison_target(input_parser parser/parser.yy ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
 							DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
+set(CMAKE_CXX_FLAGS "-O2 -Wall -Werror")
+
+set(WITH_THREADS ON)
+
+if(WITH_THREADS)
+set(CMAKE_THREAD_PREFER_PTHREAD ON)
+find_package(Threads REQUIRED)
+
+add_compile_definitions(WITH_THREADS)
+
+set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} Threads::Threads)
+endif()
+
 # This is to support brew
 include_directories(/usr/local/Cellar/ginac/1.8.1/include) 
 include_directories(/usr/local/Cellar/cln/1.3.4/include)
@@ -36,8 +49,6 @@ file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/pars
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE} ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
-
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Werror -pthread")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo ${PROJECT_LINK_LIBS} )

@@ -124,6 +124,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
     Xls = LinearSystemSet();
 
     auto pset_it = paraSet.begin();
+#ifdef WITH_THREADS
     std::vector<std::thread> threads;
     for (unsigned int b_idx = 0; b_idx < cbundles.size(); b_idx++) {
       /*
@@ -144,7 +145,14 @@ Flowpipe Sapo::reach(const Bundle &initSet, LinearSystemSet &paraSet,
     for (unsigned int b_idx = 0; b_idx < cbundles.size(); b_idx++) {
       Xls.add(cbundles[b_idx].getLinearSystem());
     }
-
+#else // WITH_THREADS
+    for (unsigned int b_idx = 0; b_idx < cbundles.size(); b_idx++) {
+      update_bundle(std::ref(*this), std::ref(cbundles[b_idx]), std::ref(*(pset_it++)), 
+                        std::ref(controlPtsVect[b_idx]));
+      
+      Xls.add(cbundles[b_idx].getLinearSystem());
+    }
+#endif // WITH_THREADS
     flowpipe.append(Xls); // store result
 
     if (this->options.verbose) {
@@ -181,6 +189,8 @@ LinearSystemSet Sapo::synthesize_unpack(Bundle &initialSet,
       result = obj.synthesizeSTL(initialSet, parameterSet, formula);
   };
 
+#ifdef WITH_THREADS
+
   std::vector<LinearSystemSet> results(parameterSet.size());
   std::vector<std::thread> threads;
   unsigned int i=0;
@@ -205,6 +215,12 @@ LinearSystemSet Sapo::synthesize_unpack(Bundle &initialSet,
     // TODO: the parameter can be reversed in the result avoiding the copy
     result.unionWith(*r_it);
   }
+#else // WITH_THREADS
+  for (LinearSystemSet::iterator pset_it = parameterSet.begin();
+        pset_it != parameterSet.end(); ++pset_it) {
+    result.unionWith(this->synthesizeSTL(initialSet, *pset_it, formula));
+  }
+#endif // WITH_THREADS
 
   result.simplify();
 

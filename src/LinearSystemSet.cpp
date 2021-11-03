@@ -92,6 +92,7 @@ bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
 {
 
 #if MINIMIZE_LS_SET_REPRESENTATION
+#if WITH_THREADS
   class ThreadResult {
     mutable std::shared_timed_mutex mutex;
     bool value;
@@ -133,7 +134,17 @@ bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
   }
 
   return result.get();
-#endif
+#else // WITH_THREADS
+  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
+    if (set.satisfies(*it)) {
+      return true;
+    }
+  }
+
+  return false;
+#endif // WITH_THREADS
+
+#endif // MINIMIZE_LS_SET_REPRESENTATION
 
   return false;
 }
@@ -180,6 +191,7 @@ LinearSystemSet &LinearSystemSet::add(pointer ls)
 // TODO: parallelize the following method
 LinearSystemSet &LinearSystemSet::simplify()
 {
+#ifdef WITH_THREADS
   class ThreadResult {
     mutable std::shared_timed_mutex mutex;
     unsigned int non_empty;
@@ -238,6 +250,17 @@ LinearSystemSet &LinearSystemSet::simplify()
   for (unsigned int i=0; i<new_set.size(); ++i) {
     new_set[i] = set[result.old_pos(i)];
   }
+#else // WITH_THREADS
+
+  container new_set;
+  for (unsigned int i=0; i<set.size(); ++i) {
+    if (!set[i]->isEmpty()) {
+      set[i]->simplify();
+      new_set.push_back(set[i]);
+      set[i] = NULL;
+    } 
+  }
+#endif // WITH_THREADS
 
   swap(set, new_set);
 
