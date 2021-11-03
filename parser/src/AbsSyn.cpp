@@ -160,6 +160,7 @@ ex Expr::toEx(const InputData &m, const lst &vars, const lst &params) const
       return params[m.getParamPos(name)];
     else if (m.isDefDefined(name))
       return m.getDef(name)->getValue()->toEx(m, vars, params);
+    throw std::logic_error("Unknown ID");
   case exprType::SUM:
     return left->toEx(m, vars, params) + right->toEx(m, vars, params);
   case exprType::MUL:
@@ -171,7 +172,8 @@ ex Expr::toEx(const InputData &m, const lst &vars, const lst &params) const
   case exprType::NEG:
     return -left->toEx(m, vars, params);
   }
-  return 0;
+  
+  throw std::logic_error("Unknown expression type");
 }
 
 ostream &operator<<(ostream &os, const Formula &f)

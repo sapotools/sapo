@@ -564,7 +564,7 @@ public:
     return spec;
   }
 
-  const unsigned int directionsNum() const
+  unsigned int directionsNum() const
   {
     return directions.size();
   }

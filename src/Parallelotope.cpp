@@ -421,7 +421,7 @@ std::vector<double> Parallelotope::hyperplaneThroughPts(
   vector<double> lambda(this->dim + 1, 0);
 
   ex sub;
-  unsigned int sub_idx;
+  unsigned int sub_idx = 0;
   // search for the tautology
   for (unsigned int i = 0; i < solLS.nops(); i++) {
     if (solLS[i].is_equal(a[i] == a[i])) {

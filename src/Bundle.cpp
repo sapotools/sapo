@@ -210,7 +210,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
 {
   using namespace std;
 
-  if (i < 0 || i > this->T.size()) {
+  if (i > this->T.size()) {
     cerr << "Bundle::getParallelotope : i must be between 0 and " << T.size()
          << endl;
     exit(EXIT_FAILURE);

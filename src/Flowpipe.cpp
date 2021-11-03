@@ -33,7 +33,7 @@ Flowpipe::Flowpipe(const std::vector<std::vector<double>> &variable_templates):
  */
 const LinearSystemSet &Flowpipe::get(const unsigned int i) const
 {
-  if ((0 <= i) && (i < this->size())) {
+  if (i < this->size()) {
     return this->flowpipe[i];
   }
   std::cerr << "Flowpipe::get : i must be between 0 and the flowpipe size"
@@ -130,7 +130,7 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
     exit(EXIT_FAILURE);
   }
 
-  if (var < 0 || var >= this->flowpipe[0].dim()) {
+  if (var >= this->flowpipe[0].dim()) {
     std::cerr << "Flowpipe::plotProjToFile : i must be between "
               << "0 and the system dimension" << std::endl;
     exit(EXIT_FAILURE);

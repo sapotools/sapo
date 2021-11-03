@@ -338,7 +338,7 @@ void BaseConverter::split(unsigned int direction, double split_point) const
 {
   using namespace std;
 
-  if ((direction < 0) || (direction >= this->vars.nops())) {
+  if (direction >= this->vars.nops()) {
     cerr << "BaseConverter::split : split direction must be between 0 and "
          << this->vars.nops() << endl;
     exit(EXIT_FAILURE);

@@ -82,12 +82,28 @@ LinearSystemSet::LinearSystemSet(const LinearSystemSet &orig)
   }
 }
 
-/*
 LinearSystemSet::LinearSystemSet(LinearSystemSet&& orig)
 {
-
+  std::swap(set, orig.set);
 }
-*/
+
+LinearSystemSet& LinearSystemSet::operator=(const LinearSystemSet &orig)
+{
+  set.resize(0);
+
+  for (auto it = orig.set.cbegin(); it != orig.set.cend(); ++it) {
+    this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
+  } 
+
+  return *this;
+}
+
+LinearSystemSet& LinearSystemSet::operator=(LinearSystemSet&& orig)
+{
+  std::swap(set, orig.set);
+
+  return *this;
+}
 
 /**
  * Get the set of linear systems

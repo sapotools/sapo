@@ -49,12 +49,16 @@ double solveLinearSystem(const vector<vector<double>> &A,
                          const vector<double> &b,
                          const vector<double> &obj_fun, const int min_max)
 {
-  int num_rows = A.size();
-  int num_cols = obj_fun.size();
-  int size_lp = num_rows * num_cols;
+  unsigned int num_rows = A.size();
+  unsigned int num_cols = obj_fun.size();
+  unsigned int size_lp = num_rows * num_cols;
 
-  int ia[size_lp + 1], ja[size_lp + 1];
-  double ar[size_lp + 1];
+  int *ia, *ja;
+  double *ar;
+  
+  ia = (int *)calloc(size_lp + 1, sizeof(int));
+  ja = (int *)calloc(size_lp + 1, sizeof(int));
+  ar = (double *)calloc(size_lp + 1, sizeof(double));
 
   glp_prob *lp;
   lp = glp_create_prob();
@@ -66,23 +70,25 @@ double solveLinearSystem(const vector<vector<double>> &A,
   lp_param.msg_lev = GLP_MSG_ERR;
 
   glp_add_rows(lp, num_rows);
-  for (int i = 0; i < num_rows; i++) {
+  for (unsigned int i = 0; i < num_rows; i++) {
     glp_set_row_bnds(lp, i + 1, GLP_UP, 0.0, b[i]);
   }
 
   glp_add_cols(lp, num_cols);
-  for (int i = 0; i < num_cols; i++) {
+  for (unsigned int i = 0; i < num_cols; i++) {
     glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
   }
 
-  for (int i = 0; i < num_cols; i++) {
+  for (unsigned int i = 0; i < num_cols; i++) {
     glp_set_obj_coef(lp, i + 1, obj_fun[i]);
   }
 
-  int k = 1;
-  for (int i = 0; i < num_rows; i++) {
-    for (int j = 0; j < num_cols; j++) {
-      ia[k] = i + 1, ja[k] = j + 1, ar[k] = A[i][j]; /* a[i+1,j+1] = A[i][j] */
+  unsigned int k = 1;
+  for (unsigned int i = 0; i < num_rows; i++) {
+    for (unsigned int j = 0; j < num_cols; j++) {
+      ia[k] = i + 1;
+      ja[k] = j + 1;
+      ar[k] = A[i][j]; /* a[i+1,j+1] = A[i][j] */
       k++;
     }
   }
@@ -103,6 +109,9 @@ double solveLinearSystem(const vector<vector<double>> &A,
   }
   glp_delete_prob(lp);
   glp_free_env();
+  free(ia);
+  free(ja);
+  free(ar);
   return res;
 }
 
@@ -239,10 +248,8 @@ LinearSystem::LinearSystem(const lst &vars, const lst &constraints)
  */
 const double &LinearSystem::getA(unsigned int i, unsigned int j) const
 {
-  if ((0 <= i) && (i < this->A.size())) {
-    if ((0 <= j) && (j < this->A[j].size())) {
-      return this->A[i][j];
-    }
+  if (i < this->A.size() && j < this->A[j].size()) {
+    return this->A[i][j];
   }
   std::cerr << "LinearSystem::getA : i and j must be within the LS->A size"
             << std::endl;
@@ -257,7 +264,7 @@ const double &LinearSystem::getA(unsigned int i, unsigned int j) const
  */
 const double &LinearSystem::getb(unsigned int i) const
 {
-  if ((0 <= i) && (i < this->b.size())) {
+  if (i < this->b.size()) {
     return this->b[i];
   }
   std::cerr << "LinearSystem::getb : i and j must be within the LS->b size"
