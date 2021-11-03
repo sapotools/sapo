@@ -14,7 +14,7 @@ In both cases, the analysis can be done on bounded time.
 
 Sapo is provided as both a C++ library, to promote integration by other projects, and a stand-alone tool, to ease its usability.
 
-A web user interface for Sapo is avaiable [here](https://github.com/LucaDorigo/webSapo).
+A web user interface for Sapo is available [here](https://github.com/LucaDorigo/webSapo).
 
 ### Models
 
