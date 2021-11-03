@@ -34,84 +34,26 @@ The parameter synthesis produces a refined set of parameters represented by:
 
 - Polytopes, i.e., n-dimensional polygon
 
-## <a name="buildsapo">Build Sapo</a>
+## <a name="buildsapo">Building Sapo</a>
 
-To compile the source code, the following packages are required:
+In order to compile the source code, the following packages are required:
 
-- C++11-compatible compiler, <a href="https://cmake.org/">cmake</a> (version>=3.6), <a href="https://www.gnu.org/software/make/">make</a>, <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
-- <a href="http://www.ginac.de/CLN/">CLN</a> (version>=1.3.6), <a href="http://www.ginac.de/">GiNaC</a> (version>=1.7.8), <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >=5.0) libraries
-- <a href="https://github.com/westes/flex">Flex</a> (version >=2.6.3) and <a href="https://www.gnu.org/software/bison/manual">Bison</a>
+- a C++11-compatible compiler
+- <a href="https://cmake.org/">cmake</a> (version>=3.6)
+- <a href="https://www.gnu.org/software/make/">make</a>
+- <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
+- <a href="https://github.com/westes/flex">Flex</a> (version >=2.6.3)
+- <a href="https://www.gnu.org/software/bison/manual">Bison</a>
+- <a href="http://www.ginac.de/CLN/">CLN</a> (version>=1.3.6)
+- <a href="http://www.ginac.de/">GiNaC</a> (version>=1.7.8)
+- <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >=5.0)
 
-### Install CLN
+### Downloading and Compiling Sapo
 
-Download latest <a href="http://www.ginac.de/CLN/">CLN</a> and install:
-
-```sh
-curl http://www.ginac.de/CLN/cln-1.3.6.tar.bz2 | tar -xj
-cd cln-1.3.6/
-./configure
-make
-make check
-sudo make install
-```
-
-### Install GiNaC
-
-Download latest <a href="http://www.ginac.de/">GiNaC</a> and install:
+Once all the required packages have been installed, download and build Sapo by using the following commands:
 
 ```sh
-curl http://www.ginac.de/ginac-1.8.0.tar.bz2 | tar -xj
-cd ginac-1.8.0/
-./configure
-make
-make check
-sudo make install
-```
-
-### Install GLPK
-
-Download latest <a href="https://www.gnu.org/software/glpk/">GLPK</a> and install:
-
-```sh
-curl http://ftp.gnu.org/gnu/glpk/glpk-4.61.tar.gz | tar -xz
-cd glpk-4.61/
-./configure
-make
-make check
-sudo make install
-```
-
-### Install Flex
-
-Download latest <a href="https://github.com/westes/flex">Flex</a> and install:
-
-```sh
-git clone https://github.com/westes/flex
-cd flex/
-./autogen.sh
-./configure
-make
-make install
-```
-
-### Install Bison
-Download latest <a href="https://www.gnu.org/software/bison/manual">Bison</a> and install:
-
-```sh
-curl http://ftp.gnu.org/gnu/bison/bison-3.5.1.tar.gz | tar -xz
-cd bison-3.5.1/
-./configure
-make
-make check
-sudo make install
-```
-
-### Install Sapo
-
-Once that the required packages are installed, download, build and install Sapo:
-
-```sh
-git clone https://github.com/LucaDorigo/sapo
+git clone https://github.com/dreossi/sapo
 cd sapo
 cmake .
 make
@@ -119,20 +61,32 @@ make
 
 This generates the executable `./bin/sapo`.
 
-## Using Sapo stand-alone application
-The Sapo stand-alone application `sapo` expects as input a SIL file.
-The SIL language is defined in the [SIL.md](SIL.md) file in this repository.
+## Testing Sapo
 
-`sapo` can be invoked passing the path of the input file
+In order to test whether Sapo is properly working in your system, please call from 
+the command line:
+
+```
+make test
+```
+
+## Using Sapo stand-alone application
+The Sapo stand-alone application `sapo` accepts input in the
+[SIL file format](SIL.md) from either the standard input or a file.
+
+Users can execute `sapo` by either passing the path of the input file, as in
 
 ```sh
 ./bin/sapo path/to/file.sil
 ```
 
-or without arguments. In that case, `sapo` reads its input from standard input.
+or without any argument. In the latter case, the tool reads its input from 
+standard input.
 
 ```sh
-./bin/sapo
+cat path/to/file.sil | ./bin/sapo
 ```
 
-The outputs are written on standard output.
+The outputs are always written on standard output.
+
+Some examples of SIL files are provided for your convenience in the directory [examples](examples) in this repository.
