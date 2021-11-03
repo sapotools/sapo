@@ -11,26 +11,25 @@
 /**
  * Constructor that instantiates an Always formula (G_[a,b]f)
  *
- * @param[in] a beginning of temporal interval
- * @param[in] b end of temporal interval
+ * @param[in] begin is beginning of temporal interval
+ * @param[in] end is the end of temporal interval
  * @param[in] f subformula
  */
-Always::Always(int a, int b, STL * f){
-
-	this->f=f;
-	this->a = a;
-	this->b = b;
-	type=ALWAYS;
-
-};
+Always::Always(const int begin, const int end, const std::shared_ptr<STL> f):
+    STL(ALWAYS), f(f), t_itvl(begin, end)
+{
+}
 
 /**
  * Print the formula
  */
-void Always::print(){
-	cout<<"always_["<<this->a<<","<<this->b<<"] (";
-	this->f->print();
-	cout<<")";
+void Always::print() const
+{
+  using namespace std;
+
+  cout << "always_" << this->t_itvl << " (";
+  this->f->print();
+  cout << ")";
 }
 
 Always::~Always() {}

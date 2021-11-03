@@ -15,31 +15,53 @@
 
 #include "Common.h"
 
-class Model {
+class Model
+{
 
 protected:
-	lst vars;		// variables
-	lst params;		// parameters
-	lst dyns;		// dynamics
+  GiNaC::lst vars;   // variables
+  GiNaC::lst params; // parameters
+  GiNaC::lst dyns;   // dynamics
 
-	Bundle *reachSet; // Initial reach set
-	LinearSystemSet *paraSet;
+  Bundle *reachSet; // Initial reach set
+  LinearSystemSet *paraSet;
 
-	STL *spec;
+  std::shared_ptr<STL> spec;
+
+  std::string name;
 
 public:
+  const std::string &getName() const
+  {
+    return this->name;
+  }
+  const GiNaC::lst &getVars() const
+  {
+    return this->vars;
+  }
+  const GiNaC::lst &getParams() const
+  {
+    return this->params;
+  }
+  const GiNaC::lst &getDyns() const
+  {
+    return this->dyns;
+  }
 
-	char name[64];
+  Bundle *getReachSet()
+  {
+    return this->reachSet;
+  }
+  LinearSystemSet *getParaSet()
+  {
+    return this->paraSet;
+  }
+  const std::shared_ptr<STL> getSpec() const
+  {
+    return this->spec;
+  }
 
-	char* getName(){ return this->name; }
-	lst getVars(){ return this->vars; }
-	lst getParams(){ return this->params; }
-	lst getDyns(){ return this->dyns; }
-
-	Bundle* getReachSet(){ return this->reachSet; }
-	LinearSystemSet* getParaSet(){ return this->paraSet; }
-	STL* getSpec(){ return this->spec; }
-
+  ~Model();
 };
 
 #endif /* MODEL_H_ */

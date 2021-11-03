@@ -1,42 +1,25 @@
 /**
  * @file VarsGenerator.h
- * Automatically generate variables for paralleltope generator functions.
- * For high dimensions declaring manually the variables can be tedious...
+ * Automatically generate variables.
  *
- * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Alberto Casagrande <acasagrande@units.it>
  * @version 0.1
  */
 
 #ifndef VARSGENERATOR_H_
 #define VARSGENERATOR_H_
 
-#include "Common.h"
-#include "LinearSystem.h"
+#include<string>
 
-class VarsGenerator {
+#include <ginac/ginac.h>
 
-private:
+GiNaC::lst get_symbol_lst(const std::string &basename,
+                          const unsigned int number_of_symbols);
 
-	int dim;
-
-	lst qs;	// base vertex
-	lst as; // alphas (free variables)
-	lst bs; // betas (lenghts)
-	lst ls; // directions (lambdas)
-	vector<lst> us; // genertor versors
-
-public:
-	VarsGenerator(int dim);
-
-	lst getBaseVertex(){ return this->qs; };
-	lst getFreeVars(){ return this->as; };
-	lst getLenghts(){ return this->bs; };
-	lst getDirections(){ return this->ls; };
-	vector<lst> getVersors(){ return this->us; };
-
-	LinearSystem* genBox(vector<double> b);
-
-	virtual ~VarsGenerator();
-};
+inline GiNaC::lst get_symbol_lst(const char *basename,
+                                 const unsigned int number_of_symbols)
+{
+  return get_symbol_lst(std::string(basename), number_of_symbols);
+}
 
 #endif /* VARSGENERATOR_H_*/

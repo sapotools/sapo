@@ -10,30 +10,36 @@
 #define UNTIL_H_
 
 #include "STL.h"
+#include "TimeInterval.h"
 
-class Until : public STL {
+class Until : public STL
+{
 
 private:
-
-	STL * f1, * f2;		// subformulas
-	int a, b;			// interval bounds
+  const std::shared_ptr<STL> f1, f2; // subformulas
+  TimeInterval t_itvl;               // temporal formula bounds
 
 public:
+  Until(const std::shared_ptr<STL> f1, const int begin, const int end,
+        const std::shared_ptr<STL> f2);
 
-	Until(STL * f1, int a, int b, STL * f2);
+  const std::shared_ptr<STL> getLeftSubFormula() const
+  {
+    return f1;
+  }
+  const std::shared_ptr<STL> getRightSubFormula() const
+  {
+    return f2;
+  }
 
-	STL * getLeftSubFormula(){return f1;};
-	STL * getRightSubFormula(){return f2;};
+  const TimeInterval &time_bounds() const
+  {
+    return t_itvl;
+  }
 
-	int getA(){return a;};
-	int getB(){return b;};
+  void print() const;
 
-	void setA(int a){this->a = a;};
-	void setB(int b){this->b = b;};
-
-	void print();
-
-	virtual ~Until();
+  ~Until();
 };
 
 #endif /* UNTIL_H */

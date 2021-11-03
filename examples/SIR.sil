@@ -1,0 +1,22 @@
+problem: reachability;
+variable_mode: polytopes;
+
+iterations: 30;
+
+var s, i, r;
+
+dynamic(s) = s - (0.34*s*i)*0.1;
+dynamic(i) = i + (0.34*s*i - 0.05*i)*0.1;
+dynamic(r) = r + 0.05*i*0.1;
+
+direction <1, 0, 0> in [0.79, 0.8];
+direction <0, 1, 0> in [0.19, 0.2];
+direction <0, 0, 1> in [0.000099, 0.0001];
+direction <1, 0.5, 0> in [0, 1];
+direction <0.5, 0, 0.5> in [0, 1];
+
+template = {
+	{0, 1, 2},
+	{1, 2, 3},
+	{2, 3, 4}
+}

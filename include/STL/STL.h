@@ -10,32 +10,27 @@
 #define STL_H_
 
 #include "Common.h"
-#include <string.h>
+#include <string>
 
-class STL {
-public:
-	STL();
-	virtual ~STL();
-
-	formula_type getType(){return type;}
-
-	virtual ex getPredicate(){ex foo; return foo;};
-	virtual STL * getSubFormula(){return new STL();};
-	virtual STL * getLeftSubFormula(){return new STL();};
-	virtual STL * getRightSubFormula(){return new STL();};
-	virtual void setPredicateControlPts(vector<lst> predicateControlPts){};
-	virtual vector<lst> getPredicateControlPts(){vector<lst> foo; return foo;};
-
-	virtual int getA(){return 0;};
-	virtual int getB(){return 0;};
-	virtual void setA(int a){};
-	virtual void setB(int b){};
-	virtual int getID(){ return -1; }
-
-	virtual void print(){};
+class STL
+{
+  const formula_type type;
 
 protected:
-	formula_type type;
+  int options;
+
+  STL(const formula_type type);
+
+public:
+  const STL &set_options(const int options);
+
+  const formula_type &getType() const
+  {
+    return type;
+  }
+
+  virtual void print() const = 0;
+  virtual ~STL();
 };
 
 #endif /* STL_H_ */

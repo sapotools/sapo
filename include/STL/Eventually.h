@@ -10,29 +10,31 @@
 #define EVENTUALLY_H_
 
 #include "STL.h"
+#include "TimeInterval.h"
 
-class Eventually : public STL {
+class Eventually : public STL
+{
 
 private:
-
-	STL * f;			// subformula
-	int a, b;			// interval bounds
+  const std::shared_ptr<STL> f; // subformula
+  TimeInterval t_itvl;          // temporal formula bounds
 
 public:
+  Eventually(const int begin, const int end, const std::shared_ptr<STL> f);
 
-	Eventually(int a, int b, STL * f);
+  const std::shared_ptr<STL> getSubFormula() const
+  {
+    return f;
+  }
 
-	STL * getSubFormula(){return f;};
+  const TimeInterval &time_bounds() const
+  {
+    return t_itvl;
+  }
 
-	int getA(){return a;};
-	int getB(){return b;};
+  void print() const;
 
-	void setA(int a){this->a = a;};
-	void setB(int b){this->b = b;};
-
-	void print();
-
-	virtual ~Eventually();
+  ~Eventually();
 };
 
 #endif /* Eventually_H */

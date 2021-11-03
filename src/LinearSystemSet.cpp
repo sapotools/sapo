@@ -9,21 +9,51 @@
 
 #include "LinearSystemSet.h"
 
+using namespace std;
+using namespace GiNaC;
+
 /**
  * Constructor that instantiates an empty set
  */
-LinearSystemSet::LinearSystemSet(){
+LinearSystemSet::LinearSystemSet(): set() {}
+
+/**
+ * Constructor that instantiates a singleton set
+ *
+ * @param[in] ls element of the set
+ */
+LinearSystemSet::LinearSystemSet(const LinearSystem &ls)
+{
+  if (!ls.isEmpty()) {
+    this->set.push_back(std::make_shared<LinearSystem>(ls.get_simplified()));
+  }
 }
 
 /**
  * Constructor that instantiates a singleton set
  *
- * @param[in] LS element of the set
+ * @param[in] ls pointer to the element of the set
  */
-LinearSystemSet::LinearSystemSet(LinearSystem *LS){
-	if(!LS->isEmpty()){
-		this->set.push_back(LS);
-	}
+LinearSystemSet::LinearSystemSet(pointer ls)
+{
+  if (!ls->isEmpty()) {
+    ls->simplify();
+    this->set.push_back(ls);
+  }
+}
+
+/**
+ * Constructor that instantiates a singleton set
+ *
+ * @param[in] orig a linear system
+ */
+
+LinearSystemSet::LinearSystemSet(LinearSystem &&ls)
+{
+  if (!ls.isEmpty()) {
+    ls.simplify();
+    this->set.push_back(std::make_shared<LinearSystem>(ls));
+  }
 }
 
 /**
@@ -31,55 +61,160 @@ LinearSystemSet::LinearSystemSet(LinearSystem *LS){
  *
  * @param[in] set vector of linear systems
  */
-LinearSystemSet::LinearSystemSet(vector<LinearSystem*> set){
-
-	for(int i=0; i<(signed)set.size(); i++){
-		if(!set[i]->isEmpty()){
-			this->set.push_back(set[i]);
-		}
-	}
+LinearSystemSet::LinearSystemSet(const container &set)
+{
+  for (unsigned int i = 0; i < set.size(); i++) {
+    if (!set[i]->isEmpty()) {
+      this->set.push_back(set[i]);
+    }
+  }
 }
+
+/**
+ * A copy constructor for a linear system set
+ *
+ * @param[in] orig a linear system set
+ */
+LinearSystemSet::LinearSystemSet(const LinearSystemSet &orig)
+{
+  for (auto it = orig.set.cbegin(); it != orig.set.cend(); ++it) {
+    this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
+  }
+}
+
+/*
+LinearSystemSet::LinearSystemSet(LinearSystemSet&& orig)
+{
+
+}
+*/
 
 /**
  * Get the set of linear systems
  *
- * @returns actual collection of linear systems
+ * @returns the current collection of linear systems
  */
-vector<LinearSystem*> LinearSystemSet::getSet(){
-	return this->set;
+
+bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
+{
+
+#if MINIMIZE_LS_SET_REPRESENTATION
+  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
+    if (set.satisfies(*it)) {
+      return true;
+    }
+  }
+#endif
+
+  return false;
 }
 
 /**
  * Add a linear system to the set
  *
- * @param[in] LS linear system to add
+ * @param[in] ls linear system to add
  */
-void LinearSystemSet::add(LinearSystem *LS){
-	if(!LS->isEmpty()){
-		this->set.push_back(LS);
-	}
+LinearSystemSet &LinearSystemSet::add(const LinearSystem &ls)
+{
+  return this->add(std::make_shared<LinearSystem>(ls));
 }
 
 /**
- * Intersect to sets of linear systems
+ * Add a linear system to the set
  *
- * @param[in] LSset set to intersect with
- * @returns intersected sets
+ * @param[in] ls linear system to be added
  */
-LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset){
+LinearSystemSet &LinearSystemSet::add(LinearSystem &&ls)
+{
+  return this->add(std::make_shared<LinearSystem>(ls));
+}
 
-	vector<LinearSystem*> intSet; // new intersection set
-	vector<LinearSystem*> set = LSset->getSet();
+/**
+ * Add a linear system to the set
+ *
+ * @param[in] ls linear system to be added
+ */
+LinearSystemSet &LinearSystemSet::add(pointer ls)
+{
+  if (size() != 0 && set[0]->dim() != ls->dim()) {
+    std::cerr << "Adding to a linear system set a "
+              << "linear system having a different dimension" << std::endl;
+  }
 
-	for(int i=0; i<(signed)this->set.size(); i++){
-		for(int j=0; j<(signed)set.size(); j++){
-			LinearSystem *intLS = this->set[i]->appendLinearSystem(set[j]); // intersect
-			if(!intLS->isEmpty()){
-				intSet.push_back(intLS);	// add inteserction
-			}
-		}
-	}
-	return new LinearSystemSet(intSet);
+  if ((!ls->isEmpty()) && (!satisfiesOneIn(*ls, *this))) {
+    this->set.push_back(ls);
+  }
+
+  return *this;
+}
+
+LinearSystemSet &LinearSystemSet::simplify()
+{
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    (*it)->simplify();
+  }
+
+  return *this;
+}
+
+LinearSystemSet LinearSystemSet::get_a_finer_covering() const
+{
+  LinearSystemSet covering;
+
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    covering.unionWith((*it)->get_a_finer_covering());
+  }
+
+  return covering;
+}
+
+/**
+ * Compute the intersection of two linear systems
+ *
+ * @param[in] A is a linear system
+ * @param[in] B is a linear system
+ * @return the linear system that represents the set of values satisfying both
+ *          the parameters.
+ */
+LinearSystemSet intersection(const LinearSystemSet &A,
+                             const LinearSystemSet &B)
+{
+  LinearSystemSet result;
+
+  for (auto t_it = std::begin(A.set); t_it != std::end(A.set); ++t_it) {
+    for (auto s_it = std::begin(B.set); s_it != std::end(B.set); ++s_it) {
+      LinearSystem I = intersection(*(*t_it), *(*s_it));
+
+      if (!I.isEmpty()) {
+        result.add(I);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Compute the intersection between a linear system sets and a linear system
+ *
+ * @param[in] A is a linear system set
+ * @param[in] B is a linear system
+ * @return the linear system set that represents the set of values satisfying
+ * both the parameters
+ */
+LinearSystemSet intersection(const LinearSystemSet &A, const LinearSystem &B)
+{
+  LinearSystemSet result;
+
+  for (auto t_it = std::begin(A.set); t_it != std::end(A.set); ++t_it) {
+    LinearSystem I = intersection(*(*t_it), B);
+
+    if (!I.isEmpty()) {
+      result.add(I);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -88,17 +223,52 @@ LinearSystemSet* LinearSystemSet::intersectWith(LinearSystemSet *LSset){
  * @param[in] LSset set to union with
  * @returns merged sets
  */
-LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
+LinearSystemSet &LinearSystemSet::unionWith(const LinearSystemSet &LSset)
+{
+  for (container::const_iterator it = std::cbegin(LSset.set);
+       it != std::cend(LSset.set); ++it) {
+    this->add(std::make_shared<LinearSystem>(*(*it)));
+  }
 
-	vector<LinearSystem*> uniSet = this->set; 		// new union set
-	vector<LinearSystem*> set = LSset->getSet();
+  return *this;
+}
 
-	for(int i=0; i<(signed)set.size(); i++){
-		uniSet.push_back(set[i]);
-	}
+LinearSystemSet unionset(const LinearSystemSet &A, const LinearSystemSet &B)
+{
+  return LinearSystemSet(A).unionWith(B);
+}
 
-	return new LinearSystemSet(uniSet);
+/**
+ * Union of sets
+ *
+ * @param[in] LSset set to union with
+ * @returns merged sets
+ */
+LinearSystemSet &LinearSystemSet::unionWith(LinearSystemSet &&LSset)
+{
+  for (container::iterator it = std::begin(LSset.set);
+       it != std::end(LSset.set); ++it) {
+    this->add(*it);
+  }
 
+  return *this;
+}
+
+/**
+ * Compute the union of two linear systems
+ *
+ * @param[in] A is a linear system
+ * @param[in] B is a linear system
+ * @return the linear system set that represents the set of values satisfying
+ *          at least one of the parameters.
+ */
+LinearSystemSet unionset(const LinearSystem &A, const LinearSystem &B)
+{
+  LinearSystemSet result(A);
+
+  result.add(B);
+
+  return result;
 }
 
 /**
@@ -108,59 +278,48 @@ LinearSystemSet* LinearSystemSet::unionWith(LinearSystemSet *LSset){
  * @param[in] bound set size bound
  * @returns merged sets
  */
-LinearSystemSet* LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset, int bound){
+/* // TODO: remove this code
+LinearSystemSet& LinearSystemSet::boundedUnionWith(LinearSystemSet *LSset,
+const unsigned int bound) {
 
-	if(this->size() > bound){
-		cout<<"LinearSystemSet::boundedUnionWith : size of actual box larger than bound";
-		exit (EXIT_FAILURE);
-	}
+        if (this->size() > bound) {
+                std::cerr << "LinearSystemSet::boundedUnionWith : size of
+actual box larger than bound" << std::endl; exit (EXIT_FAILURE);
+        }
 
-	vector<LinearSystem*> uniSet = this->set; 		// new union set
-	vector<LinearSystem*> set = LSset->getSet();
-	int set_card = set.size();
-	int iters = min(bound-this->size(),set_card);
+        int iters = min(bound-this->size(), (unsigned int)LSset->size());
 
-	for(int i=0; i<iters; i++){
-		uniSet.push_back(set[i]);
-	}
+        container::iterator it = std::begin(set);
+        for (int i=0; i<iters&&it!=std::end(set); i++) {
+                this->set.push_back(*it);
+        }
 
-	return new LinearSystemSet(uniSet);
-
+        return *this;
 }
+*/
 
 /**
  * Sum of volumes of boxes containing the sets
  *
  * @returns sum of bounding boxes
  */
-double LinearSystemSet::boundingVol(){
+double LinearSystemSet::boundingVol() const
+{
 
-	double vol = 0;
-	for(int i=0; i<this->size(); i++){
-		vol = vol + this->at(i)->volBoundingBox();
-	}
-	return vol;
-
+  double vol = 0;
+  for (unsigned int i = 0; i < this->size(); i++) {
+    vol = vol + this->set[i]->volBoundingBox();
+  }
+  return vol;
 }
 
-/**
- * Get the size of this set, i.e,
- * the number of linear systems
- *
- * @returns number of linear systems in the set
- */
-int LinearSystemSet::size() {
-	return this->set.size();
-}
+unsigned int LinearSystemSet::dim() const
+{
+  if (this->set.empty()) {
+    return 0;
+  }
 
-/**
- * Get the i-th linear system
- *
- * @param[in] index of the linear system to fetch
- * @returns i-th linear system
- */
-LinearSystem* LinearSystemSet::at(int i) {
-	return this->set[i];
+  return (this->set[0])->dim();
 }
 
 /**
@@ -168,27 +327,60 @@ LinearSystem* LinearSystemSet::at(int i) {
  *
  * @returns true if the set is empty
  */
-bool LinearSystemSet::isEmpty() {
-	return this->set.empty();
+bool LinearSystemSet::isEmpty() const
+{
+  if (this->set.empty()) {
+    return true;
+  }
+
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    if (!(*it)->isEmpty()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
  * Print the set of linear systems
  */
-void LinearSystemSet::print() {
-
-	if( this->set.size() <= 0){
-		cout<<"--- empty set ----\n";
-	}else{
-		for(int i=0; i<(signed)this->set.size(); i++){
-			cout<<"--------------\n";
-			this->set[i]->print();
-		}
-	}
-
+void LinearSystemSet::print() const
+{
+  std::cout << *this << std::endl;
 }
 
-LinearSystemSet::~LinearSystemSet() {
-	// TODO Auto-generated destructor stub
+/**
+ * Print the linear system in Matlab format (for plotregion script)
+ *
+ * @param[in] os is the output stream
+ * @param[in] color color of the polytope to plot
+ */
+void LinearSystemSet::plotRegion(std::ostream &os, const char color) const
+{
+  for (auto it = std::begin(set); it != std::end(set); ++it) {
+    (*it)->plotRegion(os, color);
+  }
 }
 
+LinearSystemSet::~LinearSystemSet()
+{
+  // TODO Auto-generated destructor stub
+}
+
+std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
+{
+  if (ls.size() == 0) {
+    out << "---- empty set ----" << endl;
+  } else {
+    out << "--------------";
+    const LinearSystemSet::const_iterator last(ls.cend() - 1);
+    for (auto it = ls.cbegin(); it != last; ++it) {
+      out << endl << *it << endl;
+    }
+
+    out << endl << *last;
+  }
+
+  return out;
+}

@@ -1,0 +1,31 @@
+problem: reachability;
+variable_mode: polytopes;
+
+iterations: 30;
+
+
+var x1, x2, x3, x4, x5;
+
+const alpha = 0.85;
+const beta = 0.5;
+const delta = 0.01;
+
+dynamic(x1) = x1 + ( x1*(1 - (x1 + alpha*x2 + beta*x5)) )*delta;
+dynamic(x2) = x2 + (x2*(1 - (x2 + alpha*x3 + beta*x1)) )*delta;
+dynamic(x3) = x3 + (x3*(1 - (x3 + alpha*x4 + beta*x2)) )*delta;
+dynamic(x4) = x4 + (x4*(1 - (x4 + alpha*x5 + beta*x3)) )*delta;
+dynamic(x5) = x5 + (x5*(1 - (x5 + alpha*x1 + beta*x4)) )*delta;
+
+direction <1, 0, 0, 0, 0> in [0.95, 1];
+direction <0, 1, 0, 0, 0> in [0.95, 1];
+direction <0, 0, 1, 0, 0> in [0.95, 1];
+direction <0, 0, 0, 1, 0> in [0.95, 1];
+direction <0, 0, 0, 0, 1> in [0.95, 1];
+direction <1, 1, 1, 0, 0> in [1, 10];
+direction <-1, 0, 0, -1, 1> in [1, 10];
+
+template = {
+	{0, 1, 2, 3, 4},
+	{5, 6, 1, 2, 3},
+	{5, 6, 2, 3, 4}
+}
