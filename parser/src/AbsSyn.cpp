@@ -172,7 +172,7 @@ ex Expr::toEx(const InputData &m, const lst &vars, const lst &params) const
   case exprType::NEG:
     return -left->toEx(m, vars, params);
   }
-  
+
   throw std::logic_error("Unknown expression type");
 }
 

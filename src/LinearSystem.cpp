@@ -55,7 +55,7 @@ double solveLinearSystem(const vector<vector<double>> &A,
 
   int *ia, *ja;
   double *ar;
-  
+
   ia = (int *)calloc(size_lp + 1, sizeof(int));
   ja = (int *)calloc(size_lp + 1, sizeof(int));
   ar = (double *)calloc(size_lp + 1, sizeof(double));

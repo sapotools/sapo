@@ -100,7 +100,8 @@ void BaseConverter::initShifts()
  * @param[in] multi_index multi-index to convert
  * @returns converted multi-index
  */
-unsigned int BaseConverter::multi_index2pos(const std::vector<unsigned int>& multi_index) const
+unsigned int BaseConverter::multi_index2pos(
+    const std::vector<unsigned int> &multi_index) const
 {
   using namespace std;
 
@@ -125,7 +126,8 @@ unsigned int BaseConverter::multi_index2pos(const std::vector<unsigned int>& mul
  * @param[in] position position to convert
  * @returns converted position
  */
-std::vector<unsigned int> BaseConverter::pos2multi_index(unsigned int position) const
+std::vector<unsigned int>
+BaseConverter::pos2multi_index(unsigned int position) const
 {
 
   std::vector<unsigned int> multi_index(this->degrees.size(), 0);
@@ -140,22 +142,23 @@ std::vector<unsigned int> BaseConverter::pos2multi_index(unsigned int position) 
   return multi_index;
 }
 
-void BaseConverter::initCoeffs(const GiNaC::ex& polynomial, unsigned int var_idx,
-                                  const unsigned int position)
+void BaseConverter::initCoeffs(const GiNaC::ex &polynomial,
+                               unsigned int var_idx,
+                               const unsigned int position)
 {
   using namespace GiNaC;
 
   // Base case, there's only one variable
   if (var_idx == this->vars.nops() - 1) {
 
-    for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {   
+    for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
       this->coeffs[position + i] = polynomial.coeff(this->vars[var_idx], i);
     }
   } else {
     const unsigned int next_idx = var_idx + 1;
     for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
-      initCoeffs(polynomial.coeff(this->vars[var_idx], i), 
-                 next_idx, position + i*this->shifts[next_idx]); // Recursive call
+      initCoeffs(polynomial.coeff(this->vars[var_idx], i), next_idx,
+                 position + i * this->shifts[next_idx]); // Recursive call
     }
   }
 }
@@ -190,8 +193,8 @@ unsigned int nChoosek(unsigned int n, unsigned int k)
  * @param[in] k lower multi-index
  * @returns n choose k
  */
-unsigned int multi_index_nChoosek(const std::vector<unsigned int>& n,
-              const std::vector<unsigned int>& k)
+unsigned int multi_index_nChoosek(const std::vector<unsigned int> &n,
+                                  const std::vector<unsigned int> &k)
 {
 
   if (n.size() != k.size()) {
@@ -216,7 +219,8 @@ unsigned int multi_index_nChoosek(const std::vector<unsigned int>& n,
  * @param[in] b multi-index
  * @returns true if a <= b
  */
-bool multi_index_leq(const std::vector<unsigned int>& a, const std::vector<unsigned int>& b)
+bool multi_index_leq(const std::vector<unsigned int> &a,
+                     const std::vector<unsigned int> &b)
 {
 
   bool leq = true;
@@ -235,7 +239,7 @@ bool multi_index_leq(const std::vector<unsigned int>& a, const std::vector<unsig
  * @param[in] mi multi-index
  * @returns mi-th Bernstein coefficient
  */
-GiNaC::ex BaseConverter::bernCoeff(const std::vector<unsigned int>& mi) const
+GiNaC::ex BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
 {
   using namespace GiNaC;
 
@@ -395,7 +399,8 @@ void BaseConverter::split(unsigned int direction, double split_point) const
  * @param[in] b end of the intevral
  * @returns product v[a]v[a+1]...v[b]
  */
-unsigned int prod(const std::vector<unsigned int>& v, const unsigned int& a, const unsigned int& b)
+unsigned int prod(const std::vector<unsigned int> &v, const unsigned int &a,
+                  const unsigned int &b)
 {
   unsigned int prod = 1;
   for (unsigned int i = a; i < b; i++) {
@@ -412,9 +417,8 @@ unsigned int prod(const std::vector<unsigned int>& v, const unsigned int& a, con
  * @returns product A*B
  */
 template<typename T>
-std::vector<std::vector<T>>
-matrixProd(const std::vector<std::vector<T>>& A,
-           const std::vector<std::vector<T>>& B)
+std::vector<std::vector<T>> matrixProd(const std::vector<std::vector<T>> &A,
+                                       const std::vector<std::vector<T>> &B)
 {
   using namespace std;
 
@@ -447,7 +451,7 @@ matrixProd(const std::vector<std::vector<T>>& A,
  * @param[in] v vector to shift
  * @returns shifted vector
  */
-std::vector<unsigned int> shift(const std::vector<unsigned int>& v)
+std::vector<unsigned int> shift(const std::vector<unsigned int> &v)
 {
   std::vector<unsigned int> sv(v.size(), 0);
 
@@ -465,7 +469,8 @@ std::vector<unsigned int> shift(const std::vector<unsigned int>& v)
  * @param[in] degs dimensions of the matrix
  * @returns 2d converted matrix
  */
-std::vector<unsigned int> n2t(const std::vector<unsigned int>& a, const std::vector<unsigned int>& degs) 
+std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
+                              const std::vector<unsigned int> &degs)
 {
   using namespace std;
 
@@ -492,8 +497,9 @@ std::vector<unsigned int> n2t(const std::vector<unsigned int>& a, const std::vec
  * @param[in] degs_prod product of the dimensions (prod(degs))
  * @returns transposed coordinate
  */
-std::vector<unsigned int> transp(const std::vector<unsigned int>& b, const std::vector<unsigned int>& degs,
-                                       const unsigned int& degs_prod)
+std::vector<unsigned int> transp(const std::vector<unsigned int> &b,
+                                 const std::vector<unsigned int> &degs,
+                                 const unsigned int &degs_prod)
 {
   std::vector<unsigned int> b_transp(2, 0);
 
@@ -510,7 +516,8 @@ std::vector<unsigned int> transp(const std::vector<unsigned int>& b, const std::
  * @param[in] degs dimensions of the matrix
  * @returns nd converted matrix
  */
-std::vector<unsigned int> t2n(const std::vector<unsigned int>& c, const std::vector<unsigned int>& degs)
+std::vector<unsigned int> t2n(const std::vector<unsigned int> &c,
+                              const std::vector<unsigned int> &degs)
 {
 
   std::vector<unsigned int> a(degs.size(), 0);
@@ -534,8 +541,8 @@ std::vector<unsigned int> t2n(const std::vector<unsigned int>& c, const std::vec
  * @param[in] degs dimensions of the coordinate
  * @returns transposed coordinate
  */
-std::vector<unsigned int> transp_naive(const std::vector<unsigned int>& b,
-                                                      const std::vector<unsigned int>& degs)
+std::vector<unsigned int> transp_naive(const std::vector<unsigned int> &b,
+                                       const std::vector<unsigned int> &degs)
 {
 
   return n2t(shift(t2n(b, degs)), shift(degs));
@@ -549,7 +556,8 @@ std::vector<unsigned int> transp_naive(const std::vector<unsigned int>& b,
  * @returns transposed matrix
  */
 std::vector<std::vector<GiNaC::ex>>
-transp(const std::vector<std::vector<GiNaC::ex>>& M, const std::vector<unsigned int>& degs)
+transp(const std::vector<std::vector<GiNaC::ex>> &M,
+       const std::vector<unsigned int> &degs)
 {
   using namespace std;
   using namespace GiNaC;
@@ -584,7 +592,7 @@ transp(const std::vector<std::vector<GiNaC::ex>>& M, const std::vector<unsigned 
  * @param[in] n dimension of the matrix
  * @returns U tilde matrix
  */
-std::vector<std::vector<GiNaC::ex>> genUtilde(const unsigned int& n)
+std::vector<std::vector<GiNaC::ex>> genUtilde(const unsigned int &n)
 {
   using namespace std;
   using namespace GiNaC;
@@ -633,7 +641,8 @@ GiNaC::lst BaseConverter::getBernCoeffsMatrix() const
     }
   }
 
-  vector<vector<ex>> UAt = transp(matrixProd(genUtilde(this->degrees[0]), A), degrees_p);
+  vector<vector<ex>> UAt
+      = transp(matrixProd(genUtilde(this->degrees[0]), A), degrees_p);
   for (long unsigned int i = 1; i < this->degrees.size(); i++) {
     degrees_p = shift(degrees_p);
     UAt = transp(matrixProd(genUtilde(this->degrees[i]), UAt), degrees_p);
@@ -674,7 +683,7 @@ void BaseConverter::print() const
  * @param[in] M matrix to print
  */
 template<typename T>
-void print(const std::vector<std::vector<GiNaC::ex>>& M)
+void print(const std::vector<std::vector<GiNaC::ex>> &M)
 {
   using namespace std;
 

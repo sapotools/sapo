@@ -9,7 +9,7 @@
 #ifndef VARSGENERATOR_H_
 #define VARSGENERATOR_H_
 
-#include<string>
+#include <string>
 
 #include <ginac/ginac.h>
 

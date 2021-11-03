@@ -312,21 +312,21 @@ public:
    *
    * @param[in] orig is a rvalue linear system set
    */
-  LinearSystemSet(LinearSystemSet&& orig);
+  LinearSystemSet(LinearSystemSet &&orig);
 
   /**
    * A copy assignment for a linear system set
    *
    * @param[in] orig a linear system set
    */
-  LinearSystemSet& operator=(const LinearSystemSet &orig);
+  LinearSystemSet &operator=(const LinearSystemSet &orig);
 
   /**
    * A swap assignment for a linear system set
    *
    * @param[in] orig is a rvalue linear system set
    */
-  LinearSystemSet& operator=(LinearSystemSet&& orig);
+  LinearSystemSet &operator=(LinearSystemSet &&orig);
 
   /**
    * Add a linear system to the set
