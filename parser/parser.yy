@@ -43,6 +43,7 @@
 	IN
 	DYN
 	SPEC
+	ASSERT
 	ITER
 	PSPLITS
 	DIR
@@ -353,6 +354,24 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.data.addSpec($3);
 						}
+						| ASSERT state_formula ";"
+						{
+							if ($2->getType() != AbsSyn::Formula::formulaType::ATOM) {
+								yy::parser::error(@2, "Only atomic formulas are supported");
+								YYERROR;
+							}
+							if ($2->getEx()->hasParams(drv.data)) {
+								yy::parser::error(@2, "Expressions in assertions cannot contain parameters");
+								YYERROR;
+							}
+							if (!$2->isLinear(drv.data)) {
+								yy::parser::error(@2, "Assertions must be linear");
+								YYERROR;
+							}
+							
+							AbsSyn::Assertion *a = new AbsSyn::Assertion($2->getEx());
+							drv.data.addAssertion(a);
+						}
 
 matricesList	: %empty {}
 							| matricesList matrices {}
@@ -527,8 +546,8 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 				
 					if (drv.data.isConstDefined($1))
 						$$ = new AbsSyn::Expr(drv.data.getConst($1)->getValue());
-					else if (drv.data.isDefDefined($1))
-						$$ = drv.data.getDef($1)->getValue()->copy();
+//					else if (drv.data.isDefDefined($1))
+//						$$ = drv.data.getDef($1)->getValue()->copy();
 					else
 						$$ = new AbsSyn::Expr($1);
 				}

@@ -57,6 +57,7 @@ define			return yy::parser::make_DEFINE(loc);
 in			return yy::parser::make_IN(loc);
 dynamic			return yy::parser::make_DYN(loc);
 spec			return yy::parser::make_SPEC(loc);
+assert			return yy::parser::make_ASSERT(loc);
 iterations		return yy::parser::make_ITER(loc);
 max_parameter_splits	return yy::parser::make_PSPLITS(loc);
 direction		return yy::parser::make_DIR(loc);

@@ -53,17 +53,21 @@ enum transType {
 
 class Expr
 {
-  friend std::ostream &operator<<(std::ostream &os, const Expr &e);
+  friend std::ostream &operator<<(std::ostream &os, const Expr &e)
+	{
+		return e.prettyPrint(os, 10);
+	}
 
 public:
+	// order of types follows order of priority (needed by Expr::prettyPrint)
   enum exprType {
-    NUM_ATOM, // atomic expression (single number)
+    NUM_ATOM = 0, // atomic expression (single number)
     ID_ATOM,  // atomic expression (single identifier)
-    SUM,      // sum (x + y)
-    SUB,      // subtraction (x - y)
-    MUL,      // multiplication (x * y)
+    NEG,       // unary minus (-x)
     DIV,      // division (x / y)
-    NEG       // unary minus (-x)
+    MUL,      // multiplication (x * y)
+    SUB,      // subtraction (x - y)
+    SUM      // sum (x + y)
   };
 
   Expr(std::string n)
@@ -121,6 +125,9 @@ public:
   {
     return right;
   }
+  
+  int getDegree(const InputData &id)
+			const; // return the degree of the polynomial expression considering only vars
 
   Expr *copy() const; // deep copy of expression
 
@@ -128,6 +135,25 @@ public:
       const; // checks if the expression contains only numbers
   double evaluate(const InputData &im)
       const; // evaluates the value of a numeric expression
+	
+	bool hasParams(const InputData &im)
+			const; // checks if the expression contains parameter names
+      
+	double getCoefficient(const InputData &id, const std::string name)
+			const;	 /*
+								* returns the coefficient of the variable "name"
+								* in the simplified expression (in which each variable
+								* apperas only one time)
+								* Applies only to linear expressions without parameters
+								*/
+	
+	double getOffset(const InputData &id)
+			const;	 /*
+								* returns the numerical term
+								* in the simplified expression (in which each variable
+								* apperas only one time)
+								* Applies only to linear expressions without parameters
+								*/
 
   GiNaC::ex
   toEx(const InputData &m, const GiNaC::lst &vars,
@@ -145,6 +171,9 @@ protected:
   double val;       // value of number (if ATOM)
   Expr *left;       // left operand (if not ATOM)
   Expr *right;      // right operand (if not ATOM)
+  
+  // utility for printing expressions without too many parenthesis
+  std::ostream &prettyPrint(std::ostream &os, const int level) const;
 };
 
 /*
@@ -214,6 +243,15 @@ public:
   {
     return i;
   }
+  
+  formulaType getType() const
+	{
+		return type;
+	}
+  
+  bool isLinear(const InputData &id)
+			const; // checks if the formula is a boolean combination
+						 // of linear inequalities
 
   /*
    * simplification, removes negations
@@ -353,6 +391,13 @@ protected:
   double val;       // value
 };
 
+
+/*
+ ************************
+ *      DEFINITION      *
+ ************************
+ */
+
 class Definition
 {
   friend std::ostream &operator<<(std::ostream &os, const Definition &d)
@@ -384,6 +429,43 @@ public:
 private:
   std::string name;
   Expr *value;
+};
+
+/*
+ *************************
+ *       ASSERTION       *
+ *************************
+ */
+
+class Assertion
+{
+  friend std::ostream &operator<<(std::ostream &os, const Assertion &a)
+	{
+		return os << *(a.ex);
+	}
+
+public:
+	
+	Assertion(Expr *e): ex(e) {}
+	
+	~Assertion()
+	{
+		delete ex;
+	}
+	
+	Expr *getExpr() const
+	{
+		return ex;
+	}
+	/*
+	std::vector<GiNaC::numeric> getDirection(const InputData *id)
+				const;		// return the direction corresponding to the linear constraint
+	
+	GiNaC::numeric getOffset(const InputData *id)
+				const;		// return the offset of the constraint*/
+	
+protected:
+	Expr *ex;		// constraint of the form ex <= 0
 };
 
 /*
@@ -482,6 +564,10 @@ public:
   {
     return defs.size();
   }
+  unsigned getAssertNumber() const
+  {
+		return asserts.size();
+	}
 
   bool isVarDefined(const std::string &name)
       const; // checks if a variable named 'name' already exists
@@ -530,6 +616,9 @@ public:
       const; // return the definition named 'name', which must exist
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
+	
+	const Assertion *getAssert(int i)
+			const; // return the assertion in position i
 
   void addVariable(Variable *v)
   {
@@ -547,6 +636,10 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
+  void addAssertion(Assertion *a)
+	{
+		asserts.push_back(a);
+	} // adds a new assertion
 
   bool isSpecDefined() const
   {
@@ -699,6 +792,8 @@ protected:
   std::vector<Parameter *> params;
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
+	
+	std::vector<Assertion *> asserts;
 
   Formula *spec;
 
