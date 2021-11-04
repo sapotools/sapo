@@ -457,12 +457,14 @@ public:
 	{
 		return ex;
 	}
-	/*
-	std::vector<GiNaC::numeric> getDirection(const InputData *id)
+	
+	std::vector<double> getDirection(const InputData &id)
 				const;		// return the direction corresponding to the linear constraint
 	
-	GiNaC::numeric getOffset(const InputData *id)
-				const;		// return the offset of the constraint*/
+	double getOffset(const InputData &id) const		// return the offset of the constraint*/
+	{
+		return -ex->getOffset(id);
+	}
 	
 protected:
 	Expr *ex;		// constraint of the form ex <= 0
@@ -617,8 +619,10 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 	
-	const Assertion *getAssert(int i)
-			const; // return the assertion in position i
+	const Assertion *getAssert(int i) const // return the assertion in position i
+	{
+		return asserts[i];
+	}
 
   void addVariable(Variable *v)
   {

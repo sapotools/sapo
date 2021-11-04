@@ -37,6 +37,11 @@ private:
                                    // vars[1] alpha : free variables \in [0,1]
                                    // vars[2] beta : generator amplitudes
 
+	// constraints over directions (assertions)
+	// constrainedDirection[i] * vars <= constraintOffset
+	std::vector<std::vector<double>> constraintDirections;
+	std::vector<double> constraintOffsets;
+
   // map with Bernstein coefficients
   std::map<std::vector<int>, GiNaC::lst> bernCoeffs;
 
@@ -72,6 +77,15 @@ public:
   Bundle(Bundle &&orig);
   Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &T);
+  Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
+         const std::vector<std::vector<int>> &T,
+				 const std::vector<std::vector<double>> constrDirs,
+				 const std::vector<double> constrOffsets);
+  Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
+         const Vector &offp, const Vector &offm,
+         const std::vector<std::vector<int>> &T,
+				 const std::vector<std::vector<double>> constrDirs,
+				 const std::vector<double> constrOffsets);
   Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
          const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &T);

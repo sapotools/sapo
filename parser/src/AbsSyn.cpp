@@ -512,6 +512,23 @@ std::shared_ptr<STL> Formula::toSTL(const InputData &m, const lst &vars,
 }
 
 /*
+ *************************
+ *       ASSERTION       *
+ *************************
+ */
+
+std::vector<double> Assertion::getDirection(const InputData &id) const
+{
+	std::vector<double> res{};
+	
+	for (unsigned i = 0; i < id.getVarNum(); i++) {
+		res.push_back(ex->getCoefficient(id, id.getVar(i)->getName()));
+	}
+	
+	return res;
+}
+
+/*
  ***********************
  *        MODEL        *
  ***********************

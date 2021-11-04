@@ -18,7 +18,9 @@
  */
 Bundle::Bundle(const Bundle &orig):
     dim(orig.dim), L(orig.L), offp(orig.offp), offm(orig.offm), T(orig.T),
-    Theta(orig.Theta), vars(orig.vars)
+    Theta(orig.Theta), vars(orig.vars),
+    constraintDirections(orig.constraintDirections),
+    constraintOffsets(orig.constraintOffsets)
 {
 }
 
@@ -41,6 +43,8 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.T, B.T);
   std::swap(A.Theta, B.Theta);
   std::swap(A.vars, B.vars);
+	std::swap(A.constraintDirections, B.constraintDirections);
+	std::swap(A.constraintOffsets, B.constraintOffsets);
 }
 
 /**
@@ -52,11 +56,35 @@ void swap(Bundle &A, Bundle &B)
  * @param[in] offm lower offsets
  * @param[in] T templates matrix
  */
+
 Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
                const Vector &offp, const Vector &offm,
                const std::vector<std::vector<int>> &T):
+			Bundle(vars, L, offp, offm, T,
+								std::vector<std::vector<double>>{}, std::vector<double>{})
+{
+}
+
+/**
+ * Constructor that instantiates the bundle
+ *
+ * @param[in] vars list of variables for parallelotope generator functions
+ * @param[in] L matrix of directions
+ * @param[in] offp upper offsets
+ * @param[in] offm lower offsets
+ * @param[in] T templates matrix
+ * @param[in] constrDirs directions constrained by assertions
+ * @param[in] constrOffsets offsets of the constraints of the assertions
+ */
+Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
+               const Vector &offp, const Vector &offm,
+               const std::vector<std::vector<int>> &T,
+							 const std::vector<std::vector<double>> constrDirs,
+							 const std::vector<double> constrOffsets
+							):
     L(L),
-    offp(offp), offm(offm), T(T), vars(vars)
+    offp(offp), offm(offm), T(T), vars(vars),
+    constraintDirections(constrDirs), constraintOffsets(constrOffsets)
 {
   using namespace std;
 
@@ -113,8 +141,83 @@ Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
  */
 Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
                const std::vector<std::vector<int>> &T):
+//    L(L),
+//    offp(offp), offm(offm), T(T),
+//    constraintDirections({}), constraintOffsets({})
+		Bundle(L, offp, offm, T, {}, {})
+{
+/*  using namespace std;
+  using namespace GiNaC;
+
+  if (L.size() > 0) {
+    this->dim = L[0].size();
+  } else {
+    std::cerr << "Bundle::Bundle : L must be non empty" << std::endl;
+
+    exit(EXIT_FAILURE);
+  }
+  if (L.size() != offp.size()) {
+    std::cerr << "Bundle::Bundle : L and offp "
+              << "must have the same size" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (L.size() != offm.size()) {
+    std::cerr << "Bundle::Bundle : L and offm must have "
+              << "the same size" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (T.size() > 0) {
+    for (unsigned int i = 0; i < T.size(); i++) {
+      if (T[i].size() != this->getDim()) {
+        std::cerr << "Bundle::Bundle : T must have " << this->getDim()
+                  << " columns" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+    }
+  } else {
+    std::cerr << "Bundle::Bundle : T must be non empty" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // generate the variables
+  const size_t& dim= T[0].size();
+
+  this->vars = vector<lst>{get_symbol_lst("b", dim),  // Base vertex variables
+                           get_symbol_lst("f", dim),  // Free variables
+                           get_symbol_lst("l", dim)}; // Length variables
+
+  // initialize orthogonal proximity
+  this->Theta = vector<vector<double>>(this->getNumDirs(),
+                                       vector<double>(this->getNumDirs(), 0));
+
+  for (unsigned int i = 0; i < this->getNumDirs(); i++) {
+    this->Theta[i][i] = 0;
+    for (unsigned int j = i + 1; j < this->getNumDirs(); j++) {
+      double prox = this->orthProx(this->L[i], this->L[j]);
+      this->Theta[i][j] = prox;
+      this->Theta[j][i] = prox;
+    }
+  }*/
+}
+
+/**
+ * Constructor that instantiates the bundle with auto-generated variables
+ *
+ * @param[in] L matrix of directions
+ * @param[in] offp upper offsets
+ * @param[in] offm lower offsets
+ * @param[in] T templates matrix
+ * @param[in] constrDirs directions constrained by assertions
+ * @param[in] constrOffsets offsets of the constraints of the assertions
+ */
+Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
+               const std::vector<std::vector<int>> &T,
+							 const std::vector<std::vector<double>> constrDirs,
+							 const std::vector<double> constrOffsets
+							):
     L(L),
-    offp(offp), offm(offm), T(T)
+    offp(offp), offm(offm), T(T),
+    constraintDirections(constrDirs), constraintOffsets(constrOffsets)
 {
   using namespace std;
   using namespace GiNaC;
@@ -429,10 +532,23 @@ Bundle Bundle::transform(
       }
       newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]], maxCoeffp);
       newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]], maxCoeffm);
+			
+			// for each asserted direction, check that the new offset
+			// does not violate the constraint
+			for (unsigned assertIndex = 0; assertIndex < this->constraintDirections.size();
+					 assertIndex++) {
+				if (this->L[dirs_to_bound[j]] == this->constraintDirections[assertIndex]) {
+					newDp[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]);
+				} else if (this->L[dirs_to_bound[j]] ==
+										get_complementary(this->constraintDirections[assertIndex])) {
+					newDm[dirs_to_bound[j]] = std::min(-constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]);
+				}
+			}
     }
   }
+  
 
-  Bundle res = Bundle(this->vars, this->L, newDp, newDm, this->T);
+  Bundle res = Bundle(this->vars, this->L, newDp, newDm, this->T, this->constraintDirections, this->constraintOffsets);
   if (mode == 0) {
     return res.get_canonical();
   }
