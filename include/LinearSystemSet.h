@@ -14,6 +14,8 @@
 
 #include "LinearSystem.h"
 
+#include <list>
+
 #define MINIMIZE_LS_SET_REPRESENTATION true
 
 class LinearSystemSet
@@ -354,7 +356,7 @@ public:
 
   LinearSystemSet &simplify();
 
-  LinearSystemSet get_a_finer_covering() const;
+  std::list<LinearSystem> get_a_finer_covering() const;
 
   // inplace operations on set
   /**
@@ -437,14 +439,14 @@ public:
     return iterator(std::end(set));
   }
 
-  const_iterator cbegin() const
+  const_iterator begin() const
   {
-    return const_iterator(std::begin(set));
+    return const_iterator(std::cbegin(set));
   }
 
-  const_iterator cend() const
+  const_iterator end() const
   {
-    return const_iterator(std::end(set));
+    return const_iterator(std::cend(set));
   }
 
   bool isEmpty() const;
@@ -520,6 +522,14 @@ LinearSystemSet unionset(const LinearSystemSet &A, const LinearSystemSet &B);
  *          at least one of the parameters.
  */
 LinearSystemSet unionset(const LinearSystem &A, const LinearSystem &B);
+
+/**
+ * Test whether all the LinearSystemSet in a list are empty
+ *
+ * @param[in] lss_list a list of linear system set
+ * @returns false if one of the linear system set in the list is not empty
+ */
+bool every_set_is_empty(const std::list<LinearSystemSet>& lss_list);
 
 std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls);
 

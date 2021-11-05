@@ -15,8 +15,7 @@
 #include <ginac/ginac.h>
 #include <utility>
 #include <vector>
-
-class LinearSystemSet;
+#include <list>
 
 class LinearSystem
 {
@@ -69,9 +68,9 @@ private:
    */
   bool constraintIsRedundant(const unsigned int i) const;
 
-  LinearSystemSet *get_a_finer_covering(const std::vector<bool> &bvect_base,
+  std::list<LinearSystem> get_a_finer_covering(const std::vector<bool> &bvect_base,
                                         const unsigned int cidx,
-                                        LinearSystemSet *tmp_covering,
+                                        std::list<LinearSystem> &tmp_covering,
                                         std::vector<std::vector<double>> &A,
                                         std::vector<double> &b) const;
 
@@ -234,7 +233,7 @@ public:
    *  @return A linear system set whose union of solution sets equals
    *      the solution set of the original linear system.
    */
-  LinearSystemSet get_a_finer_covering() const;
+  std::list<LinearSystem> get_a_finer_covering() const;
 
   // operations on linear system
   /**
