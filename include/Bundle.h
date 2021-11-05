@@ -10,7 +10,6 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-
 #include <cmath>
 
 #include "BaseConverter.h"
@@ -19,9 +18,7 @@
 #include "LinearSystem.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
-#include "float.h"
-
-class Sapo;
+#include "ControlPointStorage.h"
 
 class Bundle
 {

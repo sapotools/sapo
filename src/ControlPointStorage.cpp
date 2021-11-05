@@ -57,7 +57,7 @@ bool ControlPointStorage::contains(const std::vector<int> index) const
     return (_genF_ctrlP.count(index)>0);
 }
 
-ControlPointStorage& ControlPointStorage::set_first(const std::vector<int> index, const GiNaC::lst& genFun)
+ControlPointStorage& ControlPointStorage::set_gen_fun(const std::vector<int> index, const GiNaC::lst& genFun)
 {
     std::unique_lock<std::shared_timed_mutex> write_lock(_mutex, std::defer_lock);
 
@@ -66,7 +66,7 @@ ControlPointStorage& ControlPointStorage::set_first(const std::vector<int> index
     return *this;
 }
 
-ControlPointStorage& ControlPointStorage::set_second(const std::vector<int> index, const GiNaC::lst& ctrlPts)
+ControlPointStorage& ControlPointStorage::set_ctrl_pts(const std::vector<int> index, const GiNaC::lst& ctrlPts)
 {
     std::unique_lock<std::shared_timed_mutex> write_lock(_mutex, std::defer_lock);
 

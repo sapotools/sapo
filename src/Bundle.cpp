@@ -7,9 +7,11 @@
  * @version 0.1
  */
 
-#include <string>
 
 #include "Bundle.h"
+
+#include <limits>
+#include <string>
 
 /**
  * Copy constructor that instantiates the bundle
@@ -337,15 +339,14 @@ Bundle Bundle::decompose(double alpha, int max_iters)
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle Bundle::transform(
-    const GiNaC::lst &vars, const GiNaC::lst &f,
-    ControlPointStorage &controlPts, int mode) const
+Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+                         ControlPointStorage &controlPts, int mode) const
 {
   using namespace std;
   using namespace GiNaC;
 
-  vector<double> newDp(this->getSize(), DBL_MAX);
-  vector<double> newDm(this->getSize(), DBL_MAX);
+  vector<double> newDp(this->getSize(), std::numeric_limits<double>::max());
+  vector<double> newDm(this->getSize(), std::numeric_limits<double>::max());
 
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
@@ -414,8 +415,8 @@ Bundle Bundle::transform(
       }
 
       // find the maximum coefficient
-      double maxCoeffp = -DBL_MAX;
-      double maxCoeffm = -DBL_MAX;
+      double maxCoeffp = std::numeric_limits<double>::lowest();
+      double maxCoeffm = std::numeric_limits<double>::lowest();
       for (lst::const_iterator c = actbernCoeffs.begin();
            c != actbernCoeffs.end(); ++c) {
         double actCoeffp = ex_to<numeric>((*c).subs(subParatope)).to_double();
@@ -456,8 +457,8 @@ Bundle Bundle::transform(
   using namespace std;
   using namespace GiNaC;
 
-  vector<double> newDp(this->getSize(), DBL_MAX);
-  vector<double> newDm(this->getSize(), DBL_MAX);
+  vector<double> newDp(this->getSize(), std::numeric_limits<double>::max());
+  vector<double> newDm(this->getSize(), std::numeric_limits<double>::max());
 
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
@@ -497,7 +498,7 @@ Bundle Bundle::transform(
       lst actbernCoeffs;
 
       if (!(controlPts.contains(key)
-           &&controlPts.gen_fun_is_equal_to(key, genFun))) { // check if the coefficients were already computed
+          && controlPts.gen_fun_is_equal_to(key, genFun))) { // check if the coefficients were already computed
 
         // the combination parallelotope/direction to bound is not present in
         // hash table compute control points
@@ -527,8 +528,8 @@ Bundle Bundle::transform(
       }
 
       // find the maximum coefficient
-      double maxCoeffp = -DBL_MAX;
-      double maxCoeffm = -DBL_MAX;
+      double maxCoeffp = std::numeric_limits<double>::lowest();;
+      double maxCoeffm = std::numeric_limits<double>::lowest();;
       for (lst::const_iterator c = actbernCoeffs.begin();
            c != actbernCoeffs.end(); ++c) {
         ex paraBernCoeff;
@@ -681,7 +682,7 @@ double Bundle::maxOrthProx(std::vector<int> dirsIdx)
  */
 double Bundle::maxOrthProx(std::vector<std::vector<int>> T)
 {
-  double maxorth = -DBL_MAX;
+  double maxorth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
     maxorth = std::max(maxorth, this->maxOrthProx(*T_it));
   }
@@ -740,7 +741,7 @@ double Bundle::maxOffsetDist(std::vector<int> dirsIdx,
 double Bundle::maxOffsetDist(std::vector<std::vector<int>> T,
                              std::vector<double> dists)
 {
-  double maxdist = -DBL_MAX;
+  double maxdist = std::numeric_limits<double>::lowest();
   for (unsigned int i = 0; i < T.size(); i++) {
     maxdist = std::max(maxdist, this->maxOffsetDist(T[i], dists));
   }

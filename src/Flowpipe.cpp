@@ -150,11 +150,11 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
   os << "varm = [";
   for (auto it = std::begin(this->flowpipe); it != std::end(this->flowpipe);
        ++it) {
-    LinearSystemSet::const_iterator ls_it(it->cbegin());
+    LinearSystemSet::const_iterator ls_it(it->begin());
 
     double min_value = ls_it->minLinearSystem(v_templates[var]);
 
-    for (; ls_it != it->cend(); ++ls_it) {
+    for (; ls_it != it->end(); ++ls_it) {
       double min_var_value = ls_it->minLinearSystem(v_templates[var]);
 
       min_value = std::min(min_var_value, min_value);
@@ -170,11 +170,11 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
     std::vector<double> obj_funct(dim(), 0.0);
     obj_funct[var] = 1.0;
 
-    LinearSystemSet::const_iterator ls_it(it->cbegin());
+    LinearSystemSet::const_iterator ls_it(it->begin());
 
     double max_value = ls_it->maxLinearSystem(v_templates[var]);
 
-    for (; ls_it != it->cend(); ++ls_it) {
+    for (; ls_it != it->end(); ++ls_it) {
       double max_var_value = ls_it->maxLinearSystem(v_templates[var]);
 
       max_value = std::min(max_var_value, max_value);

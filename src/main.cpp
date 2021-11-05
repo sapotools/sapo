@@ -62,22 +62,34 @@ int main(int argc, char **argv)
     cout << "END RESULTS" << endl;
   } else {
     // Synthesize parameters
-    LinearSystemSet synth_params
+    std::list<LinearSystemSet> synth_params
         = sapo.synthesize(*(model->getReachSet()), *(model->getParaSet()),
                           model->getSpec(), drv.data.getMaxParameterSplits());
-    if (synth_params.size() == 0) {
-      cout << "RESULTS" << endl;
-      synth_params.print();
-      cout << "END RESULTS" << endl;
+    
+    cout << "RESULTS" << endl;
+    if (every_set_is_empty(synth_params)) {
+      cout << "======empty set======" << endl << endl;
     } else {
-      cout << endl;
-      Flowpipe F = sapo.reach(*(model->getReachSet()), synth_params,
-                              drv.data.getIterations());
-      cout << "RESULTS" << endl;
-      F.print();
-      cout << "END RESULTS" << endl;
+      for (auto p_it = std::cbegin(synth_params); p_it!= std::cend(synth_params); ++p_it) {
+        if (p_it->size() != 0) {
+          cout << "==================" << endl;
+          Flowpipe F = sapo.reach(*(model->getReachSet()), *p_it,
+                                    drv.data.getIterations());
+          F.print();
+        }
+      }
     }
-    synth_params.print();
+    cout << "END RESULTS";
+    if (every_set_is_empty(synth_params)) {
+      cout << endl << "======empty set======" << endl << endl;
+    } else {
+      for (auto p_it = std::cbegin(synth_params); p_it!= std::cend(synth_params); ++p_it) {
+        if (p_it->size() != 0) {
+          cout << endl << "==================" << endl;
+          p_it->print();
+        }
+      }
+    }
   }
 
   delete model;

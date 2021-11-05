@@ -413,16 +413,16 @@ get_a_ls_base_bit_vector(const std::vector<std::vector<double>> &A)
   return bvect_base;
 }
 
-LinearSystemSet *LinearSystem::get_a_finer_covering(
+std::list<LinearSystem> LinearSystem::get_a_finer_covering(
     const std::vector<bool> &bvect_base, const unsigned int cidx,
-    LinearSystemSet *tmp_covering, std::vector<std::vector<double>> &A,
+    std::list<LinearSystem> &tmp_covering, std::vector<std::vector<double>> &A,
     std::vector<double> &b) const
 {
   if (this->A.size() == cidx) {
-    std::shared_ptr<LinearSystem> ls = std::make_shared<LinearSystem>(A, b);
-    ls->simplify();
+    LinearSystem ls(A, b);
+    ls.simplify();
 
-    tmp_covering->add(ls);
+    tmp_covering.push_back(ls);
     return tmp_covering;
   }
 
@@ -463,16 +463,16 @@ LinearSystemSet *LinearSystem::get_a_finer_covering(
   return tmp_covering;
 }
 
-LinearSystemSet LinearSystem::get_a_finer_covering() const
+std::list<LinearSystem> LinearSystem::get_a_finer_covering() const
 {
-  LinearSystemSet result;
+  std::list<LinearSystem> result;
 
   std::vector<bool> bvect_base = get_a_ls_base_bit_vector(this->A);
 
   std::vector<std::vector<double>> A;
   std::vector<double> b;
 
-  get_a_finer_covering(bvect_base, 0, &result, A, b);
+  get_a_finer_covering(bvect_base, 0, result, A, b);
 
   return result;
 }

@@ -161,7 +161,7 @@ bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
   };
 
   std::vector<std::thread> threads;
-  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
+  for (LinearSystemSet::const_iterator it = S.begin(); it != S.end(); ++it) {
     threads.push_back(std::thread(check_and_update, std::ref(*it)));
   }
 
@@ -302,17 +302,6 @@ LinearSystemSet &LinearSystemSet::simplify()
   swap(set, new_set);
 
   return *this;
-}
-
-LinearSystemSet LinearSystemSet::get_a_finer_covering() const
-{
-  LinearSystemSet covering;
-
-  for (auto it = std::begin(set); it != std::end(set); ++it) {
-    covering.unionWith((*it)->get_a_finer_covering());
-  }
-
-  return covering;
 }
 
 /**
@@ -515,6 +504,17 @@ LinearSystemSet::~LinearSystemSet()
   // TODO Auto-generated destructor stub
 }
 
+bool every_set_is_empty(const std::list<LinearSystemSet>& lss_list)
+{
+  for (auto lss_it = std::begin(lss_list); lss_it != std::end(lss_list); ++lss_it) {
+    if (!lss_it->isEmpty()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
 {
   using namespace std;
@@ -523,8 +523,8 @@ std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
     out << "---- empty set ----" << endl;
   } else {
     out << "--------------";
-    const LinearSystemSet::const_iterator last(ls.cend() - 1);
-    for (auto it = ls.cbegin(); it != last; ++it) {
+    const LinearSystemSet::const_iterator last(ls.end() - 1);
+    for (auto it = ls.begin(); it != last; ++it) {
       out << endl << *it << endl;
     }
 

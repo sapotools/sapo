@@ -1,9 +1,9 @@
 /**
  * @file ControlPointStorage.h
  * @brief Defines the ControlPointStorage class.
- *  
- * This file contains the definition of the ControlPointStorage class. 
- * This class is meant to represent a control point storage for 
+ *
+ * This file contains the definition of the ControlPointStorage class.
+ * This class is meant to represent a control point storage for
  * Bundle transformations.
  *
  * @author Alberto Casagrande <alberto.casagrande@units.it>
@@ -37,14 +37,14 @@ public:
 
     ControlPointStorage& set(const std::vector<int> index, const GiNaC::lst& genFun, const GiNaC::lst& ctrlPts)
     {
-        this->set_first(index, genFun);
-        this->set_second(index, ctrlPts);
+        this->set_gen_fun(index, genFun);
+        this->set_ctrl_pts(index, ctrlPts);
 
         return *this;
     }
 
-    ControlPointStorage& set_first(const std::vector<int> index, const GiNaC::lst& genFun);
-    ControlPointStorage& set_second(const std::vector<int> index, const GiNaC::lst& ctrlPts);
+    ControlPointStorage& set_gen_fun(const std::vector<int> index, const GiNaC::lst& genFun);
+    ControlPointStorage& set_ctrl_pts(const std::vector<int> index, const GiNaC::lst& ctrlPts);
 };
 
 #endif // CONTROLPOINTS_H_
