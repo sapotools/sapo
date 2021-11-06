@@ -15,9 +15,8 @@
  * @param[in] model model to analyize
  * @param[in] sapo_opt options to tune sapo
  */
-Sapo::Sapo(Model *model, sapo_opt options):
-    dyns(model->getDyns()), vars(model->getVars()), params(model->getParams()),
-    options(options)
+Sapo::Sapo(Model *model):
+    dyns(model->getDyns()), vars(model->getVars()), params(model->getParams())
 {}
 
 /**
@@ -36,11 +35,11 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
 
   Flowpipe flowpipe(initSet.getDirectionMatrix());
 
-  if (this->options.verbose) {
-    cout << initSet.getLinearSystem() << endl << endl;
+  if (this->verbose) {
+    cout << "Initial Set" << endl
+         << initSet.getLinearSystem() << endl << endl
+         << "Computing reach set..." << flush;
   }
-
-  cout << "Computing reach set..." << flush;
 
   Bundle X = initSet;
   LinearSystem Xls = initSet.getLinearSystem();
@@ -51,20 +50,22 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
     i++;
 
     X = X.transform(this->vars, this->dyns, controlPts,
-                    this->options.trans); // transform it
+                    this->trans); // transform it
 
-    if (this->options.decomp > 0) { // eventually decompose it
-      X = X.decompose(this->options.alpha, this->options.decomp);
+    if (this->decomp > 0) { // if requested, decompose it
+      X = X.decompose(this->alpha, this->decomp);
     }
 
     flowpipe.append(X.getLinearSystem()); // store result
 
-    if (this->options.verbose) {
+    if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
     }
   }
 
-  cout << "done" << endl;
+  if (this->verbose) {
+    cout << "done" << endl;
+  }
 
   return flowpipe;
 } 
@@ -83,7 +84,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
   using namespace std;
   using namespace GiNaC;
 
-  if (this->options.verbose) {
+  if (this->verbose) {
     cout << "Initial Set" << endl
          << initSet.getLinearSystem() << endl << endl
          << "Parameter set" << endl
@@ -119,10 +120,10 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
       for (auto p_it=pSet.begin(); p_it!=pSet.end(); ++p_it) {
 
         // get the transformed bundle
-        Bundle bundle = b_it->transform(this->vars, this->params, this->dyns, *p_it, ctrlPts, this->options.trans); // transform it
+        Bundle bundle = b_it->transform(this->vars, this->params, this->dyns, *p_it, ctrlPts, this->trans); // transform it
 
-        if (this->options.decomp > 0) { // eventually decompose it
-          bundle = bundle.decompose(this->options.alpha, this->options.decomp);
+        if (this->decomp > 0) { // if requested, decompose it
+          bundle = bundle.decompose(this->alpha, this->decomp);
         }
 
         LinearSystem bls = bundle.getLinearSystem();
@@ -143,12 +144,12 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
     // add the last step to the flow pipe
     flowpipe.append(last_step); // store result
 
-    if (this->options.verbose) {
+    if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
     }
   }
   
-  if (this->options.verbose) {
+  if (this->verbose) {
     cout << "done" << endl;
   }
 
@@ -222,7 +223,7 @@ synthesize_list(Sapo &sapo, Bundle reachSet, const std::list<LinearSystemSet> &p
  * @returns the list of refined parameter sets
  */
 std::list<LinearSystemSet>
-Sapo::synthesize(Bundle &reachSet, const LinearSystemSet& pSet,
+Sapo::synthesize(const Bundle &reachSet, const LinearSystemSet& pSet,
                  const std::shared_ptr<STL> formula, const unsigned int max_splits)
 {
   using namespace std;
@@ -243,7 +244,7 @@ Sapo::synthesize(Bundle &reachSet, const LinearSystemSet& pSet,
     lss_it->simplify();
   }
 
-  if (this->options.verbose) {
+  if (this->verbose) {
     cout << "done" << endl;
   }
 
@@ -258,7 +259,7 @@ Sapo::synthesize(Bundle &reachSet, const LinearSystemSet& pSet,
  * @param[in] conj is an STL conjunction providing the specification
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                 const LinearSystemSet &pSet,
                                 const std::shared_ptr<Conjunction> conj)
 {
@@ -277,7 +278,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] conj is an STL disjunction providing the specification
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                   const LinearSystemSet &pSet,
                                   const std::shared_ptr<Disjunction> disj)
 {
@@ -297,7 +298,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] ev is an STL eventually formula providing the specification
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                   const LinearSystemSet &pSet,
                                   const std::shared_ptr<Eventually> ev)
 {
@@ -318,7 +319,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] formula is an STL specification for the model
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                  const LinearSystemSet &pSet,
                                  const std::shared_ptr<STL> formula)
 {
@@ -365,7 +366,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] sigma STL atomic formula
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                  const LinearSystemSet &pSet,
                                  const std::shared_ptr<Atom> atom)
 {
@@ -449,7 +450,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                       const LinearSystemSet &pSet,
                                       const std::shared_ptr<Until> formula,
                                       const int time)
@@ -505,7 +506,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                        const LinearSystemSet &pSet,
                                        const std::shared_ptr<Always> formula,
                                        const int time)

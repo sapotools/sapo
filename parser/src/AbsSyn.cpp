@@ -621,14 +621,6 @@ void InputData::defaultParamDirections()
     paramDirections[i][i] = 1;
 }
 
-int InputData::getTransValue()
-{
-  if (trans == transType::AFO)
-    return 1;
-  else
-    return 0;
-}
-
 bool InputData::check()
 {
   bool res = true;

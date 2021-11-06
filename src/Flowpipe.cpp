@@ -15,7 +15,8 @@
 /**
  * Constructor that instantiates Flowpipe
  */
-Flowpipe::Flowpipe(): v_templates(), flowpipe() {}
+Flowpipe::Flowpipe(): v_templates(), flowpipe()
+{}
 
 /**
  * Constructor that instantiates Flowpipe
@@ -90,13 +91,22 @@ unsigned int Flowpipe::dim() const
 }
 
 /**
- * Display the flowpipe
+ * Stream a flowpipe
+ *
+ * @param[in] os is the output stream
+ * @param[in] fs is the flowpipe to be streamed
+ * @return the output stream
  */
-void Flowpipe::print() const
+std::ostream &operator<<(std::ostream &os, const Flowpipe &fp)
 {
-  for (auto it = std::begin(flowpipe); it != std::end(flowpipe); ++it) {
-    std::cout << *it << std::endl << std::endl;
+  for (auto it = std::cbegin(fp.flowpipe); it != std::cend(fp.flowpipe); ++it) {
+    if (it != std::cbegin(fp.flowpipe)) {
+      os << std::endl;
+    }
+    os << *it << std::endl;
   }
+
+  return os;
 }
 
 /**
@@ -186,9 +196,4 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
   os << "T = [t,fliplr(t)];" << std::endl;
   os << "X = [varm,fliplr(varp)];" << std::endl;
   os << "fill(T,X,'" << color << "');" << std::endl;
-}
-
-Flowpipe::~Flowpipe()
-{
-  // TODO Auto-generated destructor stub
 }

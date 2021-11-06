@@ -73,11 +73,6 @@ public:
 
   /**
    * Print the flowpipe in Matlab format (for plotregion script)
-   */
-  void print() const;
-
-  /**
-   * Print the flowpipe in Matlab format (for plotregion script)
    *
    * @param[in] os is the output stream
    * @param[in] color color of the polytope to plot
@@ -93,9 +88,17 @@ public:
     swap(A.v_templates, B.v_templates);
   }
 
-  virtual ~Flowpipe();
-};
+  /**
+   * Stream a flowpipe
+   * 
+   * @param[in] os is the output stream
+   * @param[in] fs is the flowpipe to be streamed
+   * @return the output stream
+   */
+  friend std::ostream &operator<<(std::ostream &out, const Flowpipe &fp);
 
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls);
+  ~Flowpipe()
+  {}
+};
 
 #endif /* BUNDLE_H_ */

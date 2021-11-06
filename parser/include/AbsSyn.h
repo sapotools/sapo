@@ -624,19 +624,24 @@ public:
     paramLBoffsets.push_back(LB);
     paramUBoffsets.push_back(UB);
   }
+
   void defaultParamDirections();
+
   const std::vector<std::vector<double>> &getParameterDirections() const
   {
     return paramDirections;
   }
+
   const std::vector<double> &getParamDirection(int i) const
   {
     return paramDirections[i];
   }
+
   const std::vector<double> &getParamLB() const
   {
     return paramLBoffsets;
   }
+
   const std::vector<double> &getParamUB() const
   {
     return paramUBoffsets;
@@ -646,15 +651,24 @@ public:
   {
     return trans != transType::T_UNDEF;
   }
+
   void setTransMode(transType t)
   {
     trans = t;
   }
+
   const transType &getTransMode() const
   {
     return trans;
   }
-  int getTransValue(); // returns int value used by sapo (AFO = 1, OFO = 0)
+
+  unsigned char getTransValue() const // returns int value used by sapo (AFO = 1, OFO = 0)
+  {
+    if (trans == transType::AFO)
+      return 1;
+    else
+      return 0;
+  }
 
   const bool &isDecompositionDefined() const
   {
