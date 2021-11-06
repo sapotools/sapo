@@ -16,7 +16,6 @@
 #include "Atom.h"
 #include "BaseConverter.h"
 #include "Bundle.h"
-#include "Common.h"
 #include "Conjunction.h"
 #include "Disjunction.h"
 #include "Eventually.h"

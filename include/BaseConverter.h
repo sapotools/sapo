@@ -9,9 +9,8 @@
 #ifndef BASECONVERTER_H_
 #define BASECONVERTER_H_
 
-#include <math.h>
-
-#include "Common.h"
+#include <vector>
+#include <ginac/ginac.h>
 
 class BaseConverter
 {

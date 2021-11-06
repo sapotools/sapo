@@ -9,11 +9,11 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
+#include <ginac/ginac.h>
+
 #include "Bundle.h"
 #include "LinearSystemSet.h"
 #include "STL.h"
-
-#include "Common.h"
 
 class Model
 {

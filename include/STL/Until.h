@@ -9,6 +9,8 @@
 #ifndef UNTIL_H_
 #define UNTIL_H_
 
+#include <memory>
+
 #include "STL.h"
 #include "TimeInterval.h"
 

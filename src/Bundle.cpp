@@ -10,6 +10,7 @@
 
 #include "Bundle.h"
 
+#include <cmath>
 #include <limits>
 #include <string>
 

@@ -8,6 +8,8 @@
 
 #include "BaseConverter.h"
 
+#include<cmath>
+
 /**
  * Constructor that instantiates the base converter
  *

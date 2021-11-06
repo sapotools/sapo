@@ -8,6 +8,8 @@
 
 #include "Disjunction.h"
 
+#include <iostream>
+
 /**
  * Constructor that instantiates a Disjunction STL formula (f1 /\ f2)
  *

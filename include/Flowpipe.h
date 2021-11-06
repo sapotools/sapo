@@ -10,8 +10,9 @@
 #ifndef FLOWPIPE_H_
 #define FLOWPIPE_H_
 
+#include <vector>
+
 #include "Bundle.h"
-#include "Common.h"
 #include "LinearSystemSet.h"
 
 class Flowpipe

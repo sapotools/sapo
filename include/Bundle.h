@@ -10,15 +10,11 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-#include <cmath>
-
 #include "BaseConverter.h"
-#include "Common.h"
 #include "LinearSystem.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
 #include "ControlPointStorage.h"
-//#include "float.h"
 
 class Bundle
 {

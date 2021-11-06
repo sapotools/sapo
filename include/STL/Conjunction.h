@@ -9,6 +9,8 @@
 #ifndef CONJUNCTION_H_
 #define CONJUNCTION_H_
 
+#include <memory>
+
 #include "STL.h"
 
 class Conjunction : public STL
