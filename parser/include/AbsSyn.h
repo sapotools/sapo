@@ -662,7 +662,8 @@ public:
     return trans;
   }
 
-  unsigned char getTransValue() const // returns int value used by sapo (AFO = 1, OFO = 0)
+  unsigned char
+  getTransValue() const // returns int value used by sapo (AFO = 1, OFO = 0)
   {
     if (trans == transType::AFO)
       return 1;

@@ -17,7 +17,8 @@
 
 using namespace std;
 
-Sapo init_sapo(Model *model, const AbsSyn::InputData& data, const bool verbose=false)
+Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
+               const bool verbose = false)
 {
   Sapo sapo(model);
 
@@ -31,101 +32,362 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData& data, const bool verbose=f
   return sapo;
 }
 
-void reach_analysis(Sapo &sapo, const Model *model)
+template<typename T>
+class OutputFormatter
 {
-    Flowpipe flowpipe;
-    // if the model does not specify any parameter set
-    if (model->getParams().nops() == 0) {
+public:
+  OutputFormatter() {}
 
-      // perform the reachability analysis
-      flowpipe = sapo.reach(*(model->getReachSet()), sapo.time_horizon);
-    } else {
+  static std::string flowpipe_header()
+  {
+    return "";
+  }
 
-      // perform the parametric reachability analysis
-      flowpipe = sapo.reach(*(model->getReachSet()), *(model->getParaSet()), sapo.time_horizon);
-    }
+  static std::string flowpipe_footer()
+  {
+    return "";
+  }
 
-    cout << "FLOWPIPES" << endl
-         << "=================" << endl
-         << flowpipe << endl;
+  static std::string parameter_header()
+  {
+    return "";
+  }
+
+  static std::string parameter_footer()
+  {
+    return "";
+  }
+
+  static std::string list_begin()
+  {
+    return "";
+  }
+
+  static std::string list_end()
+  {
+    return "";
+  }
+
+  static std::string list_separator()
+  {
+    return "";
+  }
+
+  static std::string empty_list()
+  {
+    return "";
+  }
+
+  static std::string data_header()
+  {
+    return "";
+  }
+
+  static std::string data_footer()
+  {
+    return "";
+  }
+
+  static std::string data_separator()
+  {
+    return "";
+  }
+};
+
+template<>
+class OutputFormatter<std::ostream>
+{
+public:
+  OutputFormatter() {}
+
+  static std::string flowpipe_header()
+  {
+    return "FLOWPIPES\n";
+  }
+
+  static std::string flowpipe_footer()
+  {
+    return "";
+  }
+
+  static std::string parameter_header()
+  {
+    return "PARAMETER SETS\n";
+  }
+
+  static std::string parameter_footer()
+  {
+    return "";
+  }
+
+  static std::string list_begin()
+  {
+    return "=================\n";
+  }
+
+  static std::string list_end()
+  {
+    return "\n";
+  }
+
+  static std::string list_separator()
+  {
+    return "\n\n=================\n";
+  }
+
+  static std::string empty_list()
+  {
+    return "----empty set----";
+  }
+
+  static std::string data_header()
+  {
+    return "";
+  }
+
+  static std::string data_footer()
+  {
+    return "";
+  }
+
+  static std::string data_separator()
+  {
+    return "\n";
+  }
+};
+
+template<>
+class OutputFormatter<JSON::ostream>
+{
+public:
+  OutputFormatter() {}
+
+  static std::string flowpipe_header()
+  {
+    return "\"flowpipes\":";
+  }
+
+  static std::string flowpipe_footer()
+  {
+    return "";
+  }
+
+  static std::string parameter_header()
+  {
+    return "\"parameter sets\":";
+  }
+
+  static std::string parameter_footer()
+  {
+    return "";
+  }
+
+  static std::string list_begin()
+  {
+    return "[";
+  }
+
+  static std::string list_end()
+  {
+    return "]";
+  }
+
+  static std::string list_separator()
+  {
+    return ",";
+  }
+
+  static std::string empty_list()
+  {
+    return "[]";
+  }
+
+  static std::string data_header()
+  {
+    return "{";
+  }
+
+  static std::string data_footer()
+  {
+    return "}";
+  }
+
+  static std::string data_separator()
+  {
+    return ",";
+  }
+};
+
+template<typename OSTREAM>
+void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
+{
+  OutputFormatter<OSTREAM> of;
+
+  os << of.data_header() << of.flowpipe_header() << of.list_begin();
+
+  // if the model does not specify any parameter set
+  if (model->getParams().nops() == 0) {
+
+    // perform the reachability analysis
+    os << sapo.reach(*(model->getReachSet()), sapo.time_horizon);
+  } else {
+
+    // perform the parametric reachability analysis
+    os << sapo.reach(*(model->getReachSet()), *(model->getParaSet()),
+                     sapo.time_horizon);
+  }
+
+  os << of.list_end() << of.flowpipe_footer() << of.data_footer();
 }
 
-void apply_parameters_and_print(std::ostream& os, Sapo& sapo,
-                                const std::list<LinearSystemSet>& synth_params, 
-                                std::function<void(Sapo &, const LinearSystemSet&)> funct)
+template<typename OSTREAM, typename R>
+void apply_parameters_and_print(
+    OSTREAM &os, Sapo &sapo, const std::list<LinearSystemSet> &synth_params,
+    std::function<R(Sapo &, const LinearSystemSet &)> funct)
 {
+  OutputFormatter<OSTREAM> of;
+
   if (every_set_is_empty(synth_params)) {
-    os << "=================" << endl
-          << "----empty set----" << endl
-          << endl;
+    os << of.list_begin() << of.empty_list() << of.list_end();
 
     return;
-  } 
+  }
 
-  for (auto p_it = std::cbegin(synth_params); p_it!= std::cend(synth_params); ++p_it) {
+  os << of.list_begin();
+  bool not_first = false;
+  for (auto p_it = std::cbegin(synth_params); p_it != std::cend(synth_params);
+       ++p_it) {
     if (p_it->size() != 0) {
-      os << "=================" << endl;
-      funct(sapo, *p_it);
+      if (not_first) {
+        os << of.list_separator();
+      }
+      not_first = true;
+      os << funct(sapo, *p_it);
     }
   }
+  os << of.list_end();
 }
 
-void synthesis(Sapo &sapo, const Model *model)
+template<typename OSTREAM>
+void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
 {
-    // Synthesize parameters
+  OutputFormatter<OSTREAM> of;
+
+  // Synthesize parameters
   std::list<LinearSystemSet> synth_params
       = sapo.synthesize(*(model->getReachSet()), *(model->getParaSet()),
                         model->getSpec(), sapo.max_param_splits);
 
-  cout << "FLOWPIPES" << endl;
-  auto reachability = [model](Sapo& sapo, const LinearSystemSet& pSet) {
-    cout << sapo.reach(*(model->getReachSet()), pSet,
-                        sapo.time_horizon) << endl;
-  };
-  apply_parameters_and_print(cout, sapo, synth_params, reachability);
+  std::function<Flowpipe(Sapo &, const LinearSystemSet &)> reachability
+      = [model](Sapo &sapo, const LinearSystemSet &pSet) {
+          return sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
+        };
 
-  cout << "PARAMETER SETS" << endl;
+  os << of.data_header() << of.flowpipe_header();
+  apply_parameters_and_print(os, sapo, synth_params, reachability);
 
-  auto identity = [](Sapo& sapo, const LinearSystemSet& pSet) {
-    (void)sapo; // this is just to avoid the warning
+  os << of.flowpipe_footer() << of.data_separator() << of.parameter_header();
 
-    cout << pSet << endl << endl;
-  };
-  apply_parameters_and_print(cout, sapo, synth_params, identity); 
+  std::function<LinearSystemSet(Sapo &, const LinearSystemSet &)> identity
+      = [](Sapo &sapo, const LinearSystemSet &pSet) {
+          (void)sapo; // this is just to avoid the warning
+
+          return pSet;
+        };
+  apply_parameters_and_print(os, sapo, synth_params, identity);
+
+  os << of.parameter_footer() << of.data_footer();
+}
+
+template<typename OSTREAM>
+void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo, Model *model,
+                                        const AbsSyn::problemType &type)
+{
+  switch (type) {
+  case AbsSyn::problemType::REACH:
+    reach_analysis(os, sapo, model);
+    break;
+  case AbsSyn::problemType::SYNTH:
+    synthesis(os, sapo, model);
+    break;
+  default:
+    std::cerr << "Unsupported problem type" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+}
+
+struct prog_opts {
+  std::string input_filename;
+  bool JSON_output;
+  bool get_help;
+};
+
+void print_help(std::ostream &os, const std::string exec_name)
+{
+  os << "Usage: " << exec_name << " [options] [input filename]" << std::endl
+     << "Options:" << std::endl
+     << "  -h\t\tPrint this help" << std::endl
+     << "  -j\t\tGet the output in JSON format" << std::endl
+     << std::endl
+     << "If either the filename is \"-\" or no filename is provided, "
+     << "the input is taken " << std::endl
+     << " from the standard input." << std::endl;
+}
+
+prog_opts parse_opts(const int argc, char **argv)
+{
+  prog_opts opts = {"-", false, false};
+
+  if (argc > 3) {
+    std::cerr << "Syntax error: Too many parameters" << std::endl;
+    print_help(std::cerr, argv[0]);
+
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 1; i < argc; i++) {
+    std::string argv_str = std::string(argv[i]);
+    if (std::string("-h") == argv_str) {
+      opts.get_help = true;
+    } else {
+      if (std::string("-j") == argv_str) {
+        opts.JSON_output = true;
+      } else {
+        opts.input_filename = argv_str;
+      }
+    }
+  }
+
+  return opts;
 }
 
 int main(int argc, char **argv)
 {
-
   driver drv;
   string file;
 
-  if (argc == 1) {
-    file = "-"; // causes lexer to use stdin
-  } else if (argc == 2) {
-    file = argv[1]; // provided file used
-  } else {
-    cerr << "usage: " << argv[0] << " <filename>" << endl;
-    cerr << "       " << argv[0] << endl;
-    return 1;
+  prog_opts opts = parse_opts(argc, argv);
+
+  if (opts.get_help) {
+    print_help(std::cout, argv[0]);
+
+    exit(EXIT_SUCCESS);
   }
 
-  if (drv.parse(file) != 0)
-    return 2;
+  if (drv.parse(opts.input_filename) != 0) {
+    std::cerr << "Error in loading " << opts.input_filename << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
   Model *model = new AutoGenerated(drv.data);
   Sapo sapo = init_sapo(model, drv.data);
 
-  switch (drv.data.getProblem()){
-    case AbsSyn::problemType::REACH:
-      reach_analysis(sapo, model);
-      break;
-    case AbsSyn::problemType::SYNTH:
-      synthesis(sapo, model);
-      break;
-    default:
-      std::cerr << "Unsupported problem type" << std::endl;
-      exit(EXIT_FAILURE);
+  if (opts.JSON_output) {
+    JSON::ostream os(std::cout);
+    perform_computation_and_get_output(os, sapo, model, drv.data.getProblem());
+  } else {
+    perform_computation_and_get_output(std::cout, sapo, model,
+                                       drv.data.getProblem());
   }
 
   delete model;

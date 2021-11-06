@@ -36,6 +36,14 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
   return out;
 }
 
+JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
+{
+  out << "{\"template\":" << ls.getA() << ","
+      << "\"offset\":" << ls.getb() << "}";
+
+  return out;
+}
+
 /**
  * Optimize a linear system
  *

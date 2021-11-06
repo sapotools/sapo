@@ -529,8 +529,10 @@ LinearSystemSet unionset(const LinearSystem &A, const LinearSystem &B);
  * @param[in] lss_list a list of linear system set
  * @returns false if one of the linear system set in the list is not empty
  */
-bool every_set_is_empty(const std::list<LinearSystemSet>& lss_list);
+bool every_set_is_empty(const std::list<LinearSystemSet> &lss_list);
 
 std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls);
+
+JSON::ostream &operator<<(JSON::ostream &out, const LinearSystemSet &ls);
 
 #endif /* LINEARSYSTEMSET_H_ */

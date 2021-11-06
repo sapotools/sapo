@@ -9,7 +9,7 @@
 #ifndef PARALLELOTOPE_H_
 #define PARALLELOTOPE_H_
 
-#include<vector>
+#include <vector>
 
 #include "LinearSystem.h"
 

@@ -6,7 +6,7 @@
  * @version 0.1
  */
 
-#include<iostream>
+#include <iostream>
 
 #include "Always.h"
 

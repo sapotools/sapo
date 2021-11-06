@@ -91,15 +91,23 @@ public:
 
   /**
    * Stream a flowpipe
-   * 
+   *
    * @param[in] os is the output stream
    * @param[in] fs is the flowpipe to be streamed
    * @return the output stream
    */
   friend std::ostream &operator<<(std::ostream &out, const Flowpipe &fp);
 
-  ~Flowpipe()
-  {}
+  /**
+   * Stream a flowpipe in JSON format
+   *
+   * @param[in] os is the output JSON stream
+   * @param[in] fs is the flowpipe to be streamed
+   * @return the output stream
+   */
+  friend JSON::ostream &operator<<(JSON::ostream &out, const Flowpipe &fp);
+
+  ~Flowpipe() {}
 };
 
 #endif /* BUNDLE_H_ */
