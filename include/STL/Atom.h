@@ -9,6 +9,8 @@
 #ifndef ATOM_H_
 #define ATOM_H_
 
+#include <ginac/ginac.h>
+
 #include "STL.h"
 
 class Atom : public STL

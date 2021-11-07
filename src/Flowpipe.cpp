@@ -90,16 +90,6 @@ unsigned int Flowpipe::dim() const
 }
 
 /**
- * Display the flowpipe
- */
-void Flowpipe::print() const
-{
-  for (auto it = std::begin(flowpipe); it != std::end(flowpipe); ++it) {
-    std::cout << *it << std::endl << std::endl;
-  }
-}
-
-/**
  * Print the linear system in Matlab format (for plotregion script)
  *
  * @param[in] os is the output stream
@@ -186,9 +176,4 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
   os << "T = [t,fliplr(t)];" << std::endl;
   os << "X = [varm,fliplr(varp)];" << std::endl;
   os << "fill(T,X,'" << color << "');" << std::endl;
-}
-
-Flowpipe::~Flowpipe()
-{
-  // TODO Auto-generated destructor stub
 }

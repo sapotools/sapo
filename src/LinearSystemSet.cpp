@@ -504,32 +504,14 @@ LinearSystemSet::~LinearSystemSet()
   // TODO Auto-generated destructor stub
 }
 
-bool every_set_is_empty(const std::list<LinearSystemSet>& lss_list)
+bool every_set_is_empty(const std::list<LinearSystemSet> &lss_list)
 {
-  for (auto lss_it = std::begin(lss_list); lss_it != std::end(lss_list); ++lss_it) {
+  for (auto lss_it = std::begin(lss_list); lss_it != std::end(lss_list);
+       ++lss_it) {
     if (!lss_it->isEmpty()) {
       return false;
     }
   }
 
   return true;
-}
-
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
-{
-  using namespace std;
-
-  if (ls.size() == 0) {
-    out << "---- empty set ----" << endl;
-  } else {
-    out << "--------------";
-    const LinearSystemSet::const_iterator last(ls.end() - 1);
-    for (auto it = ls.begin(); it != last; ++it) {
-      out << endl << *it << endl;
-    }
-
-    out << endl << *last;
-  }
-
-  return out;
 }

@@ -8,6 +8,8 @@
 
 #include "Conjunction.h"
 
+#include <iostream>
+
 /**
  * Constructor that instantiates a Conjunction STL formula (f1 /\ f2)
  *

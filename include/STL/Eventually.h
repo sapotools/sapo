@@ -9,6 +9,8 @@
 #ifndef EVENTUALLY_H_
 #define EVENTUALLY_H_
 
+#include <memory>
+
 #include "STL.h"
 #include "TimeInterval.h"
 

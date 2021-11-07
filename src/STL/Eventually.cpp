@@ -8,6 +8,8 @@
 
 #include "Eventually.h"
 
+#include <iostream>
+
 /**
  * Constructor that instantiates an Eventually formula (F_[a,b]f)
  *

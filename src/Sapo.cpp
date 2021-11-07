@@ -17,10 +17,10 @@
  * @param[in] model model to analyize
  * @param[in] sapo_opt options to tune sapo
  */
-Sapo::Sapo(Model *model, sapo_opt options):
-    dyns(model->getDyns()), vars(model->getVars()), params(model->getParams()),
-    options(options)
-{}
+Sapo::Sapo(Model *model):
+    dyns(model->getDyns()), vars(model->getVars()), params(model->getParams())
+{
+}
 
 /**
  * Reachable set computation
@@ -38,11 +38,12 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
 
   Flowpipe flowpipe(initSet.getDirectionMatrix());
 
-  if (this->options.verbose) {
-    cout << initSet.getLinearSystem() << endl << endl;
+  if (this->verbose) {
+    cout << "Initial Set" << endl
+         << initSet.getLinearSystem() << endl
+         << endl
+         << "Computing reach set..." << flush;
   }
-
-  cout << "Computing reach set..." << flush;
 
   Bundle X = initSet;
   LinearSystem Xls = initSet.getLinearSystem();
@@ -53,23 +54,25 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
     i++;
 
     X = X.transform(this->vars, this->dyns, controlPts,
-                    this->options.trans); // transform it
+                    this->trans); // transform it
 
-    if (this->options.decomp > 0) { // eventually decompose it
-      X = X.decompose(this->options.alpha, this->options.decomp);
+    if (this->decomp > 0) { // if requested, decompose it
+      X = X.decompose(this->alpha, this->decomp);
     }
 
     flowpipe.append(X.getLinearSystem()); // store result
 
-    if (this->options.verbose) {
+    if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
     }
   }
 
-  cout << "done" << endl;
+  if (this->verbose) {
+    cout << "done" << endl;
+  }
 
   return flowpipe;
-} 
+}
 
 /**
  * Reachable set computation for parameteric dynamical systems
@@ -85,11 +88,13 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
   using namespace std;
   using namespace GiNaC;
 
-  if (this->options.verbose) {
+  if (this->verbose) {
     cout << "Initial Set" << endl
-         << initSet.getLinearSystem() << endl << endl
+         << initSet.getLinearSystem() << endl
+         << endl
          << "Parameter set" << endl
-         << pSet << endl << endl
+         << pSet << endl
+         << endl
          << "Computing parametric reach set...";
   }
 
@@ -106,7 +111,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
 
   // while time horizon has not been reached and last step reached is not empty
   // TODO: check whether there exists any chance for the last_step to be empty
-  while (i < k && last_step.size()!=0) {
+  while (i < k && last_step.size() != 0) {
 
     // create a new last step reach set
     last_step = LinearSystemSet();
@@ -116,24 +121,28 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
     std::list<Bundle> nbundles;
 
     // for all the old bundles
-    for (auto b_it=std::cbegin(cbundles); b_it!=std::cend(cbundles); ++b_it) {
+    for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
+         ++b_it) {
       // for all the parameter sets
-      for (auto p_it=pSet.begin(); p_it!=pSet.end(); ++p_it) {
+      for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
 
         // get the transformed bundle
-        Bundle bundle = b_it->transform(this->vars, this->params, this->dyns, *p_it, ctrlPts, this->options.trans); // transform it
+        Bundle bundle
+            = b_it->transform(this->vars, this->params, this->dyns, *p_it,
+                              ctrlPts, this->trans); // transform it
 
-        if (this->options.decomp > 0) { // eventually decompose it
-          bundle = bundle.decompose(this->options.alpha, this->options.decomp);
+        if (this->decomp > 0) { // if requested, decompose it
+          bundle = bundle.decompose(this->alpha, this->decomp);
         }
 
         LinearSystem bls = bundle.getLinearSystem();
 
-        // TODO: check whether there is any chance for a transformed bundle to be empty
+        // TODO: check whether there is any chance for a transformed bundle to
+        // be empty
         if (!bls.isEmpty()) {
           // add to the new reached bundle
           nbundles.push_back(bundle);
-          
+
           last_step.add(bundle.getLinearSystem());
         }
       }
@@ -145,12 +154,12 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
     // add the last step to the flow pipe
     flowpipe.append(last_step); // store result
 
-    if (this->options.verbose) {
+    if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
     }
   }
-  
-  if (this->options.verbose) {
+
+  if (this->verbose) {
     cout << "done" << endl;
   }
 
@@ -158,33 +167,31 @@ Flowpipe Sapo::reach(const Bundle &initSet, const LinearSystemSet &pSet,
 }
 
 std::list<LinearSystemSet>
-get_a_finer_covering(const std::list<LinearSystemSet>& orig)
+get_a_finer_covering(const std::list<LinearSystemSet> &orig)
 {
   std::list<LinearSystemSet> result;
-  for (auto ps_it=std::cbegin(orig); ps_it!=std::cend(orig); ++ps_it) {
+  for (auto ps_it = std::cbegin(orig); ps_it != std::cend(orig); ++ps_it) {
 
     // if the linear system set contains more than one linear system
-    switch(ps_it->size()) {
-      case 0: // the linear system set does not contain any linear system
+    switch (ps_it->size()) {
+    case 0: // the linear system set does not contain any linear system
 
-        // nothing to add to the resulting list
-        break;
-      case 1: // the linear system set contains exacly one linear system
-        { // then, split it by using LinearSystem::get_a_finer_covering();
-          
-          std::list<LinearSystem> f_cov = (ps_it->begin())->get_a_finer_covering();
-          for (auto ls_it=std::begin(f_cov); ls_it!=std::end(f_cov); ++ls_it) {
-            result.push_back(*ls_it);
-          }
-        }
-        break;
-      case 2: // the linear system set contains more than one linear system
-        { // then, unpack them
-          for (auto ls_it=ps_it->begin(); ls_it!=ps_it->end(); ++ls_it) {
-            result.push_back(*ls_it);
-          }
-        }
-        break;
+      // nothing to add to the resulting list
+      break;
+    case 1: // the linear system set contains exacly one linear system
+    {       // then, split it by using LinearSystem::get_a_finer_covering();
+
+      std::list<LinearSystem> f_cov = (ps_it->begin())->get_a_finer_covering();
+      for (auto ls_it = std::begin(f_cov); ls_it != std::end(f_cov); ++ls_it) {
+        result.push_back(*ls_it);
+      }
+    } break;
+    case 2: // the linear system set contains more than one linear system
+    {       // then, unpack them
+      for (auto ls_it = ps_it->begin(); ls_it != ps_it->end(); ++ls_it) {
+        result.push_back(*ls_it);
+      }
+    } break;
     }
   }
 
@@ -201,12 +208,14 @@ get_a_finer_covering(const std::list<LinearSystemSet>& orig)
  * @returns the list of refined parameter sets
  */
 std::list<LinearSystemSet>
-synthesize_list(Sapo &sapo, Bundle reachSet, const std::list<LinearSystemSet> &pSetList,
+synthesize_list(Sapo &sapo, Bundle reachSet,
+                const std::list<LinearSystemSet> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
   std::list<LinearSystemSet> results;
 
-  for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList); ++ps_it) {
+  for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
+       ++ps_it) {
     results.push_back(sapo.synthesize(reachSet, *ps_it, formula));
   }
 
@@ -223,16 +232,18 @@ synthesize_list(Sapo &sapo, Bundle reachSet, const std::list<LinearSystemSet> &p
  *                       parameter set to identify a non-null solution
  * @returns the list of refined parameter sets
  */
-std::list<LinearSystemSet>
-Sapo::synthesize(Bundle &reachSet, const LinearSystemSet& pSet,
-                 const std::shared_ptr<STL> formula, const unsigned int max_splits)
+std::list<LinearSystemSet> Sapo::synthesize(const Bundle &reachSet,
+                                            const LinearSystemSet &pSet,
+                                            const std::shared_ptr<STL> formula,
+                                            const unsigned int max_splits)
 {
   using namespace std;
 
   std::list<LinearSystemSet> pSetList{pSet};
 
   unsigned int num_of_splits = 0;
-  std::list<LinearSystemSet> res = synthesize_list(*this, reachSet, pSetList, formula);
+  std::list<LinearSystemSet> res
+      = synthesize_list(*this, reachSet, pSetList, formula);
 
   while (every_set_is_empty(res) && num_of_splits++ < max_splits) {
     res.clear();
@@ -241,11 +252,11 @@ Sapo::synthesize(Bundle &reachSet, const LinearSystemSet& pSet,
     res = synthesize_list(*this, reachSet, pSetList, formula);
   }
 
-  for (auto lss_it=std::begin(res); lss_it!=std::end(res); ++lss_it) {
+  for (auto lss_it = std::begin(res); lss_it != std::end(res); ++lss_it) {
     lss_it->simplify();
   }
 
-  if (this->options.verbose) {
+  if (this->verbose) {
     cout << "done" << endl;
   }
 
@@ -260,15 +271,15 @@ Sapo::synthesize(Bundle &reachSet, const LinearSystemSet& pSet,
  * @param[in] conj is an STL conjunction providing the specification
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
-                                const LinearSystemSet &pSet,
-                                const std::shared_ptr<Conjunction> conj)
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
+                                 const LinearSystemSet &pSet,
+                                 const std::shared_ptr<Conjunction> conj)
 {
-    LinearSystemSet LS1 = this->synthesize(reachSet, pSet,
-                                              conj->getLeftSubFormula());
-    LinearSystemSet LS2 = this->synthesize(reachSet, pSet,
-                                              conj->getRightSubFormula());
-    return intersection(LS1, LS2);
+  LinearSystemSet LS1
+      = this->synthesize(reachSet, pSet, conj->getLeftSubFormula());
+  LinearSystemSet LS2
+      = this->synthesize(reachSet, pSet, conj->getRightSubFormula());
+  return intersection(LS1, LS2);
 }
 
 /**
@@ -279,17 +290,16 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] conj is an STL disjunction providing the specification
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
-                                  const LinearSystemSet &pSet,
-                                  const std::shared_ptr<Disjunction> disj)
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
+                                 const LinearSystemSet &pSet,
+                                 const std::shared_ptr<Disjunction> disj)
 {
-    LinearSystemSet LS1 = this->synthesize(reachSet, pSet,
-                                              disj->getLeftSubFormula());
-    LS1.unionWith(this->synthesize(reachSet, pSet,
-                                      disj->getRightSubFormula()));
+  LinearSystemSet LS1
+      = this->synthesize(reachSet, pSet, disj->getLeftSubFormula());
+  LS1.unionWith(this->synthesize(reachSet, pSet, disj->getRightSubFormula()));
 
-    return LS1;
-}                        
+  return LS1;
+}
 
 /**
  * Parmeter synthesis for the eventually fomulas
@@ -299,15 +309,15 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] ev is an STL eventually formula providing the specification
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
-                                  const LinearSystemSet &pSet,
-                                  const std::shared_ptr<Eventually> ev)
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
+                                 const LinearSystemSet &pSet,
+                                 const std::shared_ptr<Eventually> ev)
 {
   std::shared_ptr<Atom> true_atom = std::make_shared<Atom>(-1);
 
-  std::shared_ptr<Until> u = std::make_shared<Until>(
-      true_atom, ev->time_bounds().begin(), ev->time_bounds().end(),
-      ev->getSubFormula());
+  std::shared_ptr<Until> u
+      = std::make_shared<Until>(true_atom, ev->time_bounds().begin(),
+                                ev->time_bounds().end(), ev->getSubFormula());
 
   return this->synthesize(reachSet, pSet, u, 0);
 }
@@ -320,7 +330,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] formula is an STL specification for the model
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                  const LinearSystemSet &pSet,
                                  const std::shared_ptr<STL> formula)
 {
@@ -332,26 +342,29 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
                       std::dynamic_pointer_cast<Atom>(formula));
 
   // Conjunction
-  case CONJUNCTION: 
-    return synthesize(reachSet, pSet, std::dynamic_pointer_cast<Conjunction>(formula));
+  case CONJUNCTION:
+    return synthesize(reachSet, pSet,
+                      std::dynamic_pointer_cast<Conjunction>(formula));
 
   // Disjunction
   case DISJUNCTION:
-    return synthesize(reachSet, pSet, std::dynamic_pointer_cast<Disjunction>(formula));
+    return synthesize(reachSet, pSet,
+                      std::dynamic_pointer_cast<Disjunction>(formula));
 
   // Until
   case UNTIL:
     return this->synthesize(reachSet, pSet,
-                                 std::dynamic_pointer_cast<Until>(formula), 0);
+                            std::dynamic_pointer_cast<Until>(formula), 0);
 
   // Always
   case ALWAYS:
-    return synthesize(
-        reachSet, pSet, std::dynamic_pointer_cast<Always>(formula), 0);
+    return synthesize(reachSet, pSet,
+                      std::dynamic_pointer_cast<Always>(formula), 0);
 
   // Eventually
-  case EVENTUALLY: 
-    return synthesize(reachSet, pSet, std::dynamic_pointer_cast<Eventually>(formula));
+  case EVENTUALLY:
+    return synthesize(reachSet, pSet,
+                      std::dynamic_pointer_cast<Eventually>(formula));
 
   default:
     throw std::logic_error("Unsupported formula");
@@ -367,7 +380,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] sigma STL atomic formula
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
                                  const LinearSystemSet &pSet,
                                  const std::shared_ptr<Atom> atom)
 {
@@ -388,7 +401,7 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
     lst controlPts;
 
     if (!(this->synthControlPts.contains(key)
-        && this->synthControlPts.gen_fun_is_equal_to(key, genFun))) {
+          && this->synthControlPts.gen_fun_is_equal_to(key, genFun))) {
       // compose f(gamma(x))
       lst sub, fog;
       for (unsigned int j = 0; j < this->vars.nops(); j++) {
@@ -451,10 +464,10 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
-                                      const LinearSystemSet &pSet,
-                                      const std::shared_ptr<Until> formula,
-                                      const int time)
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
+                                 const LinearSystemSet &pSet,
+                                 const std::shared_ptr<Until> formula,
+                                 const int time)
 {
   const TimeInterval &t_itvl = formula->time_bounds();
 
@@ -465,8 +478,8 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
   // Until interval far
   if (t_itvl > time) {
     // Synthesize wrt phi1
-    LinearSystemSet P1 = this->synthesize(reachSet, pSet,
-                                             formula->getLeftSubFormula());
+    LinearSystemSet P1
+        = this->synthesize(reachSet, pSet, formula->getLeftSubFormula());
     if (P1.isEmpty()) {
       return P1; // false until
     } else {
@@ -477,25 +490,24 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
   // Inside until interval
   if (t_itvl.end() > time) {
     // Refine wrt phi1 and phi2
-    LinearSystemSet P1 = this->synthesize(reachSet, pSet,
-                                             formula->getLeftSubFormula());
+    LinearSystemSet P1
+        = this->synthesize(reachSet, pSet, formula->getLeftSubFormula());
 
     if (P1.isEmpty()) {
-      return this->synthesize(reachSet, pSet,
-                                 formula->getRightSubFormula());
+      return this->synthesize(reachSet, pSet, formula->getRightSubFormula());
     }
 
-    LinearSystemSet result = transition_and_synthesis(reachSet, P1, formula, time);
-    result.unionWith(this->synthesize(reachSet, pSet,
-                                         formula->getRightSubFormula()));
+    LinearSystemSet result
+        = transition_and_synthesis(reachSet, P1, formula, time);
+    result.unionWith(
+        this->synthesize(reachSet, pSet, formula->getRightSubFormula()));
 
     return result;
   }
 
   // If none of the above condition holds, then it must holds that :
   // 			t_itvl.begin()<=time and t_itvl.end()==time
-  return this->synthesize(reachSet, pSet,
-                             formula->getRightSubFormula());
+  return this->synthesize(reachSet, pSet, formula->getRightSubFormula());
 }
 
 /**
@@ -507,10 +519,10 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-LinearSystemSet Sapo::synthesize(Bundle &reachSet,
-                                       const LinearSystemSet &pSet,
-                                       const std::shared_ptr<Always> formula,
-                                       const int time)
+LinearSystemSet Sapo::synthesize(const Bundle &reachSet,
+                                 const LinearSystemSet &pSet,
+                                 const std::shared_ptr<Always> formula,
+                                 const int time)
 {
   const TimeInterval &t_itvl = formula->time_bounds();
 
@@ -529,13 +541,13 @@ LinearSystemSet Sapo::synthesize(Bundle &reachSet,
   if (t_itvl.end() > time) {
 
     // Refine wrt phi
-    LinearSystemSet P = this->synthesize(reachSet, pSet,
-                                            formula->getSubFormula());
+    LinearSystemSet P
+        = this->synthesize(reachSet, pSet, formula->getSubFormula());
 
     if (P.isEmpty()) {
       return P;
     }
-    
+
     return transition_and_synthesis(reachSet, P, formula, time);
   }
 

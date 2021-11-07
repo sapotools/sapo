@@ -10,11 +10,7 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-#include <cmath>
-
 #include "BaseConverter.h"
-#include "Common.h"
-#include "ControlPointStorage.h"
 #include "LinearSystem.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"

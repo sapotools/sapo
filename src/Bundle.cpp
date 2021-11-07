@@ -7,9 +7,9 @@
  * @version 0.1
  */
 
-
 #include "Bundle.h"
 
+#include <cmath>
 #include <limits>
 #include <string>
 
@@ -385,7 +385,9 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
       lst actbernCoeffs;
 
       if (!(controlPts.contains(key)
-           && controlPts.gen_fun_is_equal_to(key, genFun))) { // check if the coefficients were already computed
+            && controlPts.gen_fun_is_equal_to(
+                key,
+                genFun))) { // check if the coefficients were already computed
 
         // the combination parallelotope/direction to bound is not present in
         // hash table compute control points
@@ -408,7 +410,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
         actbernCoeffs
             = BaseConverter(this->vars[1], Lfog).getBernCoeffsMatrix();
 
-        controlPts.set(key, genFun, actbernCoeffs); // store the computed coefficients
+        controlPts.set(key, genFun,
+                       actbernCoeffs); // store the computed coefficients
 
       } else {
         actbernCoeffs = controlPts.get_ctrl_pts(key);
@@ -450,9 +453,9 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle Bundle::transform(
-    const GiNaC::lst &vars, const GiNaC::lst &params, const GiNaC::lst &f,
-    const LinearSystem &paraSet, ControlPointStorage &controlPts, int mode) const
+Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
+                         const GiNaC::lst &f, const LinearSystem &paraSet,
+                         ControlPointStorage &controlPts, int mode) const
 {
   using namespace std;
   using namespace GiNaC;
@@ -498,7 +501,9 @@ Bundle Bundle::transform(
       lst actbernCoeffs;
 
       if (!(controlPts.contains(key)
-          && controlPts.gen_fun_is_equal_to(key, genFun))) { // check if the coefficients were already computed
+            && controlPts.gen_fun_is_equal_to(
+                key,
+                genFun))) { // check if the coefficients were already computed
 
         // the combination parallelotope/direction to bound is not present in
         // hash table compute control points
@@ -521,15 +526,18 @@ Bundle Bundle::transform(
         actbernCoeffs
             = BaseConverter(this->vars[1], Lfog).getBernCoeffsMatrix();
 
-        controlPts.set(key, genFun, actbernCoeffs); // store the computed coefficients
+        controlPts.set(key, genFun,
+                       actbernCoeffs); // store the computed coefficients
 
       } else {
         actbernCoeffs = controlPts.get_ctrl_pts(key);
       }
 
       // find the maximum coefficient
-      double maxCoeffp = std::numeric_limits<double>::lowest();;
-      double maxCoeffm = std::numeric_limits<double>::lowest();;
+      double maxCoeffp = std::numeric_limits<double>::lowest();
+      ;
+      double maxCoeffm = std::numeric_limits<double>::lowest();
+      ;
       for (lst::const_iterator c = actbernCoeffs.begin();
            c != actbernCoeffs.end(); ++c) {
         ex paraBernCoeff;

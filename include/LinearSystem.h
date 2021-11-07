@@ -17,6 +17,8 @@
 #include <vector>
 #include <list>
 
+#include "JSONStreamer.h"
+
 class LinearSystem
 {
 
@@ -68,11 +70,10 @@ private:
    */
   bool constraintIsRedundant(const unsigned int i) const;
 
-  std::list<LinearSystem> get_a_finer_covering(const std::vector<bool> &bvect_base,
-                                        const unsigned int cidx,
-                                        std::list<LinearSystem> &tmp_covering,
-                                        std::vector<std::vector<double>> &A,
-                                        std::vector<double> &b) const;
+  std::list<LinearSystem> get_a_finer_covering(
+      const std::vector<bool> &bvect_base, const unsigned int cidx,
+      std::list<LinearSystem> &tmp_covering,
+      std::vector<std::vector<double>> &A, std::vector<double> &b) const;
 
 public:
   /**
@@ -378,5 +379,39 @@ std::ostream &operator<<(std::ostream &out,
 }
 
 std::ostream &operator<<(std::ostream &out, const LinearSystem &ls);
+
+template<typename T>
+JSON::ostream &operator<<(JSON::ostream &out, const std::vector<T> &v)
+{
+  out << "[";
+  for (auto el_it = std::begin(v); el_it != std::end(v); ++el_it) {
+    if (el_it != std::begin(v)) {
+      out << ",";
+    }
+    out << *el_it;
+  }
+  out << "]";
+
+  return out;
+}
+
+template<typename T>
+JSON::ostream &operator<<(JSON::ostream &out,
+                          const std::vector<std::vector<T>> &A)
+{
+  out << "[";
+  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
+    if (row_it != std::begin(A)) {
+      out << ",";
+    }
+
+    out << *row_it;
+  }
+  out << "]";
+
+  return out;
+}
+
+JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls);
 
 #endif /* LINEARSYSTEM_H_ */

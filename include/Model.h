@@ -9,11 +9,11 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
+#include <ginac/ginac.h>
+
 #include "Bundle.h"
 #include "LinearSystemSet.h"
 #include "STL.h"
-
-#include "Common.h"
 
 class Model
 {
@@ -35,24 +35,27 @@ public:
   {
     return this->name;
   }
+
   const GiNaC::lst &getVars() const
   {
     return this->vars;
   }
+
   const GiNaC::lst &getParams() const
   {
     return this->params;
   }
+
   const GiNaC::lst &getDyns() const
   {
     return this->dyns;
   }
 
-  Bundle *getReachSet()
+  const Bundle *getReachSet() const
   {
     return this->reachSet;
   }
-  LinearSystemSet *getParaSet()
+  const LinearSystemSet *getParaSet() const
   {
     return this->paraSet;
   }
