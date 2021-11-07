@@ -384,38 +384,3 @@ bool every_set_is_empty(const std::list<LinearSystemSet> &lss_list)
 
   return true;
 }
-
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
-{
-  if (ls.size() == 0) {
-    out << "---- empty set ----" << endl;
-  } else {
-    out << "--------------";
-    const LinearSystemSet::const_iterator last(ls.end() - 1);
-    for (auto it = ls.begin(); it != last; ++it) {
-      out << endl << *it << endl;
-    }
-
-    out << endl << *last;
-  }
-
-  return out;
-}
-
-JSON::ostream &operator<<(JSON::ostream &out, const LinearSystemSet &ls)
-{
-  // out << "{\"linear_systems\":";
-  out << "[";
-  if (ls.size() > 0) {
-    const LinearSystemSet::const_iterator last(ls.end() - 1);
-    for (auto it = ls.begin(); it != last; ++it) {
-      out << *it << ",";
-    }
-
-    out << *last;
-  }
-  out << "]";
-  // out << "}";
-
-  return out;
-}

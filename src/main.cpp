@@ -32,198 +32,13 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
   return sapo;
 }
 
-template<typename T>
-class OutputFormatter
-{
-public:
-  OutputFormatter() {}
-
-  static std::string flowpipe_header()
-  {
-    return "";
-  }
-
-  static std::string flowpipe_footer()
-  {
-    return "";
-  }
-
-  static std::string parameter_header()
-  {
-    return "";
-  }
-
-  static std::string parameter_footer()
-  {
-    return "";
-  }
-
-  static std::string list_begin()
-  {
-    return "";
-  }
-
-  static std::string list_end()
-  {
-    return "";
-  }
-
-  static std::string list_separator()
-  {
-    return "";
-  }
-
-  static std::string empty_list()
-  {
-    return "";
-  }
-
-  static std::string data_header()
-  {
-    return "";
-  }
-
-  static std::string data_footer()
-  {
-    return "";
-  }
-
-  static std::string data_separator()
-  {
-    return "";
-  }
-};
-
-template<>
-class OutputFormatter<std::ostream>
-{
-public:
-  OutputFormatter() {}
-
-  static std::string flowpipe_header()
-  {
-    return "FLOWPIPES\n";
-  }
-
-  static std::string flowpipe_footer()
-  {
-    return "";
-  }
-
-  static std::string parameter_header()
-  {
-    return "PARAMETER SETS\n";
-  }
-
-  static std::string parameter_footer()
-  {
-    return "";
-  }
-
-  static std::string list_begin()
-  {
-    return "=================\n";
-  }
-
-  static std::string list_end()
-  {
-    return "\n";
-  }
-
-  static std::string list_separator()
-  {
-    return "\n\n=================\n";
-  }
-
-  static std::string empty_list()
-  {
-    return "----empty set----";
-  }
-
-  static std::string data_header()
-  {
-    return "";
-  }
-
-  static std::string data_footer()
-  {
-    return "";
-  }
-
-  static std::string data_separator()
-  {
-    return "\n";
-  }
-};
-
-template<>
-class OutputFormatter<JSON::ostream>
-{
-public:
-  OutputFormatter() {}
-
-  static std::string flowpipe_header()
-  {
-    return "\"flowpipes\":";
-  }
-
-  static std::string flowpipe_footer()
-  {
-    return "";
-  }
-
-  static std::string parameter_header()
-  {
-    return "\"parameter sets\":";
-  }
-
-  static std::string parameter_footer()
-  {
-    return "";
-  }
-
-  static std::string list_begin()
-  {
-    return "[";
-  }
-
-  static std::string list_end()
-  {
-    return "]";
-  }
-
-  static std::string list_separator()
-  {
-    return ",";
-  }
-
-  static std::string empty_list()
-  {
-    return "[]";
-  }
-
-  static std::string data_header()
-  {
-    return "{";
-  }
-
-  static std::string data_footer()
-  {
-    return "}";
-  }
-
-  static std::string data_separator()
-  {
-    return ",";
-  }
-};
-
 template<typename OSTREAM>
 void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
 {
-  OutputFormatter<OSTREAM> of;
+  using OF = OutputFormatter<OSTREAM>;
 
-  os << of.data_header() << of.flowpipe_header() << of.list_begin();
+  os << OF::object_header() << OF::field_header("flowpipe")
+     << OF::list_begin();
 
   // if the model does not specify any parameter set
   if (model->getParams().nops() == 0) {
@@ -237,7 +52,7 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
                      sapo.time_horizon);
   }
 
-  os << of.list_end() << of.flowpipe_footer() << of.data_footer();
+  os << OF::list_end() << OF::field_footer() << OF::object_footer();
 }
 
 template<typename OSTREAM, typename R>
@@ -271,32 +86,34 @@ void apply_parameters_and_print(
 template<typename OSTREAM>
 void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
 {
-  OutputFormatter<OSTREAM> of;
+  using OF = OutputFormatter<OSTREAM>;
 
   // Synthesize parameters
   std::list<LinearSystemSet> synth_params
       = sapo.synthesize(*(model->getReachSet()), *(model->getParaSet()),
                         model->getSpec(), sapo.max_param_splits);
 
-  std::function<Flowpipe(Sapo &, const LinearSystemSet &)> reachability
-      = [model](Sapo &sapo, const LinearSystemSet &pSet) {
-          return sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
-        };
-
-  os << of.data_header() << of.flowpipe_header();
-  apply_parameters_and_print(os, sapo, synth_params, reachability);
-
-  os << of.flowpipe_footer() << of.data_separator() << of.parameter_header();
-
-  std::function<LinearSystemSet(Sapo &, const LinearSystemSet &)> identity
-      = [](Sapo &sapo, const LinearSystemSet &pSet) {
-          (void)sapo; // this is just to avoid the warning
-
-          return pSet;
-        };
-  apply_parameters_and_print(os, sapo, synth_params, identity);
-
-  os << of.parameter_footer() << of.data_footer();
+  if (every_set_is_empty(synth_params)) {
+    os << OF::empty_list();
+  } else {
+    os << OF::list_begin();
+    bool not_first = false;
+    for (auto p_it = std::cbegin(synth_params);
+         p_it != std::cend(synth_params); ++p_it) {
+      if (p_it->size() != 0) {
+        if (not_first) {
+          os << OF::list_separator();
+        }
+        not_first = true;
+        os << OF::object_header() << OF::field_header("parameter set") << *p_it
+           << OF::field_footer() << OF::field_separator()
+           << OF::field_header("flowpipe")
+           << sapo.reach(*(model->getReachSet()), *p_it, sapo.time_horizon)
+           << OF::field_footer() << OF::object_footer();
+      }
+    }
+    os << OF::list_end();
+  }
 }
 
 template<typename OSTREAM>

@@ -38,8 +38,8 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
 
 JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
 {
-  out << "{\"template\":" << ls.getA() << ","
-      << "\"offset\":" << ls.getb() << "}";
+  out << "{\"A\":" << ls.getA() << ","
+      << "\"b\":" << ls.getb() << "}";
 
   return out;
 }

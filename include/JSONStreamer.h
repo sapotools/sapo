@@ -9,7 +9,7 @@ namespace JSON
 
 enum Command { debug, production };
 
-class ostream : public std::ostream
+class ostream : private std::ostream
 {
   bool filter_unnecessary;
 
@@ -64,28 +64,26 @@ public:
 
     return out;
   }
+
+  friend JSON::ostream &operator<<(JSON::ostream &out, const double &value)
+  {
+    if (value == 0) {
+      // This is to avoid "-0"
+      dynamic_cast<std::ostream &>(out) << 0;
+    } else {
+      dynamic_cast<std::ostream &>(out) << value;
+    }
+
+    return out;
+  }
+
+  friend JSON::ostream &operator<<(JSON::ostream &out, const char *value)
+  {
+    dynamic_cast<std::ostream &>(out) << value;
+
+    return out;
+  }
 };
 
 }
-
-inline JSON::ostream &operator<<(JSON::ostream &out, const double &value)
-{
-  if (value == 0) {
-    // This is to avoid "-0"
-    dynamic_cast<std::ostream &>(out) << 0;
-  } else {
-    dynamic_cast<std::ostream &>(out) << value;
-  }
-
-  return out;
-}
-
-template<typename T>
-JSON::ostream &operator<<(JSON::ostream &out, const T &value)
-{
-  dynamic_cast<std::ostream &>(out) << value;
-
-  return out;
-}
-
 #endif // JSONSTREAMER_H_

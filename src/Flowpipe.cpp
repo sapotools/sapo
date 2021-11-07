@@ -90,50 +90,6 @@ unsigned int Flowpipe::dim() const
 }
 
 /**
- * Stream a flowpipe
- *
- * @param[in] os is the output stream
- * @param[in] fs is the flowpipe to be streamed
- * @return the output stream
- */
-std::ostream &operator<<(std::ostream &os, const Flowpipe &fp)
-{
-  for (auto it = std::cbegin(fp.flowpipe); it != std::cend(fp.flowpipe);
-       ++it) {
-    if (it != std::cbegin(fp.flowpipe)) {
-      os << std::endl << std::endl;
-    }
-    os << *it;
-  }
-
-  return os;
-}
-
-/**
- * Stream a flowpipe in JSON format
- *
- * @param[in] os is the output JSON stream
- * @param[in] fs is the flowpipe to be streamed
- * @return the output stream
- */
-JSON::ostream &operator<<(JSON::ostream &os, const Flowpipe &fp)
-{
-  // os << "{\"flowpipe\":";
-  os << "[";
-  for (auto it = std::cbegin(fp.flowpipe); it != std::cend(fp.flowpipe);
-       ++it) {
-    if (it != std::cbegin(fp.flowpipe)) {
-      os << ",";
-    }
-    os << *it;
-  }
-  os << "]";
-  // os << "}";
-
-  return os;
-}
-
-/**
  * Print the linear system in Matlab format (for plotregion script)
  *
  * @param[in] os is the output stream

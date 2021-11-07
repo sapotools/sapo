@@ -10,11 +10,11 @@
 #ifndef LINEARSYSTEMSET_H_
 #define LINEARSYSTEMSET_H_
 
+#include <list>
 #include <memory>
 
 #include "LinearSystem.h"
-
-#include <list>
+#include "OutputFormatter.h"
 
 #define MINIMIZE_LS_SET_REPRESENTATION true
 
@@ -531,8 +531,26 @@ LinearSystemSet unionset(const LinearSystem &A, const LinearSystem &B);
  */
 bool every_set_is_empty(const std::list<LinearSystemSet> &lss_list);
 
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls);
+template<typename OSTREAM>
+OSTREAM &operator<<(OSTREAM &os, const LinearSystemSet &ls)
+{
+  using OF = OutputFormatter<OSTREAM>;
 
-JSON::ostream &operator<<(JSON::ostream &out, const LinearSystemSet &ls);
+  if (ls.size() == 0) {
+    os << OF::empty_set();
+  } else {
+    os << OF::set_begin();
+    for (auto it = ls.begin(); it != ls.end(); ++it) {
+      if (it != ls.begin()) {
+        os << OF::set_separator();
+      }
+      os << *it;
+    }
+
+    os << OF::set_end();
+  }
+
+  return os;
+}
 
 #endif /* LINEARSYSTEMSET_H_ */

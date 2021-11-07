@@ -14,6 +14,7 @@
 
 #include "Bundle.h"
 #include "LinearSystemSet.h"
+#include "OutputFormatter.h"
 
 class Flowpipe
 {
@@ -96,16 +97,23 @@ public:
    * @param[in] fs is the flowpipe to be streamed
    * @return the output stream
    */
-  friend std::ostream &operator<<(std::ostream &out, const Flowpipe &fp);
+  template<typename OSTREAM>
+  friend OSTREAM &operator<<(OSTREAM &os, const Flowpipe &fp)
+  {
+    using OF = OutputFormatter<OSTREAM>;
 
-  /**
-   * Stream a flowpipe in JSON format
-   *
-   * @param[in] os is the output JSON stream
-   * @param[in] fs is the flowpipe to be streamed
-   * @return the output stream
-   */
-  friend JSON::ostream &operator<<(JSON::ostream &out, const Flowpipe &fp);
+    os << OF::sequence_begin();
+    for (auto it = std::cbegin(fp.flowpipe); it != std::cend(fp.flowpipe);
+         ++it) {
+      if (it != std::cbegin(fp.flowpipe)) {
+        os << OF::sequence_separator();
+      }
+      os << *it;
+    }
+    os << OF::sequence_end();
+
+    return os;
+  }
 
   ~Flowpipe() {}
 };
