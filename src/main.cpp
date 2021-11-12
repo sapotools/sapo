@@ -33,12 +33,55 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
 }
 
 template<typename OSTREAM>
+OSTREAM& operator<<(OSTREAM &os, const GiNaC::lst &list)
+{
+  using OF = OutputFormatter<OSTREAM>;
+
+  os << OF::short_list_begin();
+  bool not_first = false;
+  for (auto v_it = std::begin(list); v_it != std::end(list); ++v_it) {
+    if (not_first) {
+      os << OF::short_list_separator();
+    } else {
+      not_first = true;
+    }
+    {
+      ostringstream buffer;
+      buffer << "\"" << *v_it << "\"";
+
+      os << buffer.str();
+    }
+  }
+  os << OF::short_list_end();
+
+  return os;
+}
+
+template<typename OSTREAM>
+void print_variables_and_parameters(OSTREAM &os, const Model *model)
+{
+  using OF = OutputFormatter<OSTREAM>;
+
+  os << OF::field_header("variables") << model->getVars()
+     << OF::field_footer();
+  if (model->getParams().nops() != 0) {
+    os << OF::field_separator()
+       << OF::field_header("parameters") << model->getParams()
+       << OF::field_footer();
+  }
+}
+
+template<typename OSTREAM>
 void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
 {
   using OF = OutputFormatter<OSTREAM>;
 
-  os << OF::object_header() << OF::field_header("flowpipe")
-     << OF::list_begin();
+  os << OF::object_header();
+  print_variables_and_parameters(os, model);
+  os << OF::field_separator() << OF::field_header("data");
+
+  os << OF::list_begin() 
+     << OF::object_header() << OF::field_header("flowpipe");
 
   // if the model does not specify any parameter set
   if (model->getParams().nops() == 0) {
@@ -52,35 +95,8 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
                      sapo.time_horizon);
   }
 
-  os << OF::list_end() << OF::field_footer() << OF::object_footer();
-}
-
-template<typename OSTREAM, typename R>
-void apply_parameters_and_print(
-    OSTREAM &os, Sapo &sapo, const std::list<LinearSystemSet> &synth_params,
-    std::function<R(Sapo &, const LinearSystemSet &)> funct)
-{
-  OutputFormatter<OSTREAM> of;
-
-  if (every_set_is_empty(synth_params)) {
-    os << of.list_begin() << of.empty_list() << of.list_end();
-
-    return;
-  }
-
-  os << of.list_begin();
-  bool not_first = false;
-  for (auto p_it = std::cbegin(synth_params); p_it != std::cend(synth_params);
-       ++p_it) {
-    if (p_it->size() != 0) {
-      if (not_first) {
-        os << of.list_separator();
-      }
-      not_first = true;
-      os << funct(sapo, *p_it);
-    }
-  }
-  os << of.list_end();
+  os << OF::field_footer() << OF::object_footer() << OF::list_end()
+     << OF::field_footer() << OF::object_footer();
 }
 
 template<typename OSTREAM>
@@ -92,6 +108,11 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
   std::list<LinearSystemSet> synth_params
       = sapo.synthesize(*(model->getReachSet()), *(model->getParaSet()),
                         model->getSpec(), sapo.max_param_splits);
+
+
+  os << OF::object_header();
+  print_variables_and_parameters(os, model);
+  os << OF::field_separator() << OF::field_header("data");
 
   if (every_set_is_empty(synth_params)) {
     os << OF::empty_list();
@@ -114,6 +135,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
     }
     os << OF::list_end();
   }
+  os << OF::field_footer() << OF::object_footer();
 }
 
 template<typename OSTREAM>

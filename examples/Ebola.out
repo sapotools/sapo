@@ -1,3 +1,10 @@
+VARIABLES
+["s","e","q","i","r"]
+
+PARAMETERS
+["kappa1","gamma1"]
+
+DATA
 PARAMETER SET
 1 0 <= 0.3
 -1 -0 <= -0.2
