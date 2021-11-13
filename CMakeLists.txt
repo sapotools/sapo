@@ -33,6 +33,43 @@ link_directories( /usr/local/lib )
 # end brew support
 
 
+execute_process(
+        COMMAND git branch --show-current
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        OUTPUT_VARIABLE GIT_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+string(REGEX MATCH "^v[0-9]+\.[0-9]+.*$" SAPO_MINOR "${GIT_BRANCH}")
+
+set(SAPO_VERSION "")
+
+if(NOT SAPO_MINOR STREQUAL "")
+   execute_process(
+         COMMAND git describe --abbrev=0 --tags
+         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+         OUTPUT_VARIABLE GIT_TAG
+         OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+   
+   string(REGEX MATCH "^v[0-9]+\.[0-9]+\.[0-9]+$" SAPO_VERSION "${GIT_TAG}")
+endif()
+
+if(SAPO_VERSION STREQUAL "")
+   execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        OUTPUT_VARIABLE SAPO_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   set(SAPO_VERSION "commit ${SAPO_VERSION}")
+endif()
+
+message("This is Sapo ${SAPO_VERSION}")
+
+configure_file(${CMAKE_SOURCE_DIR}/src/Version.cpp.in ${CMAKE_SOURCE_DIR}/src/Version.cpp @ONLY)
+
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp
 	                  ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
 
