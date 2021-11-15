@@ -299,7 +299,7 @@ ex Expr::toEx(const InputData &m, const lst &vars, const lst &params) const
   case exprType::NEG:
     return -left->toEx(m, vars, params);
   }
-  
+
   throw std::logic_error("Unknown expression type");
 }
 
@@ -807,14 +807,6 @@ void InputData::defaultParamDirections()
   paramDirections.resize(params.size(), vector<double>(params.size(), 0));
   for (unsigned i = 0; i < params.size(); i++)
     paramDirections[i][i] = 1;
-}
-
-int InputData::getTransValue()
-{
-  if (trans == transType::AFO)
-    return 1;
-  else
-    return 0;
 }
 
 bool InputData::check()

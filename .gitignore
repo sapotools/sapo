@@ -9,6 +9,7 @@ parser/include/locations.h
 parser/include/parser.h
 parser/src/parser.cpp
 parser/src/scanner.cpp 
+src/Version.cpp
 bin/sapo
 CTestTestfile.cmake
 Testing/

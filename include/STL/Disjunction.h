@@ -9,6 +9,8 @@
 #ifndef DISJUNCTION_H_
 #define DISJUNCTION_H_
 
+#include <memory>
+
 #include "STL.h"
 
 class Disjunction : public STL

@@ -82,23 +82,23 @@ LinearSystemSet::LinearSystemSet(const LinearSystemSet &orig)
   }
 }
 
-LinearSystemSet::LinearSystemSet(LinearSystemSet&& orig)
+LinearSystemSet::LinearSystemSet(LinearSystemSet &&orig)
 {
   std::swap(set, orig.set);
 }
 
-LinearSystemSet& LinearSystemSet::operator=(const LinearSystemSet &orig)
+LinearSystemSet &LinearSystemSet::operator=(const LinearSystemSet &orig)
 {
   set.resize(0);
 
   for (auto it = orig.set.cbegin(); it != orig.set.cend(); ++it) {
     this->set.push_back(std::make_shared<LinearSystem>(*(*it)));
-  } 
+  }
 
   return *this;
 }
 
-LinearSystemSet& LinearSystemSet::operator=(LinearSystemSet&& orig)
+LinearSystemSet &LinearSystemSet::operator=(LinearSystemSet &&orig)
 {
   std::swap(set, orig.set);
 
@@ -115,7 +115,7 @@ bool satisfiesOneIn(const LinearSystem &set, const LinearSystemSet &S)
 {
 
 #if MINIMIZE_LS_SET_REPRESENTATION
-  for (LinearSystemSet::const_iterator it = S.cbegin(); it != S.cend(); ++it) {
+  for (LinearSystemSet::const_iterator it = S.begin(); it != S.end(); ++it) {
     if (set.satisfies(*it)) {
       return true;
     }
@@ -171,17 +171,6 @@ LinearSystemSet &LinearSystemSet::simplify()
   }
 
   return *this;
-}
-
-LinearSystemSet LinearSystemSet::get_a_finer_covering() const
-{
-  LinearSystemSet covering;
-
-  for (auto it = std::begin(set); it != std::end(set); ++it) {
-    covering.unionWith((*it)->get_a_finer_covering());
-  }
-
-  return covering;
 }
 
 /**
@@ -384,19 +373,14 @@ LinearSystemSet::~LinearSystemSet()
   // TODO Auto-generated destructor stub
 }
 
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls)
+bool every_set_is_empty(const std::list<LinearSystemSet> &lss_list)
 {
-  if (ls.size() == 0) {
-    out << "---- empty set ----" << endl;
-  } else {
-    out << "--------------";
-    const LinearSystemSet::const_iterator last(ls.cend() - 1);
-    for (auto it = ls.cbegin(); it != last; ++it) {
-      out << endl << *it << endl;
+  for (auto lss_it = std::begin(lss_list); lss_it != std::end(lss_list);
+       ++lss_it) {
+    if (!lss_it->isEmpty()) {
+      return false;
     }
-
-    out << endl << *last;
   }
 
-  return out;
+  return true;
 }

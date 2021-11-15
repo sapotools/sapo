@@ -10,9 +10,11 @@
 #ifndef FLOWPIPE_H_
 #define FLOWPIPE_H_
 
+#include <vector>
+
 #include "Bundle.h"
-#include "Common.h"
 #include "LinearSystemSet.h"
+#include "OutputFormatter.h"
 
 class Flowpipe
 {
@@ -73,11 +75,6 @@ public:
 
   /**
    * Print the flowpipe in Matlab format (for plotregion script)
-   */
-  void print() const;
-
-  /**
-   * Print the flowpipe in Matlab format (for plotregion script)
    *
    * @param[in] os is the output stream
    * @param[in] color color of the polytope to plot
@@ -93,9 +90,32 @@ public:
     swap(A.v_templates, B.v_templates);
   }
 
-  virtual ~Flowpipe();
-};
+  /**
+   * Stream a flowpipe
+   *
+   * @param[in] os is the output stream
+   * @param[in] fs is the flowpipe to be streamed
+   * @return the output stream
+   */
+  template<typename OSTREAM>
+  friend OSTREAM &operator<<(OSTREAM &os, const Flowpipe &fp)
+  {
+    using OF = OutputFormatter<OSTREAM>;
 
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls);
+    os << OF::sequence_begin();
+    for (auto it = std::cbegin(fp.flowpipe); it != std::cend(fp.flowpipe);
+         ++it) {
+      if (it != std::cbegin(fp.flowpipe)) {
+        os << OF::sequence_separator();
+      }
+      os << *it;
+    }
+    os << OF::sequence_end();
+
+    return os;
+  }
+
+  ~Flowpipe() {}
+};
 
 #endif /* BUNDLE_H_ */

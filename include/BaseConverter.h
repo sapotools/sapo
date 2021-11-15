@@ -9,9 +9,8 @@
 #ifndef BASECONVERTER_H_
 #define BASECONVERTER_H_
 
-#include <math.h>
-
-#include "Common.h"
+#include <vector>
+#include <ginac/ginac.h>
 
 class BaseConverter
 {
@@ -19,12 +18,12 @@ private:
   const GiNaC::lst &vars; // list of variables
   GiNaC::ex polynomial;   // polynomial in symbolic form
   GiNaC::ex num, denom;   // numerator and denominator for rational polynomials
-  std::vector<unsigned int> degrees;      // collection of degrees
-  std::vector<unsigned int> shifts;       // degree shifts
-  std::vector<GiNaC::ex> coeffs; // list of the coefficients
+  std::vector<unsigned int> degrees; // collection of degrees
+  std::vector<unsigned int> shifts;  // degree shifts
+  std::vector<GiNaC::ex> coeffs;     // list of the coefficients
 
-  // TODO: complete two the following methods if necessary. Otherwise, remove them
-  // operations on multidimensional matrices
+  // TODO: complete two the following methods if necessary. Otherwise, remove
+  // them operations on multidimensional matrices
   std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<unsigned int>>>
   compressZeroCoeffs() const;
   void implicitMaxIndex() const;
@@ -35,7 +34,8 @@ private:
    * @param[in] multi_index multi-index to convert
    * @returns converted multi-index
    */
-  unsigned int multi_index2pos(const  std::vector<unsigned int> &multi_index) const;
+  unsigned int
+  multi_index2pos(const std::vector<unsigned int> &multi_index) const;
 
   /**
    * Decode a position into a multi-index
@@ -56,7 +56,7 @@ private:
    *
    * @param[in] polynomial polynomial from which to extract the coefficients
    */
-  void initCoeffs(const GiNaC::ex& polynomial)
+  void initCoeffs(const GiNaC::ex &polynomial)
   {
     initCoeffs(polynomial, 0, 0);
   }
@@ -69,10 +69,10 @@ private:
    * @param[in] var_idx index of the variable to be considered
    * @param[in] pos is the position of the next coefficients to be initialized
    */
-  void initCoeffs(const GiNaC::ex& polynomial, unsigned int var_idx,
-                  const unsigned int pos); // extract and initialize 
-                                                  // the coefficients
-                                                  // of the polynomial
+  void initCoeffs(const GiNaC::ex &polynomial, unsigned int var_idx,
+                  const unsigned int pos); // extract and initialize
+                                           // the coefficients
+                                           // of the polynomial
 
 public:
   // constructors
@@ -83,7 +83,7 @@ public:
                 const GiNaC::ex &denom);
 
   // get Bernstein coefficients
-  GiNaC::ex bernCoeff(const std::vector<unsigned int>& mi) const;
+  GiNaC::ex bernCoeff(const std::vector<unsigned int> &mi) const;
   GiNaC::lst getBernCoeffs() const;
   GiNaC::lst getRationalBernCoeffs() const;
   GiNaC::lst getBernCoeffsMatrix() const;

@@ -9,8 +9,16 @@
 #ifndef STL_H_
 #define STL_H_
 
-#include "Common.h"
 #include <string>
+
+enum formula_type {
+  ATOM,
+  CONJUNCTION,
+  DISJUNCTION,
+  UNTIL,
+  ALWAYS,
+  EVENTUALLY
+};
 
 class STL
 {

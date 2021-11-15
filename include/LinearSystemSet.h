@@ -10,9 +10,11 @@
 #ifndef LINEARSYSTEMSET_H_
 #define LINEARSYSTEMSET_H_
 
+#include <list>
 #include <memory>
 
 #include "LinearSystem.h"
+#include "OutputFormatter.h"
 
 #define MINIMIZE_LS_SET_REPRESENTATION true
 
@@ -312,21 +314,21 @@ public:
    *
    * @param[in] orig is a rvalue linear system set
    */
-  LinearSystemSet(LinearSystemSet&& orig);
+  LinearSystemSet(LinearSystemSet &&orig);
 
   /**
    * A copy assignment for a linear system set
    *
    * @param[in] orig a linear system set
    */
-  LinearSystemSet& operator=(const LinearSystemSet &orig);
+  LinearSystemSet &operator=(const LinearSystemSet &orig);
 
   /**
    * A swap assignment for a linear system set
    *
    * @param[in] orig is a rvalue linear system set
    */
-  LinearSystemSet& operator=(LinearSystemSet&& orig);
+  LinearSystemSet &operator=(LinearSystemSet &&orig);
 
   /**
    * Add a linear system to the set
@@ -354,7 +356,7 @@ public:
 
   LinearSystemSet &simplify();
 
-  LinearSystemSet get_a_finer_covering() const;
+  std::list<LinearSystem> get_a_finer_covering() const;
 
   // inplace operations on set
   /**
@@ -437,14 +439,14 @@ public:
     return iterator(std::end(set));
   }
 
-  const_iterator cbegin() const
+  const_iterator begin() const
   {
-    return const_iterator(std::begin(set));
+    return const_iterator(std::cbegin(set));
   }
 
-  const_iterator cend() const
+  const_iterator end() const
   {
-    return const_iterator(std::end(set));
+    return const_iterator(std::cend(set));
   }
 
   bool isEmpty() const;
@@ -521,6 +523,34 @@ LinearSystemSet unionset(const LinearSystemSet &A, const LinearSystemSet &B);
  */
 LinearSystemSet unionset(const LinearSystem &A, const LinearSystem &B);
 
-std::ostream &operator<<(std::ostream &out, const LinearSystemSet &ls);
+/**
+ * Test whether all the LinearSystemSet in a list are empty
+ *
+ * @param[in] lss_list a list of linear system set
+ * @returns false if one of the linear system set in the list is not empty
+ */
+bool every_set_is_empty(const std::list<LinearSystemSet> &lss_list);
+
+template<typename OSTREAM>
+OSTREAM &operator<<(OSTREAM &os, const LinearSystemSet &ls)
+{
+  using OF = OutputFormatter<OSTREAM>;
+
+  if (ls.size() == 0) {
+    os << OF::empty_set();
+  } else {
+    os << OF::set_begin();
+    for (auto it = ls.begin(); it != ls.end(); ++it) {
+      if (it != ls.begin()) {
+        os << OF::set_separator();
+      }
+      os << *it;
+    }
+
+    os << OF::set_end();
+  }
+
+  return os;
+}
 
 #endif /* LINEARSYSTEMSET_H_ */

@@ -1,6 +1,6 @@
-Computing reach set...done
-RESULTS
----- empty set ----
+VARIABLES
+["x","y"]
 
-
-END RESULTS
+DATA
+FLOWPIPE
+empty set

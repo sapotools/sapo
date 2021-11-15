@@ -8,6 +8,8 @@
 
 #include "Parallelotope.h"
 
+#include <cmath>
+
 /**
  * Constructor that instantiates a parallelotope
  *

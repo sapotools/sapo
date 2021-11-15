@@ -9,8 +9,14 @@
 #ifndef PARALLELOTOPE_H_
 #define PARALLELOTOPE_H_
 
-#include "Common.h"
+#include <vector>
+
 #include "LinearSystem.h"
+
+struct poly_values { // numerical values for polytopes
+  std::vector<double> base_vertex;
+  std::vector<double> lenghts;
+};
 
 class Parallelotope
 {

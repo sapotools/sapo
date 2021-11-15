@@ -11,12 +11,10 @@
 #define BUNDLE_H_
 
 #include "BaseConverter.h"
-#include "Common.h"
 #include "LinearSystem.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
-#include "float.h"
-#include <cmath>
+#include "ControlPointStorage.h"
 
 class Bundle
 {
@@ -148,10 +146,10 @@ public:
   Bundle get_canonical() const;
   Bundle decompose(double alpha, int max_iters);
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                   CtrlPointType &controlPts, int mode) const;
+                   ControlPointStorage &controlPts, int mode) const;
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
                    const GiNaC::lst &f, const LinearSystem &paraSet,
-                   CtrlPointType &controlPts, int mode) const;
+                   ControlPointStorage &controlPts, int mode) const;
 
   Bundle &operator=(Bundle &&);
 

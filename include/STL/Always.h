@@ -9,6 +9,8 @@
 #ifndef ALWAYS_H_
 #define ALWAYS_H_
 
+#include <memory>
+
 #include "STL.h"
 #include "TimeInterval.h"
 
