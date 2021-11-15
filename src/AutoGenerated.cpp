@@ -47,8 +47,8 @@ int map(int d, int P, int Pn)
 
 /*
  * This method computes a new template for the polytope.
- * The idea is that we require each parallelotope to contain directions covering
- * each variable, so that they are not singular. More, each direction should be used at least once.
+ * The idea is that we want each parallelotope to contain directions covering
+ * each variable, so that they are not singular. Moreover, each direction should be used at least once.
  * 
  * We use a LP problem to compute which direction goes in which parallelotope.
  * We define boolean variables X_i_j where i is a direction and j is a parallelotope,
@@ -213,10 +213,29 @@ Bundle *getBundleWithAsserts(const InputData &id)
 	
 	std::vector<std::vector<int>> templ = computeTemplate(directions, C);
 	
+	/*std::cout << "template: {" << std::endl;
+	for (unsigned i = 0; i < templ.size(); i++) {
+		std::cout << "\t<";
+		for (unsigned j = 0; j < templ[i].size(); j++) {
+			std::cout << templ[i][j] << ", ";
+		}
+		std::cout << ">," << std::endl;
+	}
+	std::cout << "}" << std::endl;*/
+	
 	// add C to directions
 	for (unsigned i = 0; i < C.size(); i++) {
 		directions.push_back(C[i]);
 	}
+	
+/*	std::cout << "constrained directions:" << std::endl;
+	for (unsigned i = 0; i < constrDirs.size(); i++) {
+		std::cout << "\t<";
+		for (unsigned j = 0; j < constrDirs[i].size(); j++) {
+			std::cout << constrDirs[i][j] << ", ";
+		}
+		std::cout << "> <= " << constrOffsets[i] << std::endl;
+	}*/
 
   return new Bundle(directions, UB, get_complementary(LB), templ, constrDirs, constrOffsets);
 }
@@ -282,17 +301,23 @@ std::vector<std::vector<int>> computeTemplate(const std::vector<std::vector<doub
 	unsigned Pn = ceil(((double) (m + c))/n);		// number of parallelotopes required
 	
 	unsigned cols = Pn * (m+c);
-	unsigned rows = Pn*(m+c) + Pn + Pn*n + (m + c);
+	unsigned rows = Pn + Pn*n + (m + c);
 	
 	// create ILP problem
 	glp_prob *lp;
   lp = glp_create_prob();
   glp_set_obj_dir(lp, GLP_MIN);	
 	
-	// Turn off verbose mode
+	// continuous case parameters
   glp_smcp lp_param;
   glp_init_smcp(&lp_param);
   lp_param.msg_lev = GLP_MSG_ERR;
+	
+	// integer/boolean case parameters
+/*	glp_iocp ilp_param;
+	glp_init_iocp(&ilp_param);
+	ilp_param.presolve = GLP_ON;
+  ilp_param.msg_lev = GLP_MSG_OFF;*/
 	
 	// add rows
 	glp_add_rows(lp, rows);
@@ -300,27 +325,36 @@ std::vector<std::vector<int>> computeTemplate(const std::vector<std::vector<doub
 	// add columns (unbounded)
 	glp_add_cols(lp, cols);
   for (unsigned int i = 0; i < cols; i++) {
-    glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
+		// columns are unbounded (continuous case)
+		glp_set_col_bnds(lp, i + 1, GLP_DB, 0, 1);
+		// set columns to be boolean (discrete case)
+//		glp_set_col_kind(lp, i + 1, GLP_BV);
   }
   
   // add objective function (all ones, we want only satisfiability)
   for (unsigned i = 0; i < cols; i++) {
-		glp_set_obj_coef(lp, i+1, 1);
+		glp_set_obj_coef(lp, i+1, 0);
 	}
 	
 	unsigned globalIndex = 1;
-	binaryConstraints(&lp, A, C, &globalIndex);
+//	binaryConstraints(&lp, A, C, &globalIndex);
 	paralCardConstraints(&lp, A, C, &globalIndex);
 	varCoverConstraints(&lp, A, C, &globalIndex);
 	directionConstraints(&lp, A, C, &globalIndex);
 	
-	// TODO: check that LP (not integer) is sufficient
-  glp_simplex(lp, &lp_param);
+	/* TODO: check that LP (not integer) is sufficient ->
+	 * matrix is not always TUM, but solution so far has always been int
+	 */
+	glp_simplex(lp, &lp_param);
+//	glp_intopt(lp, &ilp_param);
+	
 	
 	std::vector<std::vector<int>> T(Pn, std::vector<int>{});
 	for (unsigned P = 0; P < Pn; P++) {
 		for (unsigned d = 0; d < m+c; d++) {
+//			std::cout << "X_" << d << "_" << P << " = " << glp_get_col_prim(lp, map(d, P, Pn) + 1) << std::endl;
 			if (glp_get_col_prim(lp, map(d, P, Pn) + 1) == 1) {
+//			if (glp_mip_col_val(lp, map(d, P, Pn) + 1) == 1) {
 				T[P].push_back(d);
 			}
 		}
@@ -414,7 +448,7 @@ void varCoverConstraints(glp_prob **lp, const std::vector<std::vector<double>> A
 			indeces[0] = 0;
 			constr[0] = 0;
 			for (unsigned d = 0; d < m; d++) {
-				if (A[d][v] == 1) {								// for each direction in A covering v
+				if (A[d][v] != 0) {								// for each direction in A covering v
 					len++;
 					indeces[len] = map(d, P, Pn) + 1;
 					constr[len] = 1;
@@ -422,14 +456,16 @@ void varCoverConstraints(glp_prob **lp, const std::vector<std::vector<double>> A
 			}
 		
 			for (unsigned d = 0; d < c; d++) {
-				if (C[d][v] == 1) {								// for each direction in C covering v
+				if (C[d][v] != 0) {								// for each direction in C covering v
 					len++;
 					indeces[len] = map(d+m, P, Pn) + 1;
 					constr[len] = 1;
 				}
 			}
+			
 			glp_set_row_bnds(*lp, index, GLP_LO, 1, 0);
 			glp_set_mat_row(*lp, index, len, indeces, constr);
+			
 			free(constr);
 			free(indeces);
 			index++;

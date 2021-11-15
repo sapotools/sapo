@@ -424,16 +424,21 @@ LinearSystemSet Sapo::synthesizeAlways(Bundle &reachSet,
                                        const std::shared_ptr<Always> formula,
                                        const int time)
 {
+	
+//	std::cout << "synthesize always" << std::endl;
+	
   LinearSystemSet result;
   const TimeInterval &t_itvl = formula->time_bounds();
 
   // Base case
   if (t_itvl.isEmpty()) {
+//		std::cout << "empty interval" << std::endl;
     return result;
   }
 
   // Always interval far
   if (t_itvl > time) {
+//		std::cout << "interval is far (a > 0)" << std::endl;
     // Reach step wrt to the i-th linear system of parameterSet
     for (LinearSystemSet::iterator pset_it = parameterSet.begin();
          pset_it != parameterSet.end(); ++pset_it) {
@@ -452,12 +457,14 @@ LinearSystemSet Sapo::synthesizeAlways(Bundle &reachSet,
 
   // Inside Always interval
   if (t_itvl.end() > time) {
+//		std::cout << "Inside interval (a = 0)" << std::endl;
 
     // Refine wrt phi
     LinearSystemSet P = this->synthesizeSTL(reachSet, parameterSet,
                                             formula->getSubFormula());
 
     if (!P.isEmpty()) {
+//			std::cout << "formula holds at time 0" << std::endl;
       // Reach step wrt to the i-th linear system of P
       for (LinearSystemSet::iterator P_it = P.begin(); P_it != P.end();
            ++P_it) {
@@ -472,7 +479,9 @@ LinearSystemSet Sapo::synthesizeAlways(Bundle &reachSet,
       }
 
       return result;
-    }
+    } else {
+//			std::cout << "formula does not hold at time 0" << std::endl;
+		}
 
     return P;
   }

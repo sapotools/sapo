@@ -537,11 +537,15 @@ Bundle Bundle::transform(
 			// does not violate the constraint
 			for (unsigned assertIndex = 0; assertIndex < this->constraintDirections.size();
 					 assertIndex++) {
+				std::cout << "Asserted direction <";
+				for (unsigned i = 0; i < this->constraintDirections[assertIndex].size(); i++) {
+					std::cout << this->constraintDirections[assertIndex][i] << ", ";
+				}
+				std::cout << ">" << std::endl;
 				if (this->L[dirs_to_bound[j]] == this->constraintDirections[assertIndex]) {
 					newDp[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]);
-				} else if (this->L[dirs_to_bound[j]] ==
-										get_complementary(this->constraintDirections[assertIndex])) {
-					newDm[dirs_to_bound[j]] = std::min(-constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]);
+				} else if (this->L[dirs_to_bound[j]] == get_complementary(this->constraintDirections[assertIndex])) {
+					newDm[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]);
 				}
 			}
     }
@@ -664,10 +668,35 @@ Bundle Bundle::transform(
       }
       newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]], maxCoeffp);
       newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]], maxCoeffm);
+			
+			// for each asserted direction, check that the new offset
+			// does not violate the constraint
+/*			std::cout << "bounding direction <";
+			for (unsigned i = 0; i < this->L[dirs_to_bound[j]].size(); i++) {
+				std::cout << this->L[dirs_to_bound[j]][i] << ", ";
+			}
+			std::cout << ">" << std::endl;*/
+			for (unsigned assertIndex = 0; assertIndex < this->constraintDirections.size();
+					 assertIndex++) {
+/*				std::cout << "\tAsserted direction <";
+				for (unsigned i = 0; i < this->constraintDirections[assertIndex].size(); i++) {
+					std::cout << this->constraintDirections[assertIndex][i] << ", ";
+				}
+				std::cout << "> <= " << constraintOffsets[assertIndex] << std::endl;*/
+				if (this->L[dirs_to_bound[j]] == this->constraintDirections[assertIndex]) {
+//					std::cout << "\t\tdirection is equal, new UB = " << std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]) << std::endl;
+					newDp[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]);
+				} else if (this->L[dirs_to_bound[j]] == get_complementary(this->constraintDirections[assertIndex])) {
+//					std::cout << "\t\tdirection is negated, new LB = " << std::min(constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]) << std::endl;
+					newDm[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]);
+				} else {
+//					std::cout << "\t\tdirection is different" << std::endl;
+				}
+			}
     }
   }
 
-  Bundle res(this->vars, this->L, newDp, newDm, this->T);
+  Bundle res = Bundle(this->vars, this->L, newDp, newDm, this->T, this->constraintDirections, this->constraintOffsets);
   if (mode == 0) {
     return res.get_canonical();
   }
