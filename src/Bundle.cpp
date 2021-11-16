@@ -148,58 +148,6 @@ Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
 //    constraintDirections({}), constraintOffsets({})
 		Bundle(L, offp, offm, T, {}, {})
 {
-/*  using namespace std;
-  using namespace GiNaC;
-
-  if (L.size() > 0) {
-    this->dim = L[0].size();
-  } else {
-    std::cerr << "Bundle::Bundle : L must be non empty" << std::endl;
-
-    exit(EXIT_FAILURE);
-  }
-  if (L.size() != offp.size()) {
-    std::cerr << "Bundle::Bundle : L and offp "
-              << "must have the same size" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  if (L.size() != offm.size()) {
-    std::cerr << "Bundle::Bundle : L and offm must have "
-              << "the same size" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  if (T.size() > 0) {
-    for (unsigned int i = 0; i < T.size(); i++) {
-      if (T[i].size() != this->getDim()) {
-        std::cerr << "Bundle::Bundle : T must have " << this->getDim()
-                  << " columns" << std::endl;
-        exit(EXIT_FAILURE);
-      }
-    }
-  } else {
-    std::cerr << "Bundle::Bundle : T must be non empty" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // generate the variables
-  const size_t& dim= T[0].size();
-
-  this->vars = vector<lst>{get_symbol_lst("b", dim),  // Base vertex variables
-                           get_symbol_lst("f", dim),  // Free variables
-                           get_symbol_lst("l", dim)}; // Length variables
-
-  // initialize orthogonal proximity
-  this->Theta = vector<vector<double>>(this->getNumDirs(),
-                                       vector<double>(this->getNumDirs(), 0));
-
-  for (unsigned int i = 0; i < this->getNumDirs(); i++) {
-    this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->getNumDirs(); j++) {
-      double prox = this->orthProx(this->L[i], this->L[j]);
-      this->Theta[i][j] = prox;
-      this->Theta[j][i] = prox;
-    }
-  }*/
 }
 
 /**
@@ -538,11 +486,6 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 			// does not violate the constraint
 			for (unsigned assertIndex = 0; assertIndex < this->constraintDirections.size();
 					 assertIndex++) {
-				std::cout << "Asserted direction <";
-				for (unsigned i = 0; i < this->constraintDirections[assertIndex].size(); i++) {
-					std::cout << this->constraintDirections[assertIndex][i] << ", ";
-				}
-				std::cout << ">" << std::endl;
 				if (this->L[dirs_to_bound[j]] == this->constraintDirections[assertIndex]) {
 					newDp[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]);
 				} else if (this->L[dirs_to_bound[j]] == get_complementary(this->constraintDirections[assertIndex])) {
@@ -673,26 +616,12 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
 			
 			// for each asserted direction, check that the new offset
 			// does not violate the constraint
-/*			std::cout << "bounding direction <";
-			for (unsigned i = 0; i < this->L[dirs_to_bound[j]].size(); i++) {
-				std::cout << this->L[dirs_to_bound[j]][i] << ", ";
-			}
-			std::cout << ">" << std::endl;*/
 			for (unsigned assertIndex = 0; assertIndex < this->constraintDirections.size();
 					 assertIndex++) {
-/*				std::cout << "\tAsserted direction <";
-				for (unsigned i = 0; i < this->constraintDirections[assertIndex].size(); i++) {
-					std::cout << this->constraintDirections[assertIndex][i] << ", ";
-				}
-				std::cout << "> <= " << constraintOffsets[assertIndex] << std::endl;*/
 				if (this->L[dirs_to_bound[j]] == this->constraintDirections[assertIndex]) {
-//					std::cout << "\t\tdirection is equal, new UB = " << std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]) << std::endl;
 					newDp[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDp[dirs_to_bound[j]]);
 				} else if (this->L[dirs_to_bound[j]] == get_complementary(this->constraintDirections[assertIndex])) {
-//					std::cout << "\t\tdirection is negated, new LB = " << std::min(constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]) << std::endl;
 					newDm[dirs_to_bound[j]] = std::min(constraintOffsets[assertIndex], newDm[dirs_to_bound[j]]);
-				} else {
-//					std::cout << "\t\tdirection is different" << std::endl;
 				}
 			}
     }

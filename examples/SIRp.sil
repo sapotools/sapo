@@ -1,13 +1,8 @@
 problem: synthesis;
-variable_mode: parallelotopes;
 
 iterations: 100;
 
 var s, i, r;
-
-//var s in [0.693, 0.71];
-//var i in [-0.4313, -0.4172];
-//var r in [0, 0];
 
 param beta in [0.18, 0.2];
 param gamma in [0.05, 0.06];
@@ -18,6 +13,6 @@ dynamic(r) = r + gamma*i*0.1;
 
 spec: G[50, 100] i <= 0.4405;
 
-direction <0.7071, 0.7071, 0> in [0.693, 0.7071];
-direction <-0.7071, 0.7071, 0> in [-0.4313, -0.4172];
-direction <0, 0, 1> in [0, 0];
+direction 0.7071*s + 0.7071*i in [0.693, 0.7071];
+direction -0.7071*s + 0.7071*i in [-0.4313, -0.4172];
+direction r in [0, 0];

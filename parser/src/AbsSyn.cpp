@@ -241,13 +241,15 @@ bool Expr::isNumeric(const InputData &im) const
 bool Expr::hasParams(const InputData &id) const
 {
   if (type == exprType::ID_ATOM) {
-    if (id.isParamDefined(name))
+    if (id.isParamDefined(name)) {
       return true;
-    else
+		} else {
       return false;
+		}
   }
-  if (type == exprType::NUM_ATOM)
-    return true;
+  if (type == exprType::NUM_ATOM) {
+    return false;
+	}
 
   return left->hasParams(id) && (right != NULL ? right->hasParams(id) : true);
 }
@@ -512,20 +514,71 @@ std::shared_ptr<STL> Formula::toSTL(const InputData &m, const lst &vars,
 }
 
 /*
- *************************
- *       ASSERTION       *
- *************************
+ ****************************
+ *        INEQUALITY        *
+ ****************************
  */
 
-std::vector<double> Assertion::getDirection(const InputData &id) const
+std::ostream &operator<<(std::ostream &os, AbsSyn::Inequality &i)
+{
+	os << *(i.lhs);
+	
+	switch (i.type)
+	{
+		case Inequality::Type::LT:
+			os << " < ";
+			break;
+		case Inequality::Type::LE:
+			os << " <= ";
+			break;
+		case Inequality::Type::GT:
+			os << " > ";
+			break;
+		case Inequality::Type::GE:
+			os << " >= ";
+			break;
+		case Inequality::Type::EQ:
+			os << " = ";
+			break;
+		case Inequality::Type::INT:
+			return os << " in [" << i.lb << ", " << i.ub << "]";
+		default:
+			throw std::logic_error("Unsupported inequality type");
+			break;
+	}
+	return os << *(i.rhs);
+}
+
+std::vector<double> Inequality::getDirection(const InputData &id) const
 {
 	std::vector<double> res{};
 	
+	// if inequality is > or >=, flip sign
+	int coeff;
+	if (type == Type::LE || type == Type::LT) {
+		coeff = 1;
+	} else if (type == Type::GE || type == Type::GT) {
+		coeff = -1;
+	} else {
+		throw logic_error("usupported inequality type");
+	}
+	
 	for (unsigned i = 0; i < id.getVarNum(); i++) {
-		res.push_back(ex->getCoefficient(id, id.getVar(i)->getName()));
+		res.push_back(coeff * lhs->sub(rhs)->getCoefficient(id, id.getVar(i)->getName()));
 	}
 	
 	return res;
+}
+
+double Inequality::getOffset(const InputData &id) const
+{
+	if (type == Type::LE || type == Type::LT) {
+		return rhs->sub(lhs)->getOffset(id);
+	} else if (type == Type::GE || type == Type::GT) {
+		return lhs->sub(rhs)->getOffset(id);
+	} else {
+		throw logic_error("unsupported inequality type");
+	}
 }
 
 /*
@@ -642,6 +695,7 @@ ostream &operator<<(ostream &os, const InputData &m)
     os << "\t<" << m.directions[i] << "> in [" << m.LBoffsets[i] << ", "
        << m.UBoffsets[i] << "]" << endl;
   os << "}" << endl;
+	os << "LB.size = " << m.LBoffsets.size() << ", UB.size = " << m.UBoffsets.size() << endl;
 
   os << endl;
   os << "Template:" << endl << "{" << endl;
@@ -728,6 +782,15 @@ int InputData::getVarPos(const string &name) const
   return -1;
 }
 
+void InputData::addVariable(Variable *v)
+{
+	vars.push_back(v);
+	// all directions must be right-padded with a zero for the new var
+	for (unsigned i = 0; i < directions.size(); i++) {
+		directions[i].push_back(0);
+	}
+}
+
 const Parameter *InputData::getParam(const string &name) const
 {
   for (unsigned i = 0; i < params.size(); i++)
@@ -781,6 +844,87 @@ void InputData::addDirection(vector<double> d, double LB, double UB)
   UBoffsets.push_back(UB);
 }
 
+bool compare(std::vector<double> v1, std::vector<double> v2, double tol)
+{
+	if (v1.size() != v2.size()) {
+			return false;
+	}
+	
+	for (unsigned i = 0; i < v1.size(); i++) {
+		if (std::abs(v1[i] - v2[i]) >= tol) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+int find(std::vector<std::vector<double>> M, std::vector<double> v, double tol)
+{
+	unsigned pos = 0;
+	while (pos < M.size()) {
+		if (compare(M[pos], v, tol)) {
+			return pos;
+		} else {
+			pos++;
+		}
+	}
+	// not found
+	return -1;
+}
+
+void InputData::addDirectionConstraint(Inequality *i)
+{
+//	std::cout << "Inequality " << *i << std::endl;
+	
+	if (i->getType() == Inequality::Type::INT) {		// constraint is an interval specification
+		this->addDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getUB()), Inequality::Type::LE));
+		this->addDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getLB()), Inequality::Type::GE));
+		return;
+	}
+	
+	std::vector<double> new_dir = i->getDirection(*this);
+	std::vector<double> negated_dir = get_complementary(new_dir);
+	
+//	std::cout << "direction: " << new_dir << ", negated: " << negated_dir << std::endl;
+	
+	// check if new direction is already present
+	double tol = 0.00001;
+	int pos = find(directions, i->getDirection(*this), tol);
+	int negated_pos = find(directions, negated_dir, tol);
+	
+	if (pos != -1) {
+		
+//		std::cout << "already present, pos = " << pos << std::endl;
+		// direction already present
+		UBoffsets[pos] = std::min(UBoffsets[pos], i->getOffset(*this));
+		
+	} else if (negated_pos != -1) {
+		
+//		std::cout << "negated present, pos = " << negated_pos << ", offset = " << -i->getOffset(*this) << std::endl;
+		
+		// negation of direction already present
+		LBoffsets[negated_pos] = std::max(LBoffsets[negated_pos], (i->getOffset(*this) == 0 ? 0 : -i->getOffset(*this)));
+		
+	} else {
+		
+//		std::cout << "not present" << std::endl;
+		
+		// new direction
+		directions.push_back(new_dir);
+		UBoffsets.push_back(i->getOffset(*this));
+		LBoffsets.push_back(std::numeric_limits<double>::lowest());
+		
+		// cover variables
+		for (unsigned i = 0; i < new_dir.size(); i++) {
+			if (new_dir[i] != 0) {
+				vars[i]->setCovered();
+			}
+		}
+	}
+//	std::cout << "LB = " << LBoffsets << ", UB = " << UBoffsets << std::endl;
+}
+
 void InputData::defaultDirections()
 {
   directions.resize(vars.size(), vector<double>(vars.size(), 0));
@@ -819,15 +963,25 @@ bool InputData::check()
   }
 
   // each variable must have its dynamic
-  for (unsigned i = 0; i < vars.size(); i++)
+  for (unsigned i = 0; i < vars.size(); i++) {
     if (!vars[i]->isDynamicDefined()) {
       cerr << "Variable " << vars[i]->getName() << " has not a dynamic"
            << endl;
       res = false;
     }
+	}
+	
+	// each var must be covered
+	for (unsigned i = 0; i < vars.size(); i++) {
+    if (!vars[i]->isCovered()) {
+      cerr << "Variable " << vars[i]->getName() << " is not covered by any direction"
+           << endl;
+      res = false;
+    }
+	}
 
   // directions
-  if (varMode != modeType::BOX && directions.size() == 0) {
+  /*if (varMode != modeType::BOX && directions.size() == 0) {
     if (directions.size() == 0) {
       cerr << "Directions must be provided if variable modality is " << varMode
            << endl;
@@ -838,14 +992,14 @@ bool InputData::check()
            << endl;
       res = false;
     }
-  }
+  }*/
 
   // template
-  if (varMode == modeType::POLY && templateMatrix.size() == 0) {
+  /*if (varMode == modeType::POLY && templateMatrix.size() == 0) {
     cerr << "Template matrix must be provided if variable modality is "
          << varMode << endl;
     res = false;
-  }
+  }*/
 
   // param directions
   if (paramMode == modeType::PARAL && paramDirections.size() == 0) {

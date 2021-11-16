@@ -108,6 +108,8 @@
 %nterm <std::vector<std::vector<int>>> _matrix rowList
 %nterm <AbsSyn::Formula *> path_formula state_formula
 %nterm <AbsSyn::transType> transType
+%nterm <AbsSyn::Inequality *> inequality
+%nterm <AbsSyn::Inequality::Type> inequalityType
 
 %printer { yyo << $$; } <*>;
 
@@ -123,8 +125,8 @@ s		: headerList
 						YYERROR;
 					}
 					
-					if (!drv.data.isVarModeDefined())
-						drv.data.setVarMode(AbsSyn::modeType::BOX);
+					//if (!drv.data.isVarModeDefined())
+						//drv.data.setVarMode(AbsSyn::modeType::BOX);
 					
 					if (!drv.data.isParamModeDefined())
 						drv.data.setParamMode(AbsSyn::modeType::BOX);
@@ -137,14 +139,11 @@ s		: headerList
 				}
 			symbolList matricesList footerList END
 		{
-			if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
-						drv.data.defaultDirections();
-					
 			if (drv.data.getParamMode() == AbsSyn::modeType::BOX)
 				drv.data.defaultParamDirections();
 			
-			if (drv.data.getVarMode() != AbsSyn::modeType::POLY)
-							drv.data.defaultTemplate();
+			/*if (drv.data.getVarMode() != AbsSyn::modeType::POLY)
+							drv.data.defaultTemplate();*/
 			
 			if (!drv.data.isTransModeDefined())
 				drv.data.setTransMode(AbsSyn::transType::AFO);
@@ -165,15 +164,6 @@ header			: PROB ":" problemType ";"
 								YYERROR;
 							}
 							drv.data.setProblem($3);
-						}
-						| VARMODE ":" modeType ";"
-						{
-							if (drv.data.isVarModeDefined())
-							{
-								yy::parser::error(@4, "Variable modality has already been defined");
-								YYERROR;
-							}
-							drv.data.setVarMode($3);
 						}
 						| PARAMMODE ":" modeType ";"
 						{
@@ -209,11 +199,11 @@ symbolList	: symbol {}
 
 symbol			: VAR identList IN doubleInterval ";"
 						{
-							if (drv.data.getVarMode() != AbsSyn::modeType::BOX)
+							/*if (drv.data.getVarMode() != AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "Cannot define variable bounds if modality is not 'boxes'");
 								YYERROR;
-							}
+							}*/
 							
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -222,17 +212,21 @@ symbol			: VAR identList IN doubleInterval ";"
 									yy::parser::error(@2, "Symbol '" + $2[i] + "' already defined");
 									YYERROR;
 								}
+								
 								drv.data.addVariable(new AbsSyn::Variable($2[i]));
-								drv.data.addBounds($4.first, $4.second);
+								
+								AbsSyn::Expr *e = new AbsSyn::Expr($2[i]);
+								AbsSyn::Inequality *ineq = new AbsSyn::Inequality(e, $4.first, $4.second);
+								drv.data.addDirectionConstraint(ineq);
 							}
 						}
 						| VAR identList ";"
 						{
-							if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
+							/*if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "If variable modality is 'boxes', bounds must be provided");
 								YYERROR;
-							}
+							}*/
 							
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -354,23 +348,31 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.data.addSpec($3);
 						}
-						| ASSERT state_formula ";"
+						| ASSERT inequality ";"
 						{
-							if ($2->getType() != AbsSyn::Formula::formulaType::ATOM) {
+							/*if ($2->getType() != AbsSyn::Formula::formulaType::ATOM) {
 								yy::parser::error(@2, "Only atomic formulas are supported");
 								YYERROR;
-							}
-							if ($2->getEx()->hasParams(drv.data)) {
+							}*/
+							if ($2->getLhs()->hasParams(drv.data) || $2->getRhs()->hasParams(drv.data)) {
 								yy::parser::error(@2, "Expressions in assertions cannot contain parameters");
 								YYERROR;
 							}
-							if (!$2->isLinear(drv.data)) {
+							if ($2->getLhs()->getDegree(drv.data) > 1 || $2->getRhs()->getDegree(drv.data) > 1) {
 								yy::parser::error(@2, "Assertions must be linear");
 								YYERROR;
 							}
+							if ($2->getType() == AbsSyn::Inequality::Type::EQ) {
+								yy::parser::error(@2, "Inequalities with \"=\" are not supported yet in assertions");
+								YYERROR;
+							}
+							if ($2->getType() == AbsSyn::Inequality::Type::INT) {
+								yy::parser::error(@2, "Inequalities with intervals are not supported yet in assertions");
+								YYERROR;
+							}
 							
-							AbsSyn::Assertion *a = new AbsSyn::Assertion($2->getEx());
-							drv.data.addAssertion(a);
+							//AbsSyn::Assertion *a = new AbsSyn::Assertion($2->getEx());
+							drv.data.addAssertion($2);
 						}
 
 matricesList	: %empty {}
@@ -413,15 +415,63 @@ matrices		: direction
 							}*/
 						}
 
-direction		: DIR "<" numList ">" IN doubleInterval ";" 
+inequality	: expr inequalityType expr
 						{
-							if (drv.data.getVarNum() != $3.size())
-							{
-								yy::parser::error(@3, "A direction must have as many components as the number of variables");
+							if ($1->hasParams(drv.data)) {
+								yy::parser::error(@1, "Expression in inequality cannot contain parameters");
 								YYERROR;
 							}
-							
-							drv.data.addDirection($3, $6.first, $6.second);
+							if ($3->hasParams(drv.data)) {
+								yy::parser::error(@3, "Expression in inequality cannot contain parameters");
+								YYERROR;
+							}
+							if ($1->getDegree(drv.data) > 1) {
+								yy::parser::error(@1, "Expression in inequality must be at most linear");
+								YYERROR;
+							}
+							if ($3->getDegree(drv.data) > 1) {
+								yy::parser::error(@3, "Expression in inequality must be at most linear");
+								YYERROR;
+							}
+							$$ = new AbsSyn::Inequality($1, $3, $2);
+						}
+						| expr IN doubleInterval
+						{
+							if ($1->hasParams(drv.data)) {
+								yy::parser::error(@1, "Expression in inequality cannot contain parameters");
+								YYERROR;
+							}
+							if ($1->getDegree(drv.data) > 1) {
+								yy::parser::error(@1, "Expression in inequality must be at most linear");
+								YYERROR;
+							}
+							$$ = new AbsSyn::Inequality($1, $3.first, $3.second);
+						}
+
+inequalityType	: "<"
+								{
+									$$ = AbsSyn::Inequality::Type::LT;
+								}
+								| "<="
+								{
+									$$ = AbsSyn::Inequality::Type::LE;
+								}
+								| ">"
+								{
+									$$ = AbsSyn::Inequality::Type::GT;
+								}
+								| ">="
+								{
+									$$ = AbsSyn::Inequality::Type::GE;
+								}
+								| "="
+								{
+									$$ = AbsSyn::Inequality::Type::EQ;
+								}
+
+direction		: DIR inequality ";"
+						{
+							drv.data.addDirectionConstraint($2);
 						}
 
 template		: TEMPL "=" _matrix

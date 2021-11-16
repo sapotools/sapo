@@ -1,17 +1,13 @@
 problem: synthesis;
-variable_mode: parallelotopes;
 
 iterations: 30;
 
 // definition of variables
-/*var s in [0.79, 0.8];
+var s in [0.79, 0.8];
 var e in [0, 0];
 var q in [0, 0];
 var i in [0.19, 0.2];
 var r in [0, 0];
-*/
-
-var s, e, q, i, r;
 
 // definition of parameters
 param kappa1 in [0.2, 0.3];
@@ -33,10 +29,3 @@ dynamic(r) = r + (sigma*i)*Delta;
 
 // specification
 spec: q <= 0.045 U[10,15] i <= 0.23;
-
-
-direction <1, 0, 0, 0, 0> in [0.79, 0.8];
-direction <0, 1, 0, 0, 0> in [0, 0];
-direction <0, 0, 1, 0, 0> in [0, 0];
-direction <0, 0, 0, 1, 0> in [0.19, 0.2];
-direction <0, 0, 0, 0, 1> in [0, 0];

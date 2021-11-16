@@ -16,6 +16,7 @@
 #include "Eventually.h"
 #include "STL.h"
 #include "Until.h"
+#include "LinearSystem.h"
 
 namespace AbsSyn
 {
@@ -299,7 +300,7 @@ class Variable
   }
 
 public:
-  Variable(const std::string &n): name(n), dynamic(NULL) {}
+  Variable(const std::string &n): name(n), dynamic(NULL), covered(false) {}
 
   ~Variable()
   {
@@ -326,10 +327,21 @@ public:
   {
     return dynamic != NULL;
   }
+  
+  bool isCovered()
+	{
+		return covered;
+	}
+	
+	void setCovered()
+	{
+		this->covered = true;
+	}
 
 protected:
   std::string name; // name of the variable
   Expr *dynamic;    // dynamic associated with variable
+  bool covered;			// if there's a direction containing this variable
 };
 
 /*
@@ -432,42 +444,75 @@ private:
 };
 
 /*
- *************************
- *       ASSERTION       *
- *************************
+ **************************
+ *       INEQUALITY       *
+ **************************
  */
 
-class Assertion
+class Inequality
 {
-  friend std::ostream &operator<<(std::ostream &os, const Assertion &a)
-	{
-		return os << *(a.ex);
-	}
+	friend std::ostream &operator<<(std::ostream &os, Inequality &i);
 
 public:
-	
-	Assertion(Expr *e): ex(e) {}
-	
-	~Assertion()
+	enum Type
 	{
-		delete ex;
+		LT,		// <
+		LE,		// <=
+		GT,		// >
+		GE,		// >=
+		EQ,		// =
+		INT		// lhs in [a,b]
+	};
+	
+	Inequality(Expr *e1, Expr *e2, const Type t): lhs(e1), rhs(e2), type(t) {}
+	Inequality(Expr *e, double lb, double ub): lhs(e), rhs(nullptr), type(Type::INT)
+	{
+		this->lb = lb;
+		this->ub = ub;
 	}
 	
-	Expr *getExpr() const
+	~Inequality()
 	{
-		return ex;
+		delete(lhs);
+		delete(rhs);
+	}
+	
+	Expr *getLhs() const
+	{
+		return lhs;
+	}
+	
+	Expr *getRhs() const
+	{
+		return rhs;
+	}
+	
+	const Type &getType() const
+	{
+		return type;
+	}
+	
+	double getLB() const
+	{
+		return lb;
+	}
+	
+	double getUB() const
+	{
+		return ub;
 	}
 	
 	std::vector<double> getDirection(const InputData &id)
 				const;		// return the direction corresponding to the linear constraint
 	
-	double getOffset(const InputData &id) const		// return the offset of the constraint*/
-	{
-		return -ex->getOffset(id);
-	}
+	double getOffset(const InputData &id)
+				const;		// return the offset of the constraint*/
 	
+
 protected:
-	Expr *ex;		// constraint of the form ex <= 0
+	Expr *lhs, *rhs;
+	Type type;
+	double lb, ub;
 };
 
 /*
@@ -619,15 +664,12 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 	
-	const Assertion *getAssert(int i) const // return the assertion in position i
+	const Inequality *getAssert(int i) const // return the assertion in position i
 	{
 		return asserts[i];
 	}
 
-  void addVariable(Variable *v)
-  {
-    vars.push_back(v);
-  } // adds a new variable, which name is not already used
+  void addVariable(Variable *v); // adds a new variable, which name is not already used
   void addParameter(Parameter *p)
   {
     params.push_back(p);
@@ -640,9 +682,9 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
-  void addAssertion(Assertion *a)
+  void addAssertion(Inequality *i)
 	{
-		asserts.push_back(a);
+		asserts.push_back(i);
 	} // adds a new assertion
 
   bool isSpecDefined() const
@@ -661,6 +703,7 @@ public:
     return spec;
   }
 
+  void addDirectionConstraint(Inequality *i);
   unsigned int directionsNum() const
   {
     return directions.size();
@@ -812,7 +855,7 @@ protected:
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
 	
-	std::vector<Assertion *> asserts;
+	std::vector<Inequality *> asserts;
 
   Formula *spec;
 
