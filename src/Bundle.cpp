@@ -182,9 +182,9 @@ Bundle &Bundle::operator=(Bundle &&orig)
 /**
  * Generate the polytope represented by the bundle
  *
- * @returns polytope represented by a linear system
+ * @returns polytope represented by the bundle
  */
-LinearSystem Bundle::getLinearSystem() const
+Polytope Bundle::getPolytope() const
 {
   using namespace std;
 
@@ -199,7 +199,7 @@ LinearSystem Bundle::getLinearSystem() const
     b.push_back(this->offm[i]);
   }
 
-  return LinearSystem(A, b);
+  return Polytope(A, b);
 }
 
 /**
@@ -247,11 +247,11 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
 Bundle Bundle::get_canonical() const
 {
   // get current polytope
-  LinearSystem bund = this->getLinearSystem();
+  Polytope bund = this->getPolytope();
   std::vector<double> canoffp(this->getSize()), canoffm(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    canoffp[i] = bund.maxLinearSystem(this->L[i]);
-    canoffm[i] = bund.maxLinearSystem(get_complementary(this->L[i]));
+    canoffp[i] = bund.maximize(this->L[i]);
+    canoffm[i] = bund.maximize(get_complementary(this->L[i]));
   }
   return Bundle(this->vars, this->L, canoffp, canoffm, this->T);
 }
@@ -454,7 +454,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
  * @returns transformed bundle
  */
 Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
-                         const GiNaC::lst &f, const LinearSystem &paraSet,
+                         const GiNaC::lst &f, const Polytope &paraSet,
                          ControlPointStorage &controlPts, int mode) const
 {
   using namespace std;
@@ -544,9 +544,9 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
         ex paraBernCoeff;
         paraBernCoeff = (*c).subs(subParatope);
         maxCoeffp
-            = max(maxCoeffp, paraSet.maxLinearSystem(params, paraBernCoeff));
+            = max(maxCoeffp, paraSet.maximize(params, paraBernCoeff));
         maxCoeffm
-            = max(maxCoeffm, paraSet.maxLinearSystem(params, -paraBernCoeff));
+            = max(maxCoeffm, paraSet.maximize(params, -paraBernCoeff));
       }
       newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]], maxCoeffp);
       newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]], maxCoeffm);

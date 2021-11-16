@@ -26,12 +26,12 @@ Flowpipe::Flowpipe(const std::vector<std::vector<double>> &variable_templates):
 }
 
 /**
- * Return the i-th linear system
+ * Return the i-th polytope set
  *
  * @param[in] i index
- * @return i-th linear system
+ * @return i-th polytope set
  */
-const LinearSystemSet &Flowpipe::get(const unsigned int i) const
+const PolytopeSet &Flowpipe::get(const unsigned int i) const
 {
   if (i < this->size()) {
     return this->flowpipe[i];
@@ -49,33 +49,33 @@ const LinearSystemSet &Flowpipe::get(const unsigned int i) const
  */
 Flowpipe &Flowpipe::append(const Bundle &bundle)
 {
-  this->flowpipe.push_back(LinearSystemSet(bundle.getLinearSystem()));
+  this->flowpipe.push_back(PolytopeSet(bundle.getPolytope()));
 
   return *this;
 }
 
 /**
- * Append a linear system set to the flowpipe
+ * Append a polytope set to the flowpipe
  *
- * @param[in] ls is the linear system set to be appended
+ * @param[in] P is the polytope set to be appended
  * @return a reference to the new flowpipe
  */
-Flowpipe &Flowpipe::append(const LinearSystemSet &ls)
+Flowpipe &Flowpipe::append(const PolytopeSet &Ps)
 {
-  this->flowpipe.push_back(ls);
+  this->flowpipe.push_back(Ps);
 
   return *this;
 }
 
 /**
- * Append a linear system to the flowpipe
+ * Append a polytope to the flowpipe
  *
- * @param[in] ls is the linear system set to be appended
+ * @param[in] P is the polytope set to be appended
  * @return a reference to the new flowpipe
  */
-Flowpipe &Flowpipe::append(const LinearSystem &ls)
+Flowpipe &Flowpipe::append(const Polytope &P)
 {
-  this->flowpipe.push_back(LinearSystemSet(ls));
+  this->flowpipe.push_back(PolytopeSet(P));
 
   return *this;
 }
@@ -90,7 +90,7 @@ unsigned int Flowpipe::dim() const
 }
 
 /**
- * Print the linear system in Matlab format (for plotregion script)
+ * Print the polytope in Matlab format (for plotregion script)
  *
  * @param[in] os is the output stream
  * @param[in] color color of the polytope to plot
@@ -114,7 +114,7 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
                         const double time_step, const char color) const
 {
 
-  if (size() == 0 || this->flowpipe[0].isEmpty()) {
+  if (size() == 0 || this->flowpipe[0].is_empty()) {
     std::cerr << "Flowpipe::plotProjToFile : i must be between "
               << "0 and the system dimension" << std::endl;
     exit(EXIT_FAILURE);
@@ -140,12 +140,12 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
   os << "varm = [";
   for (auto it = std::begin(this->flowpipe); it != std::end(this->flowpipe);
        ++it) {
-    LinearSystemSet::const_iterator ls_it(it->begin());
+    PolytopeSet::const_iterator ls_it(it->begin());
 
-    double min_value = ls_it->minLinearSystem(v_templates[var]);
+    double min_value = ls_it->minimize(v_templates[var]);
 
     for (; ls_it != it->end(); ++ls_it) {
-      double min_var_value = ls_it->minLinearSystem(v_templates[var]);
+      double min_var_value = ls_it->minimize(v_templates[var]);
 
       min_value = std::min(min_var_value, min_value);
     }
@@ -160,12 +160,12 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
     std::vector<double> obj_funct(dim(), 0.0);
     obj_funct[var] = 1.0;
 
-    LinearSystemSet::const_iterator ls_it(it->begin());
+    PolytopeSet::const_iterator ls_it(it->begin());
 
-    double max_value = ls_it->maxLinearSystem(v_templates[var]);
+    double max_value = ls_it->maximize(v_templates[var]);
 
     for (; ls_it != it->end(); ++ls_it) {
-      double max_var_value = ls_it->maxLinearSystem(v_templates[var]);
+      double max_var_value = ls_it->maximize(v_templates[var]);
 
       max_value = std::min(max_var_value, max_value);
     }
