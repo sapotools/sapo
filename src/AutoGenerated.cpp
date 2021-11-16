@@ -230,6 +230,8 @@ Bundle *computeBundle(const InputData &id)
 	
 	std::vector<std::vector<int>> templ = computeTemplate(uncoveredRows, C);
 	
+//	std::cout << "computed template: " << templ << std::endl;
+	
 	// add C to directions
 	for (unsigned i = 0; i < C.size(); i++) {
 		directions.push_back(C[i]);
@@ -241,6 +243,8 @@ Bundle *computeBundle(const InputData &id)
 		std::make_move_iterator(templ.begin()),
 		std::make_move_iterator(templ.end())
 	);
+	
+//	std::cout << "final template: " << template_matrix << std::endl;
 
   return new Bundle(directions, UB, get_complementary(LB), template_matrix, constrDirs, constrOffsets);
 }
@@ -311,6 +315,8 @@ std::vector<std::vector<int>> computeTemplate(const std::vector<std::vector<doub
 	
 	unsigned cols = Pn * (m+c);
 	unsigned rows = Pn + Pn*n + (m + c);
+	
+//	std::cout << "\tn = " << n << ", m = " << m << ", c = " << c << ", Pn = " << Pn << ", cols = " << cols << ", rows = " << rows << std::endl;
 	
 	// create ILP problem
 	glp_prob *lp;

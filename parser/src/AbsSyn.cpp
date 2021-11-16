@@ -610,6 +610,7 @@ InputData::InputData()
   directions.resize(0);
   LBoffsets.resize(0);
   UBoffsets.resize(0);
+	hasLB.resize(0);
 
   templateMatrix.resize(0);
 
@@ -905,6 +906,7 @@ void InputData::addDirectionConstraint(Inequality *i)
 		
 		// negation of direction already present
 		LBoffsets[negated_pos] = std::max(LBoffsets[negated_pos], (i->getOffset(*this) == 0 ? 0 : -i->getOffset(*this)));
+		hasLB[negated_pos] = true;
 		
 	} else {
 		
@@ -914,6 +916,7 @@ void InputData::addDirectionConstraint(Inequality *i)
 		directions.push_back(new_dir);
 		UBoffsets.push_back(i->getOffset(*this));
 		LBoffsets.push_back(std::numeric_limits<double>::lowest());
+		hasLB.push_back(false);
 		
 		// cover variables
 		for (unsigned i = 0; i < new_dir.size(); i++) {
@@ -978,6 +981,57 @@ bool InputData::check()
            << endl;
       res = false;
     }
+	}
+	
+	// each variable must be bounded
+	// prepare linear system
+	vector<vector<double>> A = directions;
+	for (unsigned i = 0; i < directions.size(); i++) {
+		A.push_back(get_complementary(directions[i]));
+	}
+	vector<double> b = UBoffsets;
+	for (unsigned i = 0; i < LBoffsets.size(); i++) {
+		b.push_back(-LBoffsets[i]);
+	}
+	LinearSystem LS(A, b);
+	
+	GiNaC::lst symbols{};
+	for (unsigned i = 0; i < vars.size(); i++) {
+		GiNaC::symbol s(vars[i]->getName());
+		symbols.append(s);
+	}
+	
+	double infinity = std::numeric_limits<double>::max();
+	double negInfinity = std::numeric_limits<double>::lowest();
+	
+	for (unsigned i = 0; i < vars.size(); i++) {
+		GiNaC::ex obj_function = symbols[i];
+		double min_val = LS.minLinearSystem(symbols, obj_function);
+		double max_val = LS.maxLinearSystem(symbols, obj_function);
+		
+		if (min_val == negInfinity) {
+			cerr << "Variable " << vars[i]->getName() << " has no finite lower bound" << endl;
+			res = false;
+		}
+		if (max_val == infinity) {
+			cerr << "Variable " << vars[i]->getName() << " has no finite upper bound" << endl;
+			res = false;
+		}
+	}
+	
+	
+	// set directions LB where needed
+	for (unsigned i = 0; i < directions.size(); i++) {
+		if (!hasLB[i]) {
+			GiNaC::ex obj_function = 0;
+			for (unsigned j = 0; j < directions[i].size(); j++) {
+				obj_function += directions[i][j] * symbols[j];
+			}
+			
+			double minVal = LS.minLinearSystem(symbols, obj_function);
+			LBoffsets[i] = minVal;
+			hasLB[i] = true;
+		}
 	}
 
   // directions

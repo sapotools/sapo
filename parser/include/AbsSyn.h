@@ -731,6 +731,10 @@ public:
   {
     return UBoffsets;
   }
+  bool isBounded(int d) const
+	{
+		return hasLB[d];
+	}
 
   unsigned templateRows() const
   {
@@ -862,6 +866,7 @@ protected:
   std::vector<std::vector<double>> directions;
   std::vector<double> LBoffsets;
   std::vector<double> UBoffsets;
+	std::vector<bool> hasLB;
 
   std::vector<std::vector<int>> templateMatrix;
 
