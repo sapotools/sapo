@@ -274,6 +274,7 @@ public:
     if (size() == 0) {
       return 0;
     }
+
     return this->A[0].size();
   }
 
@@ -290,7 +291,7 @@ public:
    *
    * @return volume of the bounding box
    */
-  double volBoundingBox();
+  double volBoundingBox() const;
 
   void plotRegion(std::ostream &os = std::cout, const char color = ' ') const;
 

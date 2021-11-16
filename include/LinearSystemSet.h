@@ -18,260 +18,16 @@
 
 #define MINIMIZE_LS_SET_REPRESENTATION true
 
-class LinearSystemSet
+class LinearSystemSet : private std::vector<LinearSystem>
 {
-
-private:
-  using pointer = std::shared_ptr<LinearSystem>;
-  using container = std::vector<pointer>;
-  container set; // set of linear systems
-
 public:
-  /**
-   * An iterator class for linear system set
-   */
-  class iterator
-  {
-
-  private:
-    container::iterator iit;
-
-  public:
-    using iterator_category = container::iterator::iterator_category;
-    using difference_type = container::iterator::difference_type;
-    using value_type = LinearSystem;
-    using pointer = std::shared_ptr<LinearSystem>;
-    using reference = LinearSystem &;
-
-    /**
-     *  Constructor
-     */
-    iterator(const container::iterator &it): iit(it) {}
-
-    /**
-     *  Copy constructor
-     */
-    iterator(const iterator &orig): iit(orig.iit) {}
-
-    /**
-     *  Swap constructor
-     */
-    iterator(iterator &&orig)
-    {
-      std::swap(iit, orig.iit);
-    }
-
-    /**
-     *  Reference operator
-     *
-     * @return a reference to the pointed linear system.
-     */
-    reference operator*() const
-    {
-      return *(*iit);
-    }
-
-    /**
-     *  Pointer operator
-     *
-     * @return a pointer to the pointed linear system.
-     */
-    pointer operator->()
-    {
-      return *iit;
-    }
-
-    /**
-     *  Prefix increment
-     *
-     * @return this iterator after incrementing it.
-     */
-    iterator &operator++()
-    {
-      iit++;
-      return *this;
-    }
-
-    /**
-     *  Postfix increment
-     *
-     * @return this iterator before incrementing it.
-     */
-    iterator operator++(int)
-    {
-      return iterator(iit++);
-    }
-
-    /**
-     * Increment
-     *
-     * @param[in] a is the increment.
-     * @return this iterator after incrementing it.
-     */
-    iterator operator+(const int a)
-    {
-      return iterator(iit + a);
-    }
-
-    /**
-     * Decrement
-     *
-     * @param[in] a is the decrement.
-     * @return this iterator after decrementing it.
-     */
-    iterator operator-(const int a)
-    {
-      return iterator(iit - a);
-    }
-
-    /**
-     *  Check whether two iterators point the same object.
-     *
-     * @param[in] a is an iterator
-     * @param[in] b is an iterator
-     * @return true if and only if the two iterators point the same object.
-     */
-    friend inline bool operator==(const iterator &a, const iterator &b)
-    {
-      return a.iit == b.iit;
-    }
-
-    /**
-     *  Check whether two iterators point the same object.
-     *
-     * @param[in] a is an iterator
-     * @param[in] b is an iterator
-     * @return true if and only if the two iterators point different objects.
-     */
-    friend inline bool operator!=(const iterator &a, const iterator &b)
-    {
-      return a.iit != b.iit;
-    }
-  };
+  using const_iterator = std::vector<LinearSystem>::const_iterator;
+  using iterator = std::vector<LinearSystem>::iterator;
 
   /**
-   * A constant iterator class for linear system set
+   * Constructor
+   *
    */
-  class const_iterator
-  {
-  private:
-    container::const_iterator iit;
-
-  public:
-    using iterator_category = container::const_iterator::iterator_category;
-    using difference_type = container::const_iterator::difference_type;
-    using value_type = LinearSystem;
-    using pointer = std::shared_ptr<LinearSystem>;
-    using reference = LinearSystem &;
-
-    /**
-     *  Constructor
-     */
-    const_iterator(const container::const_iterator &it): iit(it) {}
-
-    /**
-     *  Copy constructor
-     */
-    const_iterator(const const_iterator &orig): iit(orig.iit) {}
-
-    /**
-     *  Swap constructor
-     */
-    const_iterator(const_iterator &&orig)
-    {
-      std::swap(iit, orig.iit);
-    }
-
-    /**
-     *  Reference operator
-     *
-     * @return a reference to the pointed linear system.
-     */
-    reference operator*() const
-    {
-      return *(*iit);
-    }
-
-    /**
-     *  Pointer operator
-     *
-     * @return a pointer to the pointed linear system.
-     */
-    pointer operator->()
-    {
-      return *iit;
-    }
-
-    /**
-     *  Prefix increment
-     *
-     * @return this iterator after incrementing it.
-     */
-    const_iterator &operator++()
-    {
-      iit++;
-      return *this;
-    }
-
-    /**
-     * Increment
-     *
-     * @param[in] a is the increment.
-     * @return this iterator after incrementing it.
-     */
-    const_iterator operator+(const int a)
-    {
-      return const_iterator(iit + a);
-    }
-
-    /**
-     * Decrement
-     *
-     * @param[in] a is the decrement.
-     * @return this iterator after decrementing it.
-     */
-    const_iterator operator-(const int a)
-    {
-      return const_iterator(iit - a);
-    }
-
-    /**
-     *  Postfix increment
-     *
-     * @return this iterator before incrementing it.
-     */
-    const_iterator operator++(int)
-    {
-      return const_iterator(iit++);
-    }
-
-    /**
-     *  Check whether two iterators point the same object.
-     *
-     * @param[in] a a constant iterator.
-     * @param[in] b a constant iterator.
-     * @return true if and only if the two iterators point the same object.
-     */
-    friend inline bool operator==(const const_iterator &a,
-                                  const const_iterator &b)
-    {
-      return a.iit == b.iit;
-    }
-
-    /**
-     *  Check whether two constant iterators point the same object.
-     *
-     * @param[in] a is a constant iterator.
-     * @param[in] b is a constant iterator.
-     * @return true if and only if the two iterators point different objects.
-     */
-    friend inline bool operator!=(const const_iterator &a,
-                                  const const_iterator &b)
-    {
-      return a.iit != b.iit;
-    }
-  };
-
   LinearSystemSet();
 
   /**
@@ -287,20 +43,6 @@ public:
    * @param[in] ls element of the set
    */
   LinearSystemSet(const LinearSystem &ls);
-
-  /**
-   * Constructor that instantiates a singleton set
-   *
-   * @param[in] ls a pointer to the element of the set
-   */
-  LinearSystemSet(pointer ls);
-
-  /**
-   * Constructor that instantiates a set from a vector of sets
-   *
-   * @param[in] set vector of linear systems
-   */
-  LinearSystemSet(const container &set);
 
   /**
    * A copy constructor for a linear system set
@@ -329,14 +71,6 @@ public:
    * @param[in] orig is a rvalue linear system set
    */
   LinearSystemSet &operator=(LinearSystemSet &&orig);
-
-  /**
-   * Add a linear system to the set
-   *
-   * @param[in] ls is a pointer to the linear system to be added
-   * @return a reference to the new linear system set
-   */
-  LinearSystemSet &add(pointer ls);
 
   /**
    * Add a linear system to the set
@@ -419,7 +153,7 @@ public:
    */
   unsigned int size() const
   {
-    return this->set.size();
+    return std::vector<LinearSystem>::size();
   }
 
   /**
@@ -431,22 +165,22 @@ public:
 
   iterator begin()
   {
-    return iterator(std::begin(set));
+    return std::vector<LinearSystem>::begin();
   }
 
   iterator end()
   {
-    return iterator(std::end(set));
+    return std::vector<LinearSystem>::end();
   }
 
   const_iterator begin() const
   {
-    return const_iterator(std::cbegin(set));
+    return std::vector<LinearSystem>::begin();
   }
 
   const_iterator end() const
   {
-    return const_iterator(std::cend(set));
+    return std::vector<LinearSystem>::end();
   }
 
   bool isEmpty() const;
