@@ -581,7 +581,7 @@ std::vector<double> Bundle::offsetDistances()
 
   std::vector<double> dist(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    dist[i] = abs(this->offp[i] - this->offm[i]) / this->norm(this->L[i]);
+    dist[i] = std::abs(this->offp[i] - this->offm[i]) / this->norm(this->L[i]);
   }
   return dist;
 }
@@ -641,7 +641,7 @@ double Bundle::angle(std::vector<double> v1, std::vector<double> v2)
  */
 double Bundle::orthProx(std::vector<double> v1, std::vector<double> v2)
 {
-  return abs(this->angle(v1, v2) - (3.14159265 / 2));
+  return std::abs(this->angle(v1, v2) - (3.14159265 / 2));
 }
 
 /**
