@@ -533,8 +533,9 @@ inline std::vector<unsigned int> transp(const std::vector<unsigned int> &b,
                                         const std::vector<unsigned int> &degs,
                                         const unsigned int &degs_prod)
 {
-  return std::vector<unsigned int>{first_transp(b[1], degs[1]),
-                                   second_transp(b[0], b[1], degs[1], degs_prod)};
+  return std::vector<unsigned int>{
+      first_transp(b[1], degs[1]),
+      second_transp(b[0], b[1], degs[1], degs_prod)};
 }
 
 /**

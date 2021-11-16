@@ -12,6 +12,8 @@
 
 #include "ControlPointStorage.h"
 
+#include <mutex>
+
 ControlPointStorage::ControlPointStorage(const ControlPointStorage& orig)
 {
     std::shared_lock<std::shared_timed_mutex> read_lock(orig._mutex, std::defer_lock);

@@ -288,6 +288,7 @@ public:
     if (size() == 0) {
       return 0;
     }
+
     return this->A[0].size();
   }
 
