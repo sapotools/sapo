@@ -1,3 +1,10 @@
+VARIABLES
+["s","i","r"]
+
+PARAMETERS
+["beta","gamma"]
+
+DATA
 PARAMETER SET
 1 0 <= 0.2
 -1 -0 <= -0.18

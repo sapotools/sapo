@@ -56,6 +56,21 @@ public:
     return "";
   }
 
+  static std::string short_list_begin()
+  {
+    return T::list_begin();
+  }
+
+  static std::string short_list_end()
+  {
+    return T::list_end();
+  }
+
+  static std::string short_list_separator()
+  {
+    return T::list_separator();
+  }
+
   static std::string empty_list()
   {
     return "";
@@ -142,6 +157,21 @@ public:
     return "\n" + std::string(20, '=') + "\n";
   }
 
+  static std::string short_list_begin()
+  {
+    return "[";
+  }
+
+  static std::string short_list_end()
+  {
+    return "]";
+  }
+
+  static std::string short_list_separator()
+  {
+    return ",";
+  }
+
   static std::string empty_list()
   {
     std::string pre_post(10, '=');
@@ -208,17 +238,17 @@ public:
 
   static std::string sequence_begin()
   {
-    return "[";
+    return OutputFormatter<JSON::ostream>::list_begin();
   }
 
   static std::string sequence_end()
   {
-    return "]";
+    return OutputFormatter<JSON::ostream>::list_end();
   }
 
   static std::string sequence_separator()
   {
-    return ",";
+    return OutputFormatter<JSON::ostream>::list_separator();;
   }
 
   static std::string list_begin()
@@ -236,29 +266,45 @@ public:
     return ",";
   }
 
+  static std::string short_list_begin()
+  {
+    return OutputFormatter<JSON::ostream>::list_begin();
+  }
+
+  static std::string short_list_end()
+  {
+    return OutputFormatter<JSON::ostream>::list_end();
+  }
+
+  static std::string short_list_separator()
+  {
+    return OutputFormatter<JSON::ostream>::list_separator();
+  }
+
   static std::string empty_list()
   {
-    return "[]";
+    return (OutputFormatter<JSON::ostream>::list_begin()+
+            OutputFormatter<JSON::ostream>::list_end());
   }
 
   static std::string set_begin()
   {
-    return "[";
+    return OutputFormatter<JSON::ostream>::list_begin();
   }
 
   static std::string set_end()
   {
-    return "]";
+    return OutputFormatter<JSON::ostream>::list_end();
   }
 
   static std::string set_separator()
   {
-    return ",";
+    return OutputFormatter<JSON::ostream>::list_separator();;
   }
 
   static std::string empty_set()
   {
-    return "[]";
+    return OutputFormatter<JSON::ostream>::empty_set();
   }
 
   static std::string object_header()

@@ -492,6 +492,36 @@ std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
 }
 
 /**
+ * Get the first component of the nd coordinate transpose
+ *
+ * @param[in] b_1 is the second component of the nd coordinate to be transposed
+ * @param[in] deg_1 dimensions of the second_component
+ * @returns the first component of the transposed coordinate
+ */
+inline unsigned int first_transp(const unsigned int &b_1,
+                                 const unsigned int &deg_1)
+{
+  return b_1 % deg_1;
+}
+
+/**
+ * Get the second component of the nd coordinate transpose
+ *
+ * @param[in] b_0 is the first component of the nd coordinate to be transposed
+ * @param[in] b_1 is the second component of the nd coordinate to be transposed
+ * @param[in] deg_1 dimensions of the second_component
+ * @param[in] degs_prod product of the dimensions (prod(degs))
+ * @returns the second component of the transposed coordinate
+ */
+inline unsigned int second_transp(const unsigned int &b_0,
+                                  const unsigned int &b_1,
+                                  const unsigned int &deg_1,
+                                  const unsigned int &degs_prod)
+{
+  return ((b_1 - (b_1 % deg_1)) / deg_1) + b_0 * degs_prod;
+}
+
+/**
  * Transpose an nd coordinate
  *
  * @param[in] b nd coordinate to transpose
@@ -499,16 +529,12 @@ std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
  * @param[in] degs_prod product of the dimensions (prod(degs))
  * @returns transposed coordinate
  */
-std::vector<unsigned int> transp(const std::vector<unsigned int> &b,
-                                 const std::vector<unsigned int> &degs,
-                                 const unsigned int &degs_prod)
+inline std::vector<unsigned int> transp(const std::vector<unsigned int> &b,
+                                        const std::vector<unsigned int> &degs,
+                                        const unsigned int &degs_prod)
 {
-  std::vector<unsigned int> b_transp(2, 0);
-
-  b_transp[0] = b[1] % degs[1];
-  b_transp[1] = ((b[1] - (b[1] % degs[1])) / degs[1]) + b[0] * degs_prod;
-
-  return b_transp;
+  return std::vector<unsigned int>{first_transp(b[1], degs[1]),
+                                   second_transp(b[0], b[1], degs[1], degs_prod)};
 }
 
 /**
@@ -564,23 +590,21 @@ transp(const std::vector<std::vector<GiNaC::ex>> &M,
   using namespace std;
   using namespace GiNaC;
 
-  int prod_degs2n = prod(degs, 2, degs.size());
+  const unsigned int prod_degs2n = prod(degs, 2, degs.size());
 
-  int rows_t = degs[1];
-  int cols_t = prod(degs, 2, degs.size()) * degs[0];
+  const unsigned int rows_t = degs[1];
+  const unsigned int cols_t = prod(degs, 2, degs.size()) * degs[0];
 
-  vector<ex> M_transp_i(cols_t, 0);
-  vector<vector<ex>> M_transp(rows_t, M_transp_i);
+  vector<vector<ex>> M_transp(rows_t, vector<ex>(cols_t, 0));
 
   for (unsigned int i = 0; i < M.size(); i++) {
-    for (unsigned int j = 0; j < M[i].size(); j++) {
-      if (M[i][j] != 0) {
-        vector<unsigned int> ij(2, 0);
-        ij[0] = i;
-        ij[1] = j;
-        // vector< int > ij_t = this->transp_naive(ij,degs);
-        vector<unsigned int> ij_t = transp(ij, degs, prod_degs2n);
-        M_transp[ij_t[0]][ij_t[1]] = M[i][j];
+    const std::vector<GiNaC::ex> &M_row = M[i];
+    for (unsigned int j = 0; j < M_row.size(); j++) {
+      if (M_row[j] != 0) {
+        const unsigned int ij_t_0 = first_transp(j, rows_t);
+        const unsigned int ij_t_1 = second_transp(i, j, rows_t, prod_degs2n);
+
+        M_transp[ij_t_0][ij_t_1] = M_row[j];
       }
     }
   }

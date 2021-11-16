@@ -1,3 +1,10 @@
+VARIABLES
+["s","i","t","r"]
+
+PARAMETERS
+["tau","dist"]
+
+DATA
 PARAMETER SET
 1 0 <= 0.002
 -0.353698 -0.0712121 <= -0.00141037
