@@ -34,7 +34,7 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
 }
 
 template<typename OSTREAM>
-OSTREAM& operator<<(OSTREAM &os, const GiNaC::lst &list)
+OSTREAM &operator<<(OSTREAM &os, const GiNaC::lst &list)
 {
   using OF = OutputFormatter<OSTREAM>;
 
@@ -66,9 +66,8 @@ void print_variables_and_parameters(OSTREAM &os, const Model *model)
   os << OF::field_header("variables") << model->getVars()
      << OF::field_footer();
   if (model->getParams().nops() != 0) {
-    os << OF::field_separator()
-       << OF::field_header("parameters") << model->getParams()
-       << OF::field_footer();
+    os << OF::field_separator() << OF::field_header("parameters")
+       << model->getParams() << OF::field_footer();
   }
 }
 
@@ -81,8 +80,8 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
   print_variables_and_parameters(os, model);
   os << OF::field_separator() << OF::field_header("data");
 
-  os << OF::list_begin() 
-     << OF::object_header() << OF::field_header("flowpipe");
+  os << OF::list_begin() << OF::object_header()
+     << OF::field_header("flowpipe");
 
   // if the model does not specify any parameter set
   if (model->getParams().nops() == 0) {
@@ -109,7 +108,6 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
   std::list<LinearSystemSet> synth_params
       = sapo.synthesize(*(model->getReachSet()), *(model->getParaSet()),
                         model->getSpec(), sapo.max_param_splits);
-
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);

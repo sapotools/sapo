@@ -248,7 +248,8 @@ public:
 
   static std::string sequence_separator()
   {
-    return OutputFormatter<JSON::ostream>::list_separator();;
+    return OutputFormatter<JSON::ostream>::list_separator();
+    ;
   }
 
   static std::string list_begin()
@@ -283,8 +284,8 @@ public:
 
   static std::string empty_list()
   {
-    return (OutputFormatter<JSON::ostream>::list_begin()+
-            OutputFormatter<JSON::ostream>::list_end());
+    return (OutputFormatter<JSON::ostream>::list_begin()
+            + OutputFormatter<JSON::ostream>::list_end());
   }
 
   static std::string set_begin()
@@ -299,7 +300,8 @@ public:
 
   static std::string set_separator()
   {
-    return OutputFormatter<JSON::ostream>::list_separator();;
+    return OutputFormatter<JSON::ostream>::list_separator();
+    ;
   }
 
   static std::string empty_set()
