@@ -211,6 +211,15 @@ PolytopesUnion &PolytopesUnion::simplify()
     }
   };
 
+  if (size() < 2) { // if the union consists in less than 2 polytopes, use the
+                    // non-threaded version to avoid the overhead.
+    for (auto it = std::begin(*this); it != std::end(*this); ++it) {
+      it->simplify();
+    }
+
+    return *this;
+  }
+
   ThreadResult result;
   auto test_emptiness_and_simplify = [&result](Polytope& P, const unsigned int i) {
     if (!P.is_empty()) {
