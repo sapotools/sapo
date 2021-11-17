@@ -12,14 +12,21 @@
 
 #include "ControlPointStorage.h"
 
+#if WITH_THREADS
+
 #include <mutex>
+
+#endif // WITH_THREADS
 
 ControlPointStorage::ControlPointStorage(const ControlPointStorage &orig)
 {
+
+#if WITH_THREADS
   std::shared_lock<std::shared_timed_mutex> read_lock(orig._mutex,
                                                       std::defer_lock);
   std::unique_lock<std::shared_timed_mutex> write_lock(_mutex,
                                                        std::defer_lock);
+#endif // WITH_THREADS
 
   for (auto it = std::cbegin(orig._genF_ctrlP);
        it != std::end(orig._genF_ctrlP); ++it) {
@@ -31,7 +38,9 @@ ControlPointStorage::ControlPointStorage(const ControlPointStorage &orig)
 std::pair<GiNaC::lst, GiNaC::lst>
 ControlPointStorage::get(const std::vector<int> index) const
 {
+#if WITH_THREADS
   std::shared_lock<std::shared_timed_mutex> read_lock(_mutex, std::defer_lock);
+#endif // WITH_THREADS
 
   return _genF_ctrlP.at(index);
 }
@@ -39,14 +48,18 @@ ControlPointStorage::get(const std::vector<int> index) const
 bool ControlPointStorage::gen_fun_is_equal_to(const std::vector<int> index,
                                               const GiNaC::lst &genFun) const
 {
+#if WITH_THREADS
   std::shared_lock<std::shared_timed_mutex> read_lock(_mutex, std::defer_lock);
+#endif // WITH_THREADS
 
   return _genF_ctrlP.at(index).first.is_equal(genFun);
 }
 
 GiNaC::lst ControlPointStorage::get_gen_fun(const std::vector<int> index) const
 {
+#if WITH_THREADS
   std::shared_lock<std::shared_timed_mutex> read_lock(_mutex, std::defer_lock);
+#endif // WITH_THREADS
 
   return _genF_ctrlP.at(index).first;
 }
@@ -54,14 +67,18 @@ GiNaC::lst ControlPointStorage::get_gen_fun(const std::vector<int> index) const
 GiNaC::lst
 ControlPointStorage::get_ctrl_pts(const std::vector<int> index) const
 {
+#if WITH_THREADS
   std::shared_lock<std::shared_timed_mutex> read_lock(_mutex, std::defer_lock);
+#endif // WITH_THREADS
 
   return _genF_ctrlP.at(index).second;
 }
 
 bool ControlPointStorage::contains(const std::vector<int> index) const
 {
+#if WITH_THREADS
   std::shared_lock<std::shared_timed_mutex> read_lock(_mutex, std::defer_lock);
+#endif // WITH_THREADS
 
   return (_genF_ctrlP.count(index) > 0);
 }
@@ -70,8 +87,10 @@ ControlPointStorage &
 ControlPointStorage::set_gen_fun(const std::vector<int> index,
                                  const GiNaC::lst &genFun)
 {
+#if WITH_THREADS
   std::unique_lock<std::shared_timed_mutex> write_lock(_mutex,
                                                        std::defer_lock);
+#endif // WITH_THREADS
 
   _genF_ctrlP[index].first = genFun;
 
@@ -82,8 +101,10 @@ ControlPointStorage &
 ControlPointStorage::set_ctrl_pts(const std::vector<int> index,
                                   const GiNaC::lst &ctrlPts)
 {
+#if WITH_THREADS
   std::unique_lock<std::shared_timed_mutex> write_lock(_mutex,
                                                        std::defer_lock);
+#endif // WITH_THREADS
 
   _genF_ctrlP[index].second = ctrlPts;
 

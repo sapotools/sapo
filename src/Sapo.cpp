@@ -9,7 +9,10 @@
 
 #include "Sapo.h"
 
+#if WITH_THREADS
 #include <thread>
+
+#endif // WITH_THREADS
 
 /**
  * Constructor that instantiates Sapo
@@ -198,6 +201,45 @@ get_a_finer_covering(const std::list<PolytopesUnion> &orig)
   return result;
 }
 
+#if WITH_THREADS
+template<typename T>
+class ThreadSafeList
+{
+  std::list<T> list;
+  mutable std::shared_timed_mutex mutex;
+
+public:
+  ThreadSafeList(): list() {}
+
+  ThreadSafeList(const std::list<T> &list): list(list) {}
+
+  ThreadSafeList<T> &push_back(T &&obj)
+  {
+    std::shared_lock<std::shared_timed_mutex> writelock(mutex,
+                                                        std::defer_lock);
+
+    list.push_back(obj);
+
+    return *this;
+  }
+
+  ThreadSafeList<T> &push_back(const T &obj)
+  {
+    std::shared_lock<std::shared_timed_mutex> writelock(mutex,
+                                                        std::defer_lock);
+
+    list.push_back(obj);
+
+    return *this;
+  }
+
+  const std::list<T> &get_list() const
+  {
+    return list;
+  }
+};
+#endif // WITH_THREADS
+
 /**
  * Parameter synthesis
  *
@@ -208,18 +250,44 @@ get_a_finer_covering(const std::list<PolytopesUnion> &orig)
  * @returns the list of refined parameter sets
  */
 std::list<PolytopesUnion>
-synthesize_list(Sapo &sapo, Bundle reachSet,
+synthesize_list(Sapo &sapo, const Bundle &reachSet,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
+
+#if WITH_THREADS && false
+
+  ThreadSafeList<PolytopesUnion> results;
+  auto synthesize_funct
+      = [&results, &sapo, &reachSet, &formula](const PolytopesUnion &pSet) {
+          results.push_back(sapo.synthesize(reachSet, pSet, formula));
+        };
+
+  std::vector<std::thread> threads;
+  for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
+       ++ps_it) {
+    threads.push_back(std::thread(synthesize_funct, std::ref(*ps_it)));
+  }
+
+  for (std::thread &th: threads) {
+    if (th.joinable())
+      th.join();
+  }
+
+  return results.get_list();
+
+#else // WITH_THREADS
   std::list<PolytopesUnion> results;
 
+  std::vector<std::thread> threads;
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
        ++ps_it) {
     results.push_back(sapo.synthesize(reachSet, *ps_it, formula));
   }
 
   return results;
+
+#endif // WITH_THREADS
 }
 
 /**

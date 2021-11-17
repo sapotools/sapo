@@ -13,15 +13,23 @@
 #ifndef CONTROLPOINTS_H_
 #define CONTROLPOINTS_H_
 
+#if WITH_THREADS
+
 #include <shared_mutex>
+
+#endif // WITH_THREADS
+
 #include <ginac/ginac.h>
 
 class ControlPointStorage
 {
   std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>> _genF_ctrlP;
 
+#if WITH_THREADS
   mutable std::shared_timed_mutex
       _mutex; //! A mutex to safely access to the data structure
+#endif        // WITH_THREADS
+
 public:
   ControlPointStorage() {}
   ControlPointStorage(const ControlPointStorage &orig);

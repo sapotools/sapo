@@ -9,9 +9,13 @@
 
 #include "PolytopesUnion.h"
 
+#if WITH_THREADS
+
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
+
+#endif // WITH_THREADS
 
 using namespace std;
 using namespace GiNaC;
