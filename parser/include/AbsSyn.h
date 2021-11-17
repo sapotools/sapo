@@ -437,18 +437,18 @@ private:
  *************************
  */
 
-class Assertion
+class Assumption
 {
-  friend std::ostream &operator<<(std::ostream &os, const Assertion &a)
+  friend std::ostream &operator<<(std::ostream &os, const Assumption &a)
 	{
 		return os << *(a.ex);
 	}
 
 public:
 	
-	Assertion(Expr *e): ex(e) {}
+	Assumption(Expr *e): ex(e) {}
 	
-	~Assertion()
+	~Assumption()
 	{
 		delete ex;
 	}
@@ -566,9 +566,9 @@ public:
   {
     return defs.size();
   }
-  unsigned getAssertNumber() const
+  unsigned getAssumptionsNumber() const
   {
-		return asserts.size();
+		return assumptions.size();
 	}
 
   bool isVarDefined(const std::string &name)
@@ -619,9 +619,9 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 	
-	const Assertion *getAssert(int i) const // return the assertion in position i
+	const Assumption *getAssumption(int i) const // return the assumption in position i
 	{
-		return asserts[i];
+		return assumptions[i];
 	}
 
   void addVariable(Variable *v)
@@ -640,10 +640,10 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
-  void addAssertion(Assertion *a)
+  void addAssumption(Assumption *a)
 	{
-		asserts.push_back(a);
-	} // adds a new assertion
+		assumptions.push_back(a);
+	} // adds a new assumption
 
   bool isSpecDefined() const
   {
@@ -812,7 +812,7 @@ protected:
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
 	
-	std::vector<Assertion *> asserts;
+	std::vector<Assumption *> assumptions;
 
   Formula *spec;
 

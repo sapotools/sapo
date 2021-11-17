@@ -43,7 +43,7 @@
 	IN
 	DYN
 	SPEC
-	ASSERT
+	ASSUME
 	ITER
 	PSPLITS
 	DIR
@@ -354,8 +354,13 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.data.addSpec($3);
 						}
-						| ASSERT state_formula ";"
+						| ASSUME state_formula ";"
 						{
+							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
+								yy::parser::error(@1, "Assumptions are not supported for synthesis yet");
+								YYERROR;
+							}
+							
 							if ($2->getType() != AbsSyn::Formula::formulaType::ATOM) {
 								yy::parser::error(@2, "Only atomic formulas are supported");
 								YYERROR;
@@ -365,12 +370,12 @@ symbol			: VAR identList IN doubleInterval ";"
 								YYERROR;
 							}
 							if (!$2->isLinear(drv.data)) {
-								yy::parser::error(@2, "Assertions must be linear");
+								yy::parser::error(@2, "Assumption must be linear");
 								YYERROR;
 							}
 							
-							AbsSyn::Assertion *a = new AbsSyn::Assertion($2->getEx());
-							drv.data.addAssertion(a);
+							AbsSyn::Assumption *a = new AbsSyn::Assumption($2->getEx());
+							drv.data.addAssumption(a);
 						}
 
 matricesList	: %empty {}
