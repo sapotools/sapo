@@ -463,7 +463,7 @@ public:
 		EQ,		// =
 		INT		// lhs in [a,b]
 	};
-	
+
 	Inequality(Expr *e1, Expr *e2, const Type t): lhs(e1), rhs(e2), type(t) {}
 	Inequality(Expr *e, double lb, double ub): lhs(e), rhs(nullptr), type(Type::INT)
 	{
@@ -611,9 +611,9 @@ public:
   {
     return defs.size();
   }
-  unsigned getAssertNumber() const
+  unsigned getAssumptionsNumber() const
   {
-		return asserts.size();
+		return assumptions.size();
 	}
 
   bool isVarDefined(const std::string &name)
@@ -664,9 +664,9 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 	
-	const Inequality *getAssert(int i) const // return the assertion in position i
+	const Inequality *getAssumption(int i) const // return the assertion in position i
 	{
-		return asserts[i];
+		return assumptions[i];
 	}
 
   void addVariable(Variable *v); // adds a new variable, which name is not already used
@@ -682,10 +682,10 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
-  void addAssertion(Inequality *i)
+  void addAssumption(Inequality *a)
 	{
-		asserts.push_back(i);
-	} // adds a new assertion
+		assumptions.push_back(a);
+	} // adds a new assumption
 
   bool isSpecDefined() const
   {
@@ -859,7 +859,7 @@ protected:
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
 	
-	std::vector<Inequality *> asserts;
+	std::vector<Inequality *> assumptions;
 
   Formula *spec;
 

@@ -172,9 +172,9 @@ Bundle *computeBundle(const InputData &id)
 	// new directions to be added
 	std::vector<std::vector<double>> C{};
 	
-	for (unsigned i = 0; i < id.getAssertNumber(); i++) {
+	for (unsigned i = 0; i < id.getAssumptionsNumber(); i++) {
 		
-		std::vector<double> new_dir = id.getAssert(i)->getDirection(id);
+		std::vector<double> new_dir = id.getAssumption(i)->getDirection(id);
 		std::vector<double> negated_dir = get_complementary(new_dir);
 		
 		int pos_dir = find(directions, new_dir);
@@ -183,13 +183,13 @@ Bundle *computeBundle(const InputData &id)
 		if (pos_dir != -1) {			// constrain a direction which is in the L matrix
 
 			constrDirs.push_back(directions[pos_dir]);
-			constrOffsets.push_back(rescale(id.getAssert(i)->getOffset(id), new_dir, constrDirs[i]));
+			constrOffsets.push_back(rescale(id.getAssumption(i)->getOffset(id), new_dir, constrDirs[i]));
 			UB[pos_dir] = std::min(UB[pos_dir], constrOffsets[i]);
 
 		} else if (pos_negated_dir != -1) {		// constrain a direction opposite of one in L matrix
 
 			constrDirs.push_back(get_complementary(directions[pos_negated_dir]));
-			constrOffsets.push_back(rescale(id.getAssert(i)->getOffset(id), new_dir, constrDirs[i]));
+			constrOffsets.push_back(rescale(id.getAssumption(i)->getOffset(id), new_dir, constrDirs[i]));
 			LB[pos_negated_dir] = std::max(LB[pos_negated_dir], constrOffsets[i]);
 
 		} else {									// constrain a direction not in L matrix
@@ -200,19 +200,19 @@ Bundle *computeBundle(const InputData &id)
 			if (C_pos != -1) {			// direction is already constrained, change offset and UB
 
 				constrOffsets[directions.size() + C_pos] = std::min(
-					constrOffsets[directions.size() + C_pos], id.getAssert(i)->getOffset(id));
+					constrOffsets[directions.size() + C_pos], id.getAssumption(i)->getOffset(id));
 				UB[directions.size() + C_pos] = constrOffsets[directions.size() + C_pos];
 
 			} else if (C_negated_pos != -1) {			// negated direction is constrained, change LB and add new direction
 
 				constrDirs.push_back(new_dir);
-				constrOffsets.push_back(id.getAssert(i)->getOffset(id));
-				LB[directions.size() + C_negated_pos] = -id.getAssert(i)->getOffset(id);
+				constrOffsets.push_back(id.getAssumption(i)->getOffset(id));
+				LB[directions.size() + C_negated_pos] = -id.getAssumption(i)->getOffset(id);
 
 			} else {								// new direction
 
 				constrDirs.push_back(new_dir);
-				constrOffsets.push_back(id.getAssert(i)->getOffset(id));
+				constrOffsets.push_back(id.getAssumption(i)->getOffset(id));
 				C.push_back(new_dir);
 				
 				UB.push_back(constrOffsets[i]);
@@ -310,7 +310,7 @@ std::vector<std::vector<int>> computeTemplate(const std::vector<std::vector<doub
 	
 	unsigned n = (A.size() != 0 ? A[0].size() : C[0].size());			// var num, = cols of A (or of C)
 	unsigned m = A.size();				// dirs num = rows of A
-	unsigned c = C.size();				// constr num = assertions = rows of C
+	unsigned c = C.size();				// constr num = assumptions = rows of C
 	unsigned Pn = ceil(((double) (m + c))/n);		// number of parallelotopes required
 	
 	unsigned cols = Pn * (m+c);
@@ -383,7 +383,7 @@ void binaryConstraints(glp_prob **lp, const std::vector<std::vector<double>> A,
 {
 	unsigned n = A[0].size();		// var num, = cols of A
 	unsigned m = A.size();				// dirs num = rows of A
-	unsigned c = C.size();				// constr num = assertions = rows of C
+	unsigned c = C.size();				// constr num = assumptions = rows of C
 	unsigned Pn = ceil(((double) (m + c))/n);		// number of parallelotopes required
 	
 	unsigned index = *startingIndex;
@@ -414,7 +414,7 @@ void paralCardConstraints(glp_prob **lp, const std::vector<std::vector<double>> 
 {
 	unsigned n = A[0].size();		// var num, = cols of A
 	unsigned m = A.size();				// dirs num = rows of A
-	unsigned c = C.size();				// constr num = assertions = rows of C
+	unsigned c = C.size();				// constr num = assumptions = rows of C
 	unsigned Pn = ceil(((double) (m + c))/n);		// number of parallelotopes required
 	
 	unsigned cols = Pn * (m+c);
@@ -447,7 +447,7 @@ void varCoverConstraints(glp_prob **lp, const std::vector<std::vector<double>> A
 {
 	unsigned n = A[0].size();		// var num, = cols of A
 	unsigned m = A.size();				// dirs num = rows of A
-	unsigned c = C.size();				// constr num = assertions = rows of C
+	unsigned c = C.size();				// constr num = assumptions = rows of C
 	unsigned Pn = ceil(((double) (m + c))/n);		// number of parallelotopes required
 	
 	unsigned cols = Pn * (m+c);
@@ -495,7 +495,7 @@ void directionConstraints(glp_prob **lp,
 {
 	unsigned n = A[0].size();		// var num, = cols of A
 	unsigned m = A.size();				// dirs num = rows of A
-	unsigned c = C.size();				// constr num = assertions = rows of C
+	unsigned c = C.size();				// constr num = assumptions = rows of C
 	unsigned Pn = ceil(((double) (m + c))/n);		// number of parallelotopes required
 	
 	unsigned cols = Pn * (m+c);

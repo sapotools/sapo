@@ -605,7 +605,7 @@ InputData::InputData()
   consts.resize(0);
   defs.resize(0);
 	
-	asserts.resize(0);
+	assumptions.resize(0);
 
   directions.resize(0);
   LBoffsets.resize(0);
@@ -638,7 +638,7 @@ InputData::~InputData()
   for (auto it = std::begin(defs); it != std::end(defs); ++it)
     delete *it;
 	
-  for (auto it = std::begin(asserts); it != std::end(asserts); ++it)
+  for (auto it = std::begin(assumptions); it != std::end(assumptions); ++it)
     delete *it;
 
   delete spec;
@@ -685,9 +685,9 @@ ostream &operator<<(ostream &os, const InputData &m)
     os << *(m.spec) << endl;
 	os << endl;
 	
-	os << "assertions: ";
-	for (unsigned i = 0; i < m.asserts.size(); i++)
-		os << *(m.asserts[i]) << endl;
+	os << "assumptions: ";
+	for (unsigned i = 0; i < m.assumptions.size(); i++)
+		os << *(m.assumptions[i]) << endl;
 	os << endl;
 
   os << endl;

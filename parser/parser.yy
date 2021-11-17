@@ -43,7 +43,7 @@
 	IN
 	DYN
 	SPEC
-	ASSERT
+	ASSUME
 	ITER
 	PSPLITS
 	DIR
@@ -348,31 +348,31 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.data.addSpec($3);
 						}
-						| ASSERT inequality ";"
+						| ASSUME inequality ";"
 						{
-							/*if ($2->getType() != AbsSyn::Formula::formulaType::ATOM) {
-								yy::parser::error(@2, "Only atomic formulas are supported");
-								YYERROR;
-							}*/
-							if ($2->getLhs()->hasParams(drv.data) || $2->getRhs()->hasParams(drv.data)) {
-								yy::parser::error(@2, "Expressions in assertions cannot contain parameters");
-								YYERROR;
-							}
-							if ($2->getLhs()->getDegree(drv.data) > 1 || $2->getRhs()->getDegree(drv.data) > 1) {
-								yy::parser::error(@2, "Assertions must be linear");
-								YYERROR;
-							}
-							if ($2->getType() == AbsSyn::Inequality::Type::EQ) {
-								yy::parser::error(@2, "Inequalities with \"=\" are not supported yet in assertions");
-								YYERROR;
-							}
-							if ($2->getType() == AbsSyn::Inequality::Type::INT) {
-								yy::parser::error(@2, "Inequalities with intervals are not supported yet in assertions");
+							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
+								yy::parser::error(@1, "Assumptions are not supported for synthesis yet");
 								YYERROR;
 							}
 							
-							//AbsSyn::Assertion *a = new AbsSyn::Assertion($2->getEx());
-							drv.data.addAssertion($2);
+							if ($2->getLhs()->hasParams(drv.data) || $2->getRhs()->hasParams(drv.data)) {
+								yy::parser::error(@2, "Expressions in assumptions cannot contain parameters");
+								YYERROR;
+							}
+							if ($2->getLhs()->getDegree(drv.data) > 1 || $2->getRhs()->getDegree(drv.data) > 1) {
+								yy::parser::error(@2, "Assumption must be linear");
+								YYERROR;
+							}
+							if ($2->getType() == AbsSyn::Inequality::Type::EQ) {
+								yy::parser::error(@2, "Inequalities with \"=\" are not supported yet in assumptions");
+								YYERROR;
+							}
+							if ($2->getType() == AbsSyn::Inequality::Type::INT) {
+								yy::parser::error(@2, "Inequalities with intervals are not supported yet in assumptions");
+								YYERROR;
+							}
+							
+							drv.data.addAssumption($2);
 						}
 
 matricesList	: %empty {}
