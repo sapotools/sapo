@@ -137,23 +137,25 @@ public:
   double evaluate(const InputData &im)
       const; // evaluates the value of a numeric expression
 	
+	bool hasVars(const InputData &id)
+			const;	// checks if the expression contains variable names
+	
 	bool hasParams(const InputData &im)
 			const; // checks if the expression contains parameter names
       
 	double getCoefficient(const InputData &id, const std::string name)
 			const;	 /*
-								* returns the coefficient of the variable "name"
-								* in the simplified expression (in which each variable
+								* returns the coefficient of the symbol "name"
+								* in the simplified expression (in which each symbol
 								* apperas only one time)
-								* Applies only to linear expressions without parameters
+								* Applies only to linear expressions w.r.t the symbol specified
 								*/
 	
 	double getOffset(const InputData &id)
 			const;	 /*
 								* returns the numerical term
-								* in the simplified expression (in which each variable
+								* in the simplified expression (in which each symbol
 								* apperas only one time)
-								* Applies only to linear expressions without parameters
 								*/
 
   GiNaC::ex
@@ -366,9 +368,20 @@ public:
   {
     return name;
   }
+  
+  bool isCovered()
+	{
+		return covered;
+	}
+	
+	void setCovered()
+	{
+		this->covered = true;
+	}
 
 protected:
   std::string name; // name of the parameter
+  bool covered;
 };
 
 /*
@@ -502,11 +515,23 @@ public:
 		return ub;
 	}
 	
-	std::vector<double> getDirection(const InputData &id)
+	std::vector<double> getDirection(const InputData &id, bool variables)
 				const;		// return the direction corresponding to the linear constraint
 	
 	double getOffset(const InputData &id)
 				const;		// return the offset of the constraint*/
+	
+	// checks if the inequality contains variable names
+	bool hasVars(const InputData &id) const
+	{
+		return lhs->hasVars(id) || (rhs != nullptr ? rhs->hasVars(id) : false);
+	}
+	
+	// checks if the inequality contains parameter names
+	bool hasParams(const InputData &id) const
+	{
+		return lhs->hasParams(id) || (rhs != nullptr ? rhs->hasParams(id) : false);
+	}
 	
 
 protected:
@@ -670,10 +695,7 @@ public:
 	}
 
   void addVariable(Variable *v); // adds a new variable, which name is not already used
-  void addParameter(Parameter *p)
-  {
-    params.push_back(p);
-  } // adds a new parameter, which name is not already used
+  void addParameter(Parameter *p); // adds a new parameter, which name is not already used
   void addConstant(Constant *c)
   {
     consts.push_back(c);
@@ -754,6 +776,7 @@ public:
     return templateMatrix;
   }
 
+  void addParamDirectionConstraint(Inequality *i);
   unsigned paramDirectionsNum() const
   {
     return paramDirections.size();
@@ -873,6 +896,7 @@ protected:
   std::vector<std::vector<double>> paramDirections;
   std::vector<double> paramLBoffsets;
   std::vector<double> paramUBoffsets;
+	std::vector<bool> paramHasLB;
 
   // SAPO options
   transType trans;

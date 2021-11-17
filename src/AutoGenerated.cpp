@@ -174,7 +174,7 @@ Bundle *computeBundle(const InputData &id)
 	
 	for (unsigned i = 0; i < id.getAssumptionsNumber(); i++) {
 		
-		std::vector<double> new_dir = id.getAssumption(i)->getDirection(id);
+		std::vector<double> new_dir = id.getAssumption(i)->getDirection(id, true);
 		std::vector<double> negated_dir = get_complementary(new_dir);
 		
 		int pos_dir = find(directions, new_dir);

@@ -103,7 +103,6 @@
 %nterm <double> number
 %nterm <std::vector<std::string>> identList
 %nterm <AbsSyn::Expr *> expr
-%nterm <std::vector<double>> numList
 %nterm <std::vector<int>> matrixRow intList
 %nterm <std::vector<std::vector<int>>> _matrix rowList
 %nterm <AbsSyn::Formula *> path_formula state_formula
@@ -128,8 +127,8 @@ s		: headerList
 					//if (!drv.data.isVarModeDefined())
 						//drv.data.setVarMode(AbsSyn::modeType::BOX);
 					
-					if (!drv.data.isParamModeDefined())
-						drv.data.setParamMode(AbsSyn::modeType::BOX);
+					/*if (!drv.data.isParamModeDefined())
+						drv.data.setParamMode(AbsSyn::modeType::BOX);*/
 					
 					if (!drv.data.isIterationSet())
 					{
@@ -139,8 +138,8 @@ s		: headerList
 				}
 			symbolList matricesList footerList END
 		{
-			if (drv.data.getParamMode() == AbsSyn::modeType::BOX)
-				drv.data.defaultParamDirections();
+			/*if (drv.data.getParamMode() == AbsSyn::modeType::BOX)
+				drv.data.defaultParamDirections();*/
 			
 			/*if (drv.data.getVarMode() != AbsSyn::modeType::POLY)
 							drv.data.defaultTemplate();*/
@@ -167,12 +166,11 @@ header			: PROB ":" problemType ";"
 						}
 						| PARAMMODE ":" modeType ";"
 						{
-							if (drv.data.isParamModeDefined())
-							{
-								yy::parser::error(@4, "Parameter modality has already been defined");
-								YYERROR;
-							}
-							drv.data.setParamMode($3);
+							yy::parser::error(@$, "Parameter modality is deprecated and will be ignored");
+						}
+						| VARMODE ":" modeType ";"
+						{
+							yy::parser::error(@$, "Variable modality is deprecated and will be ignored");
 						}
 						| ITER ":" INTEGER ";"
 						{
@@ -240,11 +238,11 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| PARAM identList IN doubleInterval ";"
 						{
-							if (drv.data.getParamMode() != AbsSyn::modeType::BOX)
+							/*if (drv.data.getParamMode() != AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "Cannot define parameter bounds if modality is not 'boxes'");
 								YYERROR;
-							}
+							}*/
 							
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -254,7 +252,10 @@ symbol			: VAR identList IN doubleInterval ";"
 									YYERROR;
 								}
 								drv.data.addParameter(new AbsSyn::Parameter($2[i]));
-								drv.data.addParamBounds($4.first, $4.second);
+								AbsSyn::Expr *e = new AbsSyn::Expr($2[i]);
+								AbsSyn::Inequality *ineq = new AbsSyn::Inequality(e, $4.first, $4.second);
+								drv.data.addParamDirectionConstraint(ineq);
+								//drv.data.addParamBounds($4.first, $4.second);
 							}
 						}
 						| PARAM identList ";"
@@ -417,14 +418,6 @@ matrices		: direction
 
 inequality	: expr inequalityType expr
 						{
-							if ($1->hasParams(drv.data)) {
-								yy::parser::error(@1, "Expression in inequality cannot contain parameters");
-								YYERROR;
-							}
-							if ($3->hasParams(drv.data)) {
-								yy::parser::error(@3, "Expression in inequality cannot contain parameters");
-								YYERROR;
-							}
 							if ($1->getDegree(drv.data) > 1) {
 								yy::parser::error(@1, "Expression in inequality must be at most linear");
 								YYERROR;
@@ -437,10 +430,6 @@ inequality	: expr inequalityType expr
 						}
 						| expr IN doubleInterval
 						{
-							if ($1->hasParams(drv.data)) {
-								yy::parser::error(@1, "Expression in inequality cannot contain parameters");
-								YYERROR;
-							}
 							if ($1->getDegree(drv.data) > 1) {
 								yy::parser::error(@1, "Expression in inequality must be at most linear");
 								YYERROR;
@@ -471,6 +460,10 @@ inequalityType	: "<"
 
 direction		: DIR inequality ";"
 						{
+							if ($2->hasParams(drv.data)) {
+								yy::parser::error(@2, "Inequality for variable directions cannot contain parameters");
+								YYERROR;
+							}
 							drv.data.addDirectionConstraint($2);
 						}
 
@@ -503,15 +496,14 @@ template		: TEMPL "=" _matrix
 							drv.data.setTemplate($3);
 						}
 
-paramDir		: PDIR "<" numList ">" IN doubleInterval ";"
+paramDir		: PDIR inequality ";"
 						{
-							if (drv.data.getParamNum() != $3.size())
-							{
-								yy::parser::error(@3, "A paramter direction must have as many components as the number of parameters");
+							if ($2->hasVars(drv.data)) {
+								yy::parser::error(@2, "Inequality for parameter directions cannot contain variables");
 								YYERROR;
 							}
 							
-							drv.data.addParamDirection($3, $6.first, $6.second);
+							drv.data.addParamDirectionConstraint($2);
 						}
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }
@@ -618,28 +610,6 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 
 matrixRow	: "{" intList "}" { $$ = $2; }
 					| "{" "}" { yy::parser::error(@$, "Matrix row cannot be empty"); YYERROR; }
-
-numList		: expr
-					{
-						if (!$1->isNumeric(drv.data))
-						{
-							yy::parser::error(@1, "Expression must be numeric only");
-							YYERROR;
-						}
-						$$ = std::vector<double>{$1->evaluate(drv.data)};
-						delete $1;
-					}
-					| numList "," expr
-					{
-						if (!$3->isNumeric(drv.data))
-						{
-							yy::parser::error(@3, "Expression must be numeric only");
-							YYERROR;
-						}
-						$1.push_back($3->evaluate(drv.data));
-						$$ = $1;
-						delete $3;
-					}
 
 intList		: INTEGER
 					{

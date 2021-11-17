@@ -125,31 +125,31 @@ int Expr::getDegree(const InputData &id) const
 	return -1;
 }
 
-double Expr::getCoefficient(const InputData &id, std::string varName) const
+double Expr::getCoefficient(const InputData &id, std::string symbolName) const
 {
 	switch (type) {
 		case Expr::NUM_ATOM:
 			return 0;
 		case Expr::ID_ATOM:
-			if (id.isVarDefined(name) && name == varName) {
+			if (id.isSymbolDefined(name) && name == symbolName) {
 				return 1;
 			} else if (id.isDefDefined(name)) {
-				return id.getDef(name)->getValue()->getCoefficient(id, varName);
+				return id.getDef(name)->getValue()->getCoefficient(id, symbolName);
 			} else {
 				return 0;
 			}
 		case Expr::NEG:
-			return -left->getCoefficient(id, varName);
+			return -left->getCoefficient(id, symbolName);
 		case Expr::DIV:			// division is allowed only if denominator is numeric
-			return left->getCoefficient(id, varName) / right->evaluate(id);
+			return left->getCoefficient(id, symbolName) / right->evaluate(id);
 		case Expr::SUM:
-			return left->getCoefficient(id, varName) + right->getCoefficient(id, varName);
+			return left->getCoefficient(id, symbolName) + right->getCoefficient(id, symbolName);
 		case Expr::SUB:
-			return left->getCoefficient(id, varName) - right->getCoefficient(id, varName);
+			return left->getCoefficient(id, symbolName) - right->getCoefficient(id, symbolName);
 		case Expr::MUL: {
 			// one of the two has no variables in it
-			double l = left->getCoefficient(id, varName);
-			double r = right->getCoefficient(id, varName);
+			double l = left->getCoefficient(id, symbolName);
+			double r = right->getCoefficient(id, symbolName);
 			
 			if (l == 0 && r == 0) {
 				return 0;
@@ -236,6 +236,22 @@ bool Expr::isNumeric(const InputData &im) const
     return true;
 
   return left->isNumeric(im) && (right != NULL ? right->isNumeric(im) : true);
+}
+
+bool Expr::hasVars(const InputData &id) const
+{
+  if (type == exprType::ID_ATOM) {
+    if (id.isVarDefined(name)) {
+      return true;
+		} else {
+      return false;
+		}
+  }
+  if (type == exprType::NUM_ATOM) {
+    return false;
+	}
+
+  return left->hasVars(id) && (right != NULL ? right->hasVars(id) : true);
 }
 
 bool Expr::hasParams(const InputData &id) const
@@ -549,7 +565,7 @@ std::ostream &operator<<(std::ostream &os, AbsSyn::Inequality &i)
 	return os << *(i.rhs);
 }
 
-std::vector<double> Inequality::getDirection(const InputData &id) const
+std::vector<double> Inequality::getDirection(const InputData &id, bool variables) const
 {
 	std::vector<double> res{};
 	
@@ -563,8 +579,14 @@ std::vector<double> Inequality::getDirection(const InputData &id) const
 		throw logic_error("usupported inequality type");
 	}
 	
-	for (unsigned i = 0; i < id.getVarNum(); i++) {
-		res.push_back(coeff * lhs->sub(rhs)->getCoefficient(id, id.getVar(i)->getName()));
+	if (variables) {				// Inequality has only variables
+		for (unsigned i = 0; i < id.getVarNum(); i++) {
+			res.push_back(coeff * lhs->sub(rhs)->getCoefficient(id, id.getVar(i)->getName()));
+		}
+	} else {								// Inequality has only parameters
+		for (unsigned i = 0; i < id.getParamNum(); i++) {
+			res.push_back(coeff * lhs->sub(rhs)->getCoefficient(id, id.getParam(i)->getName()));
+		}
 	}
 	
 	return res;
@@ -792,6 +814,15 @@ void InputData::addVariable(Variable *v)
 	}
 }
 
+void InputData::addParameter(Parameter *p)
+{
+	params.push_back(p);
+	// all directions must be right-padded with a zero for the new param
+	for (unsigned i = 0; i < paramDirections.size(); i++) {
+		paramDirections[i].push_back(0);
+	}
+}
+
 const Parameter *InputData::getParam(const string &name) const
 {
   for (unsigned i = 0; i < params.size(); i++)
@@ -884,14 +915,14 @@ void InputData::addDirectionConstraint(Inequality *i)
 		return;
 	}
 	
-	std::vector<double> new_dir = i->getDirection(*this);
+	std::vector<double> new_dir = i->getDirection(*this, true);
 	std::vector<double> negated_dir = get_complementary(new_dir);
 	
 //	std::cout << "direction: " << new_dir << ", negated: " << negated_dir << std::endl;
 	
 	// check if new direction is already present
 	double tol = 0.00001;
-	int pos = find(directions, i->getDirection(*this), tol);
+	int pos = find(directions, new_dir, tol);
 	int negated_pos = find(directions, negated_dir, tol);
 	
 	if (pos != -1) {
@@ -942,6 +973,61 @@ void InputData::defaultTemplate()
   //	templateMatrix.resize(1, vector<int>(vars.size(), 1));
 }
 
+void InputData::addParamDirectionConstraint(Inequality *i)
+{
+//	std::cout << "Inequality " << *i << std::endl;
+	
+	if (i->getType() == Inequality::Type::INT) {		// constraint is an interval specification
+		this->addParamDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getUB()), Inequality::Type::LE));
+		this->addParamDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getLB()), Inequality::Type::GE));
+		return;
+	}
+	
+	std::vector<double> new_dir = i->getDirection(*this, false);
+	std::vector<double> negated_dir = get_complementary(new_dir);
+	
+//	std::cout << "direction: " << new_dir << ", negated: " << negated_dir << std::endl;
+	
+	// check if new direction is already present
+	double tol = 0.00001;
+	int pos = find(paramDirections, new_dir, tol);
+	int negated_pos = find(paramDirections, negated_dir, tol);
+	
+	if (pos != -1) {
+		
+//		std::cout << "already present, pos = " << pos << std::endl;
+		// direction already present
+		paramUBoffsets[pos] = std::min(paramUBoffsets[pos], i->getOffset(*this));
+		
+	} else if (negated_pos != -1) {
+		
+//		std::cout << "negated present, pos = " << negated_pos << ", offset = " << -i->getOffset(*this) << std::endl;
+		
+		// negation of direction already present
+		paramLBoffsets[negated_pos] = std::max(paramLBoffsets[negated_pos], (i->getOffset(*this) == 0 ? 0 : -i->getOffset(*this)));
+		paramHasLB[negated_pos] = true;
+		
+	} else {
+		
+//		std::cout << "not present" << std::endl;
+		
+		// new direction
+		paramDirections.push_back(new_dir);
+		paramUBoffsets.push_back(i->getOffset(*this));
+		paramLBoffsets.push_back(std::numeric_limits<double>::lowest());
+		paramHasLB.push_back(false);
+		
+		// cover parameters
+		for (unsigned i = 0; i < new_dir.size(); i++) {
+			if (new_dir[i] != 0) {
+				params[i]->setCovered();
+			}
+		}
+	}
+//	std::cout << "Param directions " << paramDirections << std::endl;
+//	std::cout << "LB = " << paramLBoffsets << ", UB = " << paramUBoffsets << std::endl;
+}
+
 void InputData::addParamDirection(vector<double> d, double LB, double UB)
 {
   paramDirections.push_back(d);
@@ -983,55 +1069,149 @@ bool InputData::check()
     }
 	}
 	
-	// each variable must be bounded
-	// prepare linear system
-	vector<vector<double>> A = directions;
-	for (unsigned i = 0; i < directions.size(); i++) {
-		A.push_back(get_complementary(directions[i]));
-	}
-	vector<double> b = UBoffsets;
-	for (unsigned i = 0; i < LBoffsets.size(); i++) {
-		b.push_back(-LBoffsets[i]);
-	}
-	LinearSystem LS(A, b);
-	
-	GiNaC::lst symbols{};
-	for (unsigned i = 0; i < vars.size(); i++) {
-		GiNaC::symbol s(vars[i]->getName());
-		symbols.append(s);
-	}
-	
-	double infinity = std::numeric_limits<double>::max();
-	double negInfinity = std::numeric_limits<double>::lowest();
-	
-	for (unsigned i = 0; i < vars.size(); i++) {
-		GiNaC::ex obj_function = symbols[i];
-		double min_val = LS.minLinearSystem(symbols, obj_function);
-		double max_val = LS.maxLinearSystem(symbols, obj_function);
-		
-		if (min_val == negInfinity) {
-			cerr << "Variable " << vars[i]->getName() << " has no finite lower bound" << endl;
-			res = false;
+	// for each variable, check if it appears  positively (or negatively) in any constraint.
+	// If so, we conclude that it is upper (or lower) bounded
+	{	// put a block to avoid namespace pollution
+		std::vector<bool> hasLB(vars.size(), false), hasUB(vars.size(), false);
+		for (unsigned d = 0; d < directions.size(); d++) {
+			for (unsigned v = 0; v < vars.size(); v++) {
+				if (directions[d][v] > 0 || (directions[d][v] < 0 && this->hasLB[d])) {
+					hasUB[v] = true;
+				}
+				if (directions[d][v] < 0 || (directions[d][v] > 0 && this->hasLB[d])) {
+					hasLB[v] = true;
+				}
+			}
 		}
-		if (max_val == infinity) {
-			cerr << "Variable " << vars[i]->getName() << " has no finite upper bound" << endl;
-			res = false;
+		
+		for (unsigned v = 0; v < vars.size(); v++) {
+			if (!hasLB[v]) {
+				cerr << "Variable " << vars[v]->getName() << " has no finite lower bound" << endl;
+				res = false;
+			} else if (!hasUB[v]) {
+				cerr << "Variable " << vars[v]->getName() << " has no finite upper bound" << endl;
+				res = false;
+			}
 		}
 	}
 	
 	
 	// set directions LB where needed
-	for (unsigned i = 0; i < directions.size(); i++) {
-		if (!hasLB[i]) {
-			GiNaC::ex obj_function = 0;
-			for (unsigned j = 0; j < directions[i].size(); j++) {
-				obj_function += directions[i][j] * symbols[j];
-			}
-			
-			double minVal = LS.minLinearSystem(symbols, obj_function);
-			LBoffsets[i] = minVal;
-			hasLB[i] = true;
+	if (res) {
+		vector<vector<double>> A = directions;
+		for (unsigned i = 0; i < directions.size(); i++) {
+			A.push_back(get_complementary(directions[i]));
 		}
+		vector<double> b = UBoffsets;
+		for (unsigned i = 0; i < LBoffsets.size(); i++) {
+			b.push_back(-LBoffsets[i]);
+		}
+		LinearSystem LS(A, b);
+		
+		GiNaC::lst symbols{};
+		for (unsigned i = 0; i < vars.size(); i++) {
+			GiNaC::symbol s(vars[i]->getName());
+			symbols.append(s);
+		}
+		
+		for (unsigned i = 0; i < directions.size(); i++) {
+			if (!hasLB[i]) {
+				GiNaC::ex obj_function = 0;
+				for (unsigned j = 0; j < directions[i].size(); j++) {
+					obj_function += directions[i][j] * symbols[j];
+				}
+				
+				double minVal = LS.minLinearSystem(symbols, obj_function);
+				LBoffsets[i] = minVal;
+				hasLB[i] = true;
+			}
+		}
+	}
+	
+	// each param must be covered
+	for (unsigned i = 0; i < params.size(); i++) {
+    if (!params[i]->isCovered()) {
+      cerr << "Parameter " << params[i]->getName() << " is not covered by any direction"
+           << endl;
+      res = false;
+    }
+	}
+	
+	// for each parameter, check if it appears  positively (or negatively) in any constraint.
+	// If so, we conclude that it is upper (or lower) bounded
+	{	// put a block to avoid namespace pollution
+//		double infinity = std::numeric_limits<double>::max();
+//		double negInfinity = -std::numeric_limits<double>::infinity();
+		
+		std::vector<bool> hasLB(params.size(), false), hasUB(params.size(), false);
+		for (unsigned d = 0; d < paramDirections.size(); d++) {
+			for (unsigned p = 0; p < params.size(); p++) {
+				if ((paramDirections[d][p] < 0 && paramHasLB[d]) || paramDirections[d][p] > 0) {
+					hasUB[p] = true;
+				}
+				if ((paramDirections[d][p] > 0 && paramHasLB[d]) || paramDirections[d][p] < 0) {
+					hasLB[p] = true;
+				}
+			}
+		}
+	
+		for (unsigned p = 0; p < params.size(); p++) {
+			if (!hasLB[p]) {
+				cerr << "Parameter " << params[p]->getName() << " has no finite lower bound" << endl;
+				res = false;
+			} else if (!hasUB[p]) {
+				cerr << "Parameter " << params[p]->getName() << " has no finite upper bound" << endl;
+				res = false;
+			}
+		}
+	}
+	
+	
+	
+	// set param directions LB where needed
+	if (res) {
+		// prepare linear system
+		vector<vector<double>> A = paramDirections;
+		for (unsigned i = 0; i < paramDirections.size(); i++) {
+			A.push_back(get_complementary(paramDirections[i]));
+		}
+		vector<double> b = paramUBoffsets;
+		for (unsigned i = 0; i < paramLBoffsets.size(); i++) {
+			b.push_back(-paramLBoffsets[i]);
+		}
+		LinearSystem param_LS(A, b);
+		
+		GiNaC::lst symbols{};
+		for (unsigned i = 0; i < params.size(); i++) {
+			GiNaC::symbol s(params[i]->getName());
+			symbols.append(s);
+		}
+		
+		for (unsigned i = 0; i < paramDirections.size(); i++) {
+			if (!paramHasLB[i]) {
+				GiNaC::ex obj_function = 0;
+				for (unsigned j = 0; j < paramDirections[i].size(); j++) {
+					obj_function += paramDirections[i][j] * symbols[j];
+				}
+				
+				double minVal = param_LS.minLinearSystem(symbols, obj_function);
+				paramLBoffsets[i] = minVal;
+				paramHasLB[i] = true;
+			}
+		}
+	}
+	
+	/* 
+	 * check that the number of parameter directions equals the number
+	 * of parameters. If they are less, paramter set is not bounded (TODO: check),
+	 * if they are more, we would need a polytope, which is not supported
+	 */
+	if (paramDirections.size() < params.size()) {
+		cerr << "Too few directions for parameters, set is unbounded" << endl;
+		res = false;
+	} else if (paramDirections.size() > params.size()) {
+		cerr << "Too much directions for parameters, polytopes are not supported" << endl;
+		res = false;
 	}
 
   // directions
