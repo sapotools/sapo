@@ -21,7 +21,7 @@
 #include "Eventually.h"
 #include "Flowpipe.h"
 #include "Polytope.h"
-#include "PolytopeSet.h"
+#include "PolytopesUnion.h"
 #include "Model.h"
 #include "STL.h"
 #include "Until.h"
@@ -61,11 +61,11 @@ private:
    * @returns refined sets of parameters
    */
   template<typename T>
-  PolytopeSet
-  transition_and_synthesis(const Bundle &reachSet, const PolytopeSet &pSet,
+  PolytopesUnion
+  transition_and_synthesis(const Bundle &reachSet, const PolytopesUnion &pSet,
                            const std::shared_ptr<T> formula, const int time)
   {
-    PolytopeSet result;
+    PolytopesUnion result;
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
@@ -74,7 +74,7 @@ private:
                                this->reachControlPts, this->trans);
 
       // TODO: Check whether the object tmpLSset can be removed
-      result.unionWith(synthesize(newReachSet, pSet, formula, time + 1));
+      result.add(synthesize(newReachSet, pSet, formula, time + 1));
     }
 
     return result;
@@ -88,9 +88,8 @@ private:
    * @param[in] formula is an STL atomic formula providing the specification
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<Atom> formula);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<Atom> formula);
 
   /**
    * Parmeter synthesis for conjunctions
@@ -100,9 +99,8 @@ private:
    * @param[in] conj is an STL conjunction providing the specification
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<Conjunction> formula);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<Conjunction> formula);
 
   /**
    * Parmeter synthesis for disjunctions
@@ -112,9 +110,8 @@ private:
    * @param[in] conj is an STL disjunction providing the specification
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<Disjunction> formula);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<Disjunction> formula);
 
   /**
    * Parameter synthesis for until formulas
@@ -125,10 +122,9 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<Until> formula,
-                             const int time);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<Until> formula,
+                            const int time);
 
   /**
    * Parameter synthesis for always formulas
@@ -139,10 +135,9 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<Always> formula,
-                             const int time);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<Always> formula,
+                            const int time);
   /**
    * Parmeter synthesis for the eventually fomulas
    *
@@ -152,9 +147,8 @@ private:
    * specification
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<Eventually> ev);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<Eventually> ev);
 
 public:
   /**
@@ -182,7 +176,7 @@ public:
    * @param[in] k time horizon
    * @returns the reached flowpipe
    */
-  Flowpipe reach(const Bundle &initSet, const PolytopeSet &pSet,
+  Flowpipe reach(const Bundle &initSet, const PolytopesUnion &pSet,
                  unsigned int k);
 
   /**
@@ -193,9 +187,8 @@ public:
    * @param[in] formula is an STL specification for the model
    * @returns refined parameter set
    */
-  PolytopeSet synthesize(const Bundle &reachSet,
-                             const PolytopeSet &pSet,
-                             const std::shared_ptr<STL> formula);
+  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                            const std::shared_ptr<STL> formula);
 
   /**
    * Parameter synthesis with splits
@@ -207,8 +200,8 @@ public:
    *                       parameter set to identify a non-null solution
    * @returns the list of refined parameter sets
    */
-  std::list<PolytopeSet>
-  synthesize(const Bundle &reachSet, const PolytopeSet &pSet,
+  std::list<PolytopesUnion>
+  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
              const std::shared_ptr<STL> formula,
              const unsigned int max_splits); // parameter synthesis
   virtual ~Sapo();

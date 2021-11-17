@@ -128,7 +128,8 @@ double optimize(const vector<vector<double>> &A, const vector<double> &b,
  * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
  * @return optimum
  */
-double LinearSystem::optimize(const vector<double> &obj_fun, const int min_max) const
+double LinearSystem::optimize(const vector<double> &obj_fun,
+                              const int min_max) const
 {
   return ::optimize(this->A, this->b, obj_fun, min_max);
 }
@@ -293,8 +294,8 @@ const double &LinearSystem::getb(unsigned int i) const
 /**
  * Establish whether a linear system has solutions
  *
- * Due to approximation errors, it may return true for some systems 
- * having no solution too. However, when it returns false, the linear 
+ * Due to approximation errors, it may return true for some systems
+ * having no solution too. However, when it returns false, the linear
  * system certainly has no solution.
  *
  * @param[in] strict_inequality specifies whether the linear system is
@@ -357,8 +358,7 @@ double LinearSystem::minimize(const lst &vars, const ex &obj_fun) const
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double
-LinearSystem::minimize(const vector<double> &obj_fun_coeffs) const
+double LinearSystem::minimize(const vector<double> &obj_fun_coeffs) const
 {
   return optimize(obj_fun_coeffs, GLP_MIN);
 }
@@ -369,8 +369,7 @@ LinearSystem::minimize(const vector<double> &obj_fun_coeffs) const
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double
-LinearSystem::maximize(const vector<double> &obj_fun_coeffs) const
+double LinearSystem::maximize(const vector<double> &obj_fun_coeffs) const
 {
   return optimize(obj_fun_coeffs, GLP_MAX);
 }

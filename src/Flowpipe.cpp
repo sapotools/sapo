@@ -26,12 +26,12 @@ Flowpipe::Flowpipe(const std::vector<std::vector<double>> &variable_templates):
 }
 
 /**
- * Return the i-th polytope set
+ * Return the i-th polytopes union
  *
  * @param[in] i index
- * @return i-th polytope set
+ * @return i-th polytopes union
  */
-const PolytopeSet &Flowpipe::get(const unsigned int i) const
+const PolytopesUnion &Flowpipe::get(const unsigned int i) const
 {
   if (i < this->size()) {
     return this->flowpipe[i];
@@ -49,18 +49,18 @@ const PolytopeSet &Flowpipe::get(const unsigned int i) const
  */
 Flowpipe &Flowpipe::append(const Bundle &bundle)
 {
-  this->flowpipe.push_back(PolytopeSet(bundle.getPolytope()));
+  this->flowpipe.push_back(PolytopesUnion(bundle.getPolytope()));
 
   return *this;
 }
 
 /**
- * Append a polytope set to the flowpipe
+ * Append a polytopes union to the flowpipe
  *
- * @param[in] P is the polytope set to be appended
+ * @param[in] P is the polytopes union to be appended
  * @return a reference to the new flowpipe
  */
-Flowpipe &Flowpipe::append(const PolytopeSet &Ps)
+Flowpipe &Flowpipe::append(const PolytopesUnion &Ps)
 {
   this->flowpipe.push_back(Ps);
 
@@ -70,12 +70,12 @@ Flowpipe &Flowpipe::append(const PolytopeSet &Ps)
 /**
  * Append a polytope to the flowpipe
  *
- * @param[in] P is the polytope set to be appended
+ * @param[in] P is the polytopes union to be appended
  * @return a reference to the new flowpipe
  */
 Flowpipe &Flowpipe::append(const Polytope &P)
 {
-  this->flowpipe.push_back(PolytopeSet(P));
+  this->flowpipe.push_back(PolytopesUnion(P));
 
   return *this;
 }
@@ -140,7 +140,7 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
   os << "varm = [";
   for (auto it = std::begin(this->flowpipe); it != std::end(this->flowpipe);
        ++it) {
-    PolytopeSet::const_iterator ls_it(it->begin());
+    PolytopesUnion::const_iterator ls_it(it->begin());
 
     double min_value = ls_it->minimize(v_templates[var]);
 
@@ -160,7 +160,7 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
     std::vector<double> obj_funct(dim(), 0.0);
     obj_funct[var] = 1.0;
 
-    PolytopeSet::const_iterator ls_it(it->begin());
+    PolytopesUnion::const_iterator ls_it(it->begin());
 
     double max_value = ls_it->maximize(v_templates[var]);
 

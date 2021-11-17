@@ -12,7 +12,7 @@
 #include <ginac/ginac.h>
 
 #include "Bundle.h"
-#include "PolytopeSet.h"
+#include "PolytopesUnion.h"
 #include "STL.h"
 
 class Model
@@ -24,7 +24,7 @@ protected:
   GiNaC::lst dyns;   // dynamics
 
   Bundle *reachSet; // Initial reach set
-  PolytopeSet *paraSet;
+  PolytopesUnion *paraSet;
 
   std::shared_ptr<STL> spec;
 
@@ -55,7 +55,7 @@ public:
   {
     return this->reachSet;
   }
-  const PolytopeSet *getParaSet() const
+  const PolytopesUnion *getParaSet() const
   {
     return this->paraSet;
   }

@@ -6,9 +6,8 @@
  * @version 0.1
  */
 
-
 #include "Polytope.h"
-#include "PolytopeSet.h"
+#include "PolytopesUnion.h"
 
 #define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
 
@@ -18,11 +17,11 @@ using namespace GiNaC;
 /**
  * Check whether one polytope contains another polytope.
  *
- * This method establishes whether the current Polytope fully 
- * contains another polytope. Due to the approximation errors, 
+ * This method establishes whether the current Polytope fully
+ * contains another polytope. Due to the approximation errors,
  * the method may return false even if this is the case.
- * However, whenever it returns true, the current object 
- * certaintly contains the polytope. 
+ * However, whenever it returns true, the current object
+ * certaintly contains the polytope.
  *
  * @param[in] P is the polytope that are compared to the current
  *     object.
@@ -120,10 +119,11 @@ get_a_polytope_base_bit_vector(const std::vector<std::vector<double>> &A)
   return bvect_base;
 }
 
-std::list<Polytope> Polytope::split(
-    const std::vector<bool> &bvect_base, const unsigned int cidx,
-    std::list<Polytope> &tmp_covering, std::vector<std::vector<double>> &A,
-    std::vector<double> &b) const
+std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
+                                    const unsigned int cidx,
+                                    std::list<Polytope> &tmp_covering,
+                                    std::vector<std::vector<double>> &A,
+                                    std::vector<double> &b) const
 {
   if (this->A.size() == cidx) {
     Polytope ls(A, b);
@@ -155,8 +155,7 @@ std::list<Polytope> Polytope::split(
       b.pop_back();
 
     } catch (std::logic_error &e) {
-      std::cerr << "This polytope is open."
-                << std::endl;
+      std::cerr << "This polytope is open." << std::endl;
 
       split(bvect_base, cidx + 1, tmp_covering, A, b);
     }
@@ -195,7 +194,7 @@ std::list<Polytope> Polytope::split() const
 Polytope &Polytope::intersect_with(const Polytope &P)
 {
   for (unsigned int i = 0; i < P.size(); i++) {
-    if (!this->satisfies(P.A[i], P.b[i])) { 
+    if (!this->satisfies(P.A[i], P.b[i])) {
       (this->A).push_back(P.A[i]);
       (this->b).push_back(P.b[i]);
     }
@@ -204,7 +203,7 @@ Polytope &Polytope::intersect_with(const Polytope &P)
   return *this;
 }
 
-Polytope intersection(const Polytope &P1, const Polytope &P2)
+Polytope intersect(const Polytope &P1, const Polytope &P2)
 {
   Polytope result(P1.A, P1.b);
 
@@ -318,7 +317,7 @@ void Polytope::plotRegionT(std::ostream &os, const double t) const
  * @param[in] cols colors of the plots
  */
 void Polytope::plotRegion(std::ostream &os, const vector<int> &rows,
-                              const vector<int> &cols) const
+                          const vector<int> &cols) const
 {
 
   if (cols.size() > 3) {

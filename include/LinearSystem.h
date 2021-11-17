@@ -162,8 +162,7 @@ public:
    * @param[in] obj_fun objective function
    * @return minimum
    */
-  double minimize(const GiNaC::lst &vars,
-                         const GiNaC::ex &obj_fun) const;
+  double minimize(const GiNaC::lst &vars, const GiNaC::ex &obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -172,8 +171,7 @@ public:
    * @param[in] obj_fun objective function
    * @return maximum
    */
-  double maximize(const GiNaC::lst &vars,
-                         const GiNaC::ex &obj_fun) const;
+  double maximize(const GiNaC::lst &vars, const GiNaC::ex &obj_fun) const;
 
   /**
    * Minimize the linear system
@@ -196,8 +194,8 @@ public:
   /**
    * Establish whether a linear system has solutions
    *
-   * Due to approximation errors, it may return true for some systems 
-   * having no solution too. However, when it returns false, the linear 
+   * Due to approximation errors, it may return true for some systems
+   * having no solution too. However, when it returns false, the linear
    * system certainly has no solution.
    *
    * @param[in] strict_inequality specifies whether the linear system is
@@ -246,9 +244,7 @@ public:
     return this->b.size();
   }
 
-
   friend void swap(LinearSystem &ls_1, LinearSystem &ls_2);
-
 };
 
 inline void swap(LinearSystem &ls_1, LinearSystem &ls_2)

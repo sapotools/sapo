@@ -15,11 +15,11 @@ class Polytope : public LinearSystem
 {
 
 private:
-
-  std::list<Polytope> split(
-      const std::vector<bool> &bvect_base, const unsigned int cidx,
-      std::list<Polytope> &tmp_covering,
-      std::vector<std::vector<double>> &A, std::vector<double> &b) const;
+  std::list<Polytope> split(const std::vector<bool> &bvect_base,
+                            const unsigned int cidx,
+                            std::list<Polytope> &tmp_covering,
+                            std::vector<std::vector<double>> &A,
+                            std::vector<double> &b) const;
 
 public:
   /**
@@ -48,8 +48,10 @@ public:
    * @param[in] b offset vector
    */
   Polytope(const std::vector<std::vector<double>> &A,
-               const std::vector<double> &b): LinearSystem(A, b)
-  {}
+           const std::vector<double> &b):
+      LinearSystem(A, b)
+  {
+  }
 
   /**
    * Constructor from a set of symbolic expressions
@@ -57,8 +59,10 @@ public:
    * @param[in] vars list of variables appearing in the constraints
    * @param[in] constraints symbolic constraints
    */
-  Polytope(const GiNaC::lst &vars, const GiNaC::lst &constraints): LinearSystem(vars, constraints)
-  {}
+  Polytope(const GiNaC::lst &vars, const GiNaC::lst &constraints):
+      LinearSystem(vars, constraints)
+  {
+  }
 
   /**
    * Establish whether a polytope is empty
@@ -80,11 +84,11 @@ public:
   /**
    * Check whether one polytope contains another polytope.
    *
-   * This method establishes whether the current Polytope fully 
-   * contains another polytope. Due to the approximation errors, 
+   * This method establishes whether the current Polytope fully
+   * contains another polytope. Due to the approximation errors,
    * the method may return false even if this is the case.
-   * However, whenever it returns true, the current object 
-   * certaintly contains the polytope. 
+   * However, whenever it returns true, the current object
+   * certaintly contains the polytope.
    *
    * @param[in] P is the polytope that are compared to the current
    *     object.
@@ -103,7 +107,7 @@ public:
    *  This method splits a polytope in a list of polytopes such
    *  that their set union equals the original polytope.
    *
-   *  @return A list of polytopes such that their union equals 
+   *  @return A list of polytopes such that their union equals
    *      the original polytope.
    */
   std::list<Polytope> split() const;
@@ -117,7 +121,6 @@ public:
    * @return a reference to the updated object.
    */
   Polytope &intersect_with(const Polytope &P);
-
 
   /**
    * Determine the volume of the bounding box of the polytope
@@ -141,8 +144,7 @@ public:
    * @param[in] P2 is a polytope
    * @return the intersection of the two parameters.
    */
-  friend Polytope intersection(const Polytope &P1,
-                               const Polytope &P2);
+  friend Polytope intersect(const Polytope &P1, const Polytope &P2);
 };
 
 inline void swap(Polytope &P1, Polytope &P2)

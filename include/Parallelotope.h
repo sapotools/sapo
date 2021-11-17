@@ -111,9 +111,8 @@ public:
   // Representation conversion
   Polytope
   gen2const(const Vector &q,
-            const Vector &beta) const; // from generator to constraints
-  poly_values
-  const2gen(Polytope *LS) const; // from constraints to generators
+            const Vector &beta) const;       // from generator to constraints
+  poly_values const2gen(Polytope *LS) const; // from constraints to generators
   Polytope getPolytope() const
   {
     return this->gen2const(this->actual_base_vertex, this->actual_lenghts);

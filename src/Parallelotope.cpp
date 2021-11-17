@@ -274,8 +274,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
  * @param[in] beta numerical generator lengths
  * @returns polytope representing the parallelotope
  */
-Polytope Parallelotope::gen2const(const Vector &q,
-                                      const Vector &beta) const
+Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 {
   using namespace std;
   using namespace GiNaC;

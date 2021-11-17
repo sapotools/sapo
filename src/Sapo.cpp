@@ -80,7 +80,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
  * @param[in] k time horizon
  * @returns the reached flowpipe
  */
-Flowpipe Sapo::reach(const Bundle &initSet, const PolytopeSet &pSet,
+Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
                      unsigned int k)
 {
   using namespace std;
@@ -98,7 +98,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopeSet &pSet,
 
   std::list<Bundle> cbundles{initSet};
   ControlPointStorage ctrlPts;
-  PolytopeSet last_step;
+  PolytopesUnion last_step;
 
   last_step.add(initSet.getPolytope());
 
@@ -112,7 +112,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopeSet &pSet,
   while (i < k && last_step.size() != 0) {
 
     // create a new last step reach set
-    last_step = PolytopeSet();
+    last_step = PolytopesUnion();
     i++;
 
     // create a list for the new reached bundles
@@ -164,19 +164,19 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopeSet &pSet,
   return flowpipe;
 }
 
-std::list<PolytopeSet>
-get_a_finer_covering(const std::list<PolytopeSet> &orig)
+std::list<PolytopesUnion>
+get_a_finer_covering(const std::list<PolytopesUnion> &orig)
 {
-  std::list<PolytopeSet> result;
+  std::list<PolytopesUnion> result;
   for (auto ps_it = std::cbegin(orig); ps_it != std::cend(orig); ++ps_it) {
 
-    // if the polytope set contains more than one polytope
+    // if the polytopes union contains more than one polytope
     switch (ps_it->size()) {
-    case 0: // the polytope set does not contain any polytope
+    case 0: // the polytopes union does not contain any polytope
 
       // nothing to add to the resulting list
       break;
-    case 1: // the polytope set contains exacly one polytope
+    case 1: // the polytopes union contains exacly one polytope
     {       // then, split it by using Polytope::get_a_finer_covering();
 
       std::list<Polytope> f_cov = (ps_it->begin())->split();
@@ -184,7 +184,7 @@ get_a_finer_covering(const std::list<PolytopeSet> &orig)
         result.push_back(*ls_it);
       }
     } break;
-    case 2: // the polytope set contains more than one polytope
+    case 2: // the polytopes union contains more than one polytope
     {       // then, unpack them
       for (auto ls_it = ps_it->begin(); ls_it != ps_it->end(); ++ls_it) {
         result.push_back(*ls_it);
@@ -205,12 +205,12 @@ get_a_finer_covering(const std::list<PolytopeSet> &orig)
  * @param[in] formula is an STL formula providing the specification
  * @returns the list of refined parameter sets
  */
-std::list<PolytopeSet>
+std::list<PolytopesUnion>
 synthesize_list(Sapo &sapo, Bundle reachSet,
-                const std::list<PolytopeSet> &pSetList,
+                const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
-  std::list<PolytopeSet> results;
+  std::list<PolytopesUnion> results;
 
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
        ++ps_it) {
@@ -230,17 +230,17 @@ synthesize_list(Sapo &sapo, Bundle reachSet,
  *                       parameter set to identify a non-null solution
  * @returns the list of refined parameter sets
  */
-std::list<PolytopeSet> Sapo::synthesize(const Bundle &reachSet,
-                                            const PolytopeSet &pSet,
-                                            const std::shared_ptr<STL> formula,
-                                            const unsigned int max_splits)
+std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
+                                           const PolytopesUnion &pSet,
+                                           const std::shared_ptr<STL> formula,
+                                           const unsigned int max_splits)
 {
   using namespace std;
 
-  std::list<PolytopeSet> pSetList{pSet};
+  std::list<PolytopesUnion> pSetList{pSet};
 
   unsigned int num_of_splits = 0;
-  std::list<PolytopeSet> res
+  std::list<PolytopesUnion> res
       = synthesize_list(*this, reachSet, pSetList, formula);
 
   while (every_set_is_empty(res) && num_of_splits++ < max_splits) {
@@ -269,15 +269,15 @@ std::list<PolytopeSet> Sapo::synthesize(const Bundle &reachSet,
  * @param[in] conj is an STL conjunction providing the specification
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<Conjunction> conj)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<Conjunction> conj)
 {
-  PolytopeSet LS1
+  PolytopesUnion Pu1
       = this->synthesize(reachSet, pSet, conj->getLeftSubFormula());
-  PolytopeSet LS2
+  PolytopesUnion Pu2
       = this->synthesize(reachSet, pSet, conj->getRightSubFormula());
-  return intersection(LS1, LS2);
+  return intersect(Pu1, Pu2);
 }
 
 /**
@@ -288,15 +288,15 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
  * @param[in] conj is an STL disjunction providing the specification
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<Disjunction> disj)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<Disjunction> disj)
 {
-  PolytopeSet LS1
+  PolytopesUnion Pu
       = this->synthesize(reachSet, pSet, disj->getLeftSubFormula());
-  LS1.unionWith(this->synthesize(reachSet, pSet, disj->getRightSubFormula()));
+  Pu.add(this->synthesize(reachSet, pSet, disj->getRightSubFormula()));
 
-  return LS1;
+  return Pu;
 }
 
 /**
@@ -307,9 +307,9 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
  * @param[in] ev is an STL eventually formula providing the specification
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<Eventually> ev)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<Eventually> ev)
 {
   std::shared_ptr<Atom> true_atom = std::make_shared<Atom>(-1);
 
@@ -328,9 +328,9 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
  * @param[in] formula is an STL specification for the model
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<STL> formula)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<STL> formula)
 {
   switch (formula->getType()) {
 
@@ -378,14 +378,14 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
  * @param[in] sigma STL atomic formula
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<Atom> atom)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<Atom> atom)
 {
   using namespace std;
   using namespace GiNaC;
 
-  PolytopeSet result;
+  PolytopesUnion result;
 
   for (unsigned int i = 0; i < reachSet.getCard();
        i++) { // for each parallelotope
@@ -446,8 +446,8 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
 
     // cout<<synth_controlPts;
 
-    Polytope num_constraintLS(this->params, synth_controlPts);
-    result.unionWith(intersection(pSet, num_constraintLS));
+    Polytope constraints(this->params, synth_controlPts);
+    result.add(intersect(pSet, constraints));
   }
 
   return result;
@@ -462,21 +462,21 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<Until> formula,
-                                 const int time)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<Until> formula,
+                                const int time)
 {
   const TimeInterval &t_itvl = formula->time_bounds();
 
   // Base case
   if (t_itvl.is_empty())
-    return PolytopeSet();
+    return PolytopesUnion();
 
   // Until interval far
   if (t_itvl > time) {
     // Synthesize wrt phi1
-    PolytopeSet P1
+    PolytopesUnion P1
         = this->synthesize(reachSet, pSet, formula->getLeftSubFormula());
     if (P1.is_empty()) {
       return P1; // false until
@@ -488,16 +488,16 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
   // Inside until interval
   if (t_itvl.end() > time) {
     // Refine wrt phi1 and phi2
-    PolytopeSet P1
+    PolytopesUnion P1
         = this->synthesize(reachSet, pSet, formula->getLeftSubFormula());
 
     if (P1.is_empty()) {
       return this->synthesize(reachSet, pSet, formula->getRightSubFormula());
     }
 
-    PolytopeSet result
+    PolytopesUnion result
         = transition_and_synthesis(reachSet, P1, formula, time);
-    result.unionWith(
+    result.add(
         this->synthesize(reachSet, pSet, formula->getRightSubFormula()));
 
     return result;
@@ -517,16 +517,16 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-PolytopeSet Sapo::synthesize(const Bundle &reachSet,
-                                 const PolytopeSet &pSet,
-                                 const std::shared_ptr<Always> formula,
-                                 const int time)
+PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+                                const PolytopesUnion &pSet,
+                                const std::shared_ptr<Always> formula,
+                                const int time)
 {
   const TimeInterval &t_itvl = formula->time_bounds();
 
   // Base case
   if (t_itvl.is_empty()) {
-    return PolytopeSet();
+    return PolytopesUnion();
   }
 
   // Always interval far
@@ -539,7 +539,7 @@ PolytopeSet Sapo::synthesize(const Bundle &reachSet,
   if (t_itvl.end() > time) {
 
     // Refine wrt phi
-    PolytopeSet P
+    PolytopesUnion P
         = this->synthesize(reachSet, pSet, formula->getSubFormula());
 
     if (P.is_empty()) {

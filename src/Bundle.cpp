@@ -543,10 +543,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
            c != actbernCoeffs.end(); ++c) {
         ex paraBernCoeff;
         paraBernCoeff = (*c).subs(subParatope);
-        maxCoeffp
-            = max(maxCoeffp, paraSet.maximize(params, paraBernCoeff));
-        maxCoeffm
-            = max(maxCoeffm, paraSet.maximize(params, -paraBernCoeff));
+        maxCoeffp = max(maxCoeffp, paraSet.maximize(params, paraBernCoeff));
+        maxCoeffm = max(maxCoeffm, paraSet.maximize(params, -paraBernCoeff));
       }
       newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]], maxCoeffp);
       newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]], maxCoeffm);

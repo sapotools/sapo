@@ -1,5 +1,5 @@
 /**
- * @file PolytopeSet.cpp
+ * @file PolytopesUnion.cpp
  * Represent and manipulate a set of polytopes
  * It can be used to represent a symbolic union of polytopes
  *
@@ -7,7 +7,7 @@
  * @version 0.1
  */
 
-#include "PolytopeSet.h"
+#include "PolytopesUnion.h"
 
 using namespace std;
 using namespace GiNaC;
@@ -15,14 +15,14 @@ using namespace GiNaC;
 /**
  * Constructor that instantiates an empty set
  */
-PolytopeSet::PolytopeSet() {}
+PolytopesUnion::PolytopesUnion() {}
 
 /**
  * Constructor that instantiates a singleton
  *
  * @param[in] P is a polytope
  */
-PolytopeSet::PolytopeSet(const Polytope &P)
+PolytopesUnion::PolytopesUnion(const Polytope &P)
 {
   if (!P.is_empty()) {
     this->push_back(P);
@@ -37,7 +37,7 @@ PolytopeSet::PolytopeSet(const Polytope &P)
  * @param[in] P is a polytope
  */
 
-PolytopeSet::PolytopeSet(Polytope &&P)
+PolytopesUnion::PolytopesUnion(Polytope &&P)
 {
   if (!P.is_empty()) {
     P.simplify();
@@ -46,22 +46,22 @@ PolytopeSet::PolytopeSet(Polytope &&P)
 }
 
 /**
- * A copy constructor for a polytope set
+ * A copy constructor for a polytopes union
  *
- * @param[in] orig a polytope set
+ * @param[in] orig a polytopes union
  */
-PolytopeSet::PolytopeSet(const PolytopeSet &orig):
+PolytopesUnion::PolytopesUnion(const PolytopesUnion &orig):
     std::vector<Polytope>(orig)
 {
 }
 
-PolytopeSet::PolytopeSet(PolytopeSet &&orig)
+PolytopesUnion::PolytopesUnion(PolytopesUnion &&orig)
 {
   std::swap(*(static_cast<std::vector<Polytope> *>(this)),
             *(static_cast<std::vector<Polytope> *>(&orig)));
 }
 
-PolytopeSet &PolytopeSet::operator=(const PolytopeSet &orig)
+PolytopesUnion &PolytopesUnion::operator=(const PolytopesUnion &orig)
 {
   resize(0);
 
@@ -72,7 +72,7 @@ PolytopeSet &PolytopeSet::operator=(const PolytopeSet &orig)
   return *this;
 }
 
-PolytopeSet &PolytopeSet::operator=(PolytopeSet &&orig)
+PolytopesUnion &PolytopesUnion::operator=(PolytopesUnion &&orig)
 {
   std::swap(*(static_cast<std::vector<Polytope> *>(this)),
             *(static_cast<std::vector<Polytope> *>(&orig)));
@@ -80,22 +80,13 @@ PolytopeSet &PolytopeSet::operator=(PolytopeSet &&orig)
   return *this;
 }
 
-/**
- * Get the set of polytopes
- *
- * @returns the current collection of polytopes
- */
-
-bool satisfiesOneIn(const Polytope &set, const PolytopeSet &S)
+bool PolytopesUnion::contains(const Polytope &P)
 {
-
-#if MINIMIZE_LS_SET_REPRESENTATION
-  for (PolytopeSet::const_iterator it = std::cbegin(S); it != std::cend(S); ++it) {
-    if (it->contains(set)) {
+  for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
+    if (it->contains(P)) {
       return true;
     }
   }
-#endif
 
   return false;
 }
@@ -105,14 +96,14 @@ bool satisfiesOneIn(const Polytope &set, const PolytopeSet &S)
  *
  * @param[in] P is the polytope to be added
  */
-PolytopeSet &PolytopeSet::add(const Polytope &P)
+PolytopesUnion &PolytopesUnion::add(const Polytope &P)
 {
   if (size() != 0 && (front().dim() != P.dim())) {
-    std::cerr << "Adding to a polytope set a "
+    std::cerr << "Adding to a polytopes union a "
               << "polytope having a different dimension" << std::endl;
   }
 
-  if ((!P.is_empty()) && (!satisfiesOneIn(P, *this))) {
+  if (!(P.is_empty() || this->contains(P))) {
     this->push_back(P);
   }
 
@@ -124,21 +115,21 @@ PolytopeSet &PolytopeSet::add(const Polytope &P)
  *
  * @param[in] ls polytope to be added
  */
-PolytopeSet &PolytopeSet::add(Polytope &&ls)
+PolytopesUnion &PolytopesUnion::add(Polytope &&P)
 {
-  if (size() != 0 && (front().dim() != ls.dim())) {
-    std::cerr << "Adding to a polytope set a "
+  if (size() != 0 && (front().dim() != P.dim())) {
+    std::cerr << "Adding to a polytopes union a "
               << "polytope having a different dimension" << std::endl;
   }
 
-  if ((!ls.is_empty()) && (!satisfiesOneIn(ls, *this))) {
-    this->push_back(ls);
+  if (!(P.is_empty() || this->contains(P))) {
+    this->push_back(P);
   }
 
   return *this;
 }
 
-PolytopeSet &PolytopeSet::simplify()
+PolytopesUnion &PolytopesUnion::simplify()
 {
   for (auto it = std::begin(*this); it != std::end(*this); ++it) {
     it->simplify();
@@ -152,17 +143,16 @@ PolytopeSet &PolytopeSet::simplify()
  *
  * @param[in] A is a polytope
  * @param[in] B is a polytope
- * @return the polytope set representing the intersection
+ * @return the polytopes union representing the intersection
  *     of the two parameters.
  */
-PolytopeSet intersection(const PolytopeSet &A,
-                             const PolytopeSet &B)
+PolytopesUnion intersect(const PolytopesUnion &A, const PolytopesUnion &B)
 {
-  PolytopeSet result;
+  PolytopesUnion result;
 
   for (auto t_it = std::begin(A); t_it != std::end(A); ++t_it) {
     for (auto s_it = std::begin(B); s_it != std::end(B); ++s_it) {
-      Polytope I = intersection(*t_it, *s_it);
+      Polytope I = intersect(*t_it, *s_it);
 
       if (!I.is_empty()) {
         result.add(I);
@@ -174,19 +164,19 @@ PolytopeSet intersection(const PolytopeSet &A,
 }
 
 /**
- * Compute the intersection between a polytope sets and a polytope
+ * Compute the intersection between a polytopes unions and a polytope
  *
- * @param[in] A is a polytope set
+ * @param[in] A is a polytopes union
  * @param[in] B is a polytope
- * @return the polytope set that represents the set of values satisfying
+ * @return the polytopes union that represents the set of values satisfying
  * both the parameters
  */
-PolytopeSet intersection(const PolytopeSet &A, const Polytope &B)
+PolytopesUnion intersect(const PolytopesUnion &A, const Polytope &B)
 {
-  PolytopeSet result;
+  PolytopesUnion result;
 
   for (auto t_it = std::begin(A); t_it != std::end(A); ++t_it) {
-    Polytope I = intersection(*t_it, B);
+    Polytope I = intersect(*t_it, B);
 
     if (!I.is_empty()) {
       result.add(I);
@@ -197,34 +187,34 @@ PolytopeSet intersection(const PolytopeSet &A, const Polytope &B)
 }
 
 /**
- * Union of sets
+ * Union of polytopes unions
  *
- * @param[in] LSset set to union with
- * @returns merged sets
+ * @param[in] Pu the polytopes union to be adjoint
+ * @returns a reference to the updated union.
  */
-PolytopeSet &PolytopeSet::unionWith(const PolytopeSet &LSset)
+PolytopesUnion &PolytopesUnion::add(const PolytopesUnion &Pu)
 {
-  for (auto it = std::cbegin(LSset); it != std::cend(LSset); ++it) {
+  for (auto it = std::cbegin(Pu); it != std::cend(Pu); ++it) {
     this->add(*it);
   }
 
   return *this;
 }
 
-PolytopeSet unionset(const PolytopeSet &A, const PolytopeSet &B)
+PolytopesUnion unite(const PolytopesUnion &A, const PolytopesUnion &B)
 {
-  return PolytopeSet(A).unionWith(B);
+  return PolytopesUnion(A).add(B);
 }
 
 /**
- * Union of sets
+ * Union of polytopes unions
  *
- * @param[in] LSset set to union with
- * @returns merged sets
+ * @param[in] Pu the polytopes union to be adjoint
+ * @returns a reference to the updated union.
  */
-PolytopeSet &PolytopeSet::unionWith(PolytopeSet &&LSset)
+PolytopesUnion &PolytopesUnion::add(PolytopesUnion &&Pu)
 {
-  for (auto it = std::begin(LSset); it != std::end(LSset); ++it) {
+  for (auto it = std::begin(Pu); it != std::end(Pu); ++it) {
     this->add(*it);
   }
 
@@ -238,9 +228,9 @@ PolytopeSet &PolytopeSet::unionWith(PolytopeSet &&LSset)
  * @param[in] B is a polytope
  * @return the union of the two polytopes.
  */
-PolytopeSet unionset(const Polytope &A, const Polytope &B)
+PolytopesUnion unite(const Polytope &A, const Polytope &B)
 {
-  PolytopeSet result(A);
+  PolytopesUnion result(A);
 
   result.add(B);
 
@@ -248,38 +238,11 @@ PolytopeSet unionset(const Polytope &A, const Polytope &B)
 }
 
 /**
- * Union of two sets of polytopes up to bounded cardinality
- *
- * @param[in] LSset set to union with
- * @param[in] bound set size bound
- * @returns merged sets
- */
-/* // TODO: remove this code
-PolytopeSet& PolytopeSet::boundedUnionWith(PolytopeSet *LSset,
-const unsigned int bound) {
-
-        if (this->size() > bound) {
-                std::cerr << "PolytopeSet::boundedUnionWith : size of
-actual box larger than bound" << std::endl; exit (EXIT_FAILURE);
-        }
-
-        int iters = min(bound-this->size(), (unsigned int)LSset->size());
-
-        container::iterator it = std::begin(set);
-        for (int i=0; i<iters&&it!=std::end(set); i++) {
-                this->set.push_back(*it);
-        }
-
-        return *this;
-}
-*/
-
-/**
  * Sum of volumes of boxes containing the sets
  *
  * @returns sum of bounding boxes
  */
-double PolytopeSet::volume_of_bounding_boxes() const
+double PolytopesUnion::volume_of_bounding_boxes() const
 {
 
   double vol = 0;
@@ -289,7 +252,7 @@ double PolytopeSet::volume_of_bounding_boxes() const
   return vol;
 }
 
-unsigned int PolytopeSet::dim() const
+unsigned int PolytopesUnion::dim() const
 {
   if (this->empty()) {
     return 0;
@@ -303,7 +266,7 @@ unsigned int PolytopeSet::dim() const
  *
  * @returns true if the set is empty
  */
-bool PolytopeSet::is_empty() const
+bool PolytopesUnion::is_empty() const
 {
   if (this->empty()) {
     return true;
@@ -319,35 +282,26 @@ bool PolytopeSet::is_empty() const
 }
 
 /**
- * Print the set of polytopes
- */
-void PolytopeSet::print() const
-{
-  std::cout << *this << std::endl;
-}
-
-/**
  * Print the polytope in Matlab format (for plotregion script)
  *
  * @param[in] os is the output stream
  * @param[in] color color of the polytope to plot
  */
-void PolytopeSet::plotRegion(std::ostream &os, const char color) const
+void PolytopesUnion::plotRegion(std::ostream &os, const char color) const
 {
   for (auto it = std::begin(*this); it != std::end(*this); ++it) {
     it->plotRegion(os, color);
   }
 }
 
-PolytopeSet::~PolytopeSet()
+PolytopesUnion::~PolytopesUnion()
 {
   // TODO Auto-generated destructor stub
 }
 
-bool every_set_is_empty(const std::list<PolytopeSet> &ps_list)
+bool every_set_is_empty(const std::list<PolytopesUnion> &ps_list)
 {
-  for (auto ps_it = std::begin(ps_list); ps_it != std::end(ps_list);
-       ++ps_it) {
+  for (auto ps_it = std::begin(ps_list); ps_it != std::end(ps_list); ++ps_it) {
     if (!ps_it->is_empty()) {
       return false;
     }
