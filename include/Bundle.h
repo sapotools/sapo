@@ -11,7 +11,7 @@
 #define BUNDLE_H_
 
 #include "BaseConverter.h"
-#include "LinearSystem.h"
+#include "Polytope.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
 #include "ControlPointStorage.h"
@@ -112,7 +112,7 @@ public:
     return this->offm[i];
   }
 
-  LinearSystem getLinearSystem() const;
+  Polytope getPolytope() const;
   Parallelotope getParallelotope(unsigned int i) const;
 
   void setTemplate(std::vector<std::vector<int>> T);
@@ -132,7 +132,7 @@ public:
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
                    ControlPointStorage &controlPts, int mode) const;
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
-                   const GiNaC::lst &f, const LinearSystem &paraSet,
+                   const GiNaC::lst &f, const Polytope &paraSet,
                    ControlPointStorage &controlPts, int mode) const;
 
   Bundle &operator=(Bundle &&);
@@ -146,7 +146,7 @@ void swap(Bundle &A, Bundle &B);
 
 inline std::ostream& operator<<(std::ostream& out, const Bundle& bundle)
 {
-  return out << bundle.getLinearSystem();
+  return out << bundle.getPolytope();
 }
 
 #endif /* BUNDLE_H_ */

@@ -13,7 +13,6 @@
 #include <limits>
 
 #include "LinearSystem.h"
-#include "LinearSystemSet.h"
 
 #define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
 
@@ -53,9 +52,8 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
  * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
  * @return optimum
  */
-double solveLinearSystem(const vector<vector<double>> &A,
-                         const vector<double> &b,
-                         const vector<double> &obj_fun, const int min_max)
+double optimize(const vector<vector<double>> &A, const vector<double> &b,
+                const vector<double> &obj_fun, const int min_max)
 {
   unsigned int num_rows = A.size();
   unsigned int num_cols = obj_fun.size();
@@ -124,6 +122,19 @@ double solveLinearSystem(const vector<vector<double>> &A,
 }
 
 /**
+ * Optimize a linear system
+ *
+ * @param[in] obj_fun objective function
+ * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
+ * @return optimum
+ */
+double LinearSystem::optimize(const vector<double> &obj_fun,
+                              const int min_max) const
+{
+  return ::optimize(this->A, this->b, obj_fun, min_max);
+}
+
+/**
  * Check if if a vector is null, i.e.,
  * it's a vector of zeros (used to detected useless constraints)
  *
@@ -158,7 +169,7 @@ LinearSystem::LinearSystem(const vector<vector<double>> &A,
     this->b = b;
   } else {
     for (unsigned int i = 0; i < A.size(); i++) {
-      if (!this->isIn(A[i], b[i]) && (!zeroLine(A[i]))) {
+      if (!this->is_in(A[i], b[i]) && (!zeroLine(A[i]))) {
         this->A.push_back(A[i]);
         this->b.push_back(b[i]);
       }
@@ -195,7 +206,7 @@ LinearSystem::LinearSystem(LinearSystem &&orig)
  * @param[in] bi offset
  * @returns true is Ai x <= b is in the linear system
  */
-bool LinearSystem::isIn(vector<double> Ai, const double bi) const
+bool LinearSystem::is_in(vector<double> Ai, const double bi) const
 {
   Ai.push_back(bi);
 
@@ -240,7 +251,7 @@ LinearSystem::LinearSystem(const lst &vars, const lst &constraints)
 
     double bi = ex_to<numeric>(evalf(const_term)).to_double();
 
-    if (!this->isIn(Ai, -bi)) {
+    if (!this->is_in(Ai, -bi)) {
       this->A.push_back(Ai);
       this->b.push_back(-bi);
     }
@@ -281,22 +292,21 @@ const double &LinearSystem::getb(unsigned int i) const
 }
 
 /**
- * Determine whether this linear system is empty, i.e.,
- * the linear system has no solutions.
+ * Establish whether a linear system has solutions
  *
- * Due to approximation errors, it may return false for some empty
- * systems too. However, when it returns true, the set is certainly empty.
+ * Due to approximation errors, it may return true for some systems
+ * having no solution too. However, when it returns false, the linear
+ * system certainly has no solution.
  *
- * @param[in] strict_inequality specifies whether the linear system is a
- * 						strict inequality (i.e., Ax <
- * b).
- * @return a Boolean value. If the returned value is true, then the
- *       linear system is empty.
+ * @param[in] strict_inequality specifies whether the linear system is
+ *         a strict inequality (i.e., Ax < b).
+ * @return a Boolean value. If the returned value is false, then the
+ *       linear system has no solution.
  */
-bool LinearSystem::isEmpty(const bool strict_inequality) const
+bool LinearSystem::has_solutions(const bool strict_inequality) const
 {
   if (this->size() == 0) {
-    return false;
+    return true;
   }
 
   vector<vector<double>> extA(this->A);
@@ -309,180 +319,10 @@ bool LinearSystem::isEmpty(const bool strict_inequality) const
     row_it->push_back(-1);
   }
 
-  const double z = solveLinearSystem(extA, this->b, obj_fun, GLP_MIN);
+  const double z = ::optimize(extA, this->b, obj_fun, GLP_MIN);
 
-  return (z > MAX_APPROX_ERROR)
-         || (strict_inequality && (z >= MAX_APPROX_ERROR));
-}
-
-/**
- * Check whether all the solutions of a linear system are also solutions for
- * another linear system.
- *
- * This method establishes whether all the solutions of a linear system
- * are are also solutions for another linear system. Due to approximation
- * errors, it may return false even if this is the case. However, whenever
- * it returns true, the all the solutions of the linear system are certainly
- * solutions for the linear system passed as parameter.
- *
- * @param[in] ls is the linear system whose set of solutions is compated this
- * 	that of this linear system.
- * @return a Boolean value. When some of the solutions of this linear system
- *     are not solutions for the parameter, the returned value is false. When
- *     the method returns true, all the solution of the object are also
- *     solutions for the parameter. There are cases in which the set of
- *     object solutions is a subset of the parameter solutions and, still,
- *     this method returns false.
- */
-bool LinearSystem::satisfies(const LinearSystem &ls) const
-{
-
-  for (unsigned int i = 0; i < ls.size(); i++) {
-    if (!this->satisfies(ls.A[i], ls.b[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-template<typename T>
-bool are_independent(const std::vector<T> &v1, const std::vector<T> &v2)
-{
-  if (v1.size() != v2.size()) {
-    return true;
-  }
-
-  if (v1.size() == 0) {
-    return false;
-  }
-
-  unsigned int fnz_v1(0);
-  while (fnz_v1 < v1.size() && v1[fnz_v1] == 0)
-    fnz_v1++;
-
-  unsigned int fnz_v2(0);
-  while (fnz_v2 < v2.size() && v2[fnz_v2] == 0)
-    fnz_v2++;
-
-  if (fnz_v1 != fnz_v2) {
-    return true;
-  }
-
-  for (unsigned int i = 1; i < v1.size(); ++i) {
-    if (v1[fnz_v1] * v2[i]
-        != v2[fnz_v2] * v1[i]) { // this is to avoid numerical errors,
-                                 // but it can produce overflows
-      return true;
-    }
-  }
-
-  return false;
-}
-
-std::vector<unsigned int>
-get_a_linear_system_base(const std::vector<std::vector<double>> &A)
-{
-  if (A.size() == 0) {
-    return std::vector<unsigned int>();
-  }
-
-  std::vector<unsigned int> base{0};
-
-  unsigned int row_idx = 1;
-  while (row_idx < A.size()) {
-    bool indep_from_base = true;
-    auto b_it = std::begin(base);
-    while (indep_from_base && b_it != std::end(base)) {
-      indep_from_base = are_independent(A[row_idx], A[*b_it]);
-      ++b_it;
-    }
-
-    if (indep_from_base) {
-      base.push_back(row_idx);
-    }
-    ++row_idx;
-  }
-
-  return base;
-}
-
-inline std::vector<bool>
-get_a_ls_base_bit_vector(const std::vector<std::vector<double>> &A)
-{
-  std::vector<unsigned int> base = get_a_linear_system_base(A);
-
-  std::vector<bool> bvect_base(A.size(), false);
-
-  for (auto it = std::begin(base); it != std::end(base); ++it) {
-    bvect_base[*it] = true;
-  }
-
-  return bvect_base;
-}
-
-std::list<LinearSystem> LinearSystem::get_a_finer_covering(
-    const std::vector<bool> &bvect_base, const unsigned int cidx,
-    std::list<LinearSystem> &tmp_covering, std::vector<std::vector<double>> &A,
-    std::vector<double> &b) const
-{
-  if (this->A.size() == cidx) {
-    LinearSystem ls(A, b);
-    ls.simplify();
-
-    tmp_covering.push_back(ls);
-    return tmp_covering;
-  }
-
-  if (bvect_base[cidx]) {
-    A.push_back(this->A[cidx]);
-    b.push_back(this->b[cidx]);
-
-    try {
-      const double min_value = minLinearSystem(this->A[cidx]);
-      const double avg_value = (this->b[cidx] + min_value) / 2;
-
-      A.push_back(get_complementary(this->A[cidx]));
-      b.push_back(-avg_value);
-
-      get_a_finer_covering(bvect_base, cidx + 1, tmp_covering, A, b);
-
-      b[b.size() - 1] = -min_value;
-      b[b.size() - 2] = avg_value;
-
-      get_a_finer_covering(bvect_base, cidx + 1, tmp_covering, A, b);
-
-      A.pop_back();
-      b.pop_back();
-
-    } catch (std::logic_error &e) {
-      std::cerr << "The linear system solutions are not a closed polyheadron."
-                << std::endl;
-
-      get_a_finer_covering(bvect_base, cidx + 1, tmp_covering, A, b);
-    }
-
-    A.pop_back();
-    b.pop_back();
-  } else {
-    get_a_finer_covering(bvect_base, cidx + 1, tmp_covering, A, b);
-  }
-
-  return tmp_covering;
-}
-
-std::list<LinearSystem> LinearSystem::get_a_finer_covering() const
-{
-  std::list<LinearSystem> result;
-
-  std::vector<bool> bvect_base = get_a_ls_base_bit_vector(this->A);
-
-  std::vector<std::vector<double>> A;
-  std::vector<double> b;
-
-  get_a_finer_covering(bvect_base, 0, result, A, b);
-
-  return result;
+  return (z <= MAX_APPROX_ERROR)
+         || (!strict_inequality && (z < MAX_APPROX_ERROR));
 }
 
 /**
@@ -492,7 +332,7 @@ std::list<LinearSystem> LinearSystem::get_a_finer_covering() const
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double LinearSystem::minLinearSystem(const lst &vars, const ex &obj_fun) const
+double LinearSystem::minimize(const lst &vars, const ex &obj_fun) const
 {
 
   vector<double> obj_fun_coeffs;
@@ -507,8 +347,7 @@ double LinearSystem::minLinearSystem(const lst &vars, const ex &obj_fun) const
   }
 
   const double c = ex_to<numeric>(evalf(const_term)).to_double();
-  const double min
-      = solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MIN);
+  const double min = optimize(obj_fun_coeffs, GLP_MIN);
 
   return (min + c);
 }
@@ -519,10 +358,9 @@ double LinearSystem::minLinearSystem(const lst &vars, const ex &obj_fun) const
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double
-LinearSystem::minLinearSystem(const vector<double> &obj_fun_coeffs) const
+double LinearSystem::minimize(const vector<double> &obj_fun_coeffs) const
 {
-  return solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MIN);
+  return optimize(obj_fun_coeffs, GLP_MIN);
 }
 
 /**
@@ -531,10 +369,9 @@ LinearSystem::minLinearSystem(const vector<double> &obj_fun_coeffs) const
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double
-LinearSystem::maxLinearSystem(const vector<double> &obj_fun_coeffs) const
+double LinearSystem::maximize(const vector<double> &obj_fun_coeffs) const
 {
-  return solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MAX);
+  return optimize(obj_fun_coeffs, GLP_MAX);
 }
 
 /**
@@ -544,7 +381,7 @@ LinearSystem::maxLinearSystem(const vector<double> &obj_fun_coeffs) const
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maxLinearSystem(const lst &vars, const ex &obj_fun) const
+double LinearSystem::maximize(const lst &vars, const ex &obj_fun) const
 {
 
   vector<double> obj_fun_coeffs;
@@ -558,38 +395,8 @@ double LinearSystem::maxLinearSystem(const lst &vars, const ex &obj_fun) const
   }
 
   const double c = ex_to<numeric>(evalf(const_term)).to_double();
-  const double max
-      = solveLinearSystem(this->A, this->b, obj_fun_coeffs, GLP_MAX);
 
-  return (max + c);
-}
-
-/**
- * Create a new linear system by joining the constraints of two linear system
- *
- * @param[in] ls a linear system
- * @return linear system obtained by joining the constraints of this object and
- *      those of of the parameter.
- */
-LinearSystem &LinearSystem::intersectWith(const LinearSystem &ls)
-{
-  for (unsigned int i = 0; i < ls.size(); i++) {
-    if (!this->satisfies(ls.A[i], ls.b[i])) { // check for duplicates
-      (this->A).push_back(ls.A[i]);
-      (this->b).push_back(ls.b[i]);
-    }
-  }
-
-  return *this;
-}
-
-LinearSystem intersection(const LinearSystem &A, const LinearSystem &B)
-{
-  LinearSystem result(A.A, A.b);
-
-  result.intersectWith(B);
-
-  return result;
+  return maximize(obj_fun_coeffs) + c;
 }
 
 /**
@@ -613,11 +420,11 @@ bool LinearSystem::satisfies(const std::vector<double> &Ai,
   if (size() == 0)
     return false;
 
-  if (isIn(Ai, bi)) {
+  if (is_in(Ai, bi)) {
     return true;
   }
 
-  double max = this->maxLinearSystem(Ai);
+  double max = this->maximize(Ai);
   if (max + MAX_APPROX_ERROR
       <= bi) { /* This should be max <= bi,
                                   however, due to double approximation
@@ -649,7 +456,7 @@ bool LinearSystem::satisfies(const std::vector<double> &Ai,
  *     certainly redundant. There are cases in which the constraint is
  *     redundant and this method returns false.
  */
-bool LinearSystem::constraintIsRedundant(const unsigned int i) const
+bool LinearSystem::constraint_is_redundant(const unsigned int i) const
 {
   LinearSystem tmp(*this);
   std::vector<double> Ai(dim(), 0);
@@ -686,7 +493,7 @@ LinearSystem &LinearSystem::simplify()
   while (i < last_non_redundant) { // for every unchecked constraint
 
     // if it is redundant
-    if (constraintIsRedundant(i)) {
+    if (constraint_is_redundant(i)) {
       // swap it with the last non-reduntant constraint
       swap(A[i], A[last_non_redundant]);
       swap(b[i], b[last_non_redundant]);
@@ -701,7 +508,7 @@ LinearSystem &LinearSystem::simplify()
   }
 
   // if the last constraint to be checked is redundant
-  if (constraintIsRedundant(last_non_redundant)) {
+  if (constraint_is_redundant(last_non_redundant)) {
     // reduce the number of non-reduntant constraints
     last_non_redundant--;
   }
@@ -721,130 +528,4 @@ LinearSystem LinearSystem::get_simplified() const
   LinearSystem simplier(*this);
 
   return simplier.simplify();
-}
-
-/**
- * Determine the volume of the bounding box of the linear system
- *
- * @return volume of the bounding box
- */
-double LinearSystem::volBoundingBox() const
-{
-
-  vector<double> zeros(this->dim(), 0);
-  double vol = 1;
-
-  for (unsigned int i = 0; i < this->dim(); i++) {
-    vector<double> facet = zeros;
-    facet[i] = 1;
-    const double b_plus = solveLinearSystem(this->A, this->b, facet, GLP_MAX);
-    facet[i] = -1;
-    const double b_minus = solveLinearSystem(this->A, this->b, facet, GLP_MAX);
-    vol = vol * (b_plus + b_minus);
-  }
-
-  return vol;
-}
-
-/**
- * Print the linear system in Matlab format (for plotregion script)
- *
- * @param[in] os is the output stream
- * @param[in] color color of the polytope to plot
- */
-void LinearSystem::plotRegion(std::ostream &os, const char color) const
-{
-
-  if (this->dim() > 3) {
-    std::cerr << "LinearSystem::plotRegion : maximum 3d sets are allowed"
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  os << "Ab = [" << std::endl;
-  for (unsigned i = 0; i < A.size(); i++) {
-    for (auto el = std::begin(A[i]); el != std::end(A[i]); ++el) {
-      os << *el << " ";
-    }
-    os << " " << this->b[i] << ";" << std::endl;
-  }
-  os << "];" << std::endl;
-  os << "plotregion(-Ab(:,1:" << this->A[0].size() << "),-Ab(:,"
-     << this->A[0].size() + 1 << "),[],[],";
-
-  if (color == ' ') {
-    os << "color";
-  } else {
-    os << color;
-  }
-  os << ");" << std::endl;
-}
-
-/**
- * Print the 2d linear system in Matlab format (for plotregion script) over
- * time
- *
- * @param[in] os is the output stream
- * @param[in] t thickness of the set to plot
- */
-void LinearSystem::plotRegionT(std::ostream &os, const double t) const
-{
-  if (this->dim() > 2) {
-    std::cerr << "LinearSystem::plotRegionT : maximum 2d sets are allowed"
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  os << "Ab = [" << std::endl;
-  os << " 1 ";
-  for (unsigned int j = 0; j < this->A[0].size(); j++) {
-    os << " 0 ";
-  }
-  os << t << ";" << std::endl;
-  os << " -1 ";
-  for (unsigned int j = 0; j < this->A[0].size(); j++) {
-    os << " 0 ";
-  }
-  os << -t << ";" << std::endl;
-
-  for (unsigned i = 0; i < A.size(); i++) {
-    os << " 0 ";
-    for (auto el = std::begin(A[i]); el != std::end(A[i]); ++el) {
-      os << *el << " ";
-    }
-    os << this->b[i] << ";" << std::endl;
-  }
-
-  os << "];" << std::endl;
-  os << "plotregion(-Ab(:,1:3),-Ab(:,4),[],[],color);" << std::endl;
-}
-
-/**
- * Print the specified projections in Matlab format (for plotregion script)
- * into a file
- *
- * @param[in] os is the output stream
- * @param[in] rows rows to be plot
- * @param[in] cols colors of the plots
- */
-void LinearSystem::plotRegion(std::ostream &os, const vector<int> &rows,
-                              const vector<int> &cols) const
-{
-
-  if (cols.size() > 3) {
-    std::cerr << "LinearSystem::plotRegion : cols maximum 3d sets are allowed"
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  os << "Ab = [" << std::endl;
-  for (auto r_it = std::begin(rows); r_it != std::end(rows); ++r_it) {
-    for (auto c_it = std::begin(cols); c_it != std::end(cols); ++c_it) {
-      os << this->A[*r_it][*c_it] << " ";
-    }
-    os << " " << this->b[*r_it] << ";" << std::endl;
-  }
-  os << "];" << std::endl;
-  os << "plotregion(-Ab(:,1:" << cols.size() << "),-Ab(:," << cols.size() + 1
-     << "),[],[],color);" << std::endl;
 }

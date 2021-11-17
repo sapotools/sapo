@@ -85,14 +85,14 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 }
 
 /**
- * Constructor that instantiates a parallelotope from a linear system
+ * Constructor that instantiates a parallelotope from a polytope
  *
  * @param[in] vars vector with the list of variables used for the generator
  * functions
- * @param[in] constr linear system constituting the parallelotope
+ * @param[in] constr polytope constituting the parallelotope
  */
 Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
-                             const LinearSystem &constr):
+                             const Polytope &constr):
     Parallelotope(vars, constr.getA(), constr.getb())
 {
 }
@@ -168,7 +168,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
   ex solLS = lsolve(LS, q);
   if (solLS.nops() == 0) { // the template is singular
     std::cerr << "singular parallelotope" << std::endl
-              << LinearSystem(template_matrix, offset) << std::endl
+              << Polytope(template_matrix, offset) << std::endl
               << LS << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -272,10 +272,9 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
  *
  * @param[in] q numerical base vertex
  * @param[in] beta numerical generator lengths
- * @returns linear system representing the parallelotope
+ * @returns polytope representing the parallelotope
  */
-LinearSystem Parallelotope::gen2const(const Vector &q,
-                                      const Vector &beta) const
+Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 {
   using namespace std;
   using namespace GiNaC;
@@ -365,7 +364,7 @@ LinearSystem Parallelotope::gen2const(const Vector &q,
     }
   }
 
-  return LinearSystem(Lambda, d);
+  return Polytope(Lambda, d);
 }
 
 /**
@@ -453,7 +452,7 @@ std::vector<double> Parallelotope::hyperplaneThroughPts(
  * @returns numerical values to plug in the generator function for the
  * generator representation
  */
-poly_values Parallelotope::const2gen(LinearSystem *constr) const
+poly_values Parallelotope::const2gen(Polytope *constr) const
 {
   using namespace std;
   using namespace GiNaC;

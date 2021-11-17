@@ -105,7 +105,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
   using OF = OutputFormatter<OSTREAM>;
 
   // Synthesize parameters
-  std::list<LinearSystemSet> synth_params
+  std::list<PolytopesUnion> synth_params
       = sapo.synthesize(*(model->getReachSet()), *(model->getParaSet()),
                         model->getSpec(), sapo.max_param_splits);
 

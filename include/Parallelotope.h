@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#include "LinearSystem.h"
+#include "Polytope.h"
 
 struct poly_values { // numerical values for polytopes
   std::vector<double> base_vertex;
@@ -46,7 +46,7 @@ public:
   Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
   Parallelotope(const std::vector<GiNaC::lst> &vars,
                 const Matrix &template_matrix, const Vector &offset);
-  Parallelotope(const std::vector<GiNaC::lst> &vars, const LinearSystem &ls);
+  Parallelotope(const std::vector<GiNaC::lst> &vars, const Polytope &P);
 
   /**
    * Get the generator functions
@@ -109,12 +109,11 @@ public:
   }
 
   // Representation conversion
-  LinearSystem
+  Polytope
   gen2const(const Vector &q,
-            const Vector &beta) const; // from generator to constraints
-  poly_values
-  const2gen(LinearSystem *LS) const; // from constraints to generators
-  LinearSystem getLinearSystem() const
+            const Vector &beta) const;       // from generator to constraints
+  poly_values const2gen(Polytope *LS) const; // from constraints to generators
+  Polytope getPolytope() const
   {
     return this->gen2const(this->actual_base_vertex, this->actual_lenghts);
   }
