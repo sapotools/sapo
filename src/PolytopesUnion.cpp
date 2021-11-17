@@ -88,12 +88,13 @@ bool PolytopesUnion::contains(const Polytope &P)
 {
 
 #if WITH_THREADS
-  class ThreadResult {
+  class ThreadResult
+  {
     mutable std::shared_timed_mutex mutex;
     bool value;
+
   public:
-    ThreadResult(): value(false)
-    {}
+    ThreadResult(): value(false) {}
 
     bool get() const
     {
@@ -102,7 +103,7 @@ bool PolytopesUnion::contains(const Polytope &P)
       return value;
     }
 
-    void set(const bool& value)
+    void set(const bool &value)
     {
       std::unique_lock<std::shared_timed_mutex> wlock(mutex, std::defer_lock);
 
@@ -112,7 +113,7 @@ bool PolytopesUnion::contains(const Polytope &P)
 
   ThreadResult result;
 
-  auto check_and_update = [&result, &P](const Polytope& P1) {
+  auto check_and_update = [&result, &P](const Polytope &P1) {
     if (!result.get() && P1.contains(P)) {
       result.set(true);
     }
@@ -123,13 +124,13 @@ bool PolytopesUnion::contains(const Polytope &P)
     threads.push_back(std::thread(check_and_update, std::ref(*it)));
   }
 
-  for (std::thread & th : threads) {
+  for (std::thread &th: threads) {
     if (th.joinable())
-        th.join();
+      th.join();
   }
 
   return result.get();
-#else // WITH_THREADS
+#else  // WITH_THREADS
   for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
     if (it->contains(P)) {
       return true;
@@ -181,31 +182,35 @@ PolytopesUnion &PolytopesUnion::add(Polytope &&P)
 PolytopesUnion &PolytopesUnion::simplify()
 {
 #ifdef WITH_THREADS
-  class ThreadResult {
+  class ThreadResult
+  {
     mutable std::shared_timed_mutex mutex;
     unsigned int non_empty;
     std::map<unsigned int, unsigned int> new_position;
+
   public:
-    ThreadResult(): non_empty(0)
-    {}
+    ThreadResult(): non_empty(0) {}
 
     unsigned int get_non_empty() const
     {
-      std::shared_lock<std::shared_timed_mutex> read_lock(mutex, std::defer_lock);
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex,
+                                                          std::defer_lock);
 
       return non_empty;
     }
 
-    void set_non_empty(const unsigned int& index)
+    void set_non_empty(const unsigned int &index)
     {
-      std::unique_lock<std::shared_timed_mutex> write_lock(mutex, std::defer_lock);
+      std::unique_lock<std::shared_timed_mutex> write_lock(mutex,
+                                                           std::defer_lock);
 
       this->new_position[non_empty++] = index;
     }
 
-    unsigned int old_pos(const unsigned int& new_index) const
+    unsigned int old_pos(const unsigned int &new_index) const
     {
-      std::shared_lock<std::shared_timed_mutex> read_lock(mutex, std::defer_lock);
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex,
+                                                          std::defer_lock);
 
       return this->new_position.at(new_index);
     }
@@ -221,31 +226,33 @@ PolytopesUnion &PolytopesUnion::simplify()
   }
 
   ThreadResult result;
-  auto test_emptiness_and_simplify = [&result](Polytope& P, const unsigned int i) {
-    if (!P.is_empty()) {
-      P.simplify();
-      result.set_non_empty(i);
-    }
-  };
+  auto test_emptiness_and_simplify
+      = [&result](Polytope &P, const unsigned int i) {
+          if (!P.is_empty()) {
+            P.simplify();
+            result.set_non_empty(i);
+          }
+        };
 
   std::vector<std::thread> threads;
-  for (unsigned int i=0; i<size(); ++i) {
-    threads.push_back(std::thread(test_emptiness_and_simplify, std::ref((*this)[i]), i));
+  for (unsigned int i = 0; i < size(); ++i) {
+    threads.push_back(
+        std::thread(test_emptiness_and_simplify, std::ref((*this)[i]), i));
   }
 
-  for (std::thread & th : threads) {
+  for (std::thread &th: threads) {
     if (th.joinable())
-        th.join();
+      th.join();
   }
 
   PolytopesUnion Pu;
-  for (unsigned int i=0; i<result.get_non_empty(); ++i) {
+  for (unsigned int i = 0; i < result.get_non_empty(); ++i) {
     Pu.push_back((*this)[result.old_pos(i)]);
   }
 
   std::swap(Pu, *this);
 
-#else // WITH_THREADS
+#else  // WITH_THREADS
   for (auto it = std::begin(*this); it != std::end(*this); ++it) {
     it->simplify();
   }

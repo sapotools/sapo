@@ -113,7 +113,7 @@ public:
    * @param[in] orig is the original model of the linear system
    * @return a reference to the modified object
    */
-  LinearSystem& operator=(const LinearSystem& orig)
+  LinearSystem &operator=(const LinearSystem &orig)
   {
     A = orig.A;
     b = orig.b;

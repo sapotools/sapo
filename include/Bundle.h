@@ -144,7 +144,7 @@ public:
 
 void swap(Bundle &A, Bundle &B);
 
-inline std::ostream& operator<<(std::ostream& out, const Bundle& bundle)
+inline std::ostream &operator<<(std::ostream &out, const Bundle &bundle)
 {
   return out << bundle.getPolytope();
 }
