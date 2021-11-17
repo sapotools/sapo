@@ -105,7 +105,7 @@
 %nterm <AbsSyn::Expr *> expr
 %nterm <std::vector<int>> matrixRow intList
 %nterm <std::vector<std::vector<int>>> _matrix rowList
-%nterm <AbsSyn::Formula *> path_formula state_formula
+%nterm <AbsSyn::Formula *> formula
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Inequality *> inequality
 %nterm <AbsSyn::Inequality::Type> inequalityType
@@ -317,23 +317,7 @@ symbol			: VAR identList IN doubleInterval ";"
 							}
 							v->setDynamic($6);
 						}
-						| SPEC ":" path_formula ";"
-						{
-							/*if (drv.data.getProblem() != AbsSyn::problemType::SYNTH)
-							{
-								yy::parser::error(@$, "Specification not required when problem is 'reachability'");
-								YYERROR;
-							}*/
-							
-							if (!$3->simplify())
-							{
-								yy::parser::error(@3, "Negations of UNTIL are not allowed");
-								YYERROR;
-							}
-							
-							drv.data.addSpec($3);
-						}
-						| SPEC ":" state_formula ";"
+						| SPEC ":" formula ";"
 						{
 							/*if (drv.data.getProblem() != AbsSyn::problemType::SYNTH)
 							{
@@ -637,28 +621,23 @@ _matrix			: "{" rowList "}" { $$ = $2; }
 rowList			: matrixRow { $$ = std::vector<std::vector<int>>{$1}; }
 						| rowList "," matrixRow { $1.push_back($3); $$ = $1; }
 
-state_formula	: expr ">" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
-							| expr ">=" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
-							| expr "<" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
-							| expr "<=" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
-							| expr "=" expr
-							{
-								AbsSyn::Formula *f1 = new AbsSyn::Formula($1->sub($3));
-								AbsSyn::Formula *f2 = new AbsSyn::Formula($3->sub($1));
-								$$ = f1->conj(f2);
-							}
-							| state_formula AND state_formula		{ $$ = $1->conj($3); }
-							| state_formula OR state_formula		{ $$ = $1->disj($3); }
-							| "!" state_formula									{ $$ = $2->neg(); }
-							| "(" state_formula ")" { $$ = $2; }
-
-path_formula	: "G" intInterval state_formula %prec "G"	{ $$ = $3->always($2); }
-							| "F" intInterval state_formula %prec "F"	{ $$ = $3->eventually($2); }
-							| state_formula "U" intInterval state_formula %prec "U"	{ $$ = $1->until($3, $4); }
-							| path_formula "&&" path_formula					{ $$ = $1->conj($3); }
-							| path_formula "||" path_formula					{ $$ = $1->disj($3); }
-							| "!" path_formula												{ $$ = $2->neg(); }
-							| "(" path_formula ")" { $$ = $2; }
+formula	: expr ">" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
+				| expr ">=" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
+				| expr "<" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
+				| expr "<=" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
+				| expr "=" expr
+				{
+					AbsSyn::Formula *f1 = new AbsSyn::Formula($1->sub($3));
+					AbsSyn::Formula *f2 = new AbsSyn::Formula($3->sub($1));
+					$$ = f1->conj(f2);
+				}
+				| formula AND formula		{ $$ = $1->conj($3); }
+				| formula OR formula		{ $$ = $1->disj($3); }
+				| NOT formula									{ $$ = $2->neg(); }
+				| "(" formula ")" { $$ = $2; }
+				| "G" intInterval formula %prec "G"	{ $$ = $3->always($2); }
+				| "F" intInterval formula %prec "F"	{ $$ = $3->eventually($2); }
+				| formula "U" intInterval formula %prec "U"	{ $$ = $1->until($3, $4); }
 
 footerList	: %empty {}
 						| footerList footer {}
