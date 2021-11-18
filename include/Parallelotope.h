@@ -31,7 +31,6 @@ private:
                                  // vars[2] beta : generator amplitudes
   GiNaC::lst generator_function; // generator function
   Matrix u;                      // versors
-  Matrix template_matrix;        // Template matrix
 
   Vector hyperplaneThroughPts(const std::vector<Vector> &pts)
       const; // find hyper plane passing through pts
@@ -96,16 +95,6 @@ public:
   const unsigned int &getDim() const
   {
     return this->dim;
-  }
-
-  /**
-   * Get the template of the parallelotope
-   *
-   * @returns parallelotope template
-   */
-  const std::vector<std::vector<double>> &getTemplate() const
-  {
-    return this->template_matrix;
   }
 
   // Representation conversion

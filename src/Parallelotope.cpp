@@ -80,8 +80,6 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
   // Initialize the template matrix
   vector<double> base_vertex(this->dim, 0);
   Vector lenghts(this->dim, 1);
-
-  this->template_matrix = this->gen2const(base_vertex, lenghts).getA();
 }
 
 /**
@@ -107,8 +105,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
  */
 Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
                              const Matrix &template_matrix,
-                             const Vector &offset):
-    template_matrix(template_matrix)
+                             const Vector &offset)
 {
   using namespace std;
   using namespace GiNaC;
@@ -263,8 +260,6 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
           = this->generator_function[j] + alpha[i] * beta[i] * this->u[i][j];
     }
   }
-
-  // this->template_matrix = constr->getA();
 }
 
 /**
@@ -584,5 +579,4 @@ void swap(Parallelotope &A, Parallelotope &B)
   std::swap(A.vars, B.vars);
   std::swap(A.generator_function, B.generator_function);
   std::swap(A.u, B.u);
-  std::swap(A.template_matrix, B.template_matrix);
 }
