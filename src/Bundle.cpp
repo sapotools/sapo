@@ -12,6 +12,7 @@
 #include <cmath>
 #include <limits>
 #include <string>
+#include <algorithm>
 
 /**
  * Copy constructor that instantiates the bundle
@@ -257,6 +258,72 @@ Bundle Bundle::get_canonical() const
 }
 
 /**
+ * Check whether a vector is permutation of a sorted vector
+ *
+ * @param[in] v1 first vector
+ * @param[in] v2 a sorted vector 
+ * @returns true is v1 is a permutation of v2
+ */
+bool isPermutationOfSorted(std::vector<int> v1, const std::vector<int>& v2_sorted)
+{
+  if (v1.size() != v2_sorted.size()) {
+    return false;
+  }
+
+  std::sort(std::begin(v1), std::end(v1));
+
+  auto v1_it = std::begin(v1);
+  auto v2_it = std::begin(v2_sorted);
+  while (v1_it != std::end(v1)) {
+    if (*v1_it != *v2_it) {
+      return false;
+    }
+
+    ++v1_it;
+    ++v2_it;
+  }
+
+  return true;
+}
+
+/**
+ * Check if v1 is a permutation of v2
+ *
+ * @param[in] v1 first vector
+ * @param[in] v2 second vector
+ * @returns true is v1 is a permutation of v2
+ */
+bool isPermutation(const std::vector<int>& v1, std::vector<int> v2)
+{
+  if (v1.size() != v2.size()) {
+    return false;
+  }
+
+  std::sort(std::begin(v2), std::end(v2));
+
+  return isPermutationOfSorted(v1, v2);
+}
+
+template<typename T>
+bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M, const unsigned int &i)
+{
+  using namespace std;
+
+  vector<T> M_i = M[i];
+  sort(std::begin(M_i), std::end(M_i));
+  for (unsigned int j = 0; j < M.size(); j++) {
+    if (j != i) {
+      if (isPermutationOfSorted(M[j], M_i)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// TODO: the following method should be fixed
+/**
  * Decompose the current symbolic polytope
  *
  * @param[in] alpha weight parameter in [0,1] for decomposition (0 for
@@ -285,21 +352,11 @@ Bundle Bundle::decompose(double alpha, int max_iters)
     // generate random coordinates to swap
     unsigned int i1 = rand() % temp_card;
     int j1 = rand() % this->getDim();
-    int new_element = rand() % this->getSize();
 
     // swap them
-    tmpT[i1][j1] = new_element;
+    tmpT[i1][j1] = rand() % this->getSize();
 
-    bool valid = true;
-    // check for duplicates
-    vector<int> newTemp1 = tmpT[i1];
-    for (unsigned int j = 0; j < tmpT.size(); j++) {
-      if (j != i1) {
-        valid = valid && !(this->isPermutation(newTemp1, tmpT[j]));
-      }
-    }
-
-    if (valid) {
+    if (!is_permutation_of_other_rows(tmpT, i1)) {
       ex eq1 = 0;
       lst LS1;
       for (unsigned int j = 0; j < this->getDim(); j++) {
@@ -762,7 +819,7 @@ double Bundle::maxOffsetDist(std::vector<std::vector<int>> T,
  * @param[in] v vector in which to look for
  * @returns true is n belongs to v
  */
-bool Bundle::isIn(int n, std::vector<int> v)
+bool isIn(int n, std::vector<int> v)
 {
 
   for (unsigned int i = 0; i < v.size(); i++) {
@@ -780,31 +837,14 @@ bool Bundle::isIn(int n, std::vector<int> v)
  * @param[in] vlist set of vectors in which to look for
  * @returns true is v belongs to vlist
  */
-bool Bundle::isIn(std::vector<int> v, std::vector<std::vector<int>> vlist)
+bool isIn(std::vector<int> v, std::vector<std::vector<int>> vlist)
 {
   for (unsigned int i = 0; i < vlist.size(); i++) {
-    if (this->isPermutation(v, vlist[i])) {
+    if (isPermutation(v, vlist[i])) {
       return true;
     }
   }
   return false;
-}
-
-/**
- * Check if v1 is a permutation of v2
- *
- * @param[in] v1 first vector
- * @param[in] v2 second vector
- * @returns true is v1 is a permutation of v2
- */
-bool Bundle::isPermutation(std::vector<int> v1, std::vector<int> v2)
-{
-  for (unsigned int i = 0; i < v1.size(); i++) {
-    if (!this->isIn(v1[i], v2)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 /**
@@ -844,7 +884,7 @@ bool Bundle::validTemp(std::vector<std::vector<int>> T, unsigned int card,
   vector<bool> dirIn(dirs.size(), false);
   for (unsigned int i = 0; i < dirs.size(); i++) {
     for (auto row = std::begin(T); row != std::end(T); ++row) {
-      dirIn[i] = this->isIn(dirs[i], *row);
+      dirIn[i] = isIn(dirs[i], *row);
     }
   }
 

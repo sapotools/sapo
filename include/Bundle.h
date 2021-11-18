@@ -55,10 +55,6 @@ private:
   double maxOffsetDist(std::vector<std::vector<int>> T,
                        std::vector<double> dists);
 
-  bool isIn(int n, std::vector<int> v);
-  bool isIn(std::vector<int> v, std::vector<std::vector<int>> vlist);
-  bool isPermutation(std::vector<int> v1, std::vector<int> v2);
-
   bool validTemp(std::vector<std::vector<int>> T, unsigned int card,
                  std::vector<int> dirs); // check if a template is valid
   std::vector<GiNaC::lst> transformContrPts(GiNaC::lst vars, GiNaC::lst f,
