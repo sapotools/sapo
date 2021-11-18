@@ -38,8 +38,8 @@ private:
   lst2vec(const GiNaC::ex &list) const; // convert a lst to a vector of doubles
   double euclidNorm(const Vector &v) const; // compute euclidean norm
 
-  std::vector<double> actual_base_vertex;
-  std::vector<double> actual_lenghts;
+  std::vector<double> base_vertex;
+  std::vector<double> lenghts;
 
 public:
   Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
@@ -104,17 +104,17 @@ public:
   poly_values const2gen(Polytope *LS) const; // from constraints to generators
   Polytope getPolytope() const
   {
-    return this->gen2const(this->actual_base_vertex, this->actual_lenghts);
+    return this->gen2const(this->base_vertex, this->lenghts);
   }
 
   const std::vector<double> &getBaseVertex() const
   {
-    return this->actual_base_vertex;
+    return this->base_vertex;
   }
 
   const std::vector<double> &getLenghts() const
   {
-    return this->actual_lenghts;
+    return this->lenghts;
   }
 
   Matrix getVersors() const

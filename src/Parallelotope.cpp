@@ -193,7 +193,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
     vertices.push_back(lst2vec(a.subs(solLS))); // store the i-th vertex
   }
 
-  this->actual_base_vertex = vertices[0];
+  this->base_vertex = vertices[0];
 
   // Compute the generators
   Matrix g(this->dim, Vector(this->dim));
@@ -206,11 +206,11 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
     }
   }
 
-  actual_lenghts.resize(this->dim);
+  lenghts.resize(this->dim);
 
   // Compute the generators lengths
   for (unsigned int i = 0; i < this->dim; i++) {
-    actual_lenghts[i] = euclidNorm(g[i]);
+    lenghts[i] = euclidNorm(g[i]);
     // cout<<lengths[i]<<" ";
   }
   //	cout<<"\n";
@@ -222,8 +222,8 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
     Vector &versor_i = this->u[i];
     Vector &g_i = g[i];
     for (unsigned int j = 0; j < this->dim; j++) {
-      if (actual_lenghts[i] != 0) {
-        versor_i[j] = floor((g_i[j] / actual_lenghts[i]) * 100000000000.0f)
+      if (lenghts[i] != 0) {
+        versor_i[j] = floor((g_i[j] / lenghts[i]) * 100000000000.0f)
                       / 100000000000.0f;
       } else {
         versor_i[j] = floor(g_i[j] * 100000000000.0f) / 100000000000.0f;
