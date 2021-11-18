@@ -272,9 +272,9 @@ Bundle Bundle::decompose(double alpha, int max_iters)
   vector<double> offDists = this->offsetDistances();
 
   vector<vector<int>> curT
-      = this->T; // get actual template and try to improve it
+      = this->T; // get current template and try to improve it
   vector<vector<int>> bestT
-      = this->T; // get actual template and try to improve it
+      = this->T; // get current template and try to improve it
   int temp_card = this->T.size();
 
   int i = 0;
