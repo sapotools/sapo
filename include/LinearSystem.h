@@ -15,7 +15,6 @@
 #include <ginac/ginac.h>
 #include <utility>
 #include <vector>
-#include <list>
 
 #include "JSONStreamer.h"
 
@@ -251,52 +250,6 @@ inline void swap(LinearSystem &ls_1, LinearSystem &ls_2)
 {
   std::swap(ls_1.A, ls_2.A);
   std::swap(ls_1.b, ls_2.b);
-}
-
-/**
- * Compute the complementary of a vector of values.
- *
- * @param[in] orig the vector of values to be complementated.
- * @return A vector containing the complementaries of the parameter values
- */
-template<typename T>
-std::vector<T> get_complementary(const std::vector<T> &orig)
-{
-  std::vector<T> res{orig};
-
-  transform(res.begin(), res.end(), res.begin(), std::negate<T>());
-
-  return res;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
-{
-  out << "[";
-  for (auto el_it = std::begin(v); el_it != std::end(v); ++el_it) {
-    if (el_it != std::begin(v)) {
-      out << ",";
-    }
-    out << *el_it;
-  }
-  out << "]";
-
-  return out;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &out,
-                         const std::vector<std::vector<T>> &A)
-{
-  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
-    if (row_it != std::begin(A)) {
-      out << std::endl;
-    }
-
-    out << *row_it;
-  }
-
-  return out;
 }
 
 std::ostream &operator<<(std::ostream &out, const LinearSystem &ls);

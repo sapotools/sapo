@@ -9,6 +9,8 @@
 
 #include "Bundle.h"
 
+#include "LinearAlgebra.h"
+
 #include <cmath>
 #include <limits>
 #include <string>
@@ -196,7 +198,7 @@ Polytope Bundle::getPolytope() const
     b.push_back(this->offp[i]);
   }
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    A.push_back(get_complementary(this->L[i]));
+    A.push_back(-this->L[i]);
     b.push_back(this->offm[i]);
   }
 
@@ -232,7 +234,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
   it = std::begin(this->T[i]);
   // lower facets
   for (unsigned int j = this->getDim(); j < 2 * this->getDim(); j++) {
-    Lambda.push_back(get_complementary(this->L[*it]));
+    Lambda.push_back(-this->L[*it]);
     d[j] = this->offm[*(it++)];
   }
 
@@ -252,7 +254,7 @@ Bundle Bundle::get_canonical() const
   std::vector<double> canoffp(this->getSize()), canoffm(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
     canoffp[i] = bund.maximize(this->L[i]);
-    canoffm[i] = bund.maximize(get_complementary(this->L[i]));
+    canoffm[i] = bund.maximize(-this->L[i]);
   }
   return Bundle(this->vars, this->L, canoffp, canoffm, this->T);
 }
@@ -261,10 +263,11 @@ Bundle Bundle::get_canonical() const
  * Check whether a vector is permutation of a sorted vector
  *
  * @param[in] v1 first vector
- * @param[in] v2 a sorted vector 
+ * @param[in] v2 a sorted vector
  * @returns true is v1 is a permutation of v2
  */
-bool isPermutationOfSorted(std::vector<int> v1, const std::vector<int>& v2_sorted)
+bool isPermutationOfSorted(std::vector<int> v1,
+                           const std::vector<int> &v2_sorted)
 {
   if (v1.size() != v2_sorted.size()) {
     return false;
@@ -293,7 +296,7 @@ bool isPermutationOfSorted(std::vector<int> v1, const std::vector<int>& v2_sorte
  * @param[in] v2 second vector
  * @returns true is v1 is a permutation of v2
  */
-bool isPermutation(const std::vector<int>& v1, std::vector<int> v2)
+bool isPermutation(const std::vector<int> &v1, std::vector<int> v2)
 {
   if (v1.size() != v2.size()) {
     return false;
@@ -305,7 +308,8 @@ bool isPermutation(const std::vector<int>& v1, std::vector<int> v2)
 }
 
 template<typename T>
-bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M, const unsigned int &i)
+bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
+                                  const unsigned int &i)
 {
   using namespace std;
 
