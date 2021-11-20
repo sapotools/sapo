@@ -8,6 +8,8 @@
 
 #include "Parallelotope.h"
 
+#include "LinearAlgebra.h"
+
 #include <cmath>
 
 /**
@@ -95,6 +97,47 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 {
 }
 
+std::list<std::vector<double>> get_parallelotope_vertices(const std::vector<std::vector<double>> &template_matrix, const std::vector<double> &offset)
+{
+  const unsigned int dim = offset.size()/2;
+
+  std::list<std::vector<double>> vertices;
+
+  std::vector<double> offset_cut;
+  std::copy(offset.begin(), offset.begin() + dim, std::back_inserter(offset_cut));
+
+  SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix, dim);
+  SparseLinearAlgebra::PLU_Factorization<double> factorization;
+
+  try {
+    factorization = SparseLinearAlgebra::PLU_Factorization<double>(tmatrix);
+
+  } catch (std::domain_error &) { // if a domain_error is raised, then the
+                                  // template is singular
+    std::cerr << "singular parallelotope" << std::endl
+              << Polytope(template_matrix, offset) << std::endl
+              << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // store the base vertex
+  vertices.push_back(factorization.solve(offset_cut));
+
+  // Compute the vertices v
+  for (unsigned int k = 0; k < dim; k++) {
+    double tmp = offset_cut[k];
+    offset_cut[k] = -offset[k + dim];
+    vertices.push_back(factorization.solve(offset_cut));
+    offset_cut[k] = tmp;
+  }
+
+  return vertices;
+}
+
+// TODO: this method assumes that the template matrix has the form
+//       [A, -A]^T where A is square. It would be safier to have as
+//       parameters a square template matrix A, the lower offset
+//       boundaries, and the upper offset boundaries.
 /**
  * Constructor that instantiates a parallelotope from a linear system
  *
@@ -137,70 +180,18 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
   }
 
   // convert the linear system to vectors
-  vector<Vector> vertices;
+  list<Vector> vertices = get_parallelotope_vertices(template_matrix, offset);
 
-  // find base vertex
-  // build the linear system
-  ex q = this->vars[0];
-  lst LS;
-
-  //	for (int i=0; i<Lambda.size(); i++) {
-  //		for (int j=0; j<Lambda[i].size(); j++) {
-  //			cout<<Lambda[i][j]<<" ";
-  //		}
-  //		cout<<"\n";
-  //	}
-
-  for (unsigned int i = 0; i < this->dim; i++) {
-    ex eq = 0;
-    for (unsigned int j = 0; j < template_matrix[i].size(); j++) {
-      eq = eq + template_matrix[i][j] * q[j];
-    }
-    eq = eq == offset[i];
-    LS.append(eq);
-  }
-
-  //	cout<<LS;
-
-  ex solLS = lsolve(LS, q);
-  if (solLS.nops() == 0) { // the template is singular
-    std::cerr << "singular parallelotope" << std::endl
-              << Polytope(template_matrix, offset) << std::endl
-              << LS << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  vertices.push_back(lst2vec((ex)q.subs(solLS))); // store the base_vertex
-
-  // Compute the vertices v
-  for (unsigned int k = 0; k < this->dim; k++) {
-    ex a = this->vars[1];
-    lst LS;
-
-    for (unsigned int i = 0; i < this->dim; i++) {
-      ex eq = 0;
-      for (unsigned int j = 0; j < template_matrix[i].size(); j++) {
-        eq = eq + template_matrix[i][j] * a[j];
-      }
-      if (i != k) {
-        eq = eq == offset[i];
-      } else {
-        eq = eq == -offset[i + this->dim];
-      }
-      LS.append(eq);
-    }
-    ex solLS = lsolve(LS, a);
-    vertices.push_back(lst2vec(a.subs(solLS))); // store the i-th vertex
-  }
-
-  this->base_vertex = vertices[0];
+  this->base_vertex = vertices.front();
 
   // Compute the generators
   Matrix g(this->dim, Vector(this->dim));
-  const Vector &first_vertex = vertices[0];
+  const Vector &first_vertex = vertices.front();
+
+  auto v_it = std::begin(vertices);
   for (unsigned int i = 0; i < this->dim; i++) {
     Vector &g_i = g[i];
-    const Vector &vertex = vertices[i + 1];
+    const Vector &vertex = *(++v_it);
     for (unsigned int j = 0; j < this->dim; j++) {
       g_i[j] = vertex[j] - first_vertex[j];
     }
@@ -223,8 +214,9 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
     Vector &g_i = g[i];
     for (unsigned int j = 0; j < this->dim; j++) {
       if (lenghts[i] != 0) {
-        versor_i[j] = floor((g_i[j] / lenghts[i]) * 100000000000.0f)
-                      / 100000000000.0f;
+        // TODO: check why this approximation is required
+        versor_i[j]
+            = floor((g_i[j] / lenghts[i]) * 100000000000.0f) / 100000000000.0f;
       } else {
         versor_i[j] = floor(g_i[j] * 100000000000.0f) / 100000000000.0f;
       }
