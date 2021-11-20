@@ -81,7 +81,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 
   // Initialize the template matrix
   vector<double> base_vertex(this->dim, 0);
-  Vector lenghts(this->dim, 1);
+  Vector lengths(this->dim, 1);
 }
 
 /**
@@ -97,14 +97,17 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 {
 }
 
-std::list<std::vector<double>> get_parallelotope_vertices(const std::vector<std::vector<double>> &template_matrix, const std::vector<double> &offset)
+std::list<std::vector<double>> get_parallelotope_vertices(
+    const std::vector<std::vector<double>> &template_matrix,
+    const std::vector<double> &offset)
 {
-  const unsigned int dim = offset.size()/2;
+  const unsigned int dim = offset.size() / 2;
 
   std::list<std::vector<double>> vertices;
 
   std::vector<double> offset_cut;
-  std::copy(offset.begin(), offset.begin() + dim, std::back_inserter(offset_cut));
+  std::copy(offset.begin(), offset.begin() + dim,
+            std::back_inserter(offset_cut));
 
   SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix, dim);
   SparseLinearAlgebra::PLU_Factorization<double> factorization;
@@ -184,51 +187,31 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 
   this->base_vertex = vertices.front();
 
-  // Compute the generators
-  Matrix g(this->dim, Vector(this->dim));
-  const Vector &first_vertex = vertices.front();
+  // Compute the generators, their lengths, and the versors
+  for (auto v_it = ++std::begin(vertices); v_it != std::end(vertices);
+       ++v_it) {
 
-  auto v_it = std::begin(vertices);
-  for (unsigned int i = 0; i < this->dim; i++) {
-    Vector &g_i = g[i];
-    const Vector &vertex = *(++v_it);
-    for (unsigned int j = 0; j < this->dim; j++) {
-      g_i[j] = vertex[j] - first_vertex[j];
+    // add a new generator
+    const Vector gen = *v_it - base_vertex;
+
+    // compute its length and store it
+    const double length = norm_2(gen);
+    lengths.push_back(length);
+
+    // compute and store the corresponding versor
+
+    // The approximation below improves performances
+    // TODO: check whether the performance-approximation
+    //       corelation is due to GiNaC.
+    // TODO: set the approximation dynamically, possibly
+    //       by using SIL input.
+    if (length == 0) {
+      // TODO: check when a versor can be null
+      u.push_back(approx(gen, 11));
+    } else {
+      u.push_back(approx(gen / length, 11));
     }
   }
-
-  lenghts.resize(this->dim);
-
-  // Compute the generators lengths
-  for (unsigned int i = 0; i < this->dim; i++) {
-    lenghts[i] = euclidNorm(g[i]);
-    // cout<<lengths[i]<<" ";
-  }
-  //	cout<<"\n";
-
-  // cout<<"g\n";
-  // Find the versors
-  this->u = Matrix(this->dim, Vector(this->dim));
-  for (unsigned int i = 0; i < this->dim; i++) {
-    Vector &versor_i = this->u[i];
-    Vector &g_i = g[i];
-    for (unsigned int j = 0; j < this->dim; j++) {
-      if (lenghts[i] != 0) {
-        // TODO: check why this approximation is required
-        versor_i[j]
-            = floor((g_i[j] / lenghts[i]) * 100000000000.0f) / 100000000000.0f;
-      } else {
-        versor_i[j] = floor(g_i[j] * 100000000000.0f) / 100000000000.0f;
-      }
-    }
-  }
-
-  //	for (int i=0; i<this->u.size(); i++) {
-  //		for (int j=0; j<this->u[i].size(); j++) {
-  //			cout<<this->u[i][j]<<" ";
-  //		}
-  //		cout<<"\n";
-  //	}
 
   // create the generation function accumulating the versor values
   const lst &alpha = this->vars[1];
@@ -264,7 +247,6 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 {
   using namespace std;
-  using namespace GiNaC;
 
   if (q.size() != this->dim) {
     std::cerr << "Parallelotope::gen2const : q must have dimension "
@@ -282,12 +264,7 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 
     for (unsigned int j = 0; j < this->dim; j++) { // for all the generators u
       if (i != j) {
-        vector<double> p;
-        for (unsigned int k = 0; k < this->dim;
-             k++) { // coordinate of the point
-          p.push_back(q[k] + this->u[j][k] * beta[j]);
-        }
-        pts.push_back(p);
+        pts.push_back(q + (beta[j] * this->u[j]));
       }
     }
     hps.push_back(hyperplaneThroughPts(pts));
@@ -355,8 +332,8 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 }
 
 /**
- * Determine the equation of the hyperplane passing through some points, i.e.,
- * res[0]*x_0 + .. + res[n]*x_n + res[n+1] = 0
+ * Determine the equation of the hyperplane passing through some linearly
+ * independent points, i.e., res[0]*x_0 + .. + res[n]*x_n + res[n+1] = 0
  *
  * @param[in] pts interpolation points
  * @returns interpolating function coefficients
@@ -367,20 +344,18 @@ std::vector<double> Parallelotope::hyperplaneThroughPts(
   using namespace std;
   using namespace GiNaC;
 
-  if (pts.size() != pts[0].size()) {
-    std::cerr << "Parallelotope::hyperplaneThroughPts : pts must contain "
-              << "n n-dimensional points" << std::endl;
+  if (pts.size() == 0 || pts.size() != pts[0].size()) {
+    std::cerr << "Parallelotope::hyperplaneThroughPts: pts must contain "
+              << "n non-linearly dependent n-dimensional points with n!=0"
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
   Matrix A;
   // build the linear system Ax = 0
-  for (unsigned int i = 1; i < pts.size(); i++) {
-    A.push_back(Vector(this->dim, 0));
-    Vector &last_row = A.back();
-    for (unsigned int j = 0; j < this->dim; j++) {
-      last_row[j] = pts[0][j] - pts[i][j];
-    }
+
+  for (auto pts_it = ++std::begin(pts); pts_it != std::end(pts); ++pts_it) {
+    A.push_back(pts.front() - *pts_it);
   }
 
   // Build the linear system to find the normal vector
@@ -411,6 +386,11 @@ std::vector<double> Parallelotope::hyperplaneThroughPts(
   ex sub;
   unsigned int sub_idx = 0;
   // search for the tautology
+  // TODO: why is Sapo searching for one(!) tautology?
+  //       According to the GiNaC manual tautologies occur
+  //       when the system is underdetermined. However,
+  //       under these circumstances, the most resonable
+  //       things to do is to return an error.
   for (unsigned int i = 0; i < solLS.nops(); i++) {
     if (solLS[i].is_equal(a[i] == a[i])) {
       sub = a[i] == 1;
@@ -442,84 +422,22 @@ std::vector<double> Parallelotope::hyperplaneThroughPts(
 poly_values Parallelotope::const2gen(Polytope *constr) const
 {
   using namespace std;
-  using namespace GiNaC;
 
-  const vector<vector<double>> &Lambda = constr->getA();
-  const vector<double> &d = constr->getb();
-  vector<vector<double>> vertices;
+  // convert the linear system to vectors
+  std::list<Vector> vertices
+      = get_parallelotope_vertices(constr->getA(), constr->getb());
 
-  // find base vertex
-  // build the linear system
-  ex q = this->vars[0];
-  lst LS;
+  // Compute the generators and their lengths
+  Vector lengths;
+  for (auto v_it = ++std::begin(vertices); v_it != std::end(vertices);
+       ++v_it) {
 
-  for (unsigned int i = 0; i < this->dim; i++) {
-    ex eq = 0;
-    for (unsigned int j = 0; j < Lambda[i].size(); j++) {
-      eq = eq + Lambda[i][j] * q[j];
-    }
-    eq = eq == d[i];
-    LS.append(eq);
-  }
-
-  ex solLS = lsolve(LS, q);
-  vertices.push_back(lst2vec(q.subs(solLS))); // store the base_vertex
-
-  // Compute the vertices v
-  for (unsigned int k = 0; k < this->dim; k++) {
-    ex a = this->vars[1];
-    lst LS;
-
-    for (unsigned int i = 0; i < this->dim; i++) {
-      ex eq = 0;
-      for (unsigned int j = 0; j < Lambda[i].size(); j++) {
-        eq = eq + Lambda[i][j] * a[j];
-      }
-      if (i != k) {
-        eq = eq == d[i];
-      } else {
-        eq = eq == -d[i + this->dim];
-      }
-      LS.append(eq);
-    }
-
-    ex solLS = lsolve(LS, a);
-    vertices.push_back(lst2vec(a.subs(solLS))); // store the i-th vertex
-  }
-
-  // Compute the generators
-  vector<vector<double>> g;
-  for (unsigned int i = 0; i < this->dim; i++) {
-    vector<double> gi;
-    for (unsigned int j = 0; j < this->dim; j++) {
-      gi.push_back(vertices[i + 1][j] - vertices[0][j]);
-    }
-    g.push_back(gi);
-  }
-
-  // Compute the generators lengths
-  vector<double> lengths;
-  for (unsigned int i = 0; i < this->dim; i++) {
-    lengths.push_back(euclidNorm(g[i]));
-  }
-
-  // Find the versors (optional since versors are specified by the user)
-  vector<vector<double>> versors;
-  for (unsigned int i = 0; i < this->dim; i++) {
-    vector<double> versori;
-    for (unsigned int j = 0; j < this->dim; j++) {
-      versori.push_back(g[i][j] / lengths[i]);
-    }
-    versors.push_back(versori);
+    // compute its length and store it
+    lengths.push_back(norm_2(*v_it - vertices.front()));
   }
 
   // Return the conversion
-  poly_values result;
-  result.base_vertex = vertices[0];
-  result.lenghts = lengths;
-  // result.versors = versors;
-
-  return result;
+  return poly_values{vertices.front(), lengths};
 }
 
 /**
@@ -538,26 +456,6 @@ std::vector<double> Parallelotope::lst2vec(const GiNaC::ex &list) const
     res.push_back(ex_to<numeric>(evalf(list[i])).to_double());
 
   return res;
-}
-
-// TODO: Turn the following method is a function.
-
-/**
- * Compute the Euclidean norm of a vector
- *
- * @param[in] v vector to normalize
- * @returns norm of the given vector
- */
-double Parallelotope::euclidNorm(const Vector &v) const
-{
-
-  double norm = 0;
-
-  for (unsigned int i = 0; i < v.size(); i++) {
-    norm = norm + (v[i] * v[i]);
-  }
-
-  return sqrt(norm);
 }
 
 Parallelotope::~Parallelotope()

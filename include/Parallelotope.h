@@ -15,7 +15,7 @@
 
 struct poly_values { // numerical values for polytopes
   std::vector<double> base_vertex;
-  std::vector<double> lenghts;
+  std::vector<double> lengths;
 };
 
 class Parallelotope
@@ -36,10 +36,9 @@ private:
       const; // find hyper plane passing through pts
   Vector
   lst2vec(const GiNaC::ex &list) const; // convert a lst to a vector of doubles
-  double euclidNorm(const Vector &v) const; // compute euclidean norm
 
   std::vector<double> base_vertex;
-  std::vector<double> lenghts;
+  std::vector<double> lengths;
 
 public:
   Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
@@ -102,9 +101,12 @@ public:
   gen2const(const Vector &q,
             const Vector &beta) const;       // from generator to constraints
   poly_values const2gen(Polytope *LS) const; // from constraints to generators
+
+  // TODO: This method is never called by Sapo. Check whether is really
+  // necessary
   Polytope getPolytope() const
   {
-    return this->gen2const(this->base_vertex, this->lenghts);
+    return this->gen2const(this->base_vertex, this->lengths);
   }
 
   const std::vector<double> &getBaseVertex() const
@@ -112,9 +114,9 @@ public:
     return this->base_vertex;
   }
 
-  const std::vector<double> &getLenghts() const
+  const std::vector<double> &getlengths() const
   {
-    return this->lenghts;
+    return this->lengths;
   }
 
   Matrix getVersors() const

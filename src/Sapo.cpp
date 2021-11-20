@@ -84,7 +84,6 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
                      unsigned int k)
 {
   using namespace std;
-  using namespace GiNaC;
 
   if (this->verbose) {
     cout << "Initial Set" << endl
@@ -427,7 +426,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
     // substitute numerical values in sofog
     vector<double> base_vertex = P.getBaseVertex();
-    vector<double> lengths = P.getLenghts();
+    vector<double> lengths = P.getlengths();
 
     lst qvars(P.getQ());
     lst bvars(P.getBeta());

@@ -423,7 +423,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     const lst &genFun = P.getGeneratorFunction();
 
     const vector<double> &base_vertex = P.getBaseVertex();
-    const vector<double> &lengths = P.getLenghts();
+    const vector<double> &lengths = P.getlengths();
 
     lst subParatope;
 
@@ -539,7 +539,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
     const lst &genFun = P.getGeneratorFunction();
 
     const vector<double> &base_vertex = P.getBaseVertex();
-    const vector<double> &lengths = P.getLenghts();
+    const vector<double> &lengths = P.getlengths();
 
     lst subParatope;
 

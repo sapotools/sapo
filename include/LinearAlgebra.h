@@ -15,6 +15,137 @@
 #include <set>
 
 #include <numeric> // due to std::iota
+#include <math.h>  // due to sqrt
+#include <cmath>   // due to floor
+#include <limits>  // due to numeric_limits
+
+/**
+ * @brief Approximate all the values in a vector up to given decimal digit.
+ *
+ * @tparam T is a numerical type
+ * @param v is a the vector
+ * @param decimal is the number of decimal number in the result.
+ * @return the given vector approximated up to `decimal` decimal digits.
+ */
+template<typename T>
+inline std::vector<T> approx(const std::vector<T> &v,
+                             const unsigned short decimal
+                             = std::numeric_limits<T>::digits10);
+
+/**
+ * @brief Approximate all the values in a vector up to given decimal digit.
+ *
+ * This function can be mainly used to speed up the computation.
+ *
+ * @tparam T is a numerical type
+ * @param v is a the vector
+ * @param decimal is the number of decimal number in the result.
+ * @return the given vector approximated up to `decimal` decimal digits.
+ */
+template<typename T>
+inline std::vector<T> approx(std::vector<T> &&orig,
+                             const unsigned short decimal
+                             = std::numeric_limits<T>::digits10);
+
+/**
+ * @brief Approximate all the values in a vector up to given decimal digit.
+ *
+ * This function can be mainly used to speed up the computation.
+ *
+ * @param v is a the vector
+ * @param decimal is the number of decimal number in the result.
+ * @return the given vector approximated up to `decimal` decimal digits.
+ */
+template<>
+inline std::vector<double> approx<double>(std::vector<double> &&orig,
+                                          const unsigned short decimal)
+{
+  if (decimal == std::numeric_limits<double>::digits10) {
+    return orig;
+  }
+
+  const double mult = std::pow(10, decimal);
+  for (auto it = std::begin(orig); it != std::end(orig); ++it) {
+    *it = floor(*it * mult) / mult;
+  }
+
+  return orig;
+}
+
+/**
+ * @brief Approximate all the values in a vector up to given decimal digit.
+ *
+ * This function can be mainly used to speed up the computation.
+ *
+ * @param v is a the vector
+ * @param decimal is the number of decimal number in the result.
+ * @return the given vector approximated up to `decimal` decimal digits.
+ */
+template<>
+inline std::vector<double> approx<double>(const std::vector<double> &orig,
+                                          const unsigned short decimal)
+{
+  return approx<double>(std::vector<double>(orig), decimal);
+}
+
+/**
+ * @brief Compute the Euclidean norm of a vector
+ *
+ * @tparam T is a numeric type supporting the `sqrt` function.
+ * @param v is a vector
+ * @return the Euclidean norm of the given vector
+ */
+template<typename T>
+T norm_2(const std::vector<T> &v)
+{
+  T norm = 0;
+
+  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
+    norm += *v_it * *v_it;
+  }
+
+  return sqrt(norm);
+}
+
+/**
+ * @brief Compute the Manhattan norm of a vector
+ *
+ * @tparam T is a numeric type supporting the `abs` function.
+ * @param v is a vector
+ * @return the Manhattan norm of the given vector
+ */
+template<typename T>
+T norm_1(const std::vector<T> &v)
+{
+  T norm = 0;
+
+  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
+    norm += std::abs(*v_it);
+  }
+
+  return norm;
+}
+
+/**
+ * @brief Compute the maximum norm of a vector
+ *
+ * @tparam T is a numeric type supporting the `abs` function.
+ * @param v is a vector
+ * @return the maximum norm of the given vector
+ */
+template<typename T>
+T norm_infinity(const std::vector<T> &v)
+{
+  T norm = 0;
+
+  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
+    if (std::abs(*v_it) > norm) {
+      norm = std::abs(*v_it);
+    }
+  }
+
+  return norm;
+}
 
 /**
  * Compute the complementary of a vector of values.
@@ -39,9 +170,245 @@ std::vector<T> operator-(const std::vector<T> &orig)
  * @return A vector containing the complementaries of the parameter values
  */
 template<typename T>
-std::vector<T> &operator-(std::vector<T> &&v)
+std::vector<T> operator-(std::vector<T> &&v)
 {
   transform(v.begin(), v.end(), v.begin(), std::negate<T>());
+
+  return v;
+}
+
+/**
+ * @brief Compute the element-wise sum of two vectors.
+ *
+ * @tparam T any numeric type
+ * @param a is the first vector to be added.
+ * @param b is the second vector to be added.
+ * @return the element-wise sum of the two parameters.
+ */
+template<typename T>
+std::vector<T> operator+(const std::vector<T> &a, const std::vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    throw std::domain_error("The two vectors have different dimensions");
+  }
+
+  std::vector<T> res(a.size());
+
+  for (unsigned int i = 0; i < res.size(); ++i) {
+    res[i] = a[i] + b[i];
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise sum of two vectors.
+ *
+ * @tparam T any numeric type
+ * @param a is the first vector to be added.
+ * @param b is the second vector to be added.
+ * @return the element-wise sum of the two parameters.
+ */
+template<typename T>
+std::vector<T> operator+(std::vector<T> &&a, const std::vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    throw std::domain_error("The two vectors have different dimensions");
+  }
+
+  for (unsigned int i = 0; i < a.size(); ++i) {
+    a[i] += b[i];
+  }
+
+  return a;
+}
+
+/**
+ * @brief Compute the element-wise sum of two vectors.
+ *
+ * @tparam T any numeric type
+ * @param a is the first vector to be added.
+ * @param b is the second vector to be added.
+ * @return the element-wise sum of the two parameters.
+ */
+template<typename T>
+inline std::vector<T> operator+(const std::vector<T> &a, std::vector<T> &&b)
+{
+  return operator+(b, a);
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors.
+ *
+ * @tparam T any numeric type
+ * @param a is the vector from which the second parameter must be subtracted.
+ * @param b is the vector that must be subtracted.
+ * @return the element-wise difference of the second parameter from the first
+ * one.
+ */
+template<typename T>
+std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    throw std::domain_error("The two vectors have different dimensions");
+  }
+
+  std::vector<T> res(a.size());
+
+  for (unsigned int i = 0; i < res.size(); ++i) {
+    res[i] = a[i] - b[i];
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors.
+ *
+ * @tparam T any numeric type
+ * @param a is the vector from which the second parameter must be subtracted.
+ * @param b is the vector that must be subtracted.
+ * @return the element-wise difference of the second parameter from the first
+ * one.
+ */
+template<typename T>
+std::vector<T> operator-(std::vector<T> &&a, const std::vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    throw std::domain_error("The two vectors have different dimensions");
+  }
+
+  for (unsigned int i = 0; i < a.size(); ++i) {
+    a[i] -= b[i];
+  }
+
+  return a;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors.
+ *
+ * @tparam T any numeric type
+ * @param a is the vector from which the second parameter must be subtracted.
+ * @param b is the vector that must be subtracted.
+ * @return the element-wise difference of the second parameter from the first
+ * one.
+ */
+template<typename T>
+std::vector<T> operator-(const std::vector<T> &a, std::vector<T> &&b)
+{
+  if (a.size() != b.size()) {
+    throw std::domain_error("The two vectors have different dimensions");
+  }
+
+  for (unsigned int i = 0; i < a.size(); ++i) {
+    b[i] -= a[i];
+    b[i] *= -1;
+  }
+
+  return a;
+}
+
+/**
+ * @brief Compute the element-wise scalar product.
+ *
+ * @tparam T any numeric type.
+ * @param s is a scalar value.
+ * @param v is a vector.
+ * @return the element-wise scalar product $s * v$.
+ */
+template<typename T>
+std::vector<T> operator*(const T s, const std::vector<T> &v)
+{
+  std::vector<T> res(v.size());
+
+  for (unsigned int i = 0; i < res.size(); ++i) {
+    res[i] = s * v[i];
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise scalar product.
+ *
+ * @tparam T any numeric type.
+ * @param v is a vector.
+ * @param s is a scalar value.
+ * @return the element-wise scalar product $v * s$.
+ */
+template<typename T>
+inline std::vector<T> operator*(const std::vector<T> &v, const T s)
+{
+  return operator*(s, v);
+}
+
+/**
+ * @brief Compute the element-wise scalar product.
+ *
+ * @tparam T any numeric type.
+ * @param s is a scalar value.
+ * @param v is a vector.
+ * @return the element-wise scalar product $s * v$.
+ */
+template<typename T>
+std::vector<T> operator*(const T s, std::vector<T> &&v)
+{
+  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
+    *v_it *= s;
+  }
+
+  return v;
+}
+
+/**
+ * @brief Compute the element-wise scalar product.
+ *
+ * @tparam T any numeric type.
+ * @param v is a vector.
+ * @param s is a scalar value.
+ * @return the element-wise scalar product $v * s$.
+ */
+template<typename T>
+inline std::vector<T> operator*(std::vector<T> &&v, const T s)
+{
+  return operator*(s, v);
+}
+
+/**
+ * @brief Compute the element-wise scalar division.
+ *
+ * @tparam T any numeric type.
+ * @param v is a vector.
+ * @param s is a scalar value.
+ * @return the element-wise scalar division $v/a$.
+ */
+template<typename T>
+std::vector<T> operator/(const std::vector<T> &v, const T s)
+{
+  std::vector<T> res(v.size());
+
+  for (unsigned int i = 0; i < res.size(); ++i) {
+    res[i] = v[i] / s;
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise scalar division.
+ *
+ * @tparam T any numeric type.
+ * @param v is a vector.
+ * @param s is a scalar value.
+ * @return the element-wise scalar division $v/a$.
+ */
+template<typename T>
+std::vector<T> operator/(std::vector<T> &&v, const T s)
+{
+  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
+    *v_it /= s;
+  }
 
   return v;
 }
