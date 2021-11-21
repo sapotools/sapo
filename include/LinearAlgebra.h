@@ -489,13 +489,13 @@ class PLU_Factorization
 
 public:
   /**
-   * @brief Construct a new PLU_Factorization object
+   * @brief Create a new PLU_Factorization object
    *
    */
   PLU_Factorization(): _P(), _LU() {}
 
   /**
-   * @brief Construct a new PLU_Factorization object
+   * @brief Create a new PLU_Factorization object
    *
    * @param orig is the model for the new object.
    */
@@ -504,7 +504,7 @@ public:
   }
 
   /**
-   * @brief Construct a new PLU_Factorization object
+   * @brief Create a new PLU_Factorization object
    *
    * This constructor performs the P-LU factorization of
    * a dense matrix.
@@ -637,73 +637,190 @@ namespace SparseLinearAlgebra
 template<typename T>
 class Matrix
 {
+  class _row_ref_type;
+
   /**
-   * @brief A proxy for rows of sparse matrices
+   * @brief  A reference class for sparse matrix elements
    */
-  class _const_RowType
+  class _elem_ref_type
   {
-    const std::map<unsigned int, T> *_row; //!< a pointer to the actual row
-    size_t _num_of_cols;                   //!< the row size
+    Matrix<T> &A;               //!< a reference to the matrix
+    const unsigned int row_idx; //!< the index of the element row
+    const unsigned int col_idx; //!< the index of the element column
 
     /**
-     * @brief Construct a new const RowType object
+     * @brief Create a new matrix element reference object
      *
-     * @param num_of_cols is the row size
+     * @param row is a reference to the element row
+     * @param col_idx is the index of the element column
      */
-    _const_RowType(const size_t num_of_cols):
-        _row(NULL), _num_of_cols(num_of_cols)
+    _elem_ref_type(_row_ref_type &row, const unsigned int col_idx):
+        A(row.A), row_idx(row.row_idx), col_idx(col_idx)
     {
-    }
-
-    /**
-     * @brief Construct a new const RowType object
-     *
-     * @param row is a pointer to the actual row
-     * @param num_of_cols is the row size
-     */
-    _const_RowType(const std::map<unsigned int, T> *row,
-                   const size_t num_of_cols):
-        _row(row),
-        _num_of_cols(num_of_cols)
-    {
+      if (col_idx >= A.num_of_rows()) {
+        throw std::out_of_range("Out-of_bound: the column does not exist.");
+      }
     }
 
   public:
     /**
-     * @brief Construct a new const RowType object
+     * @brief The assignment method
+     *
+     * This method assign a value to the referenced matrix element. If the
+     * element already exists, it reassigns it with a new value. If the
+     * matrix element does not exists yet, it creates the referenced
+     * element (and its row if necessary) and assigns it with `value`.
+     *
+     * @param value is value that must be assign to the referenced element.
+     * @return a reference to the assigned matrix element.
+     */
+    T &operator=(const T &value)
+    {
+      auto row_it = A._matrix.find(row_idx);
+
+      if (row_it == std::end(A._matrix)) {
+        A._matrix[row_idx] = Matrix<T>::RowType();
+
+        row_it = A._matrix.find(row_idx);
+      }
+
+      row_it->second[col_idx] = value;
+
+      return row_it->second[col_idx];
+    }
+
+    /**
+     * @brief The typecast operator for the type T
+     *
+     * @return The value of the matrix element.
+     */
+    operator T() const
+    {
+      auto row_it = A._matrix.find(row_idx);
+
+      if (row_it == std::end(A._matrix)) {
+        return 0;
+      }
+
+      auto elem_it = row_it->second.find(col_idx);
+
+      if (elem_it == std::end(row_it->second)) {
+        return 0;
+      }
+
+      return elem_it->second;
+    }
+
+    friend class _row_ref_type;
+  };
+
+  /**
+   * @brief A reference class for sparse matrix rows
+   */
+  class _row_ref_type
+  {
+    Matrix<T> &A;               //!< a reference to the matrix
+    const unsigned int row_idx; //!< the index of the referenced row
+
+    /**
+     * @brief Create a new row reference object
+     *
+     * @param A
+     * @param row_idx
+     */
+    _row_ref_type(Matrix<T> &A, const unsigned int row_idx):
+        A(A), row_idx(row_idx)
+    {
+      if (row_idx >= A.num_of_rows()) {
+        throw std::out_of_range("Out-of_bound: the row does not exist.");
+      }
+    }
+
+  public:
+    /**
+     * @brief Copy constructor for row reference objects
      *
      * @param orig is the model for the new object.
      */
-    _const_RowType(const _const_RowType &orig):
-        _row(orig._row), _num_of_cols(orig._num_of_cols)
+    _row_ref_type(const _row_ref_type &orig): A(orig.A), row_idx(orig.row_idx)
     {
     }
 
     /**
-     * @brief Return the value in the `i`-th position of the row
+     * @brief Return a reference of the element in the `col_idx`-th position of
+     * the row
      *
-     * @param i is the index of the aimed value.
-     * @return a copy of the value in position `i`.
+     * @param col_idx is the index of the aimed value.
+     * @return a reference of the element in position `col_idx`.
      */
-    T operator[](const unsigned int i) const
+    _elem_ref_type operator[](const unsigned int col_idx)
     {
-      if (i >= _num_of_cols) {
-        throw std::domain_error("Out-of_bound: the column does not exist.");
-      }
-
-      if (_row == NULL) {
-        return 0;
-      }
-
-      auto it = _row->find(i);
-      if (it == std::end(*_row)) {
-        return 0;
-      }
-
-      return it->second;
+      return _elem_ref_type(*this, col_idx);
     }
 
-    friend Matrix;
+    friend class _elem_ref_type;
+    friend class Matrix<T>;
+  };
+
+  /**
+   * @brief A constant reference class for sparse matrix rows
+   */
+  class _const_row_ref_type
+  {
+    const Matrix<T> &A;         //!< a reference to the matrix
+    const unsigned int row_idx; //!< the index of the referenced row
+
+    /**
+     * @brief Create a new constant row reference object
+     *
+     * @param A
+     * @param row_idx
+     */
+    _const_row_ref_type(const Matrix<T> &A, const unsigned int row_idx):
+        A(A), row_idx(row_idx)
+    {
+      if (row_idx >= A.num_of_rows()) {
+        throw std::out_of_range("Out-of_bound: the row does not exist.");
+      }
+    }
+
+  public:
+    /**
+     * @brief Copy constructor for constant row reference objects
+     *
+     * @param orig is the model for the new object.
+     */
+    _const_row_ref_type(const _const_row_ref_type &orig):
+        A(orig.A), row_idx(orig.row_idx)
+    {
+    }
+
+    /**
+     * @brief Return the value in the `col_idx`-th position of the row
+     *
+     * @param col_idx is the index of the aimed value.
+     * @return a copy of the value in position `col_idx`.
+     */
+    T operator[](const unsigned int col_idx) const
+    {
+      if (col_idx >= A.num_of_cols()) {
+        throw std::out_of_range("Out-of_bound: the column does not exist.");
+      }
+
+      auto row_it = A._matrix.find(row_idx);
+
+      if (row_it == std::end(A._matrix)) {
+        return 0;
+      }
+
+      auto elem_it = row_it->second.find(col_idx);
+
+      if (elem_it == std::end(row_it->second)) {
+        return 0;
+      }
+
+      return elem_it->second;
+    }
   };
 
   typedef std::map<unsigned int, T> RowType;
@@ -714,13 +831,16 @@ class Matrix
 
 public:
   /**
-   * @brief Construct a new Matrix object
+   * @brief Create a new Matrix object
    *
    */
   Matrix(): _matrix(), _num_of_rows(0), _num_of_cols(0) {}
 
   /**
-   * @brief Construct a new Matrix object
+   * @brief Create a new Matrix object
+   *
+   * This method creates a new sparse matrix having a given number
+   * of rows and columns whose elements equal zero.
    *
    * @param num_of_rows is the number of rows in the new matrix.
    * @param num_of_cols is the number of columns in the new matrix.
@@ -731,7 +851,7 @@ public:
   }
 
   /**
-   * @brief Construct a new Matrix object
+   * @brief Create a new Matrix object
    *
    * @param orig is the model for the new matrix.
    * @param up_to_row is the number of rows to be considered in `orig`.
@@ -763,7 +883,7 @@ public:
   }
 
   /**
-   * @brief Construct a new Matrix object
+   * @brief Create a new Matrix object
    *
    * @param orig is the model for the new matrix.
    */
@@ -814,23 +934,26 @@ public:
   }
 
   /**
-   * @brief Get a proxy of one of the matrix rows
+   * @brief Get a constant reference to one of the matrix rows
    *
-   * @param j is the index of the aimed row.
-   * @return the proxy of the `j`-th row.
+   * @param row_idx is the index of the aimed row.
+   * @return the constant reference of the `row_idx`-th row.
    */
-  typename Matrix<T>::_const_RowType operator[](const unsigned int j) const
+  typename Matrix<T>::_const_row_ref_type
+  operator[](const unsigned int row_idx) const
   {
-    if (j >= _num_of_rows) {
-      throw std::domain_error("Out-of_bound: the row does not exist");
-    }
+    return _const_row_ref_type(*this, row_idx);
+  }
 
-    auto it = _matrix.find(j);
-    if (it == std::end(_matrix)) {
-      return _const_RowType(_num_of_cols);
-    }
-
-    return _const_RowType(&it->second, _num_of_cols);
+  /**
+   * @brief Get a reference to one of the matrix rows
+   *
+   * @param row_idx is the index of the aimed row.
+   * @return the reference of the `row_idx`-th row.
+   */
+  typename Matrix<T>::_row_ref_type operator[](const unsigned int row_idx)
+  {
+    return _row_ref_type(*this, row_idx);
   }
 
   /**
@@ -1062,7 +1185,7 @@ class PLU_Factorization
 
 public:
   /**
-   * @brief Construct a new PLU_Factorization object
+   * @brief Create a new PLU_Factorization object
    */
   PLU_Factorization(): _P(), _L(), _U() {}
 
@@ -1077,7 +1200,7 @@ public:
   }
 
   /**
-   * @brief Construct a new PLU_Factorization object
+   * @brief Create a new PLU_Factorization object
    *
    * This constructor performs the P-LU factorization of
    * a sparse matrix.
@@ -1262,6 +1385,8 @@ public:
 }
 /*! @} End of SparseLinearAlgebra group */
 
+namespace std
+{
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
 {
@@ -1311,7 +1436,7 @@ template<typename T>
 std::ostream &operator<<(std::ostream &os,
                          const SparseLinearAlgebra::Matrix<T> &M)
 {
-  os << "[ #rows: " << M.num_of_rows() << " #cols: " << M.num_of_cols();
+  os << "[ #rows: " << M.num_of_rows() << " #cols: " << M.num_of_cols() << " ";
   for (auto row_it = std::begin(M._matrix); row_it != std::end(M._matrix);
        ++row_it) {
     os << std::endl << " row " << row_it->first << ": [";
@@ -1320,7 +1445,7 @@ std::ostream &operator<<(std::ostream &os,
       if (elem_it != std::begin(row_it->second)) {
         os << ", ";
       }
-      os << "(" << elem_it->first << "," << elem_it->second << ")";
+      os << "col " << elem_it->first << ": " << elem_it->second;
     }
     os << "]";
   }
@@ -1340,5 +1465,5 @@ std::ostream &operator<<(std::ostream &os,
 
   return os;
 }
-
+}
 #endif // LINEAR_ALGEBRA_H
