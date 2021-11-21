@@ -338,14 +338,14 @@ bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
 Bundle Bundle::decompose(double alpha, int max_iters)
 {
   using namespace std;
-  using namespace GiNaC;
 
   vector<double> offDists = this->offsetDistances();
 
-  vector<vector<int>> curT
-      = this->T; // get current template and try to improve it
-  vector<vector<int>> bestT
-      = this->T; // get current template and try to improve it
+  // get current template and try to improve it
+  vector<vector<int>> curT = this->T;
+
+  // get current template and try to improve it
+  vector<vector<int>> bestT = this->T;
   int temp_card = this->T.size();
 
   int i = 0;
@@ -361,17 +361,14 @@ Bundle Bundle::decompose(double alpha, int max_iters)
     tmpT[i1][j1] = rand() % this->getSize();
 
     if (!is_permutation_of_other_rows(tmpT, i1)) {
-      ex eq1 = 0;
-      lst LS1;
+      std::vector<std::vector<double>> A;
       for (unsigned int j = 0; j < this->getDim(); j++) {
-        for (unsigned int k = 0; k < this->getDim(); k++) {
-          eq1 = eq1 + this->vars[0][k] * this->L[tmpT[i1][j]][k];
-        }
-        LS1.append(eq1 == this->offp[j]);
+        A.push_back(this->L[tmpT[i1][j]]);
       }
-      ex solLS1 = lsolve(LS1, this->vars[0]);
 
-      if (solLS1.nops() != 0) {
+      DenseLinearAlgebra::PLU_Factorization<double> fact;
+      try {
+        fact = DenseLinearAlgebra::PLU_Factorization<double>(A);
 
         double w1 = alpha * this->maxOffsetDist(tmpT, offDists)
                     + (1 - alpha) * this->maxOrthProx(tmpT);
@@ -382,6 +379,8 @@ Bundle Bundle::decompose(double alpha, int max_iters)
           bestT = tmpT;
         }
         curT = tmpT;
+      } catch (...) {
+        // The matrix A can't be factorized and Ax=b has no solution
       }
     }
     i++;
