@@ -5,7 +5,6 @@
 using namespace std;
 using namespace GiNaC;
 
-
 namespace std
 {
 ostream &operator<<(ostream &os, const AbsSyn::problemType t)
@@ -710,4 +709,3 @@ bool InputData::check()
   return res;
 }
 }
-

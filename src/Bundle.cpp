@@ -22,8 +22,9 @@
  * @param[in] orig is the model for the new bundle
  */
 Bundle::Bundle(const Bundle &orig):
-    dim(orig.dim), L(orig.L), offp(orig.offp), offm(orig.offm), T(orig.T),
-    Theta(orig.Theta), vars(orig.vars)
+    dim(orig.dim), dir_matrix(orig.dir_matrix), offp(orig.offp),
+    offm(orig.offm), t_matrix(orig.t_matrix), Theta(orig.Theta),
+    vars(orig.vars)
 {
 }
 
@@ -40,54 +41,67 @@ Bundle::Bundle(Bundle &&orig)
 void swap(Bundle &A, Bundle &B)
 {
   std::swap(A.dim, B.dim);
-  std::swap(A.L, B.L);
+  std::swap(A.dir_matrix, B.dir_matrix);
   std::swap(A.offp, B.offp);
   std::swap(A.offm, B.offm);
-  std::swap(A.T, B.T);
+  std::swap(A.t_matrix, B.t_matrix);
   std::swap(A.Theta, B.Theta);
   std::swap(A.vars, B.vars);
+}
+
+/**
+ * Orthogonal proximity of v1 and v2, i.e.,
+ * how close is the angle between v1 and v2 is to pi/2
+ *
+ * @param[in] v1 vector
+ * @param[in] v2 vector
+ * @returns orthogonal proximity
+ */
+double orthProx(std::vector<double> v1, std::vector<double> v2)
+{
+  return std::abs(angle(v1, v2) - (3.14159265 / 2));
 }
 
 /**
  * Constructor that instantiates the bundle
  *
  * @param[in] vars list of variables for parallelotope generator functions
- * @param[in] L matrix of directions
+ * @param[in] dir_matrix matrix of directions
  * @param[in] offp upper offsets
  * @param[in] offm lower offsets
- * @param[in] T templates matrix
+ * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
+Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
                const Vector &offp, const Vector &offm,
-               const std::vector<std::vector<int>> &T):
-    L(L),
-    offp(offp), offm(offm), T(T), vars(vars)
+               const std::vector<std::vector<int>> &t_matrix):
+    dir_matrix(dir_matrix),
+    offp(offp), offm(offm), t_matrix(t_matrix), vars(vars)
 {
   using namespace std;
 
-  if (L.size() > 0) {
-    this->dim = L[0].size();
+  if (dir_matrix.size() > 0) {
+    this->dim = dir_matrix[0].size();
   } else {
-    cout << "Bundle::Bundle : L must be non empty";
+    cout << "Bundle::Bundle : dir_matrix must be non empty";
   }
-  if (L.size() != offp.size()) {
-    cout << "Bundle::Bundle : L and offp must have the same size";
+  if (dir_matrix.size() != offp.size()) {
+    cout << "Bundle::Bundle : dir_matrix and offp must have the same size";
     exit(EXIT_FAILURE);
   }
-  if (L.size() != offm.size()) {
-    cout << "Bundle::Bundle : L and offm must have the same size";
+  if (dir_matrix.size() != offm.size()) {
+    cout << "Bundle::Bundle : dir_matrix and offm must have the same size";
     exit(EXIT_FAILURE);
   }
-  if (T.size() > 0) {
-    for (unsigned int i = 0; i < T.size(); i++) {
-      if (T[i].size() != this->getDim()) {
-        cout << "Bundle::Bundle : T must have " << this->getDim()
+  if (t_matrix.size() > 0) {
+    for (unsigned int i = 0; i < t_matrix.size(); i++) {
+      if (t_matrix[i].size() != this->getDim()) {
+        cout << "Bundle::Bundle : t_matrix must have " << this->getDim()
              << " columns";
         exit(EXIT_FAILURE);
       }
     }
   } else {
-    cout << "Bundle::Bundle : T must be non empty";
+    cout << "Bundle::Bundle : t_matrix must be non empty";
     exit(EXIT_FAILURE);
   }
 
@@ -101,7 +115,7 @@ Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
   for (unsigned int i = 0; i < this->getNumDirs(); i++) {
     this->Theta[i][i] = 0;
     for (unsigned int j = i + 1; j < this->getNumDirs(); j++) {
-      double prox = this->orthProx(this->L[i], this->L[j]);
+      double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
       this->Theta[i][j] = prox;
       this->Theta[j][i] = prox;
     }
@@ -111,51 +125,52 @@ Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &L,
 /**
  * Constructor that instantiates the bundle with auto-generated variables
  *
- * @param[in] L matrix of directions
+ * @param[in] dir_matrix matrix of directions
  * @param[in] offp upper offsets
  * @param[in] offm lower offsets
- * @param[in] T templates matrix
+ * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
-               const std::vector<std::vector<int>> &T):
-    L(L),
-    offp(offp), offm(offm), T(T)
+Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
+               const Vector &offm,
+               const std::vector<std::vector<int>> &t_matrix):
+    dir_matrix(dir_matrix),
+    offp(offp), offm(offm), t_matrix(t_matrix)
 {
   using namespace std;
   using namespace GiNaC;
 
-  if (L.size() > 0) {
-    this->dim = L[0].size();
+  if (dir_matrix.size() > 0) {
+    this->dim = dir_matrix[0].size();
   } else {
-    std::cerr << "Bundle::Bundle : L must be non empty" << std::endl;
+    std::cerr << "Bundle::Bundle : dir_matrix must be non empty" << std::endl;
 
     exit(EXIT_FAILURE);
   }
-  if (L.size() != offp.size()) {
-    std::cerr << "Bundle::Bundle : L and offp "
+  if (dir_matrix.size() != offp.size()) {
+    std::cerr << "Bundle::Bundle : dir_matrix and offp "
               << "must have the same size" << std::endl;
     exit(EXIT_FAILURE);
   }
-  if (L.size() != offm.size()) {
-    std::cerr << "Bundle::Bundle : L and offm must have "
+  if (dir_matrix.size() != offm.size()) {
+    std::cerr << "Bundle::Bundle : dir_matrix and offm must have "
               << "the same size" << std::endl;
     exit(EXIT_FAILURE);
   }
-  if (T.size() > 0) {
-    for (unsigned int i = 0; i < T.size(); i++) {
-      if (T[i].size() != this->getDim()) {
-        std::cerr << "Bundle::Bundle : T must have " << this->getDim()
+  if (t_matrix.size() > 0) {
+    for (unsigned int i = 0; i < t_matrix.size(); i++) {
+      if (t_matrix[i].size() != this->getDim()) {
+        std::cerr << "Bundle::Bundle : t_matrix must have " << this->getDim()
                   << " columns" << std::endl;
         exit(EXIT_FAILURE);
       }
     }
   } else {
-    std::cerr << "Bundle::Bundle : T must be non empty" << std::endl;
+    std::cerr << "Bundle::Bundle : t_matrix must be non empty" << std::endl;
     exit(EXIT_FAILURE);
   }
 
   // generate the variables
-  const size_t &dim = T[0].size();
+  const size_t &dim = t_matrix[0].size();
 
   this->vars = vector<lst>{get_symbol_lst("b", dim),  // Base vertex variables
                            get_symbol_lst("f", dim),  // Free variables
@@ -168,7 +183,7 @@ Bundle::Bundle(const Matrix &L, const Vector &offp, const Vector &offm,
   for (unsigned int i = 0; i < this->getNumDirs(); i++) {
     this->Theta[i][i] = 0;
     for (unsigned int j = i + 1; j < this->getNumDirs(); j++) {
-      double prox = this->orthProx(this->L[i], this->L[j]);
+      double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
       this->Theta[i][j] = prox;
       this->Theta[j][i] = prox;
     }
@@ -194,11 +209,11 @@ Bundle::operator Polytope() const
   vector<vector<double>> A;
   vector<double> b;
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    A.push_back(this->L[i]);
+    A.push_back(this->dir_matrix[i]);
     b.push_back(this->offp[i]);
   }
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    A.push_back(-this->L[i]);
+    A.push_back(-this->dir_matrix[i]);
     b.push_back(this->offm[i]);
   }
 
@@ -215,20 +230,20 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
 {
   using namespace std;
 
-  if (i > this->T.size()) {
-    cerr << "Bundle::getParallelotope : i must be between 0 and " << T.size()
-         << endl;
+  if (i > this->t_matrix.size()) {
+    cerr << "Bundle::getParallelotope : i must be between 0 and "
+         << t_matrix.size() << endl;
     exit(EXIT_FAILURE);
   }
 
   vector<double> lbound, ubound;
   vector<vector<double>> Lambda;
 
-  vector<int>::const_iterator it = std::begin(this->T[i]);
+  vector<int>::const_iterator it = std::begin(this->t_matrix[i]);
   // upper facets
   for (unsigned int j = 0; j < this->getDim(); j++) {
     const int idx = *it;
-    Lambda.push_back(this->L[idx]);
+    Lambda.push_back(this->dir_matrix[idx]);
     ubound.push_back(this->offp[idx]);
     lbound.push_back(this->offm[idx]);
 
@@ -250,10 +265,11 @@ Bundle Bundle::get_canonical() const
   Polytope bund = *this;
   std::vector<double> canoffp(this->getSize()), canoffm(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    canoffp[i] = bund.maximize(this->L[i]);
-    canoffm[i] = bund.maximize(-this->L[i]);
+    canoffp[i] = bund.maximize(this->dir_matrix[i]);
+    canoffm[i] = bund.maximize(-this->dir_matrix[i]);
   }
-  return Bundle(this->vars, this->L, canoffp, canoffm, this->T);
+  return Bundle(this->vars, this->dir_matrix, canoffp, canoffm,
+                this->t_matrix);
 }
 
 /**
@@ -323,7 +339,126 @@ bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
   return false;
 }
 
-// TODO: the following method should be fixed
+/**
+ * Maximum distance accumulation of a vector w.r.t. a set of vectors
+ *
+ * @param[in] vIdx index of the reference vector
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @param[in] dists pre-computed distances
+ * @returns distance accumulation
+ */
+double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
+                     const std::vector<double> &dists)
+{
+
+  if (dirsIdx.empty()) {
+    return 0;
+  }
+
+  double dist = dists[vIdx];
+  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
+    dist = dist * dists[dirsIdx[i]];
+  }
+  return dist;
+}
+
+/**
+ * Maximum distance accumulation of a set of vectors
+ *
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @param[in] dists pre-computed distances
+ * @returns distance accumulation
+ */
+double maxOffsetDist(const std::vector<int> &dirsIdx,
+                     const std::vector<double> &dists)
+{
+
+  double dist = 1;
+  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
+    dist = dist * dists[dirsIdx[i]];
+  }
+  return dist;
+}
+
+/**
+ * Maximum distance accumulation of matrix
+ *
+ * @param[in] T matrix from which fetch the vectors
+ * @param[in] dists pre-computed distances
+ * @returns distance accumulation
+ */
+double maxOffsetDist(const std::vector<std::vector<int>> &T,
+                     const std::vector<double> &dists)
+{
+  double maxdist = std::numeric_limits<double>::lowest();
+  for (unsigned int i = 0; i < T.size(); i++) {
+    maxdist = std::max(maxdist, maxOffsetDist(T[i], dists));
+  }
+  return maxdist;
+}
+
+/**
+ * Maximum orthogonal proximity of a vector w.r.t. a set of vectors
+ *
+ * @param[in] dir_matrix is the direction matrix
+ * @param[in] vIdx index of the reference vector
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @returns maximum orthogonal proximity
+ */
+double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
+                   const int vIdx, const std::vector<int> &dirsIdx)
+{
+
+  if (dirsIdx.empty()) {
+    return 0;
+  }
+
+  double maxProx = 0;
+  for (auto d_it = std::begin(dirsIdx); d_it != std::end(dirsIdx); ++d_it) {
+    maxProx = std::max(maxProx, orthProx(dir_matrix[vIdx], dir_matrix[*d_it]));
+  }
+  return maxProx;
+}
+
+/**
+ * Maximum orthogonal proximity within a set of vectors
+ *
+ * @param[in] dir_matrix is the direction matrix
+ * @param[in] dirsIdx indexes of vectors to be considered
+ * @returns maximum orthogonal proximity
+ */
+double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
+                   const std::vector<int> &dirsIdx)
+{
+  double maxProx = 0;
+  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
+    for (unsigned int j = i + 1; j < dirsIdx.size(); j++) {
+      maxProx = std::max(
+          maxProx, orthProx(dir_matrix[dirsIdx[i]], dir_matrix[dirsIdx[j]]));
+    }
+  }
+  return maxProx;
+}
+
+/**
+ * Maximum orthogonal proximity of all the vectors of a matrix
+ *
+ * @param[in] dir_matrix is the direction matrix
+ * @param[in] T collection of vectors
+ * @returns maximum orthogonal proximity
+ */
+double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
+                   const std::vector<std::vector<int>> &T)
+{
+  double maxorth = std::numeric_limits<double>::lowest();
+  for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
+    maxorth = std::max(maxorth, maxOrthProx(dir_matrix, *T_it));
+  }
+  return maxorth;
+}
+
+// TODO: the following method probably does not work; it
+//       should be fixed
 /**
  * Decompose the current symbolic polytope
  *
@@ -339,11 +474,11 @@ Bundle Bundle::decompose(double alpha, int max_iters)
   vector<double> offDists = this->offsetDistances();
 
   // get current template and try to improve it
-  vector<vector<int>> curT = this->T;
+  vector<vector<int>> curT = this->t_matrix;
 
   // get current template and try to improve it
-  vector<vector<int>> bestT = this->T;
-  int temp_card = this->T.size();
+  vector<vector<int>> bestT = this->t_matrix;
+  int temp_card = this->t_matrix.size();
 
   int i = 0;
   while (i < max_iters) {
@@ -360,17 +495,17 @@ Bundle Bundle::decompose(double alpha, int max_iters)
     if (!is_permutation_of_other_rows(tmpT, i1)) {
       std::vector<std::vector<double>> A;
       for (unsigned int j = 0; j < this->getDim(); j++) {
-        A.push_back(this->L[tmpT[i1][j]]);
+        A.push_back(this->dir_matrix[tmpT[i1][j]]);
       }
 
       DenseLinearAlgebra::PLU_Factorization<double> fact(A);
       try {
         fact.solve(std::vector<double>(this->getDim(), 0));
 
-        double w1 = alpha * this->maxOffsetDist(tmpT, offDists)
-                    + (1 - alpha) * this->maxOrthProx(tmpT);
-        double w2 = alpha * this->maxOffsetDist(bestT, offDists)
-                    + (1 - alpha) * this->maxOrthProx(bestT);
+        double w1 = alpha * maxOffsetDist(tmpT, offDists)
+                    + (1 - alpha) * maxOrthProx(this->dir_matrix, tmpT);
+        double w2 = alpha * maxOffsetDist(bestT, offDists)
+                    + (1 - alpha) * maxOrthProx(this->dir_matrix, bestT);
 
         if (w1 < w2) {
           bestT = tmpT;
@@ -383,7 +518,7 @@ Bundle Bundle::decompose(double alpha, int max_iters)
     i++;
   }
 
-  return Bundle(this->vars, this->L, this->offp, this->offp, bestT);
+  return Bundle(this->vars, this->dir_matrix, this->offp, this->offp, bestT);
 }
 
 /**
@@ -407,7 +542,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
-    for (unsigned int i = 0; i < this->L.size(); i++) {
+    for (unsigned int i = 0; i < this->dir_matrix.size(); i++) {
       dirs_to_bound.push_back(i);
     }
   }
@@ -429,14 +564,14 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     }
 
     if (mode == 0) { // static mode
-      dirs_to_bound = this->T[i];
+      dirs_to_bound = this->t_matrix[i];
     }
 
     for (unsigned int j = 0; j < dirs_to_bound.size();
          j++) { // for each direction
 
       // key of the control points
-      vector<int> key = this->T[i];
+      vector<int> key = this->t_matrix[i];
       key.push_back(dirs_to_bound[j]);
 
       lst actbernCoeffs;
@@ -461,7 +596,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
         Lfog = 0;
         // upper facets
         for (unsigned int k = 0; k < this->getDim(); k++) {
-          Lfog = Lfog + this->L[dirs_to_bound[j]][k] * fog[k];
+          Lfog = Lfog + this->dir_matrix[dirs_to_bound[j]][k] * fog[k];
         }
 
         actbernCoeffs
@@ -490,7 +625,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     }
   }
 
-  Bundle res = Bundle(this->vars, this->L, newDp, newDm, this->T);
+  Bundle res
+      = Bundle(this->vars, this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }
@@ -522,8 +658,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
 
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
-    dirs_to_bound = vector<int>(this->L.size());
-    for (unsigned int i = 0; i < this->L.size(); i++) {
+    dirs_to_bound = vector<int>(this->dir_matrix.size());
+    for (unsigned int i = 0; i < this->dir_matrix.size(); i++) {
       dirs_to_bound[i] = i;
     }
   }
@@ -545,14 +681,14 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
     }
 
     if (mode == 0) { // static mode
-      dirs_to_bound = this->T[i];
+      dirs_to_bound = this->t_matrix[i];
     }
 
     for (unsigned int j = 0; j < dirs_to_bound.size();
          j++) { // for each direction
 
       // key of the control points
-      vector<int> key = this->T[i];
+      vector<int> key = this->t_matrix[i];
       key.push_back(dirs_to_bound[j]);
 
       lst actbernCoeffs;
@@ -578,7 +714,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
         Lfog = 0;
         // upper facets
         for (unsigned int k = 0; k < this->getDim(); k++) {
-          Lfog = Lfog + this->L[dirs_to_bound[j]][k] * fog[k];
+          Lfog = Lfog + this->dir_matrix[dirs_to_bound[j]][k] * fog[k];
         }
 
         actbernCoeffs
@@ -608,22 +744,12 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
     }
   }
 
-  Bundle res(this->vars, this->L, newDp, newDm, this->T);
+  Bundle res(this->vars, this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }
 
   return res;
-}
-
-/**
- * Set the bundle template
- *
- * @param[in] T new template
- */
-void Bundle::setTemplate(std::vector<std::vector<int>> T)
-{
-  this->T = T;
 }
 
 /**
@@ -636,180 +762,10 @@ std::vector<double> Bundle::offsetDistances()
 
   std::vector<double> dist(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
-    dist[i] = std::abs(this->offp[i] - this->offm[i]) / this->norm(this->L[i]);
+    dist[i] = std::abs(this->offp[i] - this->offm[i])
+              / norm_2(this->dir_matrix[i]);
   }
   return dist;
-}
-
-/**
- * Compute the norm of a vector
- *
- * @param[in] v vector to normalize
- * @returns norm of the given vector
- */
-double Bundle::norm(std::vector<double> v)
-{
-  double sum = 0;
-  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
-    sum = sum + (*v_it) * (*v_it);
-  }
-  return sqrt(sum);
-}
-
-/**
- * Compute the product of two vectors
- *
- * @param[in] v1 left vector
- * @param[in] v2 right vector
- * @returns product v1*v2'
- */
-double Bundle::prod(std::vector<double> v1, std::vector<double> v2)
-{
-  double prod = 0;
-  for (unsigned int i = 0; i < v1.size(); i++) {
-    prod = prod + v1[i] * v2[i];
-  }
-  return prod;
-}
-
-// TODO: turn this method in a (inline) function
-/**
- * Compute the angle between two vectors
- *
- * @param[in] v1 vector
- * @param[in] v2 vector
- * @returns angle between v1 and v2
- */
-double Bundle::angle(std::vector<double> v1, std::vector<double> v2)
-{
-  return acos(this->prod(v1, v2) / (this->norm(v1) * this->norm(v2)));
-}
-
-// TODO: Turn this method in a (inline) function
-/**
- * Orthogonal proximity of v1 and v2, i.e.,
- * how close is the angle between v1 and v2 is to pi/2
- *
- * @param[in] v1 vector
- * @param[in] v2 vector
- * @returns orthogonal proximity
- */
-double Bundle::orthProx(std::vector<double> v1, std::vector<double> v2)
-{
-  return std::abs(this->angle(v1, v2) - (3.14159265 / 2));
-}
-
-/**
- * Maximum orthogonal proximity of a vector w.r.t. a set of vectors
- *
- * @param[in] vIdx index of the reference vector
- * @param[in] dirsIdx indexes of vectors to be considered
- * @returns maximum orthogonal proximity
- */
-double Bundle::maxOrthProx(const int vIdx, const std::vector<int> &dirsIdx)
-{
-
-  if (dirsIdx.empty()) {
-    return 0;
-  }
-
-  double maxProx = 0;
-  for (auto d_it = std::begin(dirsIdx); d_it != std::end(dirsIdx); ++d_it) {
-    maxProx = std::max(maxProx, this->orthProx(this->L[vIdx], this->L[*d_it]));
-  }
-  return maxProx;
-}
-
-/**
- * Maximum orthogonal proximity within a set of vectors
- *
- * @param[in] dirsIdx indexes of vectors to be considered
- * @returns maximum orthogonal proximity
- */
-double Bundle::maxOrthProx(const std::vector<int> &dirsIdx)
-{
-  double maxProx = 0;
-  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    for (unsigned int j = i + 1; j < dirsIdx.size(); j++) {
-      maxProx = std::max(
-          maxProx, this->orthProx(this->L[dirsIdx[i]], this->L[dirsIdx[j]]));
-    }
-  }
-  return maxProx;
-}
-
-/**
- * Maximum orthogonal proximity of all the vectors of a matrix
- *
- * @param[in] T collection of vectors
- * @returns maximum orthogonal proximity
- */
-double Bundle::maxOrthProx(const std::vector<std::vector<int>> &T)
-{
-  double maxorth = std::numeric_limits<double>::lowest();
-  for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
-    maxorth = std::max(maxorth, this->maxOrthProx(*T_it));
-  }
-  return maxorth;
-}
-
-// TODO: Turn this method in a function
-/**
- * Maximum distance accumulation of a vector w.r.t. a set of vectors
- *
- * @param[in] vIdx index of the reference vector
- * @param[in] dirsIdx indexes of vectors to be considered
- * @param[in] dists pre-computed distances
- * @returns distance accumulation
- */
-double Bundle::maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
-                             const std::vector<double> &dists)
-{
-
-  if (dirsIdx.empty()) {
-    return 0;
-  }
-
-  double dist = dists[vIdx];
-  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    dist = dist * dists[dirsIdx[i]];
-  }
-  return dist;
-}
-
-/**
- * Maximum distance accumulation of a set of vectors
- *
- * @param[in] dirsIdx indexes of vectors to be considered
- * @param[in] dists pre-computed distances
- * @returns distance accumulation
- */
-double Bundle::maxOffsetDist(const std::vector<int> &dirsIdx,
-                             const std::vector<double> &dists)
-{
-
-  double dist = 1;
-  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    dist = dist * dists[dirsIdx[i]];
-  }
-  return dist;
-}
-
-/**
- * Maximum distance accumulation of matrix
- *
- * @param[in] T matrix from which fetch the vectors
- * @param[in] dists pre-computed distances
- * @returns distance accumulation
- */
-double Bundle::maxOffsetDist(const std::vector<std::vector<int>> &T,
-                             const std::vector<double> &dists)
-{
-  double maxdist = std::numeric_limits<double>::lowest();
-  for (unsigned int i = 0; i < T.size(); i++) {
-    maxdist = std::max(maxdist, this->maxOffsetDist(T[i], dists));
-  }
-  return maxdist;
 }
 
 /**
@@ -845,70 +801,6 @@ bool isIn(std::vector<int> v, std::vector<std::vector<int>> vlist)
     }
   }
   return false;
-}
-
-/**
- * Check if a matrix is a valid template for the current bundle
- *
- * @param[in] T template matrix to be tested
- * @param[in] card cardinality of the bundle
- * @param[in] dirs directions
- * @returns true T is a valid template
- */
-bool Bundle::validTemp(const std::vector<std::vector<int>> &T, unsigned int card,
-                       const std::vector<int> &dirs)
-{
-  using namespace std;
-
-  cout << "dirs: ";
-  for (auto dir_it = std::begin(dirs); dir_it != std::end(dirs); ++dir_it) {
-    cout << *dir_it << " ";
-  }
-  cout << "\n";
-
-  cout << "T:\n";
-
-  for (auto row = std::begin(T); row != std::end(T); ++row) {
-    for (auto el = std::begin(*row); el != std::end(*row); ++el) {
-      cout << *el << " ";
-    }
-    cout << "\n";
-  }
-  cout << "\n";
-
-  if (T.size() != card) {
-    return false;
-  }
-
-  // check if all the directions appear in T
-  vector<bool> dirIn(dirs.size(), false);
-  for (unsigned int i = 0; i < dirs.size(); i++) {
-    for (auto row = std::begin(T); row != std::end(T); ++row) {
-      dirIn[i] = isIn(dirs[i], *row);
-    }
-  }
-
-  for (auto dir_it = std::begin(dirIn); dir_it != std::end(dirIn); ++dir_it) {
-    if (!*dir_it) {
-      return false;
-    }
-  }
-  //
-  //	// check if all the directions are non null
-  //	vector< bool > nonNullDir (this->getDim(),false);
-  //	for ( int i=0; i<T.size(); i++ ) {
-  //		for ( int j=0; j<T[i].size(); j++ ) {
-  //			for (int k=0; k<this->getDim(); k++) {
-  //				nonNullDir[k] = this->L[T[i][j]][k] != 0;
-  //			}
-  //		}
-  //	}
-  //	for (int i=0; i<nonNullDir.size(); i++) {
-  //		if ( !nonNullDir[i] ) {
-  //			return false;
-  //		}
-  //	}
-  return true;
 }
 
 Bundle::~Bundle()
