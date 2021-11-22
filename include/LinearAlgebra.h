@@ -344,6 +344,32 @@ inline std::vector<T> operator*(const std::vector<T> &v, const T s)
 }
 
 /**
+ * @brief Compute the vector product.
+ *
+ * @tparam T any numeric type.
+ * @param v1 is a vector.
+ * @param v2 is a vector.
+ * @return the vector product $v1 \cdot v2$.
+ */
+template<typename T>
+T operator*(const std::vector<T> &v1, const std::vector<T> &v2)
+{
+  if (v1.size() != v2.size()) {
+    throw std::domain_error("The two vectors have not the same dimensions.");
+  }
+
+  T res = 0;
+  auto it2 = std::begin(v2);
+  for (auto it1 = std::begin(v1); it1 != std::end(v1); ++it1) {
+    res += (*it1) * (*it2);
+
+    ++it2;
+  }
+
+  return res;
+}
+
+/**
  * @brief Compute the element-wise scalar product.
  *
  * @tparam T any numeric type.
@@ -413,36 +439,39 @@ std::vector<T> operator/(std::vector<T> &&v, const T s)
   return v;
 }
 
-
 /**
  * @brief Compute the row-column matrix-matrix multiplication
- * 
+ *
  * @tparam T is a numeric type
  * @param A is a dense matrix
  * @param B is a dense matrix
  * @return the row-column matrix-matrix multiplication $A \cdot B$.
  */
 template<typename T>
-std::vector<std::vector<T>> operator*(const std::vector<std::vector<T>> &A, const std::vector<std::vector<T>> &B)
+std::vector<std::vector<T>> operator*(const std::vector<std::vector<T>> &A,
+                                      const std::vector<std::vector<T>> &B)
 {
-  if (((A.size()!=0 && A.front().size()==0) || (A.size()==0)) && B.size() == 0) {
+  if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
+      && B.size() == 0) {
     return std::vector<std::vector<T>>();
   }
-  
+
   if (A.front().size() != B.size()) {
-    throw std::domain_error("The two matrices are not compatible for the matrix-matrix multiplication.");
+    throw std::domain_error("The two matrices are not compatible for the "
+                            "matrix-matrix multiplication.");
   }
 
-  std::vector<std::vector<T>> res(A.size(), std::vector<T>(B.front().size(), 0));
+  std::vector<std::vector<T>> res(A.size(),
+                                  std::vector<T>(B.front().size(), 0));
 
-  for (unsigned int row_idx=0; row_idx < A.size(); ++row_idx) {
-    for (unsigned int col_idx=0; col_idx < B.front().size(); ++col_idx) {
+  for (unsigned int row_idx = 0; row_idx < A.size(); ++row_idx) {
+    for (unsigned int col_idx = 0; col_idx < B.front().size(); ++col_idx) {
       T value = 0;
-      for (unsigned int k=0; k < A[row_idx].size(); ++k) {
-        value += A[row_idx][k]*B[k][col_idx];
+      for (unsigned int k = 0; k < A[row_idx].size(); ++k) {
+        value += A[row_idx][k] * B[k][col_idx];
       }
       res[row_idx][col_idx] = value;
-    } 
+    }
   }
 
   return res;
@@ -612,7 +641,8 @@ public:
     }
 
     if (_LU.size() != _LU.front().size()) {
-      throw std::domain_error("The factorization is not square and the linear system cannot be solved.");
+      throw std::domain_error("The factorization is not square and the linear "
+                              "system cannot be solved.");
     }
 
     std::vector<T> Pb(b.size());
@@ -669,7 +699,7 @@ public:
 
   /**
    * @brief Return the factorization lower-triangular matrix
-   * 
+   *
    * @return the factorization lower-triangular matrix.
    */
   std::vector<std::vector<T>> L() const
@@ -679,7 +709,8 @@ public:
     for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
       const std::vector<T> &row = _LU[row_idx];
       std::vector<T> &res_row = res[row_idx];
-      for (unsigned int col_idx = 0; col_idx < row_idx && col_idx < row.size(); ++col_idx) {
+      for (unsigned int col_idx = 0; col_idx < row_idx && col_idx < row.size();
+           ++col_idx) {
         res_row[col_idx] = row[col_idx];
       }
       res_row[row_idx] = 1;
@@ -690,12 +721,13 @@ public:
 
   /**
    * @brief Return the factorization upper-triangular matrix
-   * 
+   *
    * @return the factorization upper-triangular matrix.
    */
   std::vector<std::vector<T>> U() const
   {
-    std::vector<std::vector<T>> res(_LU.size(), std::vector<T>(_LU.front().size(), 0));
+    std::vector<std::vector<T>> res(_LU.size(),
+                                    std::vector<T>(_LU.front().size(), 0));
 
     for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
       const std::vector<T> &row = _LU[row_idx];
@@ -709,7 +741,8 @@ public:
   }
 
   template<typename E>
-  friend std::ostream &std::operator<<(std::ostream &os, const PLU_Factorization<E> &D);
+  friend std::ostream &std::operator<<(std::ostream &os,
+                                       const PLU_Factorization<E> &D);
 };
 
 }
@@ -732,6 +765,10 @@ namespace SparseLinearAlgebra
 template<typename T>
 class Matrix
 {
+public:
+  typedef std::map<unsigned int, T> RowType;
+
+protected:
   class _row_ref_type;
 
   /**
@@ -921,11 +958,29 @@ class Matrix
     friend class Matrix<T>;
   };
 
-  typedef std::map<unsigned int, T> RowType;
-
   std::map<unsigned int, RowType> _matrix; //!< indexed list of rows
   size_t _num_of_rows;                     //!< number of rows
   size_t _num_of_cols;                     //!< number of columns
+
+  /**
+   * @brief Transform a vector in a RowType
+   *
+   * @param row to original vector
+   * @return the RowType representing `row`.
+   */
+  static RowType get_RowType(const std::vector<T> &row)
+  {
+    RowType row_map;
+    unsigned int elem_idx = 0;
+    for (auto elem_it = std::begin(row); elem_it != std::end(row); ++elem_it) {
+      if (*elem_it != 0) {
+        row_map[elem_idx] = *elem_it;
+      }
+      ++elem_idx;
+    }
+
+    return row_map;
+  }
 
 public:
   /**
@@ -1015,20 +1070,49 @@ public:
       _num_of_rows = row_idx + 1;
     }
 
-    auto key_compare = [](const std::pair<unsigned int, T> &a,
-                          const std::pair<unsigned int, T> &b) -> bool {
-      return a.first < b.first;
-    };
-    auto greatest
-        = std::max_element(std::begin(row), std::end(row), key_compare);
+    auto greatest = std::rbegin(row);
 
-    if (_num_of_cols < greatest->first) {
-      _num_of_cols = greatest->first;
+    if (_num_of_cols < greatest->first + 1) {
+      _num_of_cols = greatest->first + 1;
     }
 
     _matrix[row_idx] = row;
 
     return *this;
+  }
+
+  /**
+   * @brief Add a row to the matrix.
+   *
+   * @param row_idx is the index of the new row.
+   * @param row is the new row.
+   * @return a reference to the updated object.
+   */
+  inline Matrix<T> &add_row(unsigned row_idx, const std::vector<T> &row)
+  {
+    return add_row(row_idx, get_RowType(row));
+  }
+
+  /**
+   * @brief Add a row as last row of the matrix.
+   *
+   * @param row is the new row.
+   * @return a reference to the updated object.
+   */
+  inline Matrix<T> &add_row(const RowType &row)
+  {
+    return add_row(this->num_of_rows(), row);
+  }
+
+  /**
+   * @brief Add a row as last row of the matrix.
+   *
+   * @param row is the new row.
+   * @return a reference to the updated object.
+   */
+  inline Matrix<T> &add_row(const std::vector<T> &row)
+  {
+    return add_row(this->num_of_rows(), get_RowType(row));
   }
 
   /**
@@ -1134,14 +1218,15 @@ public:
 
   /**
    * @brief Compute the row-column matrix-matrix multiplication
-   * 
+   *
    * @param A is a matrix
    * @return The row-column multiplication between this object and `A`.
    */
   Matrix<T> operator*(const Matrix<T> &A) const
   {
     if (num_of_cols() != A.num_of_rows()) {
-      std::domain_error("The two matrices are not compatible for the matrix-matrix multiplication.");
+      std::domain_error("The two matrices are not compatible for the "
+                        "matrix-matrix multiplication.");
     }
 
     Matrix<T> res(num_of_rows(), A.num_of_cols());
@@ -1151,8 +1236,8 @@ public:
       const unsigned int row_idx = row_it->first;
       for (unsigned int col_idx = 0; col_idx < A.num_of_cols(); ++col_idx) {
         T value = 0;
-        for (auto elem_it = std::cbegin(row_it->second); elem_it != std::cend(row_it->second);
-          ++elem_it) {
+        for (auto elem_it = std::cbegin(row_it->second);
+             elem_it != std::cend(row_it->second); ++elem_it) {
           value += elem_it->second * A[elem_it->first][col_idx];
         }
         if (value != 0) {
@@ -1357,8 +1442,8 @@ public:
 
     std::vector<std::set<unsigned int>> non_zero_below_diag
         = get_non_zero_below_diag(M);
-    
-    for (unsigned int row_idx=0; row_idx < _L.num_of_rows(); ++row_idx) {
+
+    for (unsigned int row_idx = 0; row_idx < _L.num_of_rows(); ++row_idx) {
       // set the L diagonal to 1
       _L._matrix[row_idx][row_idx] = 1;
     }
@@ -1385,18 +1470,19 @@ public:
         }
       }
 
-      // after the previous conditional statement either the 
-      // diagonal element is no more zero or all the values 
-      // below the diagonal in column row_idx are 0 and we 
+      // after the previous conditional statement either the
+      // diagonal element is no more zero or all the values
+      // below the diagonal in column row_idx are 0 and we
       // can skip to the next row/column
 
-      if (diag_elem != std::end(row_it->second)) { 
+      if (diag_elem != std::end(row_it->second)) {
         // the diagonal element is non-empty
         auto &U_row = _U._matrix[row_idx];
 
         // for any non-zero row in this column
         for (auto nz_row_it = std::cbegin(non_zero_below_diag[row_idx]);
-            nz_row_it != std::cend(non_zero_below_diag[row_idx]); ++nz_row_it) {
+             nz_row_it != std::cend(non_zero_below_diag[row_idx]);
+             ++nz_row_it) {
 
           auto &nz_row = _U._matrix[*nz_row_it];
 
@@ -1406,7 +1492,7 @@ public:
 
           // for any value in the row row_idx
           for (auto elem_it = std::cbegin(U_row); elem_it != std::cend(U_row);
-              ++elem_it) {
+               ++elem_it) {
 
             // search for the corresponding element in the considered non-zero
             // row
@@ -1457,7 +1543,8 @@ public:
     }
 
     if (_U.num_of_rows() != _U.num_of_cols()) {
-      throw std::domain_error("The factorization is not square and the linear system cannot be solved.");
+      throw std::domain_error("The factorization is not square and the linear "
+                              "system cannot be solved.");
     }
 
     std::vector<T> b(_U.num_of_cols());
@@ -1619,14 +1706,12 @@ std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
                          const DenseLinearAlgebra::PLU_Factorization<T> &D)
 {
   using namespace std;
-  os << "{P=" << D._P << "," << std::endl
-     << " LU=" << D._LU << "}";
+  os << "{P=" << D._P << "," << std::endl << " LU=" << D._LU << "}";
 
   return os;
 }
