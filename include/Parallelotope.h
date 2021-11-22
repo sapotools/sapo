@@ -32,13 +32,11 @@ private:
   GiNaC::lst generator_function; // generator function
   Matrix u;                      // versors
 
-  Vector hyperplaneThroughPts(const std::vector<Vector> &pts)
-      const; // find hyper plane passing through pts
-  Vector
-  lst2vec(const GiNaC::ex &list) const; // convert a lst to a vector of doubles
-
   std::vector<double> base_vertex;
   std::vector<double> lengths;
+
+  // TODO: test the following method
+  Polytope gen2const(const Vector &q, const Vector &beta) const;
 
 public:
   Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
@@ -96,15 +94,7 @@ public:
     return this->dim;
   }
 
-  // Representation conversion
-  Polytope
-  gen2const(const Vector &q,
-            const Vector &beta) const;       // from generator to constraints
-  poly_values const2gen(Polytope *LS) const; // from constraints to generators
-
-  // TODO: This method is never called by Sapo. Check whether is really
-  // necessary
-  Polytope getPolytope() const
+  inline operator Polytope() const
   {
     return this->gen2const(this->base_vertex, this->lengths);
   }

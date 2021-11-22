@@ -68,7 +68,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 
     // Normalize the versors and generatre the generator function
     // double norm = euclidNorm(u[i]);
-    // vector< double > norm_versor;
+    // std::vector< double > norm_versor;
 
     for (unsigned int j = 0; j < this->dim; j++) {
       // norm_versor.push_back(u[i][j]/norm);
@@ -80,7 +80,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
   }
 
   // Initialize the template matrix
-  vector<double> base_vertex(this->dim, 0);
+  std::vector<double> base_vertex(this->dim, 0);
   Vector lengths(this->dim, 1);
 }
 
@@ -110,10 +110,11 @@ std::list<std::vector<double>> get_parallelotope_vertices(
             std::back_inserter(offset_cut));
 
   SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix, dim);
-  SparseLinearAlgebra::PLU_Factorization<double> factorization;
+  SparseLinearAlgebra::PLU_Factorization<double> factorization(tmatrix);
 
   try {
-    factorization = SparseLinearAlgebra::PLU_Factorization<double>(tmatrix);
+    // store the base vertex
+    vertices.push_back(factorization.solve(offset_cut));
 
   } catch (std::domain_error &) { // if a domain_error is raised, then the
                                   // template is singular
@@ -122,9 +123,6 @@ std::list<std::vector<double>> get_parallelotope_vertices(
               << std::endl;
     exit(EXIT_FAILURE);
   }
-
-  // store the base vertex
-  vertices.push_back(factorization.solve(offset_cut));
 
   // Compute the vertices v
   for (unsigned int k = 0; k < dim; k++) {
@@ -183,7 +181,8 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
   }
 
   // convert the linear system to vectors
-  list<Vector> vertices = get_parallelotope_vertices(template_matrix, offset);
+  std::list<Vector> vertices
+      = get_parallelotope_vertices(template_matrix, offset);
 
   this->base_vertex = vertices.front();
 
@@ -227,7 +226,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 
     // Generatre the generator function
     // double norm = euclidNorm(u[i]);
-    // vector< double > norm_versor;
+    // std::vector< double > norm_versor;
 
     for (unsigned int j = 0; j < this->dim; j++) {
       // norm_versor.push_back(u[i][j]/norm);
@@ -235,6 +234,69 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
           = this->generator_function[j] + alpha[i] * beta[i] * this->u[i][j];
     }
   }
+}
+
+/**
+ * Determine the equation of the hyperplane passing through some linearly
+ * independent points, i.e., res[0]*x_0 + .. + res[n-1]*x_{n-1} + res[n] = 0
+ *
+ * @param[in] pts interpolation points
+ * @returns interpolating function coefficients
+ */
+std::vector<double>
+hyperplane_through_points(const std::list<std::vector<double>> &pts)
+{
+  using namespace std;
+
+  if (pts.size() == 0 || pts.size() != pts.front().size()) {
+    std::cerr << "hyperplane_through_points: pts must contain "
+              << "n non-linearly dependent n-dimensional points with n!=0"
+              << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // build the matrix A=[pts[1]-pts[0],...,pts[n-2]-pts[0]]^T
+  SparseLinearAlgebra::Matrix<double> A;
+  for (auto pts_it = ++std::begin(pts); pts_it != std::end(pts); ++pts_it) {
+    A.add_row(pts.front() - *pts_it);
+  }
+
+  // factorize the A
+  SparseLinearAlgebra::PLU_Factorization<double> fact(A);
+
+  // A is underdetermined because it is a (n-1)x n matrix
+  // find the underdetermined dimension udim
+  unsigned int udim = 0;
+  const SparseLinearAlgebra::Matrix<double> &U = fact.U();
+  while (udim < U.num_of_rows() && U[udim][udim] != 0) {
+    ++udim;
+  }
+
+  // add to A the versor on udim
+  SparseLinearAlgebra::Matrix<double>::RowType row;
+  row[udim] = 1;
+  A.add_row(row);
+
+  // factorize the new matrix
+  fact = SparseLinearAlgebra::PLU_Factorization<double>(A);
+
+  std::vector<double> lambda;
+  try {
+    // try to solve the new factorization: if it is not possible
+    // the points did not define an n-dimensional hyperplane.
+    lambda = fact.solve(std::vector<double>(A.num_of_rows(), 0));
+
+  } catch (std::domain_error &) {
+    std::cerr << "hyperplane_through_points: the points "
+              << "were not linearly independent." << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // add the offset to the result
+  const double offset = -(lambda * pts.front());
+  lambda.push_back(offset);
+
+  return lambda;
 }
 
 /**
@@ -254,12 +316,12 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
     exit(EXIT_FAILURE);
   }
 
-  vector<vector<double>> hps; // hyperplane equations
+  std::vector<std::vector<double>> hps; // hyperplane equations
 
   // first set of hyperplanes
   for (unsigned int i = 0; i < this->dim; i++) {
 
-    vector<vector<double>> pts;
+    std::list<std::vector<double>> pts;
     pts.push_back(q); // add base vertex
 
     for (unsigned int j = 0; j < this->dim; j++) { // for all the generators u
@@ -267,25 +329,26 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
         pts.push_back(q + (beta[j] * this->u[j]));
       }
     }
-    hps.push_back(hyperplaneThroughPts(pts));
+    hps.push_back(hyperplane_through_points(pts));
   }
 
   // second set of hyperplanes
   for (unsigned int i = 0; i < this->dim; i++) {
 
-    vector<vector<double>> pts;
+    std::list<std::vector<double>> pts;
 
-    vector<double> qt; // traslate q
+    std::vector<double> qt; // traslate q
     for (unsigned int j = 0; j < this->dim; j++) {
       qt.push_back(q[j] + beta[i] * this->u[i][j]);
     }
     pts.push_back(qt); // add base vertex
 
-    for (unsigned int j = 0; j < this->dim; j++) { // for all the generators u
+    for (unsigned int j = 0; j < this->dim; j++) {
+      // for all the generators u
       if (i != j) {
-        vector<double> p;
-        for (unsigned int k = 0; k < this->dim;
-             k++) { // coordinate of the point
+        std::vector<double> p;
+        for (unsigned int k = 0; k < this->dim; k++) {
+          // coordinate of the point
           p.push_back((q[k] + this->u[j][k] * beta[j])
                       + beta[i] * this->u[i][k]);
         }
@@ -293,14 +356,14 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
       }
     }
 
-    hps.push_back(hyperplaneThroughPts(pts));
+    hps.push_back(hyperplane_through_points(pts));
   }
 
-  vector<vector<double>> Lambda;
-  vector<double> d(this->dim * 2, 0);
+  std::vector<std::vector<double>> Lambda;
+  std::vector<double> d(this->dim * 2, 0);
 
   // initialize template Lambda
-  vector<double> Lambda_i(this->dim, 0);
+  std::vector<double> Lambda_i(this->dim, 0);
   for (unsigned int i = 0; i < (this->dim) * 2; i++) {
     Lambda.push_back(Lambda_i);
   }
@@ -332,103 +395,21 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 }
 
 /**
- * Determine the equation of the hyperplane passing through some linearly
- * independent points, i.e., res[0]*x_0 + .. + res[n]*x_n + res[n+1] = 0
- *
- * @param[in] pts interpolation points
- * @returns interpolating function coefficients
- */
-std::vector<double> Parallelotope::hyperplaneThroughPts(
-    const std::vector<std::vector<double>> &pts) const
-{
-  using namespace std;
-  using namespace GiNaC;
-
-  if (pts.size() == 0 || pts.size() != pts[0].size()) {
-    std::cerr << "Parallelotope::hyperplaneThroughPts: pts must contain "
-              << "n non-linearly dependent n-dimensional points with n!=0"
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  Matrix A;
-  // build the linear system Ax = 0
-
-  for (auto pts_it = ++std::begin(pts); pts_it != std::end(pts); ++pts_it) {
-    A.push_back(pts.front() - *pts_it);
-  }
-
-  // Build the linear system to find the normal vector
-  lst LS;
-  lst a = this->vars[1];
-
-  for (unsigned int i = 0; i < this->dim - 1; i++) {
-
-    ex eq = 0;
-    lst sub;
-
-    for (unsigned int j = 0; j < this->dim; j++) {
-      eq = eq + A[i][j] * a[j];
-    }
-
-    eq = eq == 0;
-    LS.append(eq);
-  }
-
-  // Solve the linear system
-  ex solLS = lsolve(LS, a);
-
-  // Build the linear inequality
-  lst x = this->vars[0];
-  ex eqr = 0;
-  vector<double> lambda(this->dim + 1, 0);
-
-  ex sub;
-  unsigned int sub_idx = 0;
-  // search for the tautology
-  // TODO: why is Sapo searching for one(!) tautology?
-  //       According to the GiNaC manual tautologies occur
-  //       when the system is underdetermined. However,
-  //       under these circumstances, the most resonable
-  //       things to do is to return an error.
-  for (unsigned int i = 0; i < solLS.nops(); i++) {
-    if (solLS[i].is_equal(a[i] == a[i])) {
-      sub = a[i] == 1;
-      sub_idx = i;
-    }
-  }
-
-  lambda[sub_idx] = 1;
-  for (unsigned int i = 0; i < this->dim; i++) {
-    if (i != sub_idx) {
-      lambda[i]
-          = ex_to<numeric>(evalf(a[i].subs(solLS[i].subs(sub)))).to_double();
-    }
-    eqr = eqr + a[i].subs(a[i] == lambda[i]) * pts[0][i];
-  }
-
-  lambda[this->dim] = -ex_to<numeric>(evalf(eqr)).to_double();
-
-  return lambda;
-}
-
-/**
  * Convert the constraint representation to the generator one
  *
  * @param[in] constr constraint representation of the parallelotope
  * @returns numerical values to plug in the generator function for the
  * generator representation
  */
-poly_values Parallelotope::const2gen(Polytope *constr) const
+poly_values const2gen(const Polytope &P)
 {
   using namespace std;
 
   // convert the linear system to vectors
-  std::list<Vector> vertices
-      = get_parallelotope_vertices(constr->getA(), constr->getb());
+  auto vertices = get_parallelotope_vertices(P.getA(), P.getb());
 
   // Compute the generators and their lengths
-  Vector lengths;
+  std::vector<double> lengths;
   for (auto v_it = ++std::begin(vertices); v_it != std::end(vertices);
        ++v_it) {
 
@@ -446,7 +427,7 @@ poly_values Parallelotope::const2gen(Polytope *constr) const
  * @param[in] symbolic list
  * @returns numeric list of numbers
  */
-std::vector<double> Parallelotope::lst2vec(const GiNaC::ex &list) const
+std::vector<double> lst2vec(const GiNaC::ex &list)
 {
   using namespace GiNaC;
 
