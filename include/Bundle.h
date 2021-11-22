@@ -46,17 +46,17 @@ private:
   double prod(std::vector<double> v1, std::vector<double> v2);
   double angle(std::vector<double> v1, std::vector<double> v2);
   double orthProx(std::vector<double> v1, std::vector<double> v2);
-  double maxOrthProx(int vIdx, std::vector<int> dirsIdx);
-  double maxOrthProx(std::vector<int> dirsIdx);
-  double maxOrthProx(std::vector<std::vector<int>> T);
-  double maxOffsetDist(int vIdx, std::vector<int> dirsIdx,
-                       std::vector<double> dists);
-  double maxOffsetDist(std::vector<int> dirsIdx, std::vector<double> dists);
-  double maxOffsetDist(std::vector<std::vector<int>> T,
-                       std::vector<double> dists);
+  double maxOrthProx(const int vIdx, const std::vector<int> &dirsIdx);
+  double maxOrthProx(const std::vector<int> &dirsIdx);
+  double maxOrthProx(const std::vector<std::vector<int>> &T);
+  double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
+                       const std::vector<double> &dists);
+  double maxOffsetDist(const std::vector<int> &dirsIdx, const std::vector<double> &dists);
+  double maxOffsetDist(const std::vector<std::vector<int>> &T,
+                       const std::vector<double> &dists);
 
-  bool validTemp(std::vector<std::vector<int>> T, unsigned int card,
-                 std::vector<int> dirs); // check if a template is valid
+  bool validTemp(const std::vector<std::vector<int>> &T, unsigned int card,
+                 const std::vector<int> &dirs); // check if a template is valid
   std::vector<GiNaC::lst> transformContrPts(GiNaC::lst vars, GiNaC::lst f,
                                             int mode);
 

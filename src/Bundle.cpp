@@ -706,7 +706,7 @@ double Bundle::orthProx(std::vector<double> v1, std::vector<double> v2)
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double Bundle::maxOrthProx(int vIdx, std::vector<int> dirsIdx)
+double Bundle::maxOrthProx(const int vIdx, const std::vector<int> &dirsIdx)
 {
 
   if (dirsIdx.empty()) {
@@ -726,7 +726,7 @@ double Bundle::maxOrthProx(int vIdx, std::vector<int> dirsIdx)
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double Bundle::maxOrthProx(std::vector<int> dirsIdx)
+double Bundle::maxOrthProx(const std::vector<int> &dirsIdx)
 {
   double maxProx = 0;
   for (unsigned int i = 0; i < dirsIdx.size(); i++) {
@@ -744,7 +744,7 @@ double Bundle::maxOrthProx(std::vector<int> dirsIdx)
  * @param[in] T collection of vectors
  * @returns maximum orthogonal proximity
  */
-double Bundle::maxOrthProx(std::vector<std::vector<int>> T)
+double Bundle::maxOrthProx(const std::vector<std::vector<int>> &T)
 {
   double maxorth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
@@ -762,8 +762,8 @@ double Bundle::maxOrthProx(std::vector<std::vector<int>> T)
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double Bundle::maxOffsetDist(int vIdx, std::vector<int> dirsIdx,
-                             std::vector<double> dists)
+double Bundle::maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
+                             const std::vector<double> &dists)
 {
 
   if (dirsIdx.empty()) {
@@ -784,8 +784,8 @@ double Bundle::maxOffsetDist(int vIdx, std::vector<int> dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double Bundle::maxOffsetDist(std::vector<int> dirsIdx,
-                             std::vector<double> dists)
+double Bundle::maxOffsetDist(const std::vector<int> &dirsIdx,
+                             const std::vector<double> &dists)
 {
 
   double dist = 1;
@@ -802,8 +802,8 @@ double Bundle::maxOffsetDist(std::vector<int> dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double Bundle::maxOffsetDist(std::vector<std::vector<int>> T,
-                             std::vector<double> dists)
+double Bundle::maxOffsetDist(const std::vector<std::vector<int>> &T,
+                             const std::vector<double> &dists)
 {
   double maxdist = std::numeric_limits<double>::lowest();
   for (unsigned int i = 0; i < T.size(); i++) {
@@ -855,8 +855,8 @@ bool isIn(std::vector<int> v, std::vector<std::vector<int>> vlist)
  * @param[in] dirs directions
  * @returns true T is a valid template
  */
-bool Bundle::validTemp(std::vector<std::vector<int>> T, unsigned int card,
-                       std::vector<int> dirs)
+bool Bundle::validTemp(const std::vector<std::vector<int>> &T, unsigned int card,
+                       const std::vector<int> &dirs)
 {
   using namespace std;
 

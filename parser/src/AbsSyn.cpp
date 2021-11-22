@@ -1,8 +1,35 @@
 #include "../include/AbsSyn.h"
 
+#include "../include/AbsSynIO.h"
+
 using namespace std;
 using namespace GiNaC;
 
+
+namespace std
+{
+ostream &operator<<(ostream &os, const AbsSyn::problemType t)
+{
+  if (t == AbsSyn::problemType::P_UNDEF)
+    return os << "UNDEF";
+  else if (t == AbsSyn::problemType::REACH)
+    return os << "reachability";
+  else
+    return os << "synthesis";
+}
+
+ostream &operator<<(ostream &os, const AbsSyn::modeType t)
+{
+  if (t == AbsSyn::modeType::M_UNDEF)
+    return os << "UNDEF";
+  else if (t == AbsSyn::modeType::BOX)
+    return os << "boxes";
+  else if (t == AbsSyn::modeType::PARAL)
+    return os << "parallelotopes";
+  else
+    return os << "polytopes";
+}
+}
 namespace AbsSyn
 {
 
@@ -684,81 +711,3 @@ bool InputData::check()
 }
 }
 
-namespace std
-{
-ostream &operator<<(ostream &os, const pair<int, int> p)
-{
-  return os << "[" << p.first << "," << p.second << "]";
-}
-
-ostream &operator<<(ostream &os, const pair<double, double> p)
-{
-  return os << "[" << p.first << "," << p.second << "]";
-}
-
-ostream &operator<<(ostream &os, const vector<double> v)
-{
-  for (unsigned i = 0; i < v.size(); i++)
-    os << v[i] << (i == v.size() - 1 ? "" : ",");
-
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<string> v)
-{
-  for (unsigned i = 0; i < v.size(); i++)
-    os << v[i] << (i == v.size() - 1 ? "" : ",");
-
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<int> v)
-{
-  for (unsigned i = 0; i < v.size(); i++)
-    os << v[i] << (i == v.size() - 1 ? "" : ",");
-
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<vector<double>> v)
-{
-  for (unsigned i = 0; i < v.size(); i++) {
-    os << "{" << v[i] << "}";
-    if (i == v.size() - 1)
-      os << endl;
-  }
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<vector<int>> v)
-{
-  for (unsigned i = 0; i < v.size(); i++) {
-    os << "{" << v[i] << "}";
-    if (i == v.size() - 1)
-      os << endl;
-  }
-  return os;
-}
-
-ostream &operator<<(ostream &os, const AbsSyn::problemType t)
-{
-  if (t == AbsSyn::problemType::P_UNDEF)
-    return os << "UNDEF";
-  else if (t == AbsSyn::problemType::REACH)
-    return os << "reachability";
-  else
-    return os << "synthesis";
-}
-
-ostream &operator<<(ostream &os, const AbsSyn::modeType t)
-{
-  if (t == AbsSyn::modeType::M_UNDEF)
-    return os << "UNDEF";
-  else if (t == AbsSyn::modeType::BOX)
-    return os << "boxes";
-  else if (t == AbsSyn::modeType::PARAL)
-    return os << "parallelotopes";
-  else
-    return os << "polytopes";
-}
-}

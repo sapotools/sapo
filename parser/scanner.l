@@ -6,6 +6,7 @@
 #include <string>
 #include "driver.h"
 #include "AbsSyn.h"
+#include "AbsSynIO.h"
 #include "parser.h"
 %}
 
