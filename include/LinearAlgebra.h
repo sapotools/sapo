@@ -413,6 +413,41 @@ std::vector<T> operator/(std::vector<T> &&v, const T s)
   return v;
 }
 
+
+/**
+ * @brief Compute the row-column matrix-matrix multiplication
+ * 
+ * @tparam T is a numeric type
+ * @param A is a dense matrix
+ * @param B is a dense matrix
+ * @return the row-column matrix-matrix multiplication $A \cdot B$.
+ */
+template<typename T>
+std::vector<std::vector<T>> operator*(const std::vector<std::vector<T>> &A, const std::vector<std::vector<T>> &B)
+{
+  if (((A.size()!=0 && A.front().size()==0) || (A.size()==0)) && B.size() == 0) {
+    return std::vector<std::vector<T>>();
+  }
+  
+  if (A.front().size() != B.size()) {
+    throw std::domain_error("The two matrices are not compatible for the matrix-matrix multiplication.");
+  }
+
+  std::vector<std::vector<T>> res(A.size(), std::vector<T>(B.front().size(), 0));
+
+  for (unsigned int row_idx=0; row_idx < A.size(); ++row_idx) {
+    for (unsigned int col_idx=0; col_idx < B.front().size(); ++col_idx) {
+      T value = 0;
+      for (unsigned int k=0; k < A[row_idx].size(); ++k) {
+        value += A[row_idx][k]*B[k][col_idx];
+      }
+      res[row_idx][col_idx] = value;
+    } 
+  }
+
+  return res;
+}
+
 /*!
  *  \addtogroup DenseLinearAlgebra
  *  @{
@@ -478,10 +513,15 @@ class PLU_Factorization
       const unsigned int j = _LU.size() - rj - 1;
       T value = b[j];
       const std::vector<T> &row = _LU[j];
+
+      const T &diag_value = row[j];
+      if (diag_value == 0) {
+        throw std::domain_error("The linear system is underdetermined.");
+      }
       for (unsigned int i = j + 1; i < row.size(); ++i) {
         value -= row[i] * x[i];
       }
-      x[j] = value / row[j];
+      x[j] = value / diag_value;
     }
 
     return x;
@@ -517,14 +557,13 @@ public:
       throw std::domain_error("The parameter is an empty matrix.");
     }
 
-    if (M.size() != M.front().size()) {
-      throw std::domain_error("The parameter is not a square matrix.");
-    }
-
     // fill _P with the identity permutation
     std::iota(std::begin(_P), std::end(_P), 0);
 
     for (unsigned int j = 0; j < _LU.size(); ++j) {
+      if (j == M.front().size()) {
+        return;
+      }
 
       // find the first non-null value below A[j-1][j]
       unsigned int k = j;
@@ -532,31 +571,29 @@ public:
         k++;
       }
 
-      // if it does not exist, return an empty solution
-      if (k >= _LU.size()) {
-        throw std::domain_error("The matrix is singular.");
-      }
-
-      // otherwise, swap rows
-      if (j != k) {
-        std::swap(_LU[j], _LU[k]);
-        std::swap(_P[j], _P[k]);
-      }
-
-      // nullify all the values below A[j][j]
-      const std::vector<T> &row_j = _LU[j];
-      const T &v = row_j[j];
-      k += 1;
-      while (k < _LU.size()) {
-        std::vector<T> &row_k = _LU[k];
-        if (row_k[j] != 0) {
-          const T ratio = -row_k[j] / v;
-          for (unsigned int i = j + 1; i < row_j.size(); ++i) {
-            row_k[i] += ratio * row_j[i];
-          }
-          row_k[j] = -ratio;
+      // if it does not exist, skip to the next row/column
+      if (k < _LU.size()) {
+        // otherwise, swap rows
+        if (j != k) {
+          std::swap(_LU[j], _LU[k]);
+          std::swap(_P[j], _P[k]);
         }
-        ++k;
+
+        // nullify all the values below A[j][j]
+        const std::vector<T> &row_j = _LU[j];
+        const T &v = row_j[j];
+        k += 1;
+        while (k < _LU.size()) {
+          std::vector<T> &row_k = _LU[k];
+          if (row_k[j] != 0) {
+            const T ratio = -row_k[j] / v;
+            for (unsigned int i = j + 1; i < row_j.size(); ++i) {
+              row_k[i] += ratio * row_j[i];
+            }
+            row_k[j] = -ratio;
+          }
+          ++k;
+        }
       }
     }
   }
@@ -572,6 +609,10 @@ public:
   {
     if (b.size() != _P.size()) {
       throw std::domain_error("Wrong dimensions");
+    }
+
+    if (_LU.size() != _LU.front().size()) {
+      throw std::domain_error("The factorization is not square and the linear system cannot be solved.");
     }
 
     std::vector<T> Pb(b.size());
@@ -615,6 +656,60 @@ public:
 
     return *this;
   }
+
+  /**
+   * @brief Get the factorization permutation
+   *
+   * @return the factorization permutation
+   */
+  const std::vector<unsigned int> &P() const
+  {
+    return _P;
+  }
+
+  /**
+   * @brief Return the factorization lower-triangular matrix
+   * 
+   * @return the factorization lower-triangular matrix.
+   */
+  std::vector<std::vector<T>> L() const
+  {
+    std::vector<std::vector<T>> res(_LU.size(), std::vector<T>(_LU.size(), 0));
+
+    for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
+      const std::vector<T> &row = _LU[row_idx];
+      std::vector<T> &res_row = res[row_idx];
+      for (unsigned int col_idx = 0; col_idx < row_idx && col_idx < row.size(); ++col_idx) {
+        res_row[col_idx] = row[col_idx];
+      }
+      res_row[row_idx] = 1;
+    }
+
+    return res;
+  }
+
+  /**
+   * @brief Return the factorization upper-triangular matrix
+   * 
+   * @return the factorization upper-triangular matrix.
+   */
+  std::vector<std::vector<T>> U() const
+  {
+    std::vector<std::vector<T>> res(_LU.size(), std::vector<T>(_LU.front().size(), 0));
+
+    for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
+      const std::vector<T> &row = _LU[row_idx];
+      std::vector<T> &res_row = res[row_idx];
+      for (unsigned int col_idx = row_idx; col_idx < row.size(); ++col_idx) {
+        res_row[col_idx] = row[col_idx];
+      }
+    }
+
+    return res;
+  }
+
+  template<typename E>
+  friend std::ostream &std::operator<<(std::ostream &os, const PLU_Factorization<E> &D);
 };
 
 }
@@ -676,6 +771,7 @@ class Matrix
      */
     T &operator=(const T &value)
     {
+      // TODO: delete the row if it only contains zeros
       auto row_it = A._matrix.find(row_idx);
 
       if (row_it == std::end(A._matrix)) {
@@ -821,6 +917,8 @@ class Matrix
 
       return elem_it->second;
     }
+
+    friend class Matrix<T>;
   };
 
   typedef std::map<unsigned int, T> RowType;
@@ -1034,6 +1132,38 @@ public:
     return *this;
   }
 
+  /**
+   * @brief Compute the row-column matrix-matrix multiplication
+   * 
+   * @param A is a matrix
+   * @return The row-column multiplication between this object and `A`.
+   */
+  Matrix<T> operator*(const Matrix<T> &A) const
+  {
+    if (num_of_cols() != A.num_of_rows()) {
+      std::domain_error("The two matrices are not compatible for the matrix-matrix multiplication.");
+    }
+
+    Matrix<T> res(num_of_rows(), A.num_of_cols());
+
+    for (auto row_it = std::cbegin(_matrix); row_it != std::cend(_matrix);
+         ++row_it) {
+      const unsigned int row_idx = row_it->first;
+      for (unsigned int col_idx = 0; col_idx < A.num_of_cols(); ++col_idx) {
+        T value = 0;
+        for (auto elem_it = std::cbegin(row_it->second); elem_it != std::cend(row_it->second);
+          ++elem_it) {
+          value += elem_it->second * A[elem_it->first][col_idx];
+        }
+        if (value != 0) {
+          res._matrix[row_idx][col_idx] = value;
+        }
+      }
+    }
+
+    return res;
+  }
+
   template<typename E>
   friend class PLU_Factorization;
 
@@ -1149,12 +1279,16 @@ class PLU_Factorization
 
     for (auto row_it = std::begin(_L._matrix); row_it != std::end(_L._matrix);
          ++row_it) {
+      const T &diag_value = std::rbegin(row_it->second)->second;
+      if (diag_value == 0) {
+        throw std::domain_error("The linear system is underdetermined.");
+      }
       T value = b[row_it->first];
       for (auto elem_it = ++std::rbegin(row_it->second);
            elem_it != std::rend(row_it->second); ++elem_it) {
         value -= elem_it->second * x[elem_it->first];
       }
-      x[row_it->first] = value / (std::rbegin(row_it->second)->second);
+      x[row_it->first] = value / diag_value;
     }
 
     return x;
@@ -1172,12 +1306,16 @@ class PLU_Factorization
 
     for (auto row_it = std::rbegin(_U._matrix);
          row_it != std::rend(_U._matrix); ++row_it) {
+      const T &diag_value = std::begin(row_it->second)->second;
+      if (diag_value == 0) {
+        throw std::domain_error("The linear system is underdetermined.");
+      }
       T value = b[row_it->first];
       for (auto elem_it = ++std::begin(row_it->second);
            elem_it != std::end(row_it->second); ++elem_it) {
         value -= elem_it->second * x[elem_it->first];
       }
-      x[row_it->first] = value / (std::begin(row_it->second)->second);
+      x[row_it->first] = value / diag_value;
     }
 
     return x;
@@ -1208,14 +1346,10 @@ public:
    * @param M is the matrix whose P-LU factorization must be computed.
    */
   PLU_Factorization(const Matrix<T> &M):
-      _P(M.num_of_rows()), _L(M.num_of_rows(), M.num_of_cols()), _U(M)
+      _P(M.num_of_rows()), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
   {
     if (M.num_of_rows() == 0 || M.num_of_cols() == 0) {
-      throw std::domain_error("The parameter is not an empty matrix.");
-    }
-
-    if (M.num_of_cols() != M.num_of_rows()) {
-      throw std::domain_error("The parameter is not a square matrix.");
+      throw std::domain_error("The parameter is an empty matrix.");
     }
 
     // fill _P with the identity permutation
@@ -1223,74 +1357,89 @@ public:
 
     std::vector<std::set<unsigned int>> non_zero_below_diag
         = get_non_zero_below_diag(M);
+    
+    for (unsigned int row_idx=0; row_idx < _L.num_of_rows(); ++row_idx) {
+      // set the L diagonal to 1
+      _L._matrix[row_idx][row_idx] = 1;
+    }
 
     for (auto row_it = std::begin(_U._matrix); row_it != std::end(_U._matrix);
          ++row_it) {
       const unsigned int &row_idx = row_it->first;
 
+      if (row_idx == M.num_of_cols()) {
+        return;
+      }
+
       // get the diagonal element on the row
       auto diag_elem = row_it->second.find(row_idx);
 
       if (diag_elem == std::end(row_it->second)) {
-
         // the diagonal element is empty
-        swap_with_the_leastest_non_zero_row_in_column(non_zero_below_diag,
-                                                      row_idx);
 
-        diag_elem = _U._matrix[row_it->first].find(row_idx);
+        if (!non_zero_below_diag[row_idx].empty()) {
+          swap_with_the_leastest_non_zero_row_in_column(non_zero_below_diag,
+                                                        row_idx);
+
+          diag_elem = _U._matrix[row_it->first].find(row_idx);
+        }
       }
 
-      // the diagonal element is non-empty
-      auto &U_row = _U._matrix[row_it->first];
+      // after the previous conditional statement either the 
+      // diagonal element is no more zero or all the values 
+      // below the diagonal in column row_idx are 0 and we 
+      // can skip to the next row/column
 
-      // set the L diagonal to 1
-      _L._matrix[row_idx][row_idx] = 1;
+      if (diag_elem != std::end(row_it->second)) { 
+        // the diagonal element is non-empty
+        auto &U_row = _U._matrix[row_idx];
 
-      // for any non-zero row in this column
-      for (auto nz_row_it = std::cbegin(non_zero_below_diag[row_idx]);
-           nz_row_it != std::cend(non_zero_below_diag[row_idx]); ++nz_row_it) {
+        // for any non-zero row in this column
+        for (auto nz_row_it = std::cbegin(non_zero_below_diag[row_idx]);
+            nz_row_it != std::cend(non_zero_below_diag[row_idx]); ++nz_row_it) {
 
-        auto &nz_row = _U._matrix[*nz_row_it];
+          auto &nz_row = _U._matrix[*nz_row_it];
 
-        // compute the ratio between the element on the U diagonal and the
-        // non-null value below it
-        auto ratio = -nz_row[row_idx] / diag_elem->second;
+          // compute the ratio between the element on the U diagonal and the
+          // non-null value below it
+          auto ratio = -nz_row[row_idx] / diag_elem->second;
 
-        // for any value in the row row_idx
-        for (auto elem_it = std::cbegin(U_row); elem_it != std::cend(U_row);
-             ++elem_it) {
+          // for any value in the row row_idx
+          for (auto elem_it = std::cbegin(U_row); elem_it != std::cend(U_row);
+              ++elem_it) {
 
-          // search for the corresponding element in the considered non-zero
-          // row
-          auto nz_elem_it = nz_row.find(elem_it->first);
+            // search for the corresponding element in the considered non-zero
+            // row
+            auto nz_elem_it = nz_row.find(elem_it->first);
 
-          // if it does not exist, initialize it to the opportune value
-          if (nz_elem_it == std::end(nz_row)) {
-            nz_row[elem_it->first] = ratio * elem_it->second;
-            non_zero_below_diag[elem_it->first].insert(*nz_row_it);
-          } else { // otherwise, it exists
-            // increase it by the the opportune value
-            nz_elem_it->second += ratio * elem_it->second;
+            // if it does not exist, initialize it to the opportune value
+            if (nz_elem_it == std::end(nz_row)) {
+              nz_row[elem_it->first] = ratio * elem_it->second;
+              non_zero_below_diag[elem_it->first].insert(*nz_row_it);
+            } else { // otherwise, it exists
+              // increase it by the the opportune value
+              nz_elem_it->second += ratio * elem_it->second;
 
-            // if now is 0 or it is the element that we aimed to to remove
-            // which is different from 0 due to approximation errors
-            if (nz_elem_it->second == 0 || nz_elem_it->first == row_idx) {
-              // remove the row from the set of non-zero rows in column if
-              // necessary
-              if (elem_it->first != row_idx) {
-                // postponing row_idx remova to avoid messing up the iterator
-                // on it
-                non_zero_below_diag[elem_it->first].erase(*nz_row_it);
+              // if now is 0 or it is the element that we aimed to to remove
+              // which is different from 0 due to approximation errors
+              if (nz_elem_it->second == 0 || nz_elem_it->first == row_idx) {
+                // remove the row from the set of non-zero rows in column if
+                // necessary
+                if (elem_it->first != row_idx) {
+                  // postponing row_idx remova to avoid messing up the iterator
+                  // on it
+                  non_zero_below_diag[elem_it->first].erase(*nz_row_it);
+                }
+
+                // delete it from the matrix
+                nz_row.erase(nz_elem_it);
               }
-
-              // delete it from the matrix
-              nz_row.erase(nz_elem_it);
             }
           }
+          _L._matrix[*nz_row_it][row_idx] = -ratio;
         }
-        _L._matrix[*nz_row_it][row_idx] = -ratio;
+        non_zero_below_diag[row_idx].clear();
       }
-      non_zero_below_diag[row_idx].clear();
     }
   }
 
@@ -1307,7 +1456,11 @@ public:
       throw std::domain_error("Wrong dimensions");
     }
 
-    std::vector<T> b(v.size());
+    if (_U.num_of_rows() != _U.num_of_cols()) {
+      throw std::domain_error("The factorization is not square and the linear system cannot be solved.");
+    }
+
+    std::vector<T> b(_U.num_of_cols());
 
     // Apply the permutation to b
     for (unsigned int i = 0; i < v.size(); ++i) {
@@ -1462,6 +1615,18 @@ std::ostream &operator<<(std::ostream &os,
   os << "{P=" << D.P() << "," << std::endl
      << " L=" << D.L() << "," << std::endl
      << " U=" << D.U() << "}";
+
+  return os;
+}
+
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os,
+                         const DenseLinearAlgebra::PLU_Factorization<T> &D)
+{
+  using namespace std;
+  os << "{P=" << D._P << "," << std::endl
+     << " LU=" << D._LU << "}";
 
   return os;
 }

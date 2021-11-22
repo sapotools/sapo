@@ -366,9 +366,9 @@ Bundle Bundle::decompose(double alpha, int max_iters)
         A.push_back(this->L[tmpT[i1][j]]);
       }
 
-      DenseLinearAlgebra::PLU_Factorization<double> fact;
+      DenseLinearAlgebra::PLU_Factorization<double> fact(A);
       try {
-        fact = DenseLinearAlgebra::PLU_Factorization<double>(A);
+        fact.solve(std::vector<double>(this->getDim(), 0));
 
         double w1 = alpha * this->maxOffsetDist(tmpT, offDists)
                     + (1 - alpha) * this->maxOrthProx(tmpT);
@@ -380,7 +380,7 @@ Bundle Bundle::decompose(double alpha, int max_iters)
         }
         curT = tmpT;
       } catch (...) {
-        // The matrix A can't be factorized and Ax=b has no solution
+        // The system Ax=b cannot be solved
       }
     }
     i++;
