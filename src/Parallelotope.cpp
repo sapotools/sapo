@@ -84,72 +84,54 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
   Vector lengths(this->dim, 1);
 }
 
-/**
- * Constructor that instantiates a parallelotope from a polytope
- *
- * @param[in] vars vector with the list of variables used for the generator
- * functions
- * @param[in] constr polytope constituting the parallelotope
- */
-Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
-                             const Polytope &constr):
-    Parallelotope(vars, constr.getA(), constr.getb())
-{
-}
-
 std::list<std::vector<double>> get_parallelotope_vertices(
     const std::vector<std::vector<double>> &template_matrix,
-    const std::vector<double> &offset)
+    const std::vector<double> &lower_bound,
+    const std::vector<double> &upper_bound)
 {
-  const unsigned int dim = offset.size() / 2;
+  const unsigned int dim = upper_bound.size();
 
   std::list<std::vector<double>> vertices;
 
-  std::vector<double> offset_cut;
-  std::copy(offset.begin(), offset.begin() + dim,
-            std::back_inserter(offset_cut));
+  std::vector<double> offset = upper_bound;
 
-  SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix, dim);
+  SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix);
   SparseLinearAlgebra::PLU_Factorization<double> factorization(tmatrix);
 
   try {
     // store the base vertex
-    vertices.push_back(factorization.solve(offset_cut));
+    vertices.push_back(factorization.solve(offset));
 
   } catch (std::domain_error &) { // if a domain_error is raised, then the
                                   // template is singular
-    std::cerr << "singular parallelotope" << std::endl
-              << Polytope(template_matrix, offset) << std::endl
-              << std::endl;
+    std::cerr << "singular parallelotope" << std::endl << std::endl;
     exit(EXIT_FAILURE);
   }
 
   // Compute the vertices v
   for (unsigned int k = 0; k < dim; k++) {
-    double tmp = offset_cut[k];
-    offset_cut[k] = -offset[k + dim];
-    vertices.push_back(factorization.solve(offset_cut));
-    offset_cut[k] = tmp;
+    double tmp = offset[k];
+    offset[k] = -lower_bound[k];
+    vertices.push_back(factorization.solve(offset));
+    offset[k] = tmp;
   }
 
   return vertices;
 }
 
-// TODO: this method assumes that the template matrix has the form
-//       [A, -A]^T where A is square. It would be safier to have as
-//       parameters a square template matrix A, the lower offset
-//       boundaries, and the upper offset boundaries.
 /**
- * Constructor that instantiates a parallelotope from a linear system
+ * Constructor
  *
  * @param[in] vars vector with the list of variables used for the generator
  * functions
  * @param[in] template_matrix is the template matrix of the parallelotope
- * @param[in] offset is the offset of the parallelotope
+ * @param[in] lower_bound is the lower bound offsets of the parallelotope
+ * @param[in] upper_bound is the upper bound offsets of the parallelotope
  */
 Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
                              const Matrix &template_matrix,
-                             const Vector &offset)
+                             const Vector &lower_bound,
+                             const Vector &upper_bound)
 {
   using namespace std;
   using namespace GiNaC;
@@ -182,7 +164,7 @@ Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
 
   // convert the linear system to vectors
   std::list<Vector> vertices
-      = get_parallelotope_vertices(template_matrix, offset);
+      = get_parallelotope_vertices(template_matrix, lower_bound, upper_bound);
 
   this->base_vertex = vertices.front();
 
@@ -392,51 +374,6 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
   }
 
   return Polytope(Lambda, d);
-}
-
-/**
- * Convert the constraint representation to the generator one
- *
- * @param[in] constr constraint representation of the parallelotope
- * @returns numerical values to plug in the generator function for the
- * generator representation
- */
-poly_values const2gen(const Polytope &P)
-{
-  using namespace std;
-
-  // convert the linear system to vectors
-  auto vertices = get_parallelotope_vertices(P.getA(), P.getb());
-
-  // Compute the generators and their lengths
-  std::vector<double> lengths;
-  for (auto v_it = ++std::begin(vertices); v_it != std::end(vertices);
-       ++v_it) {
-
-    // compute its length and store it
-    lengths.push_back(norm_2(*v_it - vertices.front()));
-  }
-
-  // Return the conversion
-  return poly_values{vertices.front(), lengths};
-}
-
-/**
- * Convert a symbolic list of numbers to a vector
- *
- * @param[in] symbolic list
- * @returns numeric list of numbers
- */
-std::vector<double> lst2vec(const GiNaC::ex &list)
-{
-  using namespace GiNaC;
-
-  std::vector<double> res;
-
-  for (unsigned int i = 0; i < list.nops(); i++)
-    res.push_back(ex_to<numeric>(evalf(list[i])).to_double());
-
-  return res;
 }
 
 Parallelotope::~Parallelotope()

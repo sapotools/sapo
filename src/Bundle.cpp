@@ -221,24 +221,21 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
     exit(EXIT_FAILURE);
   }
 
-  vector<double> d(2 * this->getDim(), 0);
+  vector<double> lbound, ubound;
   vector<vector<double>> Lambda;
 
   vector<int>::const_iterator it = std::begin(this->T[i]);
   // upper facets
   for (unsigned int j = 0; j < this->getDim(); j++) {
-    Lambda.push_back(this->L[*it]);
-    d[j] = this->offp[*(it++)];
+    const int idx = *it;
+    Lambda.push_back(this->L[idx]);
+    ubound.push_back(this->offp[idx]);
+    lbound.push_back(this->offm[idx]);
+
+    ++it;
   }
 
-  it = std::begin(this->T[i]);
-  // lower facets
-  for (unsigned int j = this->getDim(); j < 2 * this->getDim(); j++) {
-    Lambda.push_back(-this->L[*it]);
-    d[j] = this->offm[*(it++)];
-  }
-
-  return Parallelotope(this->vars, Lambda, d);
+  return Parallelotope(this->vars, Lambda, lbound, ubound);
 }
 
 /**

@@ -40,9 +40,19 @@ private:
 
 public:
   Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
+
+  /**
+   * Constructor
+   *
+   * @param[in] vars vector with the list of variables used for the generator
+   * functions
+   * @param[in] template_matrix is the template matrix of the parallelotope
+   * @param[in] lower_bound is the lower bound offsets of the parallelotope
+   * @param[in] upper_bound is the upper bound offsets of the parallelotope
+   */
   Parallelotope(const std::vector<GiNaC::lst> &vars,
-                const Matrix &template_matrix, const Vector &offset);
-  Parallelotope(const std::vector<GiNaC::lst> &vars, const Polytope &P);
+                const Matrix &template_matrix, const Vector &lower_bound,
+                const Vector &upper_bound);
 
   /**
    * Get the generator functions
