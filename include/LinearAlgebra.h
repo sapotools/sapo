@@ -440,6 +440,20 @@ std::vector<T> operator/(std::vector<T> &&v, const T s)
 }
 
 /**
+ * Compute the angle between two vectors
+ *
+ * @tparam T is a numeric type
+ * @param[in] v1 vector
+ * @param[in] v2 vector
+ * @returns angle between v1 and v2
+ */
+template<typename T>
+inline T angle(const std::vector<T> &v1, const std::vector<T> &v2)
+{
+  return acos(v1 * v2 / (norm_2(v1) * norm_2(v2)));
+}
+
+/**
  * @brief Compute the row-column matrix-matrix multiplication
  *
  * @tparam T is a numeric type
