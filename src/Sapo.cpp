@@ -36,15 +36,16 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
 
   Flowpipe flowpipe(initSet.getDirectionMatrix());
 
+  Polytope Xls = initSet;
+
   if (this->verbose) {
     cout << "Initial Set" << endl
-         << initSet.getPolytope() << endl
+         << Xls << endl
          << endl
          << "Computing reach set..." << flush;
   }
 
   Bundle X = initSet;
-  Polytope Xls = initSet.getPolytope();
   flowpipe.append(Xls);
 
   unsigned int i = 0;
@@ -58,7 +59,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
       X = X.decompose(this->alpha, this->decomp);
     }
 
-    flowpipe.append(X.getPolytope()); // store result
+    flowpipe.append(X); // store result
 
     if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
@@ -87,7 +88,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
 
   if (this->verbose) {
     cout << "Initial Set" << endl
-         << initSet.getPolytope() << endl
+         << (Polytope)initSet << endl
          << endl
          << "Parameter set" << endl
          << pSet << endl
@@ -99,7 +100,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   ControlPointStorage ctrlPts;
   PolytopesUnion last_step;
 
-  last_step.add(initSet.getPolytope());
+  last_step.add(initSet);
 
   Flowpipe flowpipe(initSet.getDirectionMatrix());
   flowpipe.append(initSet);
@@ -132,7 +133,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
           bundle = bundle.decompose(this->alpha, this->decomp);
         }
 
-        Polytope bls = bundle.getPolytope();
+        Polytope bls = bundle;
 
         // TODO: check whether there is any chance for a transformed bundle to
         // be empty
@@ -140,7 +141,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
           // add to the new reached bundle
           nbundles.push_back(bundle);
 
-          last_step.add(bundle.getPolytope());
+          last_step.add(bls);
         }
       }
     }

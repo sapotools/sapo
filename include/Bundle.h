@@ -110,7 +110,7 @@ public:
     return this->offm[i];
   }
 
-  Polytope getPolytope() const;
+  operator Polytope() const;
   Parallelotope getParallelotope(unsigned int i) const;
 
   void setTemplate(std::vector<std::vector<int>> T);

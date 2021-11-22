@@ -187,7 +187,7 @@ Bundle &Bundle::operator=(Bundle &&orig)
  *
  * @returns polytope represented by the bundle
  */
-Polytope Bundle::getPolytope() const
+Bundle::operator Polytope() const
 {
   using namespace std;
 
@@ -250,7 +250,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
 Bundle Bundle::get_canonical() const
 {
   // get current polytope
-  Polytope bund = this->getPolytope();
+  Polytope bund = *this;
   std::vector<double> canoffp(this->getSize()), canoffm(this->getSize());
   for (unsigned int i = 0; i < this->getSize(); i++) {
     canoffp[i] = bund.maximize(this->L[i]);
