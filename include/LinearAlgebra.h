@@ -491,6 +491,105 @@ std::vector<std::vector<T>> operator*(const std::vector<std::vector<T>> &A,
   return res;
 }
 
+/**
+ * @brief A class to represent pemutations.
+ *
+ * Permutation are square matrices whose row and column
+ * sums are one. However, storing a permutation for
+ * $n$-dim vectors by using this natural representation
+ * requires $n^2$ integer numbers and its application
+ * costs $O(n^2)$.
+ * This class stores permutation is a more efficient
+ * way representing only swapped element positions in
+ * a map from integer to integer. The application cost
+ * belongs to $O(n)$.
+ */
+class Permutation
+{
+  std::map<unsigned int, unsigned int> _swaps; //!< the swapped positions
+public:
+  /**
+   * @brief Create a new Permutation object
+   */
+  Permutation(): _swaps() {}
+
+  /**
+   * @brief Copy constructor for Permutation object
+   *
+   * @param orig
+   */
+  Permutation(const Permutation &orig): _swaps(orig._swaps) {}
+
+  /**
+   * @brief Swaps two positions.
+   *
+   * This method swaps two positions in the permutation.
+   *
+   * @param i first position to be swapped.
+   * @param j second position to be swapped.
+   * @return The updated permutation.
+   */
+  Permutation &swap(const unsigned int i, const unsigned int j)
+  {
+    // for both the positions
+    for (const unsigned int &pos: {i, j}) {
+      // if the position is not stored among the swaps yet
+      if (_swaps.find(pos) == std::end(_swaps)) {
+
+        // store it
+        _swaps[pos] = pos;
+      }
+    }
+
+    // swap the two positions
+    std::swap(_swaps[i], _swaps[j]);
+
+    return *this;
+  }
+
+  template<typename T>
+  std::vector<T> operator()(const std::vector<T> &v) const
+  {
+    std::vector<T> pv = v;
+
+    for (auto it = std::begin(_swaps); it != std::end(_swaps); ++it) {
+      if (it->first >= v.size() || it->second >= v.size()) {
+        throw std::domain_error(
+            "Permutation and vector dimensions are not compatible.");
+      }
+      pv[it->first] = v[it->second];
+    }
+
+    return pv;
+  }
+
+  Permutation &operator=(const Permutation &P)
+  {
+    _swaps = P._swaps;
+
+    return *this;
+  }
+
+  friend inline void swap(Permutation &P1, Permutation &P2)
+  {
+    std::swap(P1._swaps, P2._swaps);
+  }
+
+  friend std::ostream &operator<<(std::ostream &os, Permutation &P)
+  {
+    os << "Permutation[";
+    for (auto it = std::begin(P._swaps); it != std::end(P._swaps); ++it) {
+      if (it != std::begin(P._swaps)) {
+        os << ",";
+      }
+      os << it->second << "->" << it->first;
+    }
+    os << "]";
+
+    return os;
+  }
+};
+
 /*!
  *  \addtogroup DenseLinearAlgebra
  *  @{
@@ -515,7 +614,7 @@ namespace DenseLinearAlgebra
 template<typename T>
 class PLU_Factorization
 {
-  std::vector<unsigned int> _P;    //!< the permutation
+  Permutation _P;                  //!< the permutation
   std::vector<std::vector<T>> _LU; //!< the L and U matrices
 
   /**
@@ -594,14 +693,11 @@ public:
    *
    * @param M is the matrix whose P-LU factorization must be computed.
    */
-  PLU_Factorization(const std::vector<std::vector<T>> &M): _P(M.size()), _LU(M)
+  PLU_Factorization(const std::vector<std::vector<T>> &M): _P(), _LU(M)
   {
     if (M.size() == 0) {
       throw std::domain_error("The parameter is an empty matrix.");
     }
-
-    // fill _P with the identity permutation
-    std::iota(std::begin(_P), std::end(_P), 0);
 
     for (unsigned int j = 0; j < _LU.size(); ++j) {
       if (j == M.front().size()) {
@@ -619,7 +715,7 @@ public:
         // otherwise, swap rows
         if (j != k) {
           std::swap(_LU[j], _LU[k]);
-          std::swap(_P[j], _P[k]);
+          _P.swap(j, k);
         }
 
         // nullify all the values below A[j][j]
@@ -650,7 +746,7 @@ public:
    */
   std::vector<T> solve(const std::vector<T> &b) const
   {
-    if (b.size() != _P.size()) {
+    if (b.size() != _LU.size()) {
       throw std::domain_error("Wrong dimensions");
     }
 
@@ -659,12 +755,7 @@ public:
                               "system cannot be solved.");
     }
 
-    std::vector<T> Pb(b.size());
-
-    // Apply the permutation to b
-    for (unsigned int i = 0; i < b.size(); ++i) {
-      Pb[i] = b[_P[i]];
-    }
+    std::vector<T> Pb = _P(b);
 
     // Forward substitution for L
     Pb = solveL(Pb);
@@ -706,7 +797,7 @@ public:
    *
    * @return the factorization permutation
    */
-  const std::vector<unsigned int> &P() const
+  const Permutation &P() const
   {
     return _P;
   }
@@ -1285,9 +1376,9 @@ public:
 template<typename T>
 class PLU_Factorization
 {
-  std::vector<unsigned int> _P; //!< the permutation
-  Matrix<T> _L;                 //!< the lower-triangular sparse matrix
-  Matrix<T> _U;                 //!< the upper-triangular sparse matrix
+  Permutation _P; //!< the permutation
+  Matrix<T> _L;   //!< the lower-triangular sparse matrix
+  Matrix<T> _U;   //!< the upper-triangular sparse matrix
 
   /**
    * @brief Build the vector of non-zero rows below the diagonal
@@ -1347,9 +1438,9 @@ class PLU_Factorization
 
     // otherwise swap the current row and the row of the leastest row having a
     // non-empty value in this column
-    std::swap(_P[row_idx], _P[new_row_idx]);
     std::swap(_U._matrix[row_idx], _U._matrix[new_row_idx]);
     std::swap(_L._matrix[row_idx], _L._matrix[new_row_idx]);
+    _P.swap(row_idx, new_row_idx);
 
     // delete the new_row_idx from the sets of non-zero rows below the diagonal
     for (auto elem_it = std::cbegin(_U._matrix[row_idx]);
@@ -1445,14 +1536,11 @@ public:
    * @param M is the matrix whose P-LU factorization must be computed.
    */
   PLU_Factorization(const Matrix<T> &M):
-      _P(M.num_of_rows()), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
+      _P(), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
   {
     if (M.num_of_rows() == 0 || M.num_of_cols() == 0) {
       throw std::domain_error("The parameter is an empty matrix.");
     }
-
-    // fill _P with the identity permutation
-    std::iota(std::begin(_P), std::end(_P), 0);
 
     std::vector<std::set<unsigned int>> non_zero_below_diag
         = get_non_zero_below_diag(M);
@@ -1547,12 +1635,12 @@ public:
    * @brief Compute the solution of the system $(L \cot U) \cdot x = P^{-1}
    * \cdot b$
    *
-   * @param is the known term of the linear system.
+   * @param b is the known term of the linear system.
    * @return the vector $x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b$.
    */
-  std::vector<T> solve(const std::vector<T> &v) const
+  std::vector<T> solve(const std::vector<T> &b) const
   {
-    if (v.size() != _P.size()) {
+    if (b.size() != _U.num_of_rows()) {
       throw std::domain_error("Wrong dimensions");
     }
 
@@ -1561,18 +1649,13 @@ public:
                               "system cannot be solved.");
     }
 
-    std::vector<T> b(_U.num_of_cols());
-
-    // Apply the permutation to b
-    for (unsigned int i = 0; i < v.size(); ++i) {
-      b[i] = v[_P[i]];
-    }
+    std::vector<T> Pb = _P(b);
 
     // Forward substitution for L
-    b = solveL(b);
+    Pb = solveL(Pb);
 
     // Backward substitution for U
-    return solveU(b);
+    return solveU(Pb);
   }
 
   /**
@@ -1580,7 +1663,7 @@ public:
    *
    * @return the factorization permutation
    */
-  const std::vector<unsigned int> &P() const
+  const Permutation &P() const
   {
     return _P;
   }
