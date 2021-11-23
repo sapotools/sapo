@@ -524,24 +524,135 @@ Bundle Bundle::decompose(double alpha, int max_iters)
   return Bundle(this->vars, this->dir_matrix, this->offp, this->offp, bestT);
 }
 
+GiNaC::lst get_Bern_coeff(const GiNaC::lst &alphas, const GiNaC::lst &vars,
+                          const GiNaC::lst &f, const GiNaC::lst &genFun,
+                          const std::vector<double> &dir_vector)
+{
+  // the combination parallelotope/direction to bound is not present in
+  // hash table compute control points
+  GiNaC::lst sub, fog;
+
+  for (unsigned int k = 0; k < vars.nops(); k++) {
+    sub.append(vars[k] == genFun[k]);
+  }
+  for (unsigned int k = 0; k < vars.nops(); k++) {
+    fog.append(f[k].subs(sub));
+  }
+
+  GiNaC::ex Lfog;
+  Lfog = 0;
+  // upper facets
+  for (unsigned int k = 0; k < dir_vector.size(); k++) {
+    Lfog = Lfog + dir_vector[k] * fog[k];
+  }
+
+  return BaseConverter(alphas, Lfog).getBernCoeffsMatrix();
+}
+
+/**
+ * @brief Compute the variable substitutions for a parallelotope
+ *
+ * @param P is a parallelotope.
+ * @param q are the variables associated to the parallelotope's base vertex.
+ * @param beta are the variables associated to the parallelotope's lengths.
+ * @return the symbolic equations representing the the variable
+ *         substitutions for `P`.
+ */
+GiNaC::lst get_subs_from(const Parallelotope &P, const GiNaC::lst &q,
+                         const GiNaC::lst &beta)
+{
+  const std::vector<double> &base_vertex = P.getBaseVertex();
+  const std::vector<double> &lengths = P.getlengths();
+
+  GiNaC::lst subs;
+
+  for (unsigned int k = 0; k < q.nops(); k++) {
+    subs.append(q[k] == base_vertex[k]);
+    subs.append(beta[k] == lengths[k]);
+  }
+
+  return subs;
+}
+
+double Bundle::MaxCoeffFinder::coeff_eval_p(const GiNaC::ex &c) const
+{
+  using namespace GiNaC;
+
+  return ex_to<numeric>(c).to_double();
+}
+
+double Bundle::MaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
+{
+  using namespace GiNaC;
+
+  double value = ex_to<numeric>(bernCoeff).to_double();
+
+  // TODO: The following conditional evaluation avoids -0
+  //       values. Check the difference between -0 and 0.
+  return (value == 0 ? 0 : -value);
+}
+
+double
+Bundle::ParamMaxCoeffFinder::coeff_eval_p(const GiNaC::ex &bernCoeff) const
+{
+  return paraSet.maximize(params, bernCoeff);
+}
+
+double
+Bundle::ParamMaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
+{
+  return paraSet.maximize(params, -bernCoeff);
+};
+
+Bundle::MaxCoeffFinder::MaxCoeffType
+Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs,
+                                        const GiNaC::lst &subs) const
+{
+  // find the maximum coefficient
+  GiNaC::lst::const_iterator b_coeff_it = b_coeffs.begin();
+
+  GiNaC::ex bernCoeff = b_coeff_it->subs(subs);
+  double maxCoeffp = coeff_eval_p(bernCoeff);
+  double maxCoeffm = coeff_eval_m(bernCoeff);
+
+  for (++b_coeff_it; b_coeff_it != b_coeffs.end(); ++b_coeff_it) {
+    GiNaC::ex bernCoeff = b_coeff_it->subs(subs);
+    double actCoeff = coeff_eval_p(bernCoeff);
+
+    if (actCoeff > maxCoeffp) {
+      maxCoeffp = actCoeff;
+    }
+
+    actCoeff = coeff_eval_m(bernCoeff);
+    if (actCoeff > maxCoeffm) {
+      maxCoeffm = actCoeff;
+    }
+  }
+
+  return MaxCoeffType{maxCoeffp, maxCoeffm};
+}
+
 /**
  * Transform the bundle
  *
  * @param[in] vars variables appearing in the transforming function
  * @param[in] f transforming function
- * @param[in,out] controlPts control points computed so far that might be
- * updated
+ * @param[in,out] controlPts is a storage containing all the control
+ *                points computed so far.
+ * @param[in] max_finder is a pointer to an MaxCoeffFinder object.
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
 Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                         ControlPointStorage &controlPts, int mode) const
+                         ControlPointStorage &controlPts,
+                         const Bundle::MaxCoeffFinder *max_finder,
+                         int mode) const
 {
   using namespace std;
   using namespace GiNaC;
 
   vector<double> newDp(this->getSize(), std::numeric_limits<double>::max());
-  vector<double> newDm(this->getSize(), std::numeric_limits<double>::max());
+  vector<double> newDm = newDp;
 
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
@@ -550,28 +661,20 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     }
   }
 
-  for (unsigned int i = 0; i < this->getCard();
-       i++) { // for each parallelotope
+  // for each parallelotope
+  for (unsigned int i = 0; i < this->getCard(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
     const lst &genFun = P.getGeneratorFunction();
 
-    const vector<double> &base_vertex = P.getBaseVertex();
-    const vector<double> &lengths = P.getlengths();
-
-    lst subParatope;
-
-    for (unsigned int k = 0; k < this->vars[0].nops(); k++) {
-      subParatope.append(this->vars[0][k] == base_vertex[k]);
-      subParatope.append(this->vars[2][k] == lengths[k]);
-    }
+    lst subParatope = get_subs_from(P, this->vars[0], this->vars[2]);
 
     if (mode == 0) { // static mode
       dirs_to_bound = this->t_matrix[i];
     }
 
-    for (unsigned int j = 0; j < dirs_to_bound.size();
-         j++) { // for each direction
+    // for each direction
+    for (unsigned int j = 0; j < dirs_to_bound.size(); j++) {
 
       // key of the control points
       vector<int> key = this->t_matrix[i];
@@ -579,175 +682,35 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 
       lst actbernCoeffs;
 
+      // check if the coefficients were already computed
       if (!(controlPts.contains(key)
-            && controlPts.gen_fun_is_equal_to(
-                key,
-                genFun))) { // check if the coefficients were already computed
+            && controlPts.gen_fun_is_equal_to(key, genFun))) {
 
-        // the combination parallelotope/direction to bound is not present in
-        // hash table compute control points
-        lst sub, fog;
+        actbernCoeffs = get_Bern_coeff(this->vars[1], vars, f, genFun,
+                                       dir_matrix[dirs_to_bound[j]]);
 
-        for (unsigned int k = 0; k < vars.nops(); k++) {
-          sub.append(vars[k] == genFun[k]);
-        }
-        for (unsigned int k = 0; k < vars.nops(); k++) {
-          fog.append(f[k].subs(sub));
-        }
-
-        ex Lfog;
-        Lfog = 0;
-        // upper facets
-        for (unsigned int k = 0; k < this->getDim(); k++) {
-          Lfog = Lfog + this->dir_matrix[dirs_to_bound[j]][k] * fog[k];
-        }
-
-        actbernCoeffs
-            = BaseConverter(this->vars[1], Lfog).getBernCoeffsMatrix();
-
-        controlPts.set(key, genFun,
-                       actbernCoeffs); // store the computed coefficients
+        // store the computed coefficients
+        controlPts.set(key, genFun, actbernCoeffs);
 
       } else {
         actbernCoeffs = controlPts.get_ctrl_pts(key);
       }
 
-      // find the maximum coefficient
-      double maxCoeffp = std::numeric_limits<double>::lowest();
-      double maxCoeffm = std::numeric_limits<double>::lowest();
-      for (lst::const_iterator c = actbernCoeffs.begin();
-           c != actbernCoeffs.end(); ++c) {
-        double actCoeffp = ex_to<numeric>((*c).subs(subParatope)).to_double();
-        double actCoeffm
-            = ex_to<numeric>((-(*c)).subs(subParatope)).to_double();
-        maxCoeffp = max(maxCoeffp, actCoeffp);
-        maxCoeffm = max(maxCoeffm, actCoeffm);
+      auto maxCoeff = max_finder->find_max_coeffs(actbernCoeffs, subParatope);
+
+      const unsigned int &dir_b = dirs_to_bound[j];
+      if (newDp[dir_b] > maxCoeff.p) {
+        newDp[dir_b] = maxCoeff.p;
       }
-      newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]], maxCoeffp);
-      newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]], maxCoeffm);
+
+      if (newDm[dir_b] > maxCoeff.m) {
+        newDm[dir_b] = maxCoeff.m;
+      }
     }
   }
 
   Bundle res
       = Bundle(this->vars, this->dir_matrix, newDp, newDm, this->t_matrix);
-  if (mode == 0) {
-    return res.get_canonical();
-  }
-
-  return res;
-}
-
-/**
- * Parametric transformation of the bundle
- *
- * @param[in] vars variables appearing in the transforming function
- * @param[in] params parameters appearing in the transforming function
- * @param[in] f transforming function
- * @param[in] paraSet set of parameters
- * @param[in,out] controlPts control points computed so far that might be
- * updated
- * @param[in] mode transformation mode (0=OFO,1=AFO)
- * @returns transformed bundle
- */
-Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &params,
-                         const GiNaC::lst &f, const Polytope &paraSet,
-                         ControlPointStorage &controlPts, int mode) const
-{
-  using namespace std;
-  using namespace GiNaC;
-
-  vector<double> newDp(this->getSize(), std::numeric_limits<double>::max());
-  vector<double> newDm(this->getSize(), std::numeric_limits<double>::max());
-
-  vector<int> dirs_to_bound;
-  if (mode) { // dynamic transformation
-    dirs_to_bound = vector<int>(this->dir_matrix.size());
-    for (unsigned int i = 0; i < this->dir_matrix.size(); i++) {
-      dirs_to_bound[i] = i;
-    }
-  }
-
-  for (unsigned int i = 0; i < this->getCard();
-       i++) { // for each parallelotope
-
-    Parallelotope P = this->getParallelotope(i);
-    const lst &genFun = P.getGeneratorFunction();
-
-    const vector<double> &base_vertex = P.getBaseVertex();
-    const vector<double> &lengths = P.getlengths();
-
-    lst subParatope;
-
-    for (unsigned int k = 0; k < this->vars[0].nops(); k++) {
-      subParatope.append(this->vars[0][k] == base_vertex[k]);
-      subParatope.append(this->vars[2][k] == lengths[k]);
-    }
-
-    if (mode == 0) { // static mode
-      dirs_to_bound = this->t_matrix[i];
-    }
-
-    for (unsigned int j = 0; j < dirs_to_bound.size();
-         j++) { // for each direction
-
-      // key of the control points
-      vector<int> key = this->t_matrix[i];
-      key.push_back(dirs_to_bound[j]);
-
-      lst actbernCoeffs;
-
-      if (!(controlPts.contains(key)
-            && controlPts.gen_fun_is_equal_to(
-                key,
-                genFun))) { // check if the coefficients were already computed
-
-        // the combination parallelotope/direction to bound is not present in
-        // hash table compute control points
-        lst sub, fog;
-
-        for (unsigned int k = 0; k < vars.nops(); k++) {
-          sub.append(vars[k] == genFun[k]);
-        }
-
-        for (unsigned int k = 0; k < vars.nops(); k++) {
-          fog.append(f[k].subs(sub));
-        }
-
-        ex Lfog;
-        Lfog = 0;
-        // upper facets
-        for (unsigned int k = 0; k < this->getDim(); k++) {
-          Lfog = Lfog + this->dir_matrix[dirs_to_bound[j]][k] * fog[k];
-        }
-
-        actbernCoeffs
-            = BaseConverter(this->vars[1], Lfog).getBernCoeffsMatrix();
-
-        controlPts.set(key, genFun,
-                       actbernCoeffs); // store the computed coefficients
-
-      } else {
-        actbernCoeffs = controlPts.get_ctrl_pts(key);
-      }
-
-      // find the maximum coefficient
-      double maxCoeffp = std::numeric_limits<double>::lowest();
-      ;
-      double maxCoeffm = std::numeric_limits<double>::lowest();
-      ;
-      for (lst::const_iterator c = actbernCoeffs.begin();
-           c != actbernCoeffs.end(); ++c) {
-        ex paraBernCoeff;
-        paraBernCoeff = (*c).subs(subParatope);
-        maxCoeffp = max(maxCoeffp, paraSet.maximize(params, paraBernCoeff));
-        maxCoeffm = max(maxCoeffm, paraSet.maximize(params, -paraBernCoeff));
-      }
-      newDp[dirs_to_bound[j]] = min(newDp[dirs_to_bound[j]], maxCoeffp);
-      newDm[dirs_to_bound[j]] = min(newDm[dirs_to_bound[j]], maxCoeffm);
-    }
-  }
-
-  Bundle res(this->vars, this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

@@ -45,6 +45,112 @@ private:
    */
   Vector offsetDistances();
 
+  /**
+   * @brief A finder for Bernstein coefficient upper and lower-bounds.
+   */
+  class MaxCoeffFinder
+  {
+    /**
+     * @brief Evaluate the Bernstein coefficient upper-bound.
+     *
+     * @param bernCoeff is the symbolical representation of Bernstein
+     * coefficient.
+     * @return The numerical evaluation of Bernstein coefficient upper-bound.
+     */
+    virtual double coeff_eval_p(const GiNaC::ex &bernCoeff) const;
+
+    /**
+     * @brief Evaluate the Bernstein coefficient lower-bound complementary.
+     *
+     * @param bernCoeff is the symbolical representation of Bernstein
+     *                  coefficient.
+     * @return The numerical evaluation of Bernstein coefficient
+     *         lower-bound complementary.
+     */
+    virtual double coeff_eval_m(const GiNaC::ex &bernCoeff) const;
+
+  public:
+    typedef struct MaxCoeffType {
+      double p; //<! the Bernstein coefficient upper-bound
+      double m; //<! the Bernstein coefficient lower-bound complementary
+    } MaxCoeffType;
+
+    /**
+     * @brief Create MaxCoeffType objects.
+     */
+    MaxCoeffFinder() {}
+
+    /**
+     * @brief Find the maximum of lower-bound complementary and
+     *        upper-bound for Bernstein coefficients.
+     *
+     * @param b_coeffs is a list of symbolical Bernstein coefficients.
+     * @param subs is a list of variable assignaments
+     * @return The maximum of both lower-bound complementary and
+     *         upper-bound for all the Bernstein coefficients in
+     *         `b_coeffs`.
+     */
+    MaxCoeffType find_max_coeffs(const GiNaC::lst &b_coeffs,
+                                 const GiNaC::lst &subs) const;
+  };
+
+  /**
+   * @brief A finder for parametric Bernstein coefficient upper and
+   * lower-bounds.
+   */
+  class ParamMaxCoeffFinder : public MaxCoeffFinder
+  {
+    const GiNaC::lst &params;
+    const Polytope &paraSet;
+    /**
+     * @brief Evaluate the parametric Bernstein coefficient upper-bound.
+     *
+     * @param bernCoeff is the symbolical representation of Bernstein
+     * coefficient.
+     * @return The numerical evaluation of parametric Bernstein
+     *         coefficient upper-bound.
+     */
+    double coeff_eval_p(const GiNaC::ex &bernCoeff) const;
+
+    /**
+     * @brief Evaluate the parametric Bernstein coefficient lower-bound
+     *        complementary.
+     *
+     * @param bernCoeff is the symbolical representation of Bernstein
+     *                  coefficient.
+     * @return The numerical evaluation of parametric Bernstein coefficient
+     *         lower-bound complementary.
+     */
+    double coeff_eval_m(const GiNaC::ex &bernCoeff) const;
+
+  public:
+    /**
+     * @brief Create ParamMaxCoeffFinder objects.
+     *
+     * @param params is the list of parameters.
+     * @param paraSet is the set of admissible values for parameters.
+     */
+    ParamMaxCoeffFinder(const GiNaC::lst &params, const Polytope &paraSet):
+        MaxCoeffFinder(), params(params), paraSet(paraSet)
+    {
+    }
+  };
+
+  /**
+   * Transform the bundle
+   *
+   * @param[in] vars variables appearing in the transforming function
+   * @param[in] f transforming function
+   * @param[in,out] controlPts control points computed so far that might be
+   * updated
+   * @param[in] max_finder is a pointer to a MaxCoeffFinder object.
+   * @param[in] mode transformation mode (0=OFO,1=AFO)
+   * @returns transformed bundle
+   */
+  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+                   ControlPointStorage &controlPts,
+                   const MaxCoeffFinder *max_finder, int mode) const;
+
 public:
   // constructors
   Bundle(const Bundle &orig);
@@ -178,8 +284,13 @@ public:
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                   ControlPointStorage &controlPts, int mode) const;
+  inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+                          ControlPointStorage &controlPts, int mode) const
+  {
+    MaxCoeffFinder max_finder;
+
+    return transform(vars, f, controlPts, &max_finder, mode);
+  }
 
   /**
    * Parametric transformation of the bundle
@@ -193,9 +304,14 @@ public:
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
-                   const GiNaC::lst &f, const Polytope &paraSet,
-                   ControlPointStorage &controlPts, int mode) const;
+  inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
+                          const GiNaC::lst &f, const Polytope &paraSet,
+                          ControlPointStorage &controlPts, int mode) const
+  {
+    ParamMaxCoeffFinder max_finder(params, paraSet);
+
+    return transform(vars, f, controlPts, &max_finder, mode);
+  }
 
   Bundle &operator=(Bundle &&);
 
