@@ -12,78 +12,6 @@
 
 #include <cmath>
 
-/**
- * Constructor that instantiates a parallelotope
- *
- * @param[in] vars vector with the list of variables used for the generator
- * functions
- * @param[in] u collection of generator versors
- */
-Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
-                             const Matrix &u)
-{
-  using namespace std;
-  using namespace GiNaC;
-
-  if (vars.size() != 3) {
-    cerr << "Parallelotope::Parallelotope : vars must contain 3 "
-         << "collections of variable names (q,alpha,beta)" << endl;
-    exit(EXIT_FAILURE);
-  }
-
-  this->vars.push_back(vars[0]);
-  this->vars.push_back(vars[1]);
-  this->vars.push_back(vars[2]);
-
-  // get the dimension of the parallelotope
-  this->dim = vars[0].nops();
-  // and store its variable names
-  for (int i = 0; i < 3; i++) {
-    if (vars[i].nops() != this->dim) {
-      std::cerr << "Parallelotope::Parallelotope : vars[" << i
-                << "] must have " << this->dim << " variables" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  // extract variable names
-  lst q = this->vars[0];
-  lst alpha = this->vars[1];
-  lst beta = this->vars[2];
-
-  // initialize generator function
-  for (auto it = std::begin(q); it != std::end(q); ++it) {
-    this->generator_function.append(*it);
-  }
-
-  // create the generation function accumulating the versor values
-  for (unsigned int i = 0; i < this->dim; i++) {
-
-    // check dimension of versors
-    if (u[i].size() != this->dim) {
-      std::cerr << "Parallelotope::Parallelotope : dim and ui "
-                << "dimensions must agree" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // Normalize the versors and generatre the generator function
-    // double norm = euclidNorm(u[i]);
-    // std::vector< double > norm_versor;
-
-    for (unsigned int j = 0; j < this->dim; j++) {
-      // norm_versor.push_back(u[i][j]/norm);
-      this->generator_function[j]
-          = this->generator_function[j] + alpha[i] * beta[i] * u[i][j];
-    }
-    // store the i-th versor
-    this->u.push_back(u[i]);
-  }
-
-  // Initialize the template matrix
-  std::vector<double> base_vertex(this->dim, 0);
-  Vector lengths(this->dim, 1);
-}
-
 std::list<std::vector<double>> get_parallelotope_vertices(
     const std::vector<std::vector<double>> &template_matrix,
     const std::vector<double> &lower_bound,
@@ -122,98 +50,43 @@ std::list<std::vector<double>> get_parallelotope_vertices(
 /**
  * Constructor
  *
- * @param[in] vars vector with the list of variables used for the generator
- * functions
  * @param[in] template_matrix is the template matrix of the parallelotope
  * @param[in] lower_bound is the lower bound offsets of the parallelotope
  * @param[in] upper_bound is the upper bound offsets of the parallelotope
  */
-Parallelotope::Parallelotope(const std::vector<GiNaC::lst> &vars,
-                             const Matrix &template_matrix,
+Parallelotope::Parallelotope(const Matrix &template_matrix,
                              const Vector &lower_bound,
                              const Vector &upper_bound)
 {
   using namespace std;
-  using namespace GiNaC;
-
-  if (vars.size() != 3) {
-    cerr << "Parallelotope::Parallelotope : vars must contain "
-         << "3 collections of variable names (q,alpha,beta)" << endl;
-    exit(EXIT_FAILURE);
-  }
-
-  this->vars.push_back(vars[0]);
-  this->vars.push_back(vars[1]);
-  this->vars.push_back(vars[2]);
-
-  // get the dimension of the parallelotope
-  this->dim = vars[0].nops();
-  // and store its variable names
-  for (int i = 0; i < 3; i++) {
-    if (vars[i].nops() != this->dim) {
-      std::cerr << "Parallelotope::Parallelotope : vars[" << i
-                << "] must have " << this->dim << " variables" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  // initialize generator function
-  for (auto it = std::begin(vars[0]); it != std::end(vars[0]); ++it) {
-    this->generator_function.append(*it);
-  }
 
   // convert the linear system to vectors
   std::list<Vector> vertices
       = get_parallelotope_vertices(template_matrix, lower_bound, upper_bound);
 
-  this->base_vertex = vertices.front();
+  this->_base_vertex = vertices.front();
 
   // Compute the generators, their lengths, and the versors
   for (auto v_it = ++std::begin(vertices); v_it != std::end(vertices);
        ++v_it) {
 
     // add a new generator
-    const Vector gen = *v_it - base_vertex;
+    const Vector gen = *v_it - _base_vertex;
 
     // compute its length and store it
     const double length = norm_2(gen);
-    lengths.push_back(length);
+    _lengths.push_back(length);
 
     // compute and store the corresponding versor
 
     // The approximation below improves performances
-    // TODO: check whether the performance-approximation
-    //       corelation is due to GiNaC.
     // TODO: set the approximation dynamically, possibly
     //       by using SIL input.
     if (length == 0) {
       // TODO: check when a versor can be null
-      u.push_back(approx(gen, 11));
+      _versors.push_back(approx(gen, 11));
     } else {
-      u.push_back(approx(gen / length, 11));
-    }
-  }
-
-  // create the generation function accumulating the versor values
-  const lst &alpha = this->vars[1];
-  const lst &beta = this->vars[2];
-  for (unsigned int i = 0; i < this->dim; i++) {
-
-    // check dimension of versors
-    if (u[i].size() != this->dim) {
-      std::cerr << "Parallelotope::Parallelotope : dim and ui "
-                << "dimensions must agree" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // Generatre the generator function
-    // double norm = euclidNorm(u[i]);
-    // std::vector< double > norm_versor;
-
-    for (unsigned int j = 0; j < this->dim; j++) {
-      // norm_versor.push_back(u[i][j]/norm);
-      this->generator_function[j]
-          = this->generator_function[j] + alpha[i] * beta[i] * this->u[i][j];
+      _versors.push_back(approx(gen / length, 11));
     }
   }
 }
@@ -292,47 +165,51 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 {
   using namespace std;
 
-  if (q.size() != this->dim) {
-    std::cerr << "Parallelotope::gen2const : q must have dimension "
-              << this->dim << std::endl;
+  const unsigned int dim = this->dim();
+
+  if (q.size() != dim) {
+    std::cerr << "Parallelotope::gen2const : q must have dimension " << dim
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
   std::vector<std::vector<double>> hps; // hyperplane equations
 
   // first set of hyperplanes
-  for (unsigned int i = 0; i < this->dim; i++) {
+  for (unsigned int i = 0; i < dim; i++) {
 
     std::list<std::vector<double>> pts;
     pts.push_back(q); // add base vertex
 
-    for (unsigned int j = 0; j < this->dim; j++) { // for all the generators u
+    for (unsigned int j = 0; j < dim; j++) { // for all the generators u
       if (i != j) {
-        pts.push_back(q + (beta[j] * this->u[j]));
+        pts.push_back(q + (beta[j] * this->_versors[j]));
       }
     }
     hps.push_back(hyperplane_through_points(pts));
   }
 
   // second set of hyperplanes
-  for (unsigned int i = 0; i < this->dim; i++) {
+  for (unsigned int i = 0; i < dim; i++) {
 
     std::list<std::vector<double>> pts;
 
+    const std::vector<double> &versor_i = _versors[i];
+
     std::vector<double> qt; // traslate q
-    for (unsigned int j = 0; j < this->dim; j++) {
-      qt.push_back(q[j] + beta[i] * this->u[i][j]);
+    for (unsigned int j = 0; j < dim; j++) {
+      qt.push_back(q[j] + beta[i] * versor_i[j]);
     }
     pts.push_back(qt); // add base vertex
 
-    for (unsigned int j = 0; j < this->dim; j++) {
+    for (unsigned int j = 0; j < dim; j++) {
       // for all the generators u
       if (i != j) {
         std::vector<double> p;
-        for (unsigned int k = 0; k < this->dim; k++) {
+        for (unsigned int k = 0; k < dim; k++) {
           // coordinate of the point
-          p.push_back((q[k] + this->u[j][k] * beta[j])
-                      + beta[i] * this->u[i][k]);
+          p.push_back((q[k] + this->_versors[j][k] * beta[j])
+                      + beta[i] * versor_i[k]);
         }
         pts.push_back(p);
       }
@@ -341,50 +218,38 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
     hps.push_back(hyperplane_through_points(pts));
   }
 
-  std::vector<std::vector<double>> Lambda;
-  std::vector<double> d(this->dim * 2, 0);
+  std::vector<double> d(dim * 2, 0);
+  std::vector<std::vector<double>> Lambda(d.size(),
+                                          std::vector<double>(dim, 0));
 
-  // initialize template Lambda
-  std::vector<double> Lambda_i(this->dim, 0);
-  for (unsigned int i = 0; i < (this->dim) * 2; i++) {
-    Lambda.push_back(Lambda_i);
-  }
+  for (unsigned int i = 0; i < dim; i++) {
 
-  for (unsigned int i = 0; i < this->dim; i++) {
+    const std::vector<double> &hps_i = hps[i];
+    const std::vector<double> &hps_i_plus = hps[i + dim];
+
+    std::vector<double> &Lambda_i = Lambda[i];
+    std::vector<double> &Lambda_i_plus = Lambda[i + dim];
 
     // find hyperplane with smaller direction
-    double b1 = -hps[i][hps[i].size() - 1];
-    double b2 = -hps[i + this->dim][hps[i].size() - 1];
+    double b1 = -hps_i[hps[i].size() - 1];
+    double b2 = -hps_i_plus[hps[i].size() - 1];
 
-    if (b1 > b2) {
-      d[i] = b1;
-      d[i + this->dim] = -b2;
-      for (unsigned int j = 0; j < this->dim; j++) {
-        Lambda[i][j] = hps[i][j];
-        Lambda[i + this->dim][j] = -hps[i + this->dim][j];
-      }
-    } else {
-      d[i] = -b1;
-      d[i + this->dim] = b2;
-      for (unsigned int j = 0; j < this->dim; j++) {
-        Lambda[i][j] = -hps[i][j];
-        Lambda[i + this->dim][j] = hps[i + this->dim][j];
-      }
+    double sign = (b1 > b2 ? 1 : -1);
+
+    d[i] = sign * b1;
+    d[i + dim] = -sign * b2;
+    for (unsigned int j = 0; j < dim; j++) {
+      Lambda_i[j] = sign * hps_i[j];
+      Lambda_i_plus[j] = -sign * hps_i_plus[j];
     }
   }
 
   return Polytope(Lambda, d);
 }
 
-Parallelotope::~Parallelotope()
-{
-  // TODO Auto-generated destructor stub
-}
-
 void swap(Parallelotope &A, Parallelotope &B)
 {
-  std::swap(A.dim, B.dim);
-  std::swap(A.vars, B.vars);
-  std::swap(A.generator_function, B.generator_function);
-  std::swap(A.u, B.u);
+  std::swap(A._versors, B._versors);
+  std::swap(A._base_vertex, B._base_vertex);
+  std::swap(A._lengths, B._lengths);
 }

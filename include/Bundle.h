@@ -30,10 +30,12 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
+
+  // TODO: unravel this member into three properly named members
   std::vector<GiNaC::lst> vars; //!< variables appearing in generato function
-                                //!< vars[0] q: base vertex
-                                //!< vars[1] alpha : free variables \in [0,1]
-                                //!< vars[2] beta : generator amplitudes
+                                // vars[0] q: base vertex
+                                // vars[1] alpha : free variables \in [0,1]
+                                // vars[2] beta : generator amplitudes
 
   std::map<std::vector<int>, GiNaC::lst>
       bernCoeffs; //!< Bernstein coefficients map
@@ -210,6 +212,36 @@ public:
     return this->dir_matrix;
   }
 
+  /**
+   * Get variables of base vertex
+   *
+   * @returns base vertex variables
+   */
+  const GiNaC::lst &getQ() const
+  {
+    return this->vars[0];
+  }
+
+  /**
+   * Get free variables
+   *
+   * @returns free variables
+   */
+  const GiNaC::lst &getAlpha() const
+  {
+    return this->vars[1];
+  }
+
+  /**
+   * Get variables of generator lengths
+   *
+   * @returns generator lengths variables
+   */
+  const GiNaC::lst &getBeta() const
+  {
+    return this->vars[2];
+  }
+
   const double &getOffp(long unsigned int i) const
   {
     return this->offp[i];
@@ -321,5 +353,9 @@ public:
 };
 
 void swap(Bundle &A, Bundle &B);
+
+GiNaC::lst build_generator_functs(
+    const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
+    const std::vector<std::vector<double>> &generator_matrix);
 
 #endif /* BUNDLE_H_ */

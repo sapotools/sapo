@@ -253,7 +253,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
     ++it;
   }
 
-  return Parallelotope(this->vars, Lambda, lbound, ubound);
+  return Parallelotope(Lambda, lbound, ubound);
 }
 
 /**
@@ -524,9 +524,10 @@ Bundle Bundle::decompose(double alpha, int max_iters)
   return Bundle(this->vars, this->dir_matrix, this->offp, this->offp, bestT);
 }
 
-GiNaC::lst get_Bern_coeff(const GiNaC::lst &alphas, const GiNaC::lst &vars,
-                          const GiNaC::lst &f, const GiNaC::lst &genFun,
-                          const std::vector<double> &dir_vector)
+GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alphas,
+                               const GiNaC::lst &vars, const GiNaC::lst &f,
+                               const GiNaC::lst &genFun,
+                               const std::vector<double> &dir_vector)
 {
   // the combination parallelotope/direction to bound is not present in
   // hash table compute control points
@@ -561,8 +562,8 @@ GiNaC::lst get_Bern_coeff(const GiNaC::lst &alphas, const GiNaC::lst &vars,
 GiNaC::lst get_subs_from(const Parallelotope &P, const GiNaC::lst &q,
                          const GiNaC::lst &beta)
 {
-  const std::vector<double> &base_vertex = P.getBaseVertex();
-  const std::vector<double> &lengths = P.getlengths();
+  const std::vector<double> &base_vertex = P.base_vertex();
+  const std::vector<double> &lengths = P.lengths();
 
   GiNaC::lst subs;
 
@@ -632,6 +633,29 @@ Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs,
   return MaxCoeffType{maxCoeffp, maxCoeffm};
 }
 
+GiNaC::lst build_generator_functs(
+    const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
+    const std::vector<std::vector<double>> &generator_matrix)
+{
+  GiNaC::lst gen_functs = q;
+
+  /*
+  // initialize generator functions
+  for (auto it = std::begin(q); it != std::end(q); ++it) {
+    gen_functs.append(*it);
+  }
+  */
+
+  for (unsigned int i = 0; i < generator_matrix.size(); i++) {
+    const std::vector<double> &gen_row = generator_matrix[i];
+    for (unsigned int j = 0; j < gen_row.size(); j++) {
+      gen_functs[j] = gen_functs[j] + alpha[i] * beta[i] * gen_row[j];
+    }
+  }
+
+  return gen_functs;
+}
+
 /**
  * Transform the bundle
  *
@@ -665,7 +689,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   for (unsigned int i = 0; i < this->getCard(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
-    const lst &genFun = P.getGeneratorFunction();
+    const lst &genFun = build_generator_functs(this->vars[0], this->vars[1],
+                                               this->vars[2], P.versors());
 
     lst subParatope = get_subs_from(P, this->vars[0], this->vars[2]);
 
@@ -686,8 +711,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
       if (!(controlPts.contains(key)
             && controlPts.gen_fun_is_equal_to(key, genFun))) {
 
-        actbernCoeffs = get_Bern_coeff(this->vars[1], vars, f, genFun,
-                                       dir_matrix[dirs_to_bound[j]]);
+        actbernCoeffs = compute_Bern_coeffs(this->vars[1], vars, f, genFun,
+                                            dir_matrix[dirs_to_bound[j]]);
 
         // store the computed coefficients
         controlPts.set(key, genFun, actbernCoeffs);

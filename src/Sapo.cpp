@@ -395,7 +395,8 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
     key.push_back(atom->getID());
 
     Parallelotope P = reachSet.getParallelotope(i);
-    lst genFun = P.getGeneratorFunction();
+    lst genFun = build_generator_functs(reachSet.getQ(), reachSet.getAlpha(),
+                                        reachSet.getBeta(), P.versors());
     lst controlPts;
 
     if (!(this->synthControlPts.contains(key)
@@ -418,7 +419,8 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
       sofog = atom->getPredicate().subs(sub_sigma);
 
       // compute the Bernstein control points
-      controlPts = BaseConverter(P.getAlpha(), sofog).getBernCoeffsMatrix();
+      controlPts
+          = BaseConverter(reachSet.getAlpha(), sofog).getBernCoeffsMatrix();
       this->synthControlPts.set(key, genFun, controlPts);
 
     } else {
@@ -426,11 +428,11 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
     }
 
     // substitute numerical values in sofog
-    vector<double> base_vertex = P.getBaseVertex();
-    vector<double> lengths = P.getlengths();
+    vector<double> base_vertex = P.base_vertex();
+    vector<double> lengths = P.lengths();
 
-    lst qvars(P.getQ());
-    lst bvars(P.getBeta());
+    lst qvars(reachSet.getQ());
+    lst bvars(reachSet.getBeta());
     lst para_sub;
     for (unsigned int j = 0; j < this->vars.nops(); j++) {
       para_sub.append(qvars[j] == base_vertex[j]);
