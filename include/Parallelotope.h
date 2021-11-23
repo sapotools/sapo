@@ -31,9 +31,6 @@ private:
   std::vector<double> _base_vertex; //!< base vertex
   std::vector<double> _lengths;     //!< tensors original lengths
 
-  // TODO: test the following method
-  Polytope gen2const(const Vector &q, const Vector &beta) const;
-
 public:
   /**
    * Constructor
@@ -55,10 +52,13 @@ public:
     return (_versors.size() == 0 ? 0 : _versors.front().size());
   }
 
-  inline operator Polytope() const
-  {
-    return this->gen2const(this->_base_vertex, this->_lengths);
-  }
+  // TODO: test the following method
+  /**
+   * Build a polytope representing the parallelotope.
+   *
+   * @returns a polytope representing the parallelotope
+   */
+  operator Polytope() const;
 
   const std::vector<double> &base_vertex() const
   {

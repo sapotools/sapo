@@ -155,23 +155,15 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
 }
 
 /**
- * Constructor generator to constraints representation
+ * Build a polytope representing the parallelotope.
  *
- * @param[in] q numerical base vertex
- * @param[in] beta numerical generator lengths
- * @returns polytope representing the parallelotope
+ * @returns a polytope representing the parallelotope
  */
-Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
+Parallelotope::operator Polytope() const
 {
   using namespace std;
 
   const unsigned int dim = this->dim();
-
-  if (q.size() != dim) {
-    std::cerr << "Parallelotope::gen2const : q must have dimension " << dim
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
 
   std::vector<std::vector<double>> hps; // hyperplane equations
 
@@ -179,11 +171,11 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
   for (unsigned int i = 0; i < dim; i++) {
 
     std::list<std::vector<double>> pts;
-    pts.push_back(q); // add base vertex
+    pts.push_back(_base_vertex); // add base vertex
 
     for (unsigned int j = 0; j < dim; j++) { // for all the generators u
       if (i != j) {
-        pts.push_back(q + (beta[j] * this->_versors[j]));
+        pts.push_back(pts.front() + _lengths[j] * this->_versors[j]);
       }
     }
     hps.push_back(hyperplane_through_points(pts));
@@ -194,24 +186,13 @@ Polytope Parallelotope::gen2const(const Vector &q, const Vector &beta) const
 
     std::list<std::vector<double>> pts;
 
-    const std::vector<double> &versor_i = _versors[i];
-
-    std::vector<double> qt; // traslate q
-    for (unsigned int j = 0; j < dim; j++) {
-      qt.push_back(q[j] + beta[i] * versor_i[j]);
-    }
-    pts.push_back(qt); // add base vertex
+    // add base vertex
+    pts.push_back(_base_vertex + _lengths[i] * _versors[i]);
 
     for (unsigned int j = 0; j < dim; j++) {
       // for all the generators u
       if (i != j) {
-        std::vector<double> p;
-        for (unsigned int k = 0; k < dim; k++) {
-          // coordinate of the point
-          p.push_back((q[k] + this->_versors[j][k] * beta[j])
-                      + beta[i] * versor_i[k]);
-        }
-        pts.push_back(p);
+        pts.push_back(pts.front() + _lengths[j] * _versors[j]);
       }
     }
 
