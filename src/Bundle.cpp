@@ -11,10 +11,13 @@
 
 #include "LinearAlgebra.h"
 
-#include <cmath>
 #include <limits>
 #include <string>
 #include <algorithm>
+
+#define _USE_MATH_DEFINES
+
+#include <cmath>
 
 /**
  * Copy constructor that instantiates the bundle
@@ -59,7 +62,7 @@ void swap(Bundle &A, Bundle &B)
  */
 double orthProx(std::vector<double> v1, std::vector<double> v2)
 {
-  return std::abs(angle(v1, v2) - (3.14159265 / 2));
+  return std::abs(angle(v1, v2) - M_PI_2);
 }
 
 /**
