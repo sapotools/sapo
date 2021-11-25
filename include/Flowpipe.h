@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "Bundle.h"
-#include "LinearSystemSet.h"
+#include "PolytopesUnion.h"
 #include "OutputFormatter.h"
 
 class Flowpipe
@@ -21,7 +21,7 @@ class Flowpipe
 
 private:
   std::vector<std::vector<double>> v_templates;
-  std::vector<LinearSystemSet> flowpipe; // flowpipe
+  std::vector<PolytopesUnion> flowpipe; // flowpipe
 
 public:
   /**
@@ -34,24 +34,24 @@ public:
    */
   Flowpipe(const std::vector<std::vector<double>> &variable_templates);
 
-  const LinearSystemSet &
-  get(const unsigned int i) const; // get i-th LinearSystemSet
+  const PolytopesUnion &
+  get(const unsigned int i) const; // get i-th PolytopesUnion
 
   /**
-   * Append a linear system to the flowpipe
+   * Append a polytope to the flowpipe
    *
-   * @param[in] ls is the linear system set to be appended
+   * @param[in] P is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  Flowpipe &append(const LinearSystem &ls);
+  Flowpipe &append(const Polytope &P);
 
   /**
-   * Append a linear system set to the flowpipe
+   * Append a polytopes union to the flowpipe
    *
-   * @param[in] ls is the linear system set to be appended
+   * @param[in] Pu is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  Flowpipe &append(const LinearSystemSet &ls);
+  Flowpipe &append(const PolytopesUnion &Pu);
 
   /**
    * Append a bundle to the flowpipe

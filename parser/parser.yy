@@ -9,6 +9,8 @@
 %code requires {
 	# include <string>
 	#include "AbsSyn.h"
+	#include "AbsSynIO.h"
+
 	class driver;
 }
 

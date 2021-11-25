@@ -833,21 +833,4 @@ protected:
 };
 
 }
-
-namespace std
-{
-std::ostream &operator<<(std::ostream &os, const AbsSyn::problemType t);
-std::ostream &operator<<(std::ostream &os, const AbsSyn::modeType t);
-
-std::ostream &operator<<(std::ostream &os, const pair<int, int> p);
-std::ostream &operator<<(std::ostream &os, const pair<double, double> p);
-
-std::ostream &operator<<(std::ostream &os, const std::vector<double> v);
-std::ostream &operator<<(std::ostream &os, const std::vector<string> v);
-std::ostream &operator<<(std::ostream &os, const std::vector<int> v);
-std::ostream &operator<<(std::ostream &os,
-                         const std::vector<std::vector<double>> v);
-std::ostream &operator<<(std::ostream &os,
-                         const std::vector<std::vector<int>> v);
-}
 #endif
