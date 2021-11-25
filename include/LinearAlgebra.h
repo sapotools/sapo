@@ -370,6 +370,35 @@ T operator*(const std::vector<T> &v1, const std::vector<T> &v2)
 }
 
 /**
+ * @brief Compute the Hadamard product of two vectors.
+ *
+ * This method computes the Hadamard product of two vectors
+ * $v_1 \circ v_2$, i.e., it returns a vector whose elements
+ * are obtained by element-wise multiplying of the
+ * parameters.
+ * $$(v_1 \circ v_2)[i] = v_1[i]*v_2[i]$$
+ *
+ * @tparam T any numeric type.
+ * @param v1 is a vector.
+ * @param v2 is a vector.
+ * @return the vector product $v1 \circ v2$.
+ */
+template<typename T>
+std::vector<T> H_prod(const std::vector<T> &v1, const std::vector<T> &v2)
+{
+  if (v1.size() != v2.size()) {
+    throw std::domain_error("The two vectors have not the same dimensions.");
+  }
+
+  std::vector<T> res(v1.size());
+  for (unsigned int i = 0; i < v1.size(); ++i) {
+    res[i] = v1[i] * v2[i];
+  }
+
+  return res;
+}
+
+/**
  * @brief Compute the element-wise scalar product.
  *
  * @tparam T any numeric type.
@@ -575,7 +604,7 @@ public:
     std::swap(P1._swaps, P2._swaps);
   }
 
-  friend std::ostream &operator<<(std::ostream &os, Permutation &P)
+  friend std::ostream &operator<<(std::ostream &os, const Permutation &P)
   {
     os << "Permutation[";
     for (auto it = std::begin(P._swaps); it != std::end(P._swaps); ++it) {
@@ -1177,11 +1206,13 @@ public:
 
     auto greatest = std::rbegin(row);
 
-    if (_num_of_cols < greatest->first + 1) {
-      _num_of_cols = greatest->first + 1;
-    }
+    if (greatest != std::rend(row)) {
+      if (_num_of_cols < greatest->first + 1) {
+        _num_of_cols = greatest->first + 1;
+      }
 
-    _matrix[row_idx] = row;
+      _matrix[row_idx] = row;
+    }
 
     return *this;
   }
