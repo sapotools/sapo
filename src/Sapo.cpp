@@ -34,7 +34,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
 
   ControlPointStorage controlPts;
 
-  Flowpipe flowpipe(initSet.getDirectionMatrix());
+  Flowpipe flowpipe(initSet.get_directions());
 
   Polytope Xls = initSet;
 
@@ -56,7 +56,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
                     this->trans); // transform it
 
     if (this->decomp > 0) { // if requested, decompose it
-      X = X.decompose(this->alpha, this->decomp);
+      X = X.decompose(this->decomp_weight, this->decomp);
     }
 
     flowpipe.append(X); // store result
@@ -102,7 +102,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
 
   last_step.add(initSet);
 
-  Flowpipe flowpipe(initSet.getDirectionMatrix());
+  Flowpipe flowpipe(initSet.get_directions());
   flowpipe.append(initSet);
 
   unsigned int i = 0;
@@ -130,7 +130,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
                               ctrlPts, this->trans); // transform it
 
         if (this->decomp > 0) { // if requested, decompose it
-          bundle = bundle.decompose(this->alpha, this->decomp);
+          bundle = bundle.decompose(this->decomp_weight, this->decomp);
         }
 
         Polytope bls = bundle;
@@ -387,16 +387,16 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
   PolytopesUnion result;
 
-  for (unsigned int i = 0; i < reachSet.getCard();
+  for (unsigned int i = 0; i < reachSet.num_of_templates();
        i++) { // for each parallelotope
 
     // complete the key
-    vector<int> key = reachSet.getTemplate(i);
+    vector<int> key = reachSet.get_templates(i);
     key.push_back(atom->getID());
 
     Parallelotope P = reachSet.getParallelotope(i);
-    lst genFun = build_generator_functs(reachSet.getQ(), reachSet.getAlpha(),
-                                        reachSet.getBeta(), P.versors());
+    lst genFun = build_generator_functs(reachSet.get_q(), reachSet.get_alpha(),
+                                        reachSet.get_beta(), P);
     lst controlPts;
 
     if (!(this->synthControlPts.contains(key)
@@ -420,7 +420,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
       // compute the Bernstein control points
       controlPts
-          = BaseConverter(reachSet.getAlpha(), sofog).getBernCoeffsMatrix();
+          = BaseConverter(reachSet.get_alpha(), sofog).getBernCoeffsMatrix();
       this->synthControlPts.set(key, genFun, controlPts);
 
     } else {
@@ -431,12 +431,12 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
     vector<double> base_vertex = P.base_vertex();
     vector<double> lengths = P.lengths();
 
-    lst qvars(reachSet.getQ());
-    lst bvars(reachSet.getBeta());
+    const lst &q = reachSet.get_q();
+    const lst &beta = reachSet.get_beta();
     lst para_sub;
     for (unsigned int j = 0; j < this->vars.nops(); j++) {
-      para_sub.append(qvars[j] == base_vertex[j]);
-      para_sub.append(bvars[j] == lengths[j]);
+      para_sub.append(q[j] == base_vertex[j]);
+      para_sub.append(beta[j] == lengths[j]);
     }
     ex num_sofog;
     lst synth_controlPts;

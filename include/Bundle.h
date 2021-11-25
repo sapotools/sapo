@@ -24,19 +24,14 @@ class Bundle
       = std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>;
 
 private:
-  unsigned int dim;                       //!< dimension
   Matrix dir_matrix;                      //!< direction matrix
   Vector offp;                            //!< superior offset
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
-
-  // TODO: unravel this member into three properly named members
-  std::vector<GiNaC::lst> vars; //!< variables appearing in generato function
-                                // vars[0] q: base vertex
-                                // vars[1] alpha : free variables \in [0,1]
-                                // vars[2] beta : generator amplitudes
-
+  GiNaC::lst q;     //!< variables to represent base vertex
+  GiNaC::lst alpha; //!< free variables \in [0,1]
+  GiNaC::lst beta;  //!< generator amplitude variables
   std::map<std::vector<int>, GiNaC::lst>
       bernCoeffs; //!< Bernstein coefficients map
 
@@ -144,7 +139,7 @@ private:
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
    * @param[in,out] controlPts control points computed so far that might be
-   * updated
+   *                           updated
    * @param[in] max_finder is a pointer to a MaxCoeffFinder object.
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
@@ -172,42 +167,44 @@ public:
   /**
    * Constructor that instantiates the bundle
    *
-   * @param[in] vars list of variables for parallelotope generator functions
+   * @param[in] q is a list of variables to represent base vertex
+   * @param[in] alpha is a list of free variables
+   * @param[in] beta are generator amplitude variables
    * @param[in] dir_matrix matrix of directions
    * @param[in] offp upper offsets
    * @param[in] offm lower offsets
    * @param[in] t_matrix t_matrixs matrix
    */
-  Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
-         const Vector &offp, const Vector &offm,
+  Bundle(const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
+         const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &t_matrix);
 
-  unsigned int getDim() const
+  unsigned int dim() const
   {
-    return this->dim;
+    return (dir_matrix.size() == 0 ? 0 : dir_matrix.front().size());
   }
 
-  unsigned int getSize() const
+  unsigned int size() const
   {
     return dir_matrix.size();
   }
 
-  unsigned int getCard() const
+  unsigned int num_of_templates() const
   {
     return t_matrix.size();
   }
 
-  unsigned int getNumDirs() const
+  unsigned int num_of_dirs() const
   {
     return this->dir_matrix.size();
   }
 
-  const std::vector<int> &getTemplate(long unsigned int i) const
+  const std::vector<int> &get_templates(long unsigned int i) const
   {
     return this->t_matrix[i];
   }
 
-  const std::vector<std::vector<double>> &getDirectionMatrix() const
+  const std::vector<std::vector<double>> &get_directions() const
   {
     return this->dir_matrix;
   }
@@ -217,9 +214,9 @@ public:
    *
    * @returns base vertex variables
    */
-  const GiNaC::lst &getQ() const
+  const GiNaC::lst &get_q() const
   {
-    return this->vars[0];
+    return this->q;
   }
 
   /**
@@ -227,9 +224,9 @@ public:
    *
    * @returns free variables
    */
-  const GiNaC::lst &getAlpha() const
+  const GiNaC::lst &get_alpha() const
   {
-    return this->vars[1];
+    return this->alpha;
   }
 
   /**
@@ -237,17 +234,17 @@ public:
    *
    * @returns generator lengths variables
    */
-  const GiNaC::lst &getBeta() const
+  const GiNaC::lst &get_beta() const
   {
-    return this->vars[2];
+    return this->beta;
   }
 
-  const double &getOffp(long unsigned int i) const
+  const double &get_offsetp(long unsigned int i) const
   {
     return this->offp[i];
   }
 
-  const double &getOffm(long unsigned int i) const
+  const double &get_offsetm(long unsigned int i) const
   {
     return this->offm[i];
   }
@@ -354,8 +351,8 @@ public:
 
 void swap(Bundle &A, Bundle &B);
 
-GiNaC::lst build_generator_functs(
-    const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
-    const std::vector<std::vector<double>> &generator_matrix);
+GiNaC::lst build_generator_functs(const GiNaC::lst &q, const GiNaC::lst &alpha,
+                                  const GiNaC::lst &beta,
+                                  const Parallelotope &P);
 
 #endif /* BUNDLE_H_ */

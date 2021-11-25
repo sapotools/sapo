@@ -25,9 +25,9 @@
  * @param[in] orig is the model for the new bundle
  */
 Bundle::Bundle(const Bundle &orig):
-    dim(orig.dim), dir_matrix(orig.dir_matrix), offp(orig.offp),
-    offm(orig.offm), t_matrix(orig.t_matrix), Theta(orig.Theta),
-    vars(orig.vars)
+    dir_matrix(orig.dir_matrix), offp(orig.offp), offm(orig.offm),
+    t_matrix(orig.t_matrix), Theta(orig.Theta), q(orig.q), alpha(orig.alpha),
+    beta(orig.beta)
 {
 }
 
@@ -43,13 +43,14 @@ Bundle::Bundle(Bundle &&orig)
 
 void swap(Bundle &A, Bundle &B)
 {
-  std::swap(A.dim, B.dim);
   std::swap(A.dir_matrix, B.dir_matrix);
   std::swap(A.offp, B.offp);
   std::swap(A.offm, B.offm);
   std::swap(A.t_matrix, B.t_matrix);
   std::swap(A.Theta, B.Theta);
-  std::swap(A.vars, B.vars);
+  std::swap(A.q, B.q);
+  std::swap(A.alpha, B.alpha);
+  std::swap(A.beta, B.beta);
 }
 
 /**
@@ -68,24 +69,26 @@ double orthProx(std::vector<double> v1, std::vector<double> v2)
 /**
  * Constructor that instantiates the bundle
  *
- * @param[in] vars list of variables for parallelotope generator functions
+ * @param[in] q is a list of variables to represent base vertex
+ * @param[in] alpha is a list of free variables
+ * @param[in] beta are generator amplitude variables
  * @param[in] dir_matrix matrix of directions
  * @param[in] offp upper offsets
  * @param[in] offm lower offsets
  * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
+Bundle::Bundle(const GiNaC::lst &q, const GiNaC::lst &alpha,
+               const GiNaC::lst &beta, const Matrix &dir_matrix,
                const Vector &offp, const Vector &offm,
                const std::vector<std::vector<int>> &t_matrix):
     dir_matrix(dir_matrix),
-    offp(offp), offm(offm), t_matrix(t_matrix), vars(vars)
+    offp(offp), offm(offm), t_matrix(t_matrix), q(q), alpha(alpha), beta(beta)
 {
   using namespace std;
 
-  if (dir_matrix.size() > 0) {
-    this->dim = dir_matrix[0].size();
-  } else {
+  if (dir_matrix.size() == 0) {
     cout << "Bundle::Bundle : dir_matrix must be non empty";
+    exit(EXIT_FAILURE);
   }
   if (dir_matrix.size() != offp.size()) {
     cout << "Bundle::Bundle : dir_matrix and offp must have the same size";
@@ -97,8 +100,8 @@ Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
   }
   if (t_matrix.size() > 0) {
     for (unsigned int i = 0; i < t_matrix.size(); i++) {
-      if (t_matrix[i].size() != this->getDim()) {
-        cout << "Bundle::Bundle : t_matrix must have " << this->getDim()
+      if (t_matrix[i].size() != this->dim()) {
+        cout << "Bundle::Bundle : t_matrix must have " << this->dim()
              << " columns";
         exit(EXIT_FAILURE);
       }
@@ -109,15 +112,15 @@ Bundle::Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
   }
 
   // initialize orthogonal proximity
-  for (unsigned int i = 0; i < this->getNumDirs(); i++) {
-    Vector Thetai(this->getNumDirs(), 0);
-    for (unsigned int j = i; j < this->getNumDirs(); j++) {
+  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
+    Vector Thetai(this->num_of_dirs(), 0);
+    for (unsigned int j = i; j < this->num_of_dirs(); j++) {
       this->Theta.push_back(Thetai);
     }
   }
-  for (unsigned int i = 0; i < this->getNumDirs(); i++) {
+  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
     this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->getNumDirs(); j++) {
+    for (unsigned int j = i + 1; j < this->num_of_dirs(); j++) {
       double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
       this->Theta[i][j] = prox;
       this->Theta[j][i] = prox;
@@ -142,9 +145,7 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
   using namespace std;
   using namespace GiNaC;
 
-  if (dir_matrix.size() > 0) {
-    this->dim = dir_matrix[0].size();
-  } else {
+  if (dir_matrix.size() == 0) {
     std::cerr << "Bundle::Bundle : dir_matrix must be non empty" << std::endl;
 
     exit(EXIT_FAILURE);
@@ -161,8 +162,8 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
   }
   if (t_matrix.size() > 0) {
     for (unsigned int i = 0; i < t_matrix.size(); i++) {
-      if (t_matrix[i].size() != this->getDim()) {
-        std::cerr << "Bundle::Bundle : t_matrix must have " << this->getDim()
+      if (t_matrix[i].size() != this->dim()) {
+        std::cerr << "Bundle::Bundle : t_matrix must have " << this->dim()
                   << " columns" << std::endl;
         exit(EXIT_FAILURE);
       }
@@ -175,17 +176,17 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
   // generate the variables
   const size_t &dim = t_matrix[0].size();
 
-  this->vars = vector<lst>{get_symbol_lst("b", dim),  // Base vertex variables
-                           get_symbol_lst("f", dim),  // Free variables
-                           get_symbol_lst("l", dim)}; // Length variables
+  this->q = get_symbol_lst("b", dim);     // Base vertex variables
+  this->alpha = get_symbol_lst("f", dim); // Free variables
+  this->beta = get_symbol_lst("l", dim);  // Length variables
 
   // initialize orthogonal proximity
-  this->Theta = vector<vector<double>>(this->getNumDirs(),
-                                       vector<double>(this->getNumDirs(), 0));
+  this->Theta = vector<vector<double>>(this->num_of_dirs(),
+                                       vector<double>(this->num_of_dirs(), 0));
 
-  for (unsigned int i = 0; i < this->getNumDirs(); i++) {
+  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
     this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->getNumDirs(); j++) {
+    for (unsigned int j = i + 1; j < this->num_of_dirs(); j++) {
       double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
       this->Theta[i][j] = prox;
       this->Theta[j][i] = prox;
@@ -211,11 +212,11 @@ Bundle::operator Polytope() const
 
   vector<vector<double>> A;
   vector<double> b;
-  for (unsigned int i = 0; i < this->getSize(); i++) {
+  for (unsigned int i = 0; i < this->size(); i++) {
     A.push_back(this->dir_matrix[i]);
     b.push_back(this->offp[i]);
   }
-  for (unsigned int i = 0; i < this->getSize(); i++) {
+  for (unsigned int i = 0; i < this->size(); i++) {
     A.push_back(-this->dir_matrix[i]);
     b.push_back(this->offm[i]);
   }
@@ -244,7 +245,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
 
   vector<int>::const_iterator it = std::begin(this->t_matrix[i]);
   // upper facets
-  for (unsigned int j = 0; j < this->getDim(); j++) {
+  for (unsigned int j = 0; j < this->dim(); j++) {
     const int idx = *it;
     Lambda.push_back(this->dir_matrix[idx]);
     ubound.push_back(this->offp[idx]);
@@ -253,6 +254,9 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
     ++it;
   }
 
+  // TODO: Since Lambdas are always the same, check whether
+  //       storing the PLU factorizations of Lambdas may give
+  //       some speed-up.
   return Parallelotope(Lambda, lbound, ubound);
 }
 
@@ -266,13 +270,12 @@ Bundle Bundle::get_canonical() const
 {
   // get current polytope
   Polytope bund = *this;
-  std::vector<double> canoffp(this->getSize()), canoffm(this->getSize());
-  for (unsigned int i = 0; i < this->getSize(); i++) {
+  std::vector<double> canoffp(this->size()), canoffm(this->size());
+  for (unsigned int i = 0; i < this->size(); i++) {
     canoffp[i] = bund.maximize(this->dir_matrix[i]);
     canoffm[i] = bund.maximize(-this->dir_matrix[i]);
   }
-  return Bundle(this->vars, this->dir_matrix, canoffp, canoffm,
-                this->t_matrix);
+  return Bundle(q, alpha, beta, dir_matrix, canoffp, canoffm, t_matrix);
 }
 
 /**
@@ -465,12 +468,12 @@ double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
 /**
  * Decompose the current symbolic polytope
  *
- * @param[in] alpha weight parameter in [0,1] for decomposition (0 for
+ * @param[in] dec_weight weight parameter in [0,1] for decomposition (0 for
  * distance, 1 for orthogonality)
  * @param[in] max_iter maximum number of randomly generated templates
  * @returns new bundle decomposing current symbolic polytope
  */
-Bundle Bundle::decompose(double alpha, int max_iters)
+Bundle Bundle::decompose(double dec_weight, int max_iters)
 {
   using namespace std;
 
@@ -490,25 +493,25 @@ Bundle Bundle::decompose(double alpha, int max_iters)
 
     // generate random coordinates to swap
     unsigned int i1 = rand() % temp_card;
-    int j1 = rand() % this->getDim();
+    int j1 = rand() % this->dim();
 
     // swap them
-    tmpT[i1][j1] = rand() % this->getSize();
+    tmpT[i1][j1] = rand() % this->size();
 
     if (!is_permutation_of_other_rows(tmpT, i1)) {
       std::vector<std::vector<double>> A;
-      for (unsigned int j = 0; j < this->getDim(); j++) {
+      for (unsigned int j = 0; j < this->dim(); j++) {
         A.push_back(this->dir_matrix[tmpT[i1][j]]);
       }
 
       DenseLinearAlgebra::PLU_Factorization<double> fact(A);
       try {
-        fact.solve(std::vector<double>(this->getDim(), 0));
+        fact.solve(std::vector<double>(this->dim(), 0));
 
-        double w1 = alpha * maxOffsetDist(tmpT, offDists)
-                    + (1 - alpha) * maxOrthProx(this->dir_matrix, tmpT);
-        double w2 = alpha * maxOffsetDist(bestT, offDists)
-                    + (1 - alpha) * maxOrthProx(this->dir_matrix, bestT);
+        double w1 = dec_weight * maxOffsetDist(tmpT, offDists)
+                    + (1 - dec_weight) * maxOrthProx(this->dir_matrix, tmpT);
+        double w2 = dec_weight * maxOffsetDist(bestT, offDists)
+                    + (1 - dec_weight) * maxOrthProx(this->dir_matrix, bestT);
 
         if (w1 < w2) {
           bestT = tmpT;
@@ -521,33 +524,30 @@ Bundle Bundle::decompose(double alpha, int max_iters)
     i++;
   }
 
-  return Bundle(this->vars, this->dir_matrix, this->offp, this->offp, bestT);
+  return Bundle(q, alpha, beta, dir_matrix, offp, offm, bestT);
 }
 
-GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alphas,
-                               const GiNaC::lst &vars, const GiNaC::lst &f,
-                               const GiNaC::lst &genFun,
+GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &vars,
+                               const GiNaC::lst &f, const GiNaC::lst &genFun,
                                const std::vector<double> &dir_vector)
 {
   // the combination parallelotope/direction to bound is not present in
   // hash table compute control points
-  GiNaC::lst sub, fog;
+  GiNaC::lst sub;
 
   for (unsigned int k = 0; k < vars.nops(); k++) {
     sub.append(vars[k] == genFun[k]);
   }
-  for (unsigned int k = 0; k < vars.nops(); k++) {
-    fog.append(f[k].subs(sub));
-  }
 
-  GiNaC::ex Lfog;
-  Lfog = 0;
+  GiNaC::ex Lfog = 0;
   // upper facets
   for (unsigned int k = 0; k < dir_vector.size(); k++) {
-    Lfog = Lfog + dir_vector[k] * fog[k];
+    if (dir_vector[k] != 0) {
+      Lfog = Lfog + dir_vector[k] * f[k].subs(sub);
+    }
   }
 
-  return BaseConverter(alphas, Lfog).getBernCoeffsMatrix();
+  return BaseConverter(alpha, Lfog).getBernCoeffsMatrix();
 }
 
 /**
@@ -633,23 +633,40 @@ Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs,
   return MaxCoeffType{maxCoeffp, maxCoeffm};
 }
 
-GiNaC::lst build_generator_functs(
-    const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
-    const std::vector<std::vector<double>> &generator_matrix)
+/**
+ * @brief Build the generator function of a parallelotope
+ *
+ * This function build the generator functions of a parallelotope.
+ * In particular, it returns the symbolic vector:
+ * $$
+ * q + ((alpha \circ beta)^T \cdot G)^T
+ * $$
+ * where $\cdot$ is the row-column product, $\circ$ is the
+ * Hadamard product, and $G$ is the generator matrix of the
+ * considered parallelotope $P$.
+ *
+ * @param q is a vector of variables.
+ * @param alpha is a vector of variables.
+ * @param beta is a vector of variables.
+ * @param P is the considered parallelotope.
+ * @return The generator function of `P`.
+ */
+GiNaC::lst build_generator_functs(const GiNaC::lst &q, const GiNaC::lst &alpha,
+                                  const GiNaC::lst &beta,
+                                  const Parallelotope &P)
 {
   GiNaC::lst gen_functs = q;
-
-  /*
-  // initialize generator functions
-  for (auto it = std::begin(q); it != std::end(q); ++it) {
-    gen_functs.append(*it);
-  }
-  */
+  const std::vector<std::vector<double>> &generator_matrix = P.versors();
 
   for (unsigned int i = 0; i < generator_matrix.size(); i++) {
     const std::vector<double> &gen_row = generator_matrix[i];
     for (unsigned int j = 0; j < gen_row.size(); j++) {
-      gen_functs[j] = gen_functs[j] + alpha[i] * beta[i] * gen_row[j];
+      // some of the non-null rows of the generator matrix
+      // correspond to 0-length dimensions in degenerous
+      // parallelotopes and must be avoided
+      if (P.lengths()[j] != 0) {
+        gen_functs[j] = gen_functs[j] + alpha[i] * beta[i] * gen_row[j];
+      }
     }
   }
 
@@ -675,7 +692,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   using namespace std;
   using namespace GiNaC;
 
-  vector<double> newDp(this->getSize(), std::numeric_limits<double>::max());
+  vector<double> newDp(this->size(), std::numeric_limits<double>::max());
   vector<double> newDm = newDp;
 
   vector<int> dirs_to_bound;
@@ -686,13 +703,12 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   }
 
   // for each parallelotope
-  for (unsigned int i = 0; i < this->getCard(); i++) {
+  for (unsigned int i = 0; i < this->num_of_templates(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
-    const lst &genFun = build_generator_functs(this->vars[0], this->vars[1],
-                                               this->vars[2], P.versors());
+    const lst &genFun = build_generator_functs(q, alpha, beta, P);
 
-    lst subParatope = get_subs_from(P, this->vars[0], this->vars[2]);
+    lst subParatope = get_subs_from(P, q, beta);
 
     if (mode == 0) { // static mode
       dirs_to_bound = this->t_matrix[i];
@@ -711,7 +727,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
       if (!(controlPts.contains(key)
             && controlPts.gen_fun_is_equal_to(key, genFun))) {
 
-        actbernCoeffs = compute_Bern_coeffs(this->vars[1], vars, f, genFun,
+        actbernCoeffs = compute_Bern_coeffs(alpha, vars, f, genFun,
                                             dir_matrix[dirs_to_bound[j]]);
 
         // store the computed coefficients
@@ -735,7 +751,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   }
 
   Bundle res
-      = Bundle(this->vars, this->dir_matrix, newDp, newDm, this->t_matrix);
+      = Bundle(q, alpha, beta, this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }
@@ -751,8 +767,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 std::vector<double> Bundle::offsetDistances()
 {
 
-  std::vector<double> dist(this->getSize());
-  for (unsigned int i = 0; i < this->getSize(); i++) {
+  std::vector<double> dist(this->size());
+  for (unsigned int i = 0; i < this->size(); i++) {
     dist[i] = std::abs(this->offp[i] - this->offm[i])
               / norm_2(this->dir_matrix[i]);
   }

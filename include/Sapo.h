@@ -30,22 +30,22 @@
 class Sapo
 {
 public:
-  unsigned char trans;       // transformation (0: static, 1: dynamic)
-  double alpha;              // decomposition weight
-  unsigned int decomp;       // number of decompositions (0: none, >0: yes)
-  std::string plot;          // the name of the file were to plot the reach set
-  unsigned int time_horizon; // the computation time horizon
-  unsigned int max_param_splits; // maximum number of splits in synthesis
-  bool verbose;                  // display info
+  unsigned char trans;  //!< transformation (0: static, 1: dynamic)
+  double decomp_weight; //!< decomposition weight
+  unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
+  std::string plot;     //!< the name of the file were to plot the reach set
+  unsigned int time_horizon;     //!< the computation time horizon
+  unsigned int max_param_splits; //!< maximum number of splits in synthesis
+  bool verbose;                  //!< display info
 
 private:
-  const GiNaC::lst &dyns;   // dynamics of the system
-  const GiNaC::lst &vars;   // variables of the system
-  const GiNaC::lst &params; // parameters of the system
+  const GiNaC::lst &dyns;   //!< dynamics of the system
+  const GiNaC::lst &vars;   //!< variables of the system
+  const GiNaC::lst &params; //!< parameters of the system
 
   // TODO: check whether the following two members are really Sapo properties
-  ControlPointStorage reachControlPts; // symbolic control points
-  ControlPointStorage synthControlPts; // symbolic control points
+  ControlPointStorage reachControlPts; //!< symbolic control points
+  ControlPointStorage synthControlPts; //!< symbolic control points
 
   // TODO: check whether the following method is really needed/usable.
   std::vector<Bundle *>
