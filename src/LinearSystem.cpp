@@ -389,7 +389,8 @@ double LinearSystem::maximize(const lst &vars, const ex &obj_fun) const
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
-    double coeff = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
+    const double coeff
+        = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
     obj_fun_coeffs.push_back(coeff);
     const_term = const_term.coeff(*v_it, 0);
   }
