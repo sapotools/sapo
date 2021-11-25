@@ -18,7 +18,7 @@ natural			{digit}+
 double			(({natural})\.{natural})
 
 letter			[a-zA-Z]
-ident				{letter}({letter}|{digit}|\_-)*
+ident				{letter}({letter}|{digit}|[_])*
 
 l_comment		"//"[^\n]*\n
 ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"

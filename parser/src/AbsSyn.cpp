@@ -97,27 +97,27 @@ Expr *Expr::neg()
   return res;
 }
 
-int Expr::getDegree(const InputData &id) const
+int Expr::getDegree(const InputData &id, bool variable) const
 {
 	switch (type) {
 		case Expr::NUM_ATOM:
 			return 0;
 		case Expr::ID_ATOM:
-			if (id.isVarDefined(name)) {
+			if ((variable && id.isVarDefined(name)) || (!variable && id.isParamDefined(name))) {
 				return 1;
 			} else if (id.isDefDefined(name)) {
-				return id.getDef(name)->getValue()->getDegree(id);
+				return id.getDef(name)->getValue()->getDegree(id, variable);
 			} else {
 				return 0;
 			}
 		case Expr::NEG:
 		case Expr::DIV:			// division is allowed only if denominator is numeric
-			return left->getDegree(id);
+			return left->getDegree(id, variable);
 		case Expr::SUM:
 		case Expr::SUB:
-			return std::max(left->getDegree(id), right->getDegree(id));
+			return std::max(left->getDegree(id, variable), right->getDegree(id, variable));
 		case Expr::MUL:
-			return left->getDegree(id) + right->getDegree(id);
+			return left->getDegree(id, variable) + right->getDegree(id, variable);
 		default:
 			std::logic_error("Unsupported expression");
 	}
@@ -268,6 +268,22 @@ bool Expr::hasParams(const InputData &id) const
 	}
 
   return left->hasParams(id) && (right != NULL ? right->hasParams(id) : true);
+}
+
+bool Expr::contains(const std::string symbolName) const
+{
+	if (type == exprType::ID_ATOM) {
+		if (name == symbolName) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	if (type == exprType::NUM_ATOM) {
+		return false;
+	}
+	
+	return left->contains(symbolName) && (right != nullptr ? right->contains(symbolName) : false);
 }
 
 double Expr::evaluate(const InputData &im) const
@@ -535,7 +551,7 @@ std::shared_ptr<STL> Formula::toSTL(const InputData &m, const lst &vars,
  ****************************
  */
 
-std::ostream &operator<<(std::ostream &os, AbsSyn::Inequality &i)
+/*std::ostream &operator<<(std::ostream &os, AbsSyn::Inequality &i)
 {
 	os << *(i.lhs);
 	
@@ -563,9 +579,179 @@ std::ostream &operator<<(std::ostream &os, AbsSyn::Inequality &i)
 			break;
 	}
 	return os << *(i.rhs);
+}*/
+
+/*
+ ***************************
+ *        DIRECTION        *
+ ***************************
+ */
+
+std::ostream &operator<<(std::ostream &os, const Direction &d)
+{
+	if (d.name != "") {
+		os << d.name << ": ";
+	}
+	
+	os << *(d.lhs);
+	
+	switch(d.type) {
+		case Direction::Type::LT:
+			os << " < ";
+			break;
+		case Direction::Type::LE:
+			os << " <= ";
+			break;
+		case Direction::Type::GT:
+			os << " > ";
+			break;
+		case Direction::Type::GE:
+			os << " >= ";
+			break;
+		case Direction::Type::EQ:
+			os << " = ";
+			break;
+		case Direction::Type::INT:
+			return os << " in [" << d.LB << ", " << d.UB << "]";
+		default:
+			throw logic_error("unsupported direction type");
+			break;
+	}
+	os << *(d.rhs);
+	return os;
 }
 
-std::vector<double> Inequality::getDirection(const InputData &id, bool variables) const
+double Direction::getLB(const InputData &id) const
+{
+	if (type == Type::INT) {
+		return LB;
+	} else if (type == Type::GT || type == Type::GE) {
+		return -this->getOffset(id);
+	} else {
+		return -std::numeric_limits<double>::infinity();
+	}
+}
+double Direction::getUB(const InputData &id) const
+{
+	if (type == Type::INT) {
+		return UB;
+	} else if (type == Type::LT || type == Type::LE) {
+		return this->getOffset(id);
+	} else {
+		return std::numeric_limits<double>::infinity();
+	}
+}
+
+void Direction::setLB(const InputData &id, double val)
+{
+	UB = this->getUB(id);
+	
+	if (this->hasUB()) {
+		type = Type::INT;
+	}
+	
+	LB = (val == 0 ? 0 : val);
+}
+void Direction::setUB(const InputData &id, double val)
+{
+	LB = this->getLB(id);
+	
+	if (this->hasLB()) {
+		type = Type::INT;
+	}
+	
+	UB = (val == 0 ? 0 : val);
+}
+
+
+Direction *Direction::copy() const
+{
+	return new Direction(lhs->copy(), rhs->copy(), type, LB, UB, name);
+}
+
+Direction *Direction::getComplementary() const
+{
+	Direction::Type newType;
+	
+	switch (type) {
+		case Direction::Type::LT:
+			newType = Direction::Type::GT;
+			break;
+		case Direction::Type::LE:
+			newType = Direction::Type::GE;
+			break;
+		case Direction::Type::GT:
+			newType = Direction::Type::LT;
+			break;
+		case Direction::Type::GE:
+			newType = Direction::Type::LE;
+			break;
+		case Direction::Type::EQ:
+			newType = Direction::Type::EQ;
+			break;
+		case Direction::Type::INT:
+			newType = Direction::Type::INT;
+			break;
+		default:
+			throw logic_error("undefined direction type");
+			break;
+	}
+	
+	return new Direction(lhs->copy()->neg(), rhs->copy()->neg(), newType, -UB, -LB, name);
+}
+
+bool Direction::compare(Direction *d, const InputData &id, bool variable) const
+{
+	GiNaC::lst vars{}, params{};
+	for (unsigned i = 0; i < id.getVarNum(); i++) {
+		GiNaC::symbol s(id.getVar(i)->getName());
+		vars.append(s);
+	}
+	for (unsigned i = 0; i < id.getParamNum(); i++) {
+		GiNaC::symbol s(id.getParam(i)->getName());
+		params.append(s);
+	}
+	
+	std::vector<double> d1{}, d2{};
+	if (variable) {
+		Expr *e1 = lhs->sub(rhs);
+		Expr *e2 = d->getLHS()->sub(d->getRHS());
+		for (unsigned i = 0; i < id.getVarNum(); i++) {
+			d1.push_back(e1->getCoefficient(id, id.getVar(i)->getName()));
+			d2.push_back(e2->getCoefficient(id, id.getVar(i)->getName()));
+		}
+	} else {
+		Expr *e1 = lhs->sub(rhs);
+		Expr *e2 = d->getLHS()->sub(d->getRHS());
+		for (unsigned i = 0; i < id.getParamNum(); i++) {
+			d1.push_back(e1->getCoefficient(id, id.getParam(i)->getName()));
+			d2.push_back(e2->getCoefficient(id, id.getParam(i)->getName()));
+		}
+	}
+	
+	double tol = 1E-8;
+	
+	// compute length of vectors
+	double l1 = 0, l2 = 0;
+	for (unsigned i = 0; i < d1.size(); i++) {
+		l1 += d1[i]*d1[i];
+		l2 += d2[i]*d2[i];
+	}
+	l1 = sqrt(l1);
+	l2 = sqrt(l2);
+
+	// check normalized difference
+	for (unsigned i = 0; i < d1.size(); i++) {
+		if (abs(d1[i]/l1 - d2[i]/l2) > tol) {
+			return false;
+		}
+	}
+	return true;
+}
+
+
+
+std::vector<double> Direction::getDirectionVector(const InputData &id, bool variables) const
 {
 	std::vector<double> res{};
 	
@@ -575,8 +761,10 @@ std::vector<double> Inequality::getDirection(const InputData &id, bool variables
 		coeff = 1;
 	} else if (type == Type::GE || type == Type::GT) {
 		coeff = -1;
+	} else if (type == Type::INT) {
+		coeff = 1;
 	} else {
-		throw logic_error("usupported inequality type");
+		throw logic_error("Unsupported inequality type");
 	}
 	
 	if (variables) {				// Inequality has only variables
@@ -592,7 +780,7 @@ std::vector<double> Inequality::getDirection(const InputData &id, bool variables
 	return res;
 }
 
-double Inequality::getOffset(const InputData &id) const
+double Direction::getOffset(const InputData &id) const
 {
 	if (type == Type::LE || type == Type::LT) {
 		return rhs->sub(lhs)->getOffset(id);
@@ -601,6 +789,11 @@ double Inequality::getOffset(const InputData &id) const
 	} else {
 		throw logic_error("unsupported inequality type");
 	}
+}
+
+bool Direction::covers(const InputData &id, const std::string name) const
+{
+	return lhs->sub(rhs)->getCoefficient(id, name) != 0;
 }
 
 /*
@@ -630,15 +823,9 @@ InputData::InputData()
 	assumptions.resize(0);
 
   directions.resize(0);
-  LBoffsets.resize(0);
-  UBoffsets.resize(0);
-	hasLB.resize(0);
-
   templateMatrix.resize(0);
-
+	
   paramDirections.resize(0);
-  paramLBoffsets.resize(0);
-  paramUBoffsets.resize(0);
 
   trans = transType::T_UNDEF;
   decomp = false;
@@ -662,14 +849,18 @@ InputData::~InputData()
 	
   for (auto it = std::begin(assumptions); it != std::end(assumptions); ++it)
     delete *it;
+	
+  for (auto it = std::begin(directions); it != std::end(directions); ++it)
+    delete *it;
+	
+  for (auto it = std::begin(paramDirections); it != std::end(paramDirections); ++it)
+    delete *it;
 
   delete spec;
 }
 ostream &operator<<(ostream &os, const InputData &m)
 {
   os << "Problem: " << m.problem << endl;
-  os << "VarMode: " << m.varMode << endl;
-  os << "ParamMode: " << m.paramMode << endl;
   os << "Iterations: " << m.iterations << endl;
 
   os << endl;
@@ -714,11 +905,12 @@ ostream &operator<<(ostream &os, const InputData &m)
 
   os << endl;
   os << "Directions:" << endl << "{" << endl;
-  for (unsigned i = 0; i < m.directions.size(); i++)
-    os << "\t<" << m.directions[i] << "> in [" << m.LBoffsets[i] << ", "
-       << m.UBoffsets[i] << "]" << endl;
+  for (unsigned i = 0; i < m.directions.size(); i++){
+		os << "\t" << *(m.directions[i]) << endl;
+	}
+//    os << "\t<" << m.directions[i] << "> in [" << m.LBoffsets[i] << ", "
+//       << m.UBoffsets[i] << "]" << endl;
   os << "}" << endl;
-	os << "LB.size = " << m.LBoffsets.size() << ", UB.size = " << m.UBoffsets.size() << endl;
 
   os << endl;
   os << "Template:" << endl << "{" << endl;
@@ -728,9 +920,9 @@ ostream &operator<<(ostream &os, const InputData &m)
 
   os << endl;
   os << "Parameter directions:" << endl << "{" << endl;
-  for (unsigned i = 0; i < m.paramDirections.size(); i++)
-    os << "\t<" << m.paramDirections[i] << "> in [" << m.paramLBoffsets[i]
-       << ", " << m.paramUBoffsets << "]" << endl;
+  for (unsigned i = 0; i < m.paramDirections.size(); i++) {
+		os << *(m.paramDirections[i]) << (i == m.paramDirections.size() - 1 ? "" : ",") << endl;
+	}
   os << "}" << endl;
 
   return os;
@@ -805,24 +997,6 @@ int InputData::getVarPos(const string &name) const
   return -1;
 }
 
-void InputData::addVariable(Variable *v)
-{
-	vars.push_back(v);
-	// all directions must be right-padded with a zero for the new var
-	for (unsigned i = 0; i < directions.size(); i++) {
-		directions[i].push_back(0);
-	}
-}
-
-void InputData::addParameter(Parameter *p)
-{
-	params.push_back(p);
-	// all directions must be right-padded with a zero for the new param
-	for (unsigned i = 0; i < paramDirections.size(); i++) {
-		paramDirections[i].push_back(0);
-	}
-}
-
 const Parameter *InputData::getParam(const string &name) const
 {
   for (unsigned i = 0; i < params.size(); i++)
@@ -868,34 +1042,19 @@ int InputData::getDefPos(const string &name) const
 
   return -1;
 }
-
+/*
 void InputData::addDirection(vector<double> d, double LB, double UB)
 {
   directions.push_back(d);
   LBoffsets.push_back(LB);
   UBoffsets.push_back(UB);
-}
+}*/
 
-bool compare(std::vector<double> v1, std::vector<double> v2, double tol)
-{
-	if (v1.size() != v2.size()) {
-			return false;
-	}
-	
-	for (unsigned i = 0; i < v1.size(); i++) {
-		if (std::abs(v1[i] - v2[i]) >= tol) {
-			return false;
-		}
-	}
-	
-	return true;
-}
-
-int find(std::vector<std::vector<double>> M, std::vector<double> v, double tol)
+int find(std::vector<Direction *> M, Direction *v, const InputData &id, bool variable = true)
 {
 	unsigned pos = 0;
 	while (pos < M.size()) {
-		if (compare(M[pos], v, tol)) {
+		if (M[pos]->compare(v, id, variable)) {
 			return pos;
 		} else {
 			pos++;
@@ -905,66 +1064,84 @@ int find(std::vector<std::vector<double>> M, std::vector<double> v, double tol)
 	return -1;
 }
 
-void InputData::addDirectionConstraint(Inequality *i)
+void InputData::addDirectionConstraint(Direction *d)
 {
-//	std::cout << "Inequality " << *i << std::endl;
+//	std::cout << "Direction " << *d << std::endl;
 	
-	if (i->getType() == Inequality::Type::INT) {		// constraint is an interval specification
-		this->addDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getUB()), Inequality::Type::LE));
-		this->addDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getLB()), Inequality::Type::GE));
+	if (d->getType() == Direction::Type::INT) {		// constraint is an interval specification
+		this->addDirectionConstraint(new Direction(d->getLHS()->copy(), new Expr(d->getUB(*this)), Direction::Type::LE, 0, 0, d->getName()));
+		this->addDirectionConstraint(new Direction(d->getLHS()->copy(), new Expr(d->getLB(*this)), Direction::Type::GE, 0, 0, d->getName()));
+		delete(d);
 		return;
 	}
 	
-	std::vector<double> new_dir = i->getDirection(*this, true);
-	std::vector<double> negated_dir = get_complementary(new_dir);
+	Direction *new_dir = d;
+	Direction *negated_dir = new_dir->getComplementary();
 	
-//	std::cout << "direction: " << new_dir << ", negated: " << negated_dir << std::endl;
+//	std::cout << "direction: " << *new_dir << ", negated: " << *negated_dir << std::endl;
 	
 	// check if new direction is already present
-	double tol = 0.00001;
-	int pos = find(directions, new_dir, tol);
-	int negated_pos = find(directions, negated_dir, tol);
+	int pos = find(directions, new_dir, *this);
+	int negated_pos = find(directions, negated_dir, *this);
 	
 	if (pos != -1) {
 		
 //		std::cout << "already present, pos = " << pos << std::endl;
 		// direction already present
-		UBoffsets[pos] = std::min(UBoffsets[pos], i->getOffset(*this));
+		if (!directions[pos]->hasUB() || new_dir->getUB(*this) < directions[pos]->getUB(*this)) {
+			directions[pos]->setUB(*this, new_dir->getUB(*this));
+			directions[pos]->setName(new_dir->getName());
+		}
+		if (!directions[pos]->hasLB() || new_dir->getLB(*this) > directions[pos]->getLB(*this)) {
+			directions[pos]->setLB(*this, new_dir->getLB(*this));
+			directions[pos]->setName(new_dir->getName());
+		}
+		delete(new_dir);
+		delete(negated_dir);
 		
 	} else if (negated_pos != -1) {
 		
 //		std::cout << "negated present, pos = " << negated_pos << ", offset = " << -i->getOffset(*this) << std::endl;
-		
 		// negation of direction already present
-		LBoffsets[negated_pos] = std::max(LBoffsets[negated_pos], (i->getOffset(*this) == 0 ? 0 : -i->getOffset(*this)));
-		hasLB[negated_pos] = true;
+		if (!directions[negated_pos]->hasUB() || negated_dir->getUB(*this) < directions[negated_pos]->getUB(*this)) {
+			directions[negated_pos]->setUB(*this, negated_dir->getUB(*this));
+			directions[negated_pos]->setName(negated_dir->getName());
+		}
+		if (!directions[negated_pos]->hasLB() || negated_dir->getLB(*this) > directions[negated_pos]->getLB(*this)) {
+			directions[negated_pos]->setLB(*this, negated_dir->getLB(*this));
+			directions[negated_pos]->setName(negated_dir->getName());
+		}
+		delete(new_dir);
+		delete(negated_dir);
 		
 	} else {
 		
 //		std::cout << "not present" << std::endl;
-		
 		// new direction
 		directions.push_back(new_dir);
-		UBoffsets.push_back(i->getOffset(*this));
-		LBoffsets.push_back(std::numeric_limits<double>::lowest());
-		hasLB.push_back(false);
 		
 		// cover variables
-		for (unsigned i = 0; i < new_dir.size(); i++) {
-			if (new_dir[i] != 0) {
+		for (unsigned i = 0; i < vars.size(); i++) {
+			if (new_dir->covers(*this, vars[i]->getName())) {
 				vars[i]->setCovered();
 			}
 		}
+		
+		delete(negated_dir);
 	}
-//	std::cout << "LB = " << LBoffsets << ", UB = " << UBoffsets << std::endl;
+/*	std::cout << "directions: {";
+	for (unsigned i = 0; i < directions.size(); i++) {
+		std::cout << *directions[i] << std::endl;
+	}
+	std::cout << "}" << std::endl;*/
 }
 
-void InputData::defaultDirections()
+/*void InputData::defaultDirections()
 {
   directions.resize(vars.size(), vector<double>(vars.size(), 0));
   for (unsigned i = 0; i < vars.size(); i++)
     directions[i][i] = 1;
-}
+}*/
 
 void InputData::defaultTemplate()
 {
@@ -973,62 +1150,64 @@ void InputData::defaultTemplate()
   //	templateMatrix.resize(1, vector<int>(vars.size(), 1));
 }
 
-void InputData::addParamDirectionConstraint(Inequality *i)
+void InputData::addParamDirectionConstraint(Direction *d)
 {
-//	std::cout << "Inequality " << *i << std::endl;
+//	std::cout << "Direction " << *d << std::endl;
 	
-	if (i->getType() == Inequality::Type::INT) {		// constraint is an interval specification
-		this->addParamDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getUB()), Inequality::Type::LE));
-		this->addParamDirectionConstraint(new Inequality(i->getLhs(), new Expr(i->getLB()), Inequality::Type::GE));
+	if (d->getType() == Direction::Type::INT) {		// constraint is an interval specification
+		this->addParamDirectionConstraint(new Direction(d->getLHS()->copy(), new Expr(d->getUB(*this)), Direction::Type::LE, 0, 0, d->getName()));
+		this->addParamDirectionConstraint(new Direction(d->getLHS()->copy(), new Expr(d->getLB(*this)), Direction::Type::GE, 0, 0, d->getName()));
+		delete(d);
 		return;
 	}
 	
-	std::vector<double> new_dir = i->getDirection(*this, false);
-	std::vector<double> negated_dir = get_complementary(new_dir);
-	
-//	std::cout << "direction: " << new_dir << ", negated: " << negated_dir << std::endl;
+	Direction *new_dir = d;
+	Direction *negated_dir = new_dir->getComplementary();
 	
 	// check if new direction is already present
-	double tol = 0.00001;
-	int pos = find(paramDirections, new_dir, tol);
-	int negated_pos = find(paramDirections, negated_dir, tol);
+	int pos = find(paramDirections, new_dir, *this, false);
+	int negated_pos = find(paramDirections, negated_dir, *this, false);
 	
 	if (pos != -1) {
-		
-//		std::cout << "already present, pos = " << pos << std::endl;
 		// direction already present
-		paramUBoffsets[pos] = std::min(paramUBoffsets[pos], i->getOffset(*this));
+		if (!paramDirections[pos]->hasUB() || new_dir->getUB(*this) < paramDirections[pos]->getUB(*this)) {
+			paramDirections[pos]->setUB(*this, new_dir->getUB(*this));
+			paramDirections[pos]->setName(new_dir->getName());
+		}
+		if (!paramDirections[pos]->hasLB() || new_dir->getLB(*this) > paramDirections[pos]->getLB(*this)) {
+			paramDirections[pos]->setLB(*this, new_dir->getLB(*this));
+			paramDirections[pos]->setName(new_dir->getName());
+		}
+		delete(new_dir);
+		delete(negated_dir);
 		
 	} else if (negated_pos != -1) {
-		
-//		std::cout << "negated present, pos = " << negated_pos << ", offset = " << -i->getOffset(*this) << std::endl;
-		
-		// negation of direction already present
-		paramLBoffsets[negated_pos] = std::max(paramLBoffsets[negated_pos], (i->getOffset(*this) == 0 ? 0 : -i->getOffset(*this)));
-		paramHasLB[negated_pos] = true;
+		// negation of direction already present		
+		if (!paramDirections[negated_pos]->hasLB() || negated_dir->getLB(*this) > paramDirections[negated_pos]->getLB(*this)) {
+			paramDirections[negated_pos]->setLB(*this, negated_dir->getLB(*this));
+			paramDirections[negated_pos]->setName(negated_dir->getName());
+		}
+		if (!paramDirections[negated_pos]->hasUB() || negated_dir->getUB(*this) < paramDirections[pos]->getUB(*this)) {
+			paramDirections[negated_pos]->setUB(*this, negated_dir->getUB(*this));
+			paramDirections[negated_pos]->setName(negated_dir->getName());
+		}
+		delete(new_dir);
+		delete(negated_dir);
 		
 	} else {
-		
-//		std::cout << "not present" << std::endl;
-		
 		// new direction
 		paramDirections.push_back(new_dir);
-		paramUBoffsets.push_back(i->getOffset(*this));
-		paramLBoffsets.push_back(std::numeric_limits<double>::lowest());
-		paramHasLB.push_back(false);
 		
 		// cover parameters
-		for (unsigned i = 0; i < new_dir.size(); i++) {
-			if (new_dir[i] != 0) {
+		for (unsigned i = 0; i < params.size(); i++) {
+			if (new_dir->covers(*this, params[i]->getName())) {
 				params[i]->setCovered();
 			}
 		}
 	}
-//	std::cout << "Param directions " << paramDirections << std::endl;
-//	std::cout << "LB = " << paramLBoffsets << ", UB = " << paramUBoffsets << std::endl;
 }
 
-void InputData::addParamDirection(vector<double> d, double LB, double UB)
+/*void InputData::addParamDirection(vector<double> d, double LB, double UB)
 {
   paramDirections.push_back(d);
   paramLBoffsets.push_back(LB);
@@ -1040,7 +1219,7 @@ void InputData::defaultParamDirections()
   paramDirections.resize(params.size(), vector<double>(params.size(), 0));
   for (unsigned i = 0; i < params.size(); i++)
     paramDirections[i][i] = 1;
-}
+}*/
 
 bool InputData::check()
 {
@@ -1074,11 +1253,12 @@ bool InputData::check()
 	{	// put a block to avoid namespace pollution
 		std::vector<bool> hasLB(vars.size(), false), hasUB(vars.size(), false);
 		for (unsigned d = 0; d < directions.size(); d++) {
+			std::vector<double> dirVector = directions[d]->getDirectionVector(*this, true);
 			for (unsigned v = 0; v < vars.size(); v++) {
-				if (directions[d][v] > 0 || (directions[d][v] < 0 && this->hasLB[d])) {
+				if ((dirVector[v] > 0 && directions[d]->hasUB()) || (dirVector[v] < 0 && directions[d]->hasLB())) {
 					hasUB[v] = true;
 				}
-				if (directions[d][v] < 0 || (directions[d][v] > 0 && this->hasLB[d])) {
+				if ((dirVector[v] < 0 && directions[d]->hasUB()) || (dirVector[v] > 0 && directions[d]->hasLB())) {
 					hasLB[v] = true;
 				}
 			}
@@ -1098,13 +1278,20 @@ bool InputData::check()
 	
 	// set directions LB where needed
 	if (res) {
-		vector<vector<double>> A = directions;
+		vector<vector<double>> A{};
+		vector<double> b{};
 		for (unsigned i = 0; i < directions.size(); i++) {
-			A.push_back(get_complementary(directions[i]));
+			// add only bounded directions
+			if (directions[i]->hasUB()) {
+				A.push_back(directions[i]->getDirectionVector(*this, true));
+				b.push_back(directions[i]->getUB(*this));
+			}
 		}
-		vector<double> b = UBoffsets;
-		for (unsigned i = 0; i < LBoffsets.size(); i++) {
-			b.push_back(-LBoffsets[i]);
+		for (unsigned i = 0; i < directions.size(); i++) {
+			if (directions[i]->hasLB()) {
+				A.push_back(get_complementary(directions[i]->getDirectionVector(*this, true)));
+				b.push_back(-directions[i]->getLB(*this));
+			}
 		}
 		LinearSystem LS(A, b);
 		
@@ -1115,15 +1302,26 @@ bool InputData::check()
 		}
 		
 		for (unsigned i = 0; i < directions.size(); i++) {
-			if (!hasLB[i]) {
+			if (!directions[i]->hasLB()) {
+				std::vector<double> dirVector = directions[i]->getDirectionVector(*this, true);
 				GiNaC::ex obj_function = 0;
-				for (unsigned j = 0; j < directions[i].size(); j++) {
-					obj_function += directions[i][j] * symbols[j];
+				for (unsigned j = 0; j < dirVector.size(); j++) {
+					obj_function += dirVector[j] * symbols[j];
 				}
 				
 				double minVal = LS.minLinearSystem(symbols, obj_function);
-				LBoffsets[i] = minVal;
-				hasLB[i] = true;
+				directions[i]->setLB(*this, minVal);
+			}
+			
+			if (!directions[i]->hasUB()) {
+				std::vector<double> dirVector = directions[i]->getDirectionVector(*this, true);
+				GiNaC::ex obj_function = 0;
+				for (unsigned j = 0; j < dirVector.size(); j++) {
+					obj_function += dirVector[j] * symbols[j];
+				}
+				
+				double maxVal = LS.maxLinearSystem(symbols, obj_function);
+				directions[i]->setUB(*this, maxVal);
 			}
 		}
 	}
@@ -1145,11 +1343,12 @@ bool InputData::check()
 		
 		std::vector<bool> hasLB(params.size(), false), hasUB(params.size(), false);
 		for (unsigned d = 0; d < paramDirections.size(); d++) {
+			std::vector<double> dirVector = paramDirections[d]->getDirectionVector(*this, false);
 			for (unsigned p = 0; p < params.size(); p++) {
-				if ((paramDirections[d][p] < 0 && paramHasLB[d]) || paramDirections[d][p] > 0) {
+				if ((dirVector[p] < 0 && paramDirections[d]->hasLB()) || (dirVector[p] > 0 && paramDirections[d]->hasUB())) {
 					hasUB[p] = true;
 				}
-				if ((paramDirections[d][p] > 0 && paramHasLB[d]) || paramDirections[d][p] < 0) {
+				if ((dirVector[p] > 0 && paramDirections[d]->hasLB()) || (dirVector[p] < 0 && paramDirections[d]->hasUB())) {
 					hasLB[p] = true;
 				}
 			}
@@ -1168,18 +1367,22 @@ bool InputData::check()
 	
 	
 	
-	// set param directions LB where needed
+	// set param directions bounds where needed
 	if (res) {
 		// prepare linear system
-		vector<vector<double>> A = paramDirections;
+		vector<vector<double>> A{};
+		vector<double> b{};
 		for (unsigned i = 0; i < paramDirections.size(); i++) {
-			A.push_back(get_complementary(paramDirections[i]));
+			if (paramDirections[i]->hasUB()) {
+				A.push_back(paramDirections[i]->getDirectionVector(*this, false));
+				b.push_back(paramDirections[i]->getUB(*this));
+			}
+			if (paramDirections[i]->hasLB()) {
+				A.push_back(paramDirections[i]->getComplementary()->getDirectionVector(*this, false));
+				b.push_back(paramDirections[i]->getLB(*this));
+			}
 		}
-		vector<double> b = paramUBoffsets;
-		for (unsigned i = 0; i < paramLBoffsets.size(); i++) {
-			b.push_back(-paramLBoffsets[i]);
-		}
-		LinearSystem param_LS(A, b);
+		LinearSystem LS(A, b);
 		
 		GiNaC::lst symbols{};
 		for (unsigned i = 0; i < params.size(); i++) {
@@ -1188,15 +1391,26 @@ bool InputData::check()
 		}
 		
 		for (unsigned i = 0; i < paramDirections.size(); i++) {
-			if (!paramHasLB[i]) {
+			if (!paramDirections[i]->hasLB()) {
 				GiNaC::ex obj_function = 0;
-				for (unsigned j = 0; j < paramDirections[i].size(); j++) {
-					obj_function += paramDirections[i][j] * symbols[j];
+				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(*this, false);
+				for (unsigned j = 0; j < dirVector.size(); j++) {
+					obj_function += dirVector[j] * symbols[j];
 				}
 				
-				double minVal = param_LS.minLinearSystem(symbols, obj_function);
-				paramLBoffsets[i] = minVal;
-				paramHasLB[i] = true;
+				double minVal = LS.minLinearSystem(symbols, obj_function);
+				paramDirections[i]->setLB(*this, minVal);
+			}
+			
+			if (!paramDirections[i]->hasUB()) {
+				GiNaC::ex obj_function = 0;
+				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(*this, false);
+				for (unsigned j = 0; j < dirVector.size(); j++) {
+					obj_function += dirVector[j] * symbols[j];
+				}
+				
+				double maxVal = LS.maxLinearSystem(symbols, obj_function);
+				paramDirections[i]->setUB(*this, maxVal);
 			}
 		}
 	}
@@ -1211,6 +1425,16 @@ bool InputData::check()
 		res = false;
 	} else if (paramDirections.size() > params.size()) {
 		cerr << "Too much directions for parameters, polytopes are not supported" << endl;
+		cerr << "parameters: {" << endl;
+		for (unsigned i = 0; i < params.size(); i++) {
+			cerr << "\t" << *(params[i]) << endl;
+		}
+		cerr << "}" << endl;
+		cerr << "parameter directions: {" << endl;
+		for (unsigned i = 0; i < paramDirections.size(); i++) {
+			cerr << "\t" << *(paramDirections[i]) << endl;
+		}
+		cerr << "}" << endl;
 		res = false;
 	}
 

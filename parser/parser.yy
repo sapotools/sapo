@@ -107,8 +107,8 @@
 %nterm <std::vector<std::vector<int>>> _matrix rowList
 %nterm <AbsSyn::Formula *> formula
 %nterm <AbsSyn::transType> transType
-%nterm <AbsSyn::Inequality *> inequality
-%nterm <AbsSyn::Inequality::Type> inequalityType
+%nterm <AbsSyn::Direction *> direction
+%nterm <AbsSyn::Direction::Type> directionType
 
 %printer { yyo << $$; } <*>;
 
@@ -213,9 +213,10 @@ symbol			: VAR identList IN doubleInterval ";"
 								
 								drv.data.addVariable(new AbsSyn::Variable($2[i]));
 								
-								AbsSyn::Expr *e = new AbsSyn::Expr($2[i]);
-								AbsSyn::Inequality *ineq = new AbsSyn::Inequality(e, $4.first, $4.second);
-								drv.data.addDirectionConstraint(ineq);
+								AbsSyn::Expr *lhs = new AbsSyn::Expr($2[i]);
+								AbsSyn::Expr *rhs = new AbsSyn::Expr(0);
+								AbsSyn::Direction *d = new AbsSyn::Direction(lhs, rhs, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+								drv.data.addDirectionConstraint(d);
 							}
 						}
 						| VAR identList ";"
@@ -252,9 +253,10 @@ symbol			: VAR identList IN doubleInterval ";"
 									YYERROR;
 								}
 								drv.data.addParameter(new AbsSyn::Parameter($2[i]));
-								AbsSyn::Expr *e = new AbsSyn::Expr($2[i]);
-								AbsSyn::Inequality *ineq = new AbsSyn::Inequality(e, $4.first, $4.second);
-								drv.data.addParamDirectionConstraint(ineq);
+								AbsSyn::Expr *lhs = new AbsSyn::Expr($2[i]);
+								AbsSyn::Expr *rhs = new AbsSyn::Expr(0);
+								AbsSyn::Direction *d = new AbsSyn::Direction(lhs, rhs, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+								drv.data.addParamDirectionConstraint(d);
 								//drv.data.addParamBounds($4.first, $4.second);
 							}
 						}
@@ -333,27 +335,27 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.data.addSpec($3);
 						}
-						| ASSUME inequality ";"
+						| ASSUME direction ";"
 						{
 							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
 								yy::parser::error(@1, "Assumptions are not supported for synthesis yet");
 								YYERROR;
 							}
 							
-							if ($2->getLhs()->hasParams(drv.data) || $2->getRhs()->hasParams(drv.data)) {
+							if ($2->getLHS()->hasParams(drv.data) || $2->getRHS()->hasParams(drv.data)) {
 								yy::parser::error(@2, "Expressions in assumptions cannot contain parameters");
 								YYERROR;
 							}
-							if ($2->getLhs()->getDegree(drv.data) > 1 || $2->getRhs()->getDegree(drv.data) > 1) {
+							if ($2->getLHS()->getDegree(drv.data) > 1 || $2->getRHS()->getDegree(drv.data) > 1) {
 								yy::parser::error(@2, "Assumption must be linear");
 								YYERROR;
 							}
-							if ($2->getType() == AbsSyn::Inequality::Type::EQ) {
-								yy::parser::error(@2, "Inequalities with \"=\" are not supported yet in assumptions");
+							if ($2->getType() == AbsSyn::Direction::Type::EQ) {
+								yy::parser::error(@2, "Directions with \"=\" are not supported yet in assumptions");
 								YYERROR;
 							}
-							if ($2->getType() == AbsSyn::Inequality::Type::INT) {
-								yy::parser::error(@2, "Inequalities with intervals are not supported yet in assumptions");
+							if ($2->getType() == AbsSyn::Direction::Type::INT) {
+								yy::parser::error(@2, "Directions with intervals are not supported yet in assumptions");
 								YYERROR;
 							}
 							
@@ -363,7 +365,7 @@ symbol			: VAR identList IN doubleInterval ";"
 matricesList	: %empty {}
 							| matricesList matrices {}
 
-matrices		: direction
+matrices		: var_direction
 						{
 							/*if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
 							{
@@ -385,7 +387,7 @@ matrices		: direction
 								YYERROR;
 							}*/
 							
-							if (drv.data.directionsNum() == 0)
+							if (drv.data.getDirectionsNum() == 0)
 							{
 								yy::parser::error(@$, "Template matrix cannot be provided before directions");
 								YYERROR;
@@ -400,55 +402,69 @@ matrices		: direction
 							}*/
 						}
 
-inequality	: expr inequalityType expr
+direction	: expr directionType expr
 						{
 							if ($1->getDegree(drv.data) > 1) {
-								yy::parser::error(@1, "Expression in inequality must be at most linear");
+								yy::parser::error(@1, "Expression in directions must be at most linear");
 								YYERROR;
 							}
 							if ($3->getDegree(drv.data) > 1) {
-								yy::parser::error(@3, "Expression in inequality must be at most linear");
+								yy::parser::error(@3, "Expression in directions must be at most linear");
 								YYERROR;
 							}
-							$$ = new AbsSyn::Inequality($1, $3, $2);
+							$$ = new AbsSyn::Direction($1, $3, $2);
 						}
 						| expr IN doubleInterval
 						{
 							if ($1->getDegree(drv.data) > 1) {
-								yy::parser::error(@1, "Expression in inequality must be at most linear");
+								yy::parser::error(@1, "Expression in directions must be at most linear");
 								YYERROR;
 							}
-							$$ = new AbsSyn::Inequality($1, $3.first, $3.second);
+							$$ = new AbsSyn::Direction($1, new AbsSyn::Expr(0), AbsSyn::Direction::Type::INT, $3.first, $3.second);
 						}
 
-inequalityType	: "<"
-								{
-									$$ = AbsSyn::Inequality::Type::LT;
-								}
-								| "<="
-								{
-									$$ = AbsSyn::Inequality::Type::LE;
-								}
-								| ">"
-								{
-									$$ = AbsSyn::Inequality::Type::GT;
-								}
-								| ">="
-								{
-									$$ = AbsSyn::Inequality::Type::GE;
-								}
-								| "="
-								{
-									$$ = AbsSyn::Inequality::Type::EQ;
-								}
-
-direction		: DIR inequality ";"
-						{
-							if ($2->hasParams(drv.data)) {
-								yy::parser::error(@2, "Inequality for variable directions cannot contain parameters");
-								YYERROR;
+directionType		: "<"
+							{
+								$$ = AbsSyn::Direction::Type::LT;
 							}
-							drv.data.addDirectionConstraint($2);
+							| "<="
+							{
+								$$ = AbsSyn::Direction::Type::LE;
+							}
+							| ">"
+							{
+								$$ = AbsSyn::Direction::Type::GT;
+							}
+							| ">="
+							{
+								$$ = AbsSyn::Direction::Type::GE;
+							}
+							| "="
+							{
+								$$ = AbsSyn::Direction::Type::EQ;
+							}
+
+var_direction	: DIR direction ";"
+							{
+								if ($2->hasParams(drv.data)) {
+									yy::parser::error(@2, "Variable directions cannot contain parameters");
+									YYERROR;
+								}
+								drv.data.addDirectionConstraint($2);
+							}
+							| DIR IDENT ":" direction ";"
+							{
+								if ($4->hasParams(drv.data)) {
+									yy::parser::error(@2, "Variable directions cannot contain parameters");
+									YYERROR;
+								}
+								if (drv.data.isSymbolDefined($2))
+								{
+									yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
+									YYERROR;
+								}
+								$4->setName($2);
+								drv.data.addDirectionConstraint($4);
 						}
 
 template		: TEMPL "=" _matrix
@@ -469,7 +485,7 @@ template		: TEMPL "=" _matrix
 							{
 								for (unsigned j = 0; j < $3[i].size(); j++)
 								{
-									if ($3[i][j] < 0 || (unsigned int)$3[i][j] >= drv.data.directionsNum())
+									if ($3[i][j] < 0 || (unsigned int)$3[i][j] >= drv.data.getDirectionsNum())
 									{
 										yy::parser::error(@3, "Unknown direction");
 										YYERROR;
@@ -480,14 +496,28 @@ template		: TEMPL "=" _matrix
 							drv.data.setTemplate($3);
 						}
 
-paramDir		: PDIR inequality ";"
+paramDir		: PDIR direction ";"
 						{
 							if ($2->hasVars(drv.data)) {
-								yy::parser::error(@2, "Inequality for parameter directions cannot contain variables");
+								yy::parser::error(@2, "Parameter directions cannot contain variables");
 								YYERROR;
 							}
 							
 							drv.data.addParamDirectionConstraint($2);
+						}
+						| PDIR IDENT ":" direction ";"
+						{
+							if ($4->hasVars(drv.data)) {
+								yy::parser::error(@2, "Parameter directions cannot contain variables");
+								YYERROR;
+							}
+							if (drv.data.isSymbolDefined($2))
+							{
+								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
+								YYERROR;
+							}
+							$4->setName($2);
+							drv.data.addParamDirectionConstraint($4);
 						}
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }
@@ -597,7 +627,7 @@ matrixRow	: "{" intList "}" { $$ = $2; }
 
 intList		: INTEGER
 					{
-						if ($1 < 0 || (unsigned int)$1 >= drv.data.directionsNum())
+						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum())
 						{
 							yy::parser::error(@1, "Unknown direction");
 							YYERROR;
@@ -606,7 +636,7 @@ intList		: INTEGER
 					}
 					| intList "," INTEGER
 					{
-						if ($3 < 0 || (unsigned int)$3 >= drv.data.directionsNum())
+						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum())
 						{
 							yy::parser::error(@3, "Unknown direction");
 							YYERROR;

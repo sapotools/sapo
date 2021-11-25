@@ -7,6 +7,7 @@
 #include <string>
 #include <utility> // pair
 #include <vector>
+#include <math.h>
 
 // STL formulas
 #include "Always.h"
@@ -127,8 +128,8 @@ public:
     return right;
   }
   
-  int getDegree(const InputData &id)
-			const; // return the degree of the polynomial expression considering only vars
+  int getDegree(const InputData &id, bool variable = true)
+			const; // return the degree of the polynomial expression
 
   Expr *copy() const; // deep copy of expression
 
@@ -139,6 +140,9 @@ public:
 	
 	bool hasVars(const InputData &id)
 			const;	// checks if the expression contains variable names
+	
+	bool contains(const std::string name)
+			const;	// checks if the symbol named "name" is contained
 	
 	bool hasParams(const InputData &im)
 			const; // checks if the expression contains parameter names
@@ -457,11 +461,115 @@ private:
 };
 
 /*
+ ***************************
+ *        DIRECTION        *
+ ***************************
+ */
+
+class Direction
+{
+  friend std::ostream &operator<<(std::ostream &os, const Direction &d);
+
+public:
+	enum Type
+	{
+		LT,		// <
+		LE,		// <=
+		GT,		// >
+		GE,		// >=
+		EQ,		// =
+		INT		// lhs in [a,b]
+	};
+	
+	Direction(Expr *e1, Expr *e2, Type t, double lb = -std::numeric_limits<double>::infinity(),
+						double ub = std::numeric_limits<double>::infinity(), std::string dirName = ""):
+				lhs(e1), rhs(e2), type(t), LB(lb), UB(ub), name(dirName) {}
+	
+	~Direction()
+	{
+		delete(lhs);
+		delete(rhs);
+	}
+	
+	std::vector<double> getDirectionVector(const InputData &id, bool variables)
+				const;	// returns the vector representing the direction
+	
+	double getOffset(const InputData &id)
+				const;		// return the offset of the direction, if type is not INT
+	
+	std::string getName() const
+	{
+		return name;
+	}
+	void setName(std::string n)
+	{
+		name = n;
+	}
+	
+	double getLB(const InputData &id) const;
+	double getUB(const InputData &id) const;
+	
+	bool hasLB() const
+	{
+		return type == Type::INT || LB != -std::numeric_limits<double>::infinity();
+	}
+	bool hasUB() const
+	{
+		return type == Type::INT || UB != std::numeric_limits<double>::infinity();
+	}
+	
+	void setLB(const InputData &id, double val);
+	void setUB(const InputData &id, double val);
+	
+	Expr *getLHS()
+	{
+		return lhs;
+	}
+	Expr *getRHS()
+	{
+		return rhs;
+	}
+	
+	Type getType() const
+	{
+		return type;
+	}
+	
+	// checks if the direction contains variable names
+	bool hasVars(const InputData &id) const
+	{
+		return lhs->hasVars(id) || (rhs != nullptr ? rhs->hasVars(id) : false);
+	}
+	
+	// checks if the direction contains parameter names
+	bool hasParams(const InputData &id) const
+	{
+		return lhs->hasParams(id) || (rhs != nullptr ? rhs->hasParams(id) : false);
+	}
+	
+	Direction *copy() const;		// deep copy of direction
+	
+	Direction *getComplementary() const;	// returns the negated direction
+	
+	bool compare(Direction *d, const InputData &id, bool variable = true) const;			// comparison between directions
+	
+	bool covers(const InputData &id, const std::string name)
+				const;	// checks if the symbol named "name" is present in the direction
+	
+protected:
+	Expr *lhs, *rhs;
+	Type type;
+	double LB, UB;		// used only if type is INT
+	std::string name;
+};
+
+
+/*
  **************************
  *       INEQUALITY       *
  **************************
  */
-
+/*
 class Inequality
 {
 	friend std::ostream &operator<<(std::ostream &os, Inequality &i);
@@ -519,7 +627,7 @@ public:
 				const;		// return the direction corresponding to the linear constraint
 	
 	double getOffset(const InputData &id)
-				const;		// return the offset of the constraint*/
+				const;		// return the offset of the constraint
 	
 	// checks if the inequality contains variable names
 	bool hasVars(const InputData &id) const
@@ -539,7 +647,7 @@ protected:
 	Type type;
 	double lb, ub;
 };
-
+*/
 /*
  ***********************
  *        MODEL        *
@@ -548,7 +656,7 @@ protected:
 
 class InputData
 {
-  friend std::ostream &operator<<(std::ostream &os, const InputData &m);
+  friend std::ostream &operator<<(std::ostream &os, const InputData &id);
 
 public:
   InputData();
@@ -689,13 +797,19 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 	
-	const Inequality *getAssumption(int i) const // return the assertion in position i
+	const Direction *getAssumption(int i) const // return the assumption in position i
 	{
 		return assumptions[i];
 	}
 
-  void addVariable(Variable *v); // adds a new variable, which name is not already used
-  void addParameter(Parameter *p); // adds a new parameter, which name is not already used
+  void addVariable(Variable *v) // adds a new variable, which name is not already used
+	{
+		vars.push_back(v);
+	}
+  void addParameter(Parameter *p) // adds a new parameter, which name is not already used
+	{
+		params.push_back(p);
+	}
   void addConstant(Constant *c)
   {
     consts.push_back(c);
@@ -704,9 +818,9 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
-  void addAssumption(Inequality *a)
+  void addAssumption(Direction *d)
 	{
-		assumptions.push_back(a);
+		assumptions.push_back(d);
 	} // adds a new assumption
 
   bool isSpecDefined() const
@@ -725,16 +839,21 @@ public:
     return spec;
   }
 
-  void addDirectionConstraint(Inequality *i);
-  unsigned int directionsNum() const
+	// add direction with specified name
+  void addDirectionConstraint(Direction *d);
+  unsigned int getDirectionsNum() const
   {
     return directions.size();
   }
-  const std::vector<std::vector<double>> &getDirections() const
+  const std::vector<Direction *> &getDirections() const
   {
     return directions;
   }
-  void addDirection(std::vector<double> d, double LB, double UB);
+  const Direction *getDirection(unsigned i) const
+  {
+		return directions[i];
+	}
+/*  void addDirection(std::vector<double> d, double LB, double UB);
   void addDirection(std::vector<double> d)
   {
     directions.push_back(d);
@@ -752,10 +871,10 @@ public:
   const std::vector<double> &getUB() const
   {
     return UBoffsets;
-  }
+  }*/
   bool isBounded(int d) const
 	{
-		return hasLB[d];
+		return directions[d]->hasLB() && directions[d]->hasUB();
 	}
 
   unsigned templateRows() const
@@ -776,12 +895,12 @@ public:
     return templateMatrix;
   }
 
-  void addParamDirectionConstraint(Inequality *i);
+  void addParamDirectionConstraint(Direction *d);
   unsigned paramDirectionsNum() const
   {
     return paramDirections.size();
   }
-  void addParamDirection(std::vector<double> d, double LB, double UB);
+/*  void addParamDirection(std::vector<double> d, double LB, double UB);
   void addParamDirection(std::vector<double> d)
   {
     paramDirections.push_back(d);
@@ -790,21 +909,21 @@ public:
   {
     paramLBoffsets.push_back(LB);
     paramUBoffsets.push_back(UB);
-  }
+  }*/
 
-  void defaultParamDirections();
+//  void defaultParamDirections();
 
-  const std::vector<std::vector<double>> &getParameterDirections() const
+  const std::vector<Direction *> &getParameterDirections() const
   {
     return paramDirections;
   }
 
-  const std::vector<double> &getParamDirection(int i) const
+  Direction *getParamDirection(int i) const
   {
     return paramDirections[i];
   }
 
-  const std::vector<double> &getParamLB() const
+  /*const std::vector<double> &getParamLB() const
   {
     return paramLBoffsets;
   }
@@ -812,7 +931,7 @@ public:
   const std::vector<double> &getParamUB() const
   {
     return paramUBoffsets;
-  }
+  }*/
 
   bool isTransModeDefined() const
   {
@@ -882,21 +1001,25 @@ protected:
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
 	
-	std::vector<Inequality *> assumptions;
+	std::vector<Direction *> assumptions;
 
   Formula *spec;
 
+	std::vector<Direction *> directions;
+	/*
   std::vector<std::vector<double>> directions;
+	std::vector<std::string> directionNames;
   std::vector<double> LBoffsets;
   std::vector<double> UBoffsets;
-	std::vector<bool> hasLB;
+	std::vector<bool> hasLB;*/
 
   std::vector<std::vector<int>> templateMatrix;
 
-  std::vector<std::vector<double>> paramDirections;
+	std::vector<Direction *> paramDirections;
+	/*std::vector<std::vector<double>> paramDirections;
   std::vector<double> paramLBoffsets;
   std::vector<double> paramUBoffsets;
-	std::vector<bool> paramHasLB;
+	std::vector<bool> paramHasLB;*/
 
   // SAPO options
   transType trans;
