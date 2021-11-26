@@ -33,7 +33,7 @@ Sapo::Sapo(Model *model):
  * @param[in] k time horizon
  * @returns the reached flowpipe
  */
-Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
+Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k) const
 {
   using namespace std;
   using namespace GiNaC;
@@ -86,7 +86,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
  * @returns the reached flowpipe
  */
 Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
-                     unsigned int k)
+                     unsigned int k) const
 {
   using namespace std;
 
@@ -248,7 +248,7 @@ public:
  * @returns the list of refined parameter sets
  */
 std::list<PolytopesUnion>
-synthesize_list(Sapo &sapo, const Bundle &reachSet,
+synthesize_list(const Sapo &sapo, Bundle reachSet,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
@@ -301,7 +301,7 @@ synthesize_list(Sapo &sapo, const Bundle &reachSet,
 std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
                                            const PolytopesUnion &pSet,
                                            const std::shared_ptr<STL> formula,
-                                           const unsigned int max_splits)
+                                           const unsigned int max_splits) const
 {
   using namespace std;
 
@@ -339,7 +339,7 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Conjunction> conj)
+                                const std::shared_ptr<Conjunction> conj) const
 {
   PolytopesUnion Pu1
       = this->synthesize(reachSet, pSet, conj->getLeftSubFormula());
@@ -358,7 +358,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Disjunction> disj)
+                                const std::shared_ptr<Disjunction> disj) const
 {
   PolytopesUnion Pu
       = this->synthesize(reachSet, pSet, disj->getLeftSubFormula());
@@ -377,7 +377,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Eventually> ev)
+                                const std::shared_ptr<Eventually> ev) const
 {
   std::shared_ptr<Atom> true_atom = std::make_shared<Atom>(-1);
 
@@ -398,7 +398,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<STL> formula)
+                                const std::shared_ptr<STL> formula) const
 {
   switch (formula->getType()) {
 
@@ -448,7 +448,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Atom> atom)
+                                const std::shared_ptr<Atom> atom) const
 {
   using namespace std;
   using namespace GiNaC;
@@ -494,7 +494,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<Until> formula,
-                                const int time)
+                                const int time) const
 {
   const TimeInterval &t_itvl = formula->time_bounds();
 
@@ -549,7 +549,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<Always> formula,
-                                const int time)
+                                const int time) const
 {
   const TimeInterval &t_itvl = formula->time_bounds();
 
