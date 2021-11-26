@@ -28,7 +28,7 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
-  GiNaC::lst alpha; //!< free variables \in [0,1]
+  GiNaC::lst alpha;                       //!< free variables \in [0,1]
   std::map<std::vector<int>, GiNaC::lst>
       bernCoeffs; //!< Bernstein coefficients map
 
@@ -165,8 +165,8 @@ public:
    * @param[in] offm lower offsets
    * @param[in] t_matrix t_matrixs matrix
    */
-  Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
-         const std::vector<std::vector<int>> &t_matrix);
+  Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix, const Vector &offp,
+         const Vector &offm, const std::vector<std::vector<int>> &t_matrix);
 
   unsigned int dim() const
   {
@@ -316,7 +316,8 @@ public:
 
 void swap(Bundle &A, Bundle &B);
 
-GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha, const Parallelotope &P);
+GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
+                                               const Parallelotope &P);
 GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
                     const GiNaC::lst &expressions);
 #endif /* BUNDLE_H_ */

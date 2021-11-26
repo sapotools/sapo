@@ -536,7 +536,6 @@ GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
   return results;
 }
 
-
 GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &f,
                                const std::vector<double> &dir_vector)
 {
@@ -652,7 +651,8 @@ GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
                                                const Parallelotope &P)
 {
   GiNaC::lst gen_functs;
-  for (auto it = std::begin(P.base_vertex()); it!= std::end(P.base_vertex()); ++it) {
+  for (auto it = std::begin(P.base_vertex()); it != std::end(P.base_vertex());
+       ++it) {
     gen_functs.append(*it);
   }
 
@@ -703,9 +703,9 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
-    //const lst &genFun = build_generator_functs(q, alpha, beta, P);
+    // const lst &genFun = build_generator_functs(q, alpha, beta, P);
 
-    //lst subParatope = get_subs_from(P, q, beta);
+    // lst subParatope = get_subs_from(P, q, beta);
     const lst &genFun = build_instanciated_generator_functs(alpha, P);
 
     const lst genFun_f = sub_vars(f, vars, genFun);
@@ -716,8 +716,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 
     // for each direction
     for (unsigned int j = 0; j < dirs_to_bound.size(); j++) {
-      lst bernCoeffs = compute_Bern_coeffs(alpha, genFun_f,
-                                           dir_matrix[dirs_to_bound[j]]);
+      lst bernCoeffs
+          = compute_Bern_coeffs(alpha, genFun_f, dir_matrix[dirs_to_bound[j]]);
 
       auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
 
@@ -732,8 +732,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     }
   }
 
-  Bundle res
-      = Bundle(alpha, this->dir_matrix, newDp, newDm, this->t_matrix);
+  Bundle res = Bundle(alpha, this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

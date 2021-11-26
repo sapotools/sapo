@@ -391,7 +391,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
     lst genFun = build_instanciated_generator_functs(reachSet.get_alpha(), P);
 
     const lst fog = sub_vars(this->dyns, vars, genFun);
-  
+
     // compose sigma(f(gamma(x)))
     lst sub_sigma;
     for (unsigned int j = 0; j < this->vars.nops(); j++) {
@@ -400,9 +400,9 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
     const ex sofog = atom->getPredicate().subs(sub_sigma);
 
-      // compute the Bernstein control points
+    // compute the Bernstein control points
     lst controlPts
-          = BaseConverter(reachSet.get_alpha(), sofog).getBernCoeffsMatrix();
+        = BaseConverter(reachSet.get_alpha(), sofog).getBernCoeffsMatrix();
 
     Polytope constraints(this->params, controlPts);
     result.add(intersect(pSet, constraints));

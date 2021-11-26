@@ -64,9 +64,8 @@ private:
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle newReachSet
-          = reachSet.transform(this->vars, this->params, this->dyns, *p_it,
-                               this->trans);
+      Bundle newReachSet = reachSet.transform(this->vars, this->params,
+                                              this->dyns, *p_it, this->trans);
 
       // TODO: Check whether the object tmpLSset can be removed
       result.add(synthesize(newReachSet, pSet, formula, time + 1));
