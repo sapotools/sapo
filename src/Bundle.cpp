@@ -26,8 +26,7 @@
  */
 Bundle::Bundle(const Bundle &orig):
     dir_matrix(orig.dir_matrix), offp(orig.offp), offm(orig.offm),
-    t_matrix(orig.t_matrix), Theta(orig.Theta), q(orig.q), alpha(orig.alpha),
-    beta(orig.beta)
+    t_matrix(orig.t_matrix), Theta(orig.Theta), alpha(orig.alpha)
 {
 }
 
@@ -48,9 +47,7 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.offm, B.offm);
   std::swap(A.t_matrix, B.t_matrix);
   std::swap(A.Theta, B.Theta);
-  std::swap(A.q, B.q);
   std::swap(A.alpha, B.alpha);
-  std::swap(A.beta, B.beta);
 }
 
 /**
@@ -67,22 +64,19 @@ double orthProx(std::vector<double> v1, std::vector<double> v2)
 }
 
 /**
- * Constructor that instantiates the bundle
+ * Constructor for bundles
  *
- * @param[in] q is a list of variables to represent base vertex
  * @param[in] alpha is a list of free variables
- * @param[in] beta are generator amplitude variables
  * @param[in] dir_matrix matrix of directions
  * @param[in] offp upper offsets
  * @param[in] offm lower offsets
  * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const GiNaC::lst &q, const GiNaC::lst &alpha,
-               const GiNaC::lst &beta, const Matrix &dir_matrix,
+Bundle::Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix,
                const Vector &offp, const Vector &offm,
                const std::vector<std::vector<int>> &t_matrix):
     dir_matrix(dir_matrix),
-    offp(offp), offm(offm), t_matrix(t_matrix), q(q), alpha(alpha), beta(beta)
+    offp(offp), offm(offm), t_matrix(t_matrix), alpha(alpha)
 {
   using namespace std;
 
@@ -176,9 +170,7 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
   // generate the variables
   const size_t &dim = t_matrix[0].size();
 
-  this->q = get_symbol_lst("b", dim);     // Base vertex variables
   this->alpha = get_symbol_lst("f", dim); // Free variables
-  this->beta = get_symbol_lst("l", dim);  // Length variables
 
   // initialize orthogonal proximity
   this->Theta = vector<vector<double>>(this->num_of_dirs(),
@@ -275,7 +267,7 @@ Bundle Bundle::get_canonical() const
     canoffp[i] = bund.maximize(this->dir_matrix[i]);
     canoffm[i] = bund.maximize(-this->dir_matrix[i]);
   }
-  return Bundle(q, alpha, beta, dir_matrix, canoffp, canoffm, t_matrix);
+  return Bundle(alpha, dir_matrix, canoffp, canoffm, t_matrix);
 }
 
 /**
@@ -524,26 +516,35 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
     i++;
   }
 
-  return Bundle(q, alpha, beta, dir_matrix, offp, offm, bestT);
+  return Bundle(alpha, dir_matrix, offp, offm, bestT);
 }
 
-GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &vars,
-                               const GiNaC::lst &f, const GiNaC::lst &genFun,
-                               const std::vector<double> &dir_vector)
+GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
+                    const GiNaC::lst &expressions)
 {
-  // the combination parallelotope/direction to bound is not present in
-  // hash table compute control points
   GiNaC::lst sub;
 
-  for (unsigned int k = 0; k < vars.nops(); k++) {
-    sub.append(vars[k] == genFun[k]);
+  for (unsigned int k = 0; k < vars.nops(); ++k) {
+    sub.append(vars[k] == expressions[k]);
   }
 
+  GiNaC::lst results;
+  for (auto ex_it = std::begin(ex_list); ex_it != std::end(ex_list); ++ex_it) {
+    results.append(ex_it->subs(sub));
+  }
+
+  return results;
+}
+
+
+GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &f,
+                               const std::vector<double> &dir_vector)
+{
   GiNaC::ex Lfog = 0;
   // upper facets
   for (unsigned int k = 0; k < dir_vector.size(); k++) {
     if (dir_vector[k] != 0) {
-      Lfog = Lfog + dir_vector[k] * f[k].subs(sub);
+      Lfog = Lfog + dir_vector[k] * f[k];
     }
   }
 
@@ -606,25 +607,22 @@ Bundle::ParamMaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
 };
 
 Bundle::MaxCoeffFinder::MaxCoeffType
-Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs,
-                                        const GiNaC::lst &subs) const
+Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs) const
 {
   // find the maximum coefficient
   GiNaC::lst::const_iterator b_coeff_it = b_coeffs.begin();
 
-  GiNaC::ex bernCoeff = b_coeff_it->subs(subs);
-  double maxCoeffp = coeff_eval_p(bernCoeff);
-  double maxCoeffm = coeff_eval_m(bernCoeff);
+  double maxCoeffp = coeff_eval_p(*b_coeff_it);
+  double maxCoeffm = coeff_eval_m(*b_coeff_it);
 
   for (++b_coeff_it; b_coeff_it != b_coeffs.end(); ++b_coeff_it) {
-    GiNaC::ex bernCoeff = b_coeff_it->subs(subs);
-    double actCoeff = coeff_eval_p(bernCoeff);
+    double actCoeff = coeff_eval_p(*b_coeff_it);
 
     if (actCoeff > maxCoeffp) {
       maxCoeffp = actCoeff;
     }
 
-    actCoeff = coeff_eval_m(bernCoeff);
+    actCoeff = coeff_eval_m(*b_coeff_it);
     if (actCoeff > maxCoeffm) {
       maxCoeffm = actCoeff;
     }
@@ -642,30 +640,32 @@ Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs,
  * q + ((alpha \circ beta)^T \cdot G)^T
  * $$
  * where $\cdot$ is the row-column product, $\circ$ is the
- * Hadamard product, and $G$ is the generator matrix of the
- * considered parallelotope $P$.
+ * Hadamard product, and $q$, $beta$, and $G$ are the base vector,
+ * the vector lengths, the versors matrix of the
+ * considered parallelotope $P$, respectively.
  *
- * @param q is a vector of variables.
  * @param alpha is a vector of variables.
- * @param beta is a vector of variables.
  * @param P is the considered parallelotope.
  * @return The generator function of `P`.
  */
-GiNaC::lst build_generator_functs(const GiNaC::lst &q, const GiNaC::lst &alpha,
-                                  const GiNaC::lst &beta,
-                                  const Parallelotope &P)
+GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
+                                               const Parallelotope &P)
 {
-  GiNaC::lst gen_functs = q;
-  const std::vector<std::vector<double>> &generator_matrix = P.versors();
+  GiNaC::lst gen_functs;
+  for (auto it = std::begin(P.base_vertex()); it!= std::end(P.base_vertex()); ++it) {
+    gen_functs.append(*it);
+  }
 
-  for (unsigned int i = 0; i < generator_matrix.size(); i++) {
-    const std::vector<double> &gen_row = generator_matrix[i];
-    for (unsigned int j = 0; j < gen_row.size(); j++) {
-      // some of the non-null rows of the generator matrix
-      // correspond to 0-length dimensions in degenerous
-      // parallelotopes and must be avoided
-      if (P.lengths()[j] != 0) {
-        gen_functs[j] = gen_functs[j] + alpha[i] * beta[i] * gen_row[j];
+  const std::vector<std::vector<double>> &versors = P.versors();
+
+  for (unsigned int i = 0; i < versors.size(); i++) {
+    // some of the non-null rows of the generator matrix
+    // correspond to 0-length dimensions in degenerous
+    // parallelotopes and must be avoided
+    if (P.lengths()[i] != 0) {
+      std::vector<double> vector = P.lengths()[i] * versors[i];
+      for (unsigned int j = 0; j < vector.size(); j++) {
+        gen_functs[j] = gen_functs[j] + alpha[i] * vector[j];
       }
     }
   }
@@ -678,14 +678,11 @@ GiNaC::lst build_generator_functs(const GiNaC::lst &q, const GiNaC::lst &alpha,
  *
  * @param[in] vars variables appearing in the transforming function
  * @param[in] f transforming function
- * @param[in,out] controlPts is a storage containing all the control
- *                points computed so far.
  * @param[in] max_finder is a pointer to an MaxCoeffFinder object.
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
 Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                         ControlPointStorage &controlPts,
                          const Bundle::MaxCoeffFinder *max_finder,
                          int mode) const
 {
@@ -706,9 +703,12 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
-    const lst &genFun = build_generator_functs(q, alpha, beta, P);
+    //const lst &genFun = build_generator_functs(q, alpha, beta, P);
 
-    lst subParatope = get_subs_from(P, q, beta);
+    //lst subParatope = get_subs_from(P, q, beta);
+    const lst &genFun = build_instanciated_generator_functs(alpha, P);
+
+    const lst genFun_f = sub_vars(f, vars, genFun);
 
     if (mode == 0) { // static mode
       dirs_to_bound = this->t_matrix[i];
@@ -716,28 +716,10 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 
     // for each direction
     for (unsigned int j = 0; j < dirs_to_bound.size(); j++) {
+      lst bernCoeffs = compute_Bern_coeffs(alpha, genFun_f,
+                                           dir_matrix[dirs_to_bound[j]]);
 
-      // key of the control points
-      vector<int> key = this->t_matrix[i];
-      key.push_back(dirs_to_bound[j]);
-
-      lst actbernCoeffs;
-
-      // check if the coefficients were already computed
-      if (!(controlPts.contains(key)
-            && controlPts.gen_fun_is_equal_to(key, genFun))) {
-
-        actbernCoeffs = compute_Bern_coeffs(alpha, vars, f, genFun,
-                                            dir_matrix[dirs_to_bound[j]]);
-
-        // store the computed coefficients
-        controlPts.set(key, genFun, actbernCoeffs);
-
-      } else {
-        actbernCoeffs = controlPts.get_ctrl_pts(key);
-      }
-
-      auto maxCoeff = max_finder->find_max_coeffs(actbernCoeffs, subParatope);
+      auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
 
       const unsigned int &dir_b = dirs_to_bound[j];
       if (newDp[dir_b] > maxCoeff.p) {
@@ -751,7 +733,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   }
 
   Bundle res
-      = Bundle(q, alpha, beta, this->dir_matrix, newDp, newDm, this->t_matrix);
+      = Bundle(alpha, this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

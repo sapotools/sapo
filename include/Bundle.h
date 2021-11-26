@@ -14,7 +14,6 @@
 #include "Polytope.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
-#include "ControlPointStorage.h"
 
 class Bundle
 {
@@ -29,9 +28,7 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
-  GiNaC::lst q;     //!< variables to represent base vertex
   GiNaC::lst alpha; //!< free variables \in [0,1]
-  GiNaC::lst beta;  //!< generator amplitude variables
   std::map<std::vector<int>, GiNaC::lst>
       bernCoeffs; //!< Bernstein coefficients map
 
@@ -82,13 +79,11 @@ private:
      *        upper-bound for Bernstein coefficients.
      *
      * @param b_coeffs is a list of symbolical Bernstein coefficients.
-     * @param subs is a list of variable assignaments
      * @return The maximum of both lower-bound complementary and
      *         upper-bound for all the Bernstein coefficients in
      *         `b_coeffs`.
      */
-    MaxCoeffType find_max_coeffs(const GiNaC::lst &b_coeffs,
-                                 const GiNaC::lst &subs) const;
+    MaxCoeffType find_max_coeffs(const GiNaC::lst &b_coeffs) const;
   };
 
   /**
@@ -138,14 +133,11 @@ private:
    *
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
-   * @param[in,out] controlPts control points computed so far that might be
-   *                           updated
    * @param[in] max_finder is a pointer to a MaxCoeffFinder object.
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
   Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                   ControlPointStorage &controlPts,
                    const MaxCoeffFinder *max_finder, int mode) const;
 
 public:
@@ -167,16 +159,13 @@ public:
   /**
    * Constructor that instantiates the bundle
    *
-   * @param[in] q is a list of variables to represent base vertex
    * @param[in] alpha is a list of free variables
-   * @param[in] beta are generator amplitude variables
    * @param[in] dir_matrix matrix of directions
    * @param[in] offp upper offsets
    * @param[in] offm lower offsets
    * @param[in] t_matrix t_matrixs matrix
    */
-  Bundle(const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
-         const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
+  Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &t_matrix);
 
   unsigned int dim() const
@@ -210,16 +199,6 @@ public:
   }
 
   /**
-   * Get variables of base vertex
-   *
-   * @returns base vertex variables
-   */
-  const GiNaC::lst &get_q() const
-  {
-    return this->q;
-  }
-
-  /**
    * Get free variables
    *
    * @returns free variables
@@ -227,16 +206,6 @@ public:
   const GiNaC::lst &get_alpha() const
   {
     return this->alpha;
-  }
-
-  /**
-   * Get variables of generator lengths
-   *
-   * @returns generator lengths variables
-   */
-  const GiNaC::lst &get_beta() const
-  {
-    return this->beta;
   }
 
   const double &get_offsetp(long unsigned int i) const
@@ -308,17 +277,15 @@ public:
    *
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
-   * @param[in,out] controlPts control points computed so far that might be
-   * updated
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
   inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                          ControlPointStorage &controlPts, int mode) const
+                          int mode) const
   {
     MaxCoeffFinder max_finder;
 
-    return transform(vars, f, controlPts, &max_finder, mode);
+    return transform(vars, f, &max_finder, mode);
   }
 
   /**
@@ -328,18 +295,16 @@ public:
    * @param[in] params parameters appearing in the transforming function
    * @param[in] f transforming function
    * @param[in] paraSet set of parameters
-   * @param[in,out] controlPts control points computed so far that might be
-   * updated
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
   inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
                           const GiNaC::lst &f, const Polytope &paraSet,
-                          ControlPointStorage &controlPts, int mode) const
+                          int mode) const
   {
     ParamMaxCoeffFinder max_finder(params, paraSet);
 
-    return transform(vars, f, controlPts, &max_finder, mode);
+    return transform(vars, f, &max_finder, mode);
   }
 
   Bundle &operator=(Bundle &&);
@@ -351,8 +316,7 @@ public:
 
 void swap(Bundle &A, Bundle &B);
 
-GiNaC::lst build_generator_functs(const GiNaC::lst &q, const GiNaC::lst &alpha,
-                                  const GiNaC::lst &beta,
-                                  const Parallelotope &P);
-
+GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha, const Parallelotope &P);
+GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
+                    const GiNaC::lst &expressions);
 #endif /* BUNDLE_H_ */

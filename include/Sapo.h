@@ -25,7 +25,6 @@
 #include "Model.h"
 #include "STL.h"
 #include "Until.h"
-#include "ControlPointStorage.h"
 
 class Sapo
 {
@@ -42,10 +41,6 @@ private:
   const GiNaC::lst &dyns;   //!< dynamics of the system
   const GiNaC::lst &vars;   //!< variables of the system
   const GiNaC::lst &params; //!< parameters of the system
-
-  // TODO: check whether the following two members are really Sapo properties
-  ControlPointStorage reachControlPts; //!< symbolic control points
-  ControlPointStorage synthControlPts; //!< symbolic control points
 
   // TODO: check whether the following method is really needed/usable.
   std::vector<Bundle *>
@@ -71,7 +66,7 @@ private:
       // transition by using the n-th polytope of the parameter set
       Bundle newReachSet
           = reachSet.transform(this->vars, this->params, this->dyns, *p_it,
-                               this->reachControlPts, this->trans);
+                               this->trans);
 
       // TODO: Check whether the object tmpLSset can be removed
       result.add(synthesize(newReachSet, pSet, formula, time + 1));
