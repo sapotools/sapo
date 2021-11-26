@@ -17,7 +17,6 @@
 #include "BaseConverter.h"
 #include "Bundle.h"
 #include "Conjunction.h"
-#include "ControlPointStorage.h"
 #include "Disjunction.h"
 #include "Eventually.h"
 #include "Flowpipe.h"
@@ -26,27 +25,22 @@
 #include "Model.h"
 #include "STL.h"
 #include "Until.h"
-#include "ControlPointStorage.h"
 
 class Sapo
 {
 public:
-  unsigned char trans;       // transformation (0: static, 1: dynamic)
-  double alpha;              // decomposition weight
-  unsigned int decomp;       // number of decompositions (0: none, >0: yes)
-  std::string plot;          // the name of the file were to plot the reach set
-  unsigned int time_horizon; // the computation time horizon
-  unsigned int max_param_splits; // maximum number of splits in synthesis
-  bool verbose;                  // display info
+  unsigned char trans;  //!< transformation (0: static, 1: dynamic)
+  double decomp_weight; //!< decomposition weight
+  unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
+  std::string plot;     //!< the name of the file were to plot the reach set
+  unsigned int time_horizon;     //!< the computation time horizon
+  unsigned int max_param_splits; //!< maximum number of splits in synthesis
+  bool verbose;                  //!< display info
 
 private:
-  const GiNaC::lst &dyns;   // dynamics of the system
-  const GiNaC::lst &vars;   // variables of the system
-  const GiNaC::lst &params; // parameters of the system
-
-  // TODO: check whether the following two members are really Sapo properties
-  ControlPointStorage reachControlPts; // symbolic control points
-  ControlPointStorage synthControlPts; // symbolic control points
+  const GiNaC::lst &dyns;   //!< dynamics of the system
+  const GiNaC::lst &vars;   //!< variables of the system
+  const GiNaC::lst &params; //!< parameters of the system
 
   // TODO: check whether the following method is really needed/usable.
   std::vector<Bundle *>
@@ -70,9 +64,8 @@ private:
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle newReachSet
-          = reachSet.transform(this->vars, this->params, this->dyns, *p_it,
-                               this->reachControlPts, this->trans);
+      Bundle newReachSet = reachSet.transform(this->vars, this->params,
+                                              this->dyns, *p_it, this->trans);
 
       // TODO: Check whether the object tmpLSset can be removed
       result.add(synthesize(newReachSet, pSet, formula, time + 1));

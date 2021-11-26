@@ -11,6 +11,7 @@
 
 #if WITH_THREADS
 #include <thread>
+#include <shared_mutex>
 
 #endif // WITH_THREADS
 
@@ -37,33 +38,32 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k)
   using namespace std;
   using namespace GiNaC;
 
-  ControlPointStorage controlPts;
+  Flowpipe flowpipe(initSet.get_directions());
 
-  Flowpipe flowpipe(initSet.getDirectionMatrix());
+  Polytope Xls = initSet;
 
   if (this->verbose) {
     cout << "Initial Set" << endl
-         << initSet.getPolytope() << endl
+         << Xls << endl
          << endl
          << "Computing reach set..." << flush;
   }
 
   Bundle X = initSet;
-  Polytope Xls = initSet.getPolytope();
   flowpipe.append(Xls);
 
   unsigned int i = 0;
   while (i < k && !Xls.is_empty()) {
     i++;
 
-    X = X.transform(this->vars, this->dyns, controlPts,
+    X = X.transform(this->vars, this->dyns,
                     this->trans); // transform it
 
     if (this->decomp > 0) { // if requested, decompose it
-      X = X.decompose(this->alpha, this->decomp);
+      X = X.decompose(this->decomp_weight, this->decomp);
     }
 
-    flowpipe.append(X.getPolytope()); // store result
+    flowpipe.append(X); // store result
 
     if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
@@ -89,11 +89,10 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
                      unsigned int k)
 {
   using namespace std;
-  using namespace GiNaC;
 
   if (this->verbose) {
     cout << "Initial Set" << endl
-         << initSet.getPolytope() << endl
+         << (Polytope)initSet << endl
          << endl
          << "Parameter set" << endl
          << pSet << endl
@@ -102,12 +101,11 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   }
 
   std::list<Bundle> cbundles{initSet};
-  ControlPointStorage ctrlPts;
   PolytopesUnion last_step;
 
-  last_step.add(initSet.getPolytope());
+  last_step.add(initSet);
 
-  Flowpipe flowpipe(initSet.getDirectionMatrix());
+  Flowpipe flowpipe(initSet.get_directions());
   flowpipe.append(initSet);
 
   unsigned int i = 0;
@@ -132,13 +130,13 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
         // get the transformed bundle
         Bundle bundle
             = b_it->transform(this->vars, this->params, this->dyns, *p_it,
-                              ctrlPts, this->trans); // transform it
+                              this->trans); // transform it
 
         if (this->decomp > 0) { // if requested, decompose it
-          bundle = bundle.decompose(this->alpha, this->decomp);
+          bundle = bundle.decompose(this->decomp_weight, this->decomp);
         }
 
-        Polytope bls = bundle.getPolytope();
+        Polytope bls = bundle;
 
         // TODO: check whether there is any chance for a transformed bundle to
         // be empty
@@ -146,7 +144,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
           // add to the new reached bundle
           nbundles.push_back(bundle);
 
-          last_step.add(bundle.getPolytope());
+          last_step.add(bls);
         }
       }
     }
@@ -457,66 +455,27 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
   PolytopesUnion result;
 
-  for (unsigned int i = 0; i < reachSet.getCard();
+  for (unsigned int i = 0; i < reachSet.num_of_templates();
        i++) { // for each parallelotope
 
-    // complete the key
-    vector<int> key = reachSet.getTemplate(i);
-    key.push_back(atom->getID());
-
     Parallelotope P = reachSet.getParallelotope(i);
-    lst genFun = P.getGeneratorFunction();
-    lst controlPts;
+    lst genFun = build_instanciated_generator_functs(reachSet.get_alpha(), P);
 
-    if (!(this->synthControlPts.contains(key)
-          && this->synthControlPts.gen_fun_is_equal_to(key, genFun))) {
-      // compose f(gamma(x))
-      lst sub, fog;
-      for (unsigned int j = 0; j < this->vars.nops(); j++) {
-        sub.append(vars[j] == genFun[j]);
-      }
-      for (unsigned int j = 0; j < vars.nops(); j++) {
-        fog.append(this->dyns[j].subs(sub));
-      }
+    const lst fog = sub_vars(this->dyns, vars, genFun);
 
-      // compose sigma(f(gamma(x)))
-      lst sub_sigma;
-      for (unsigned int j = 0; j < this->vars.nops(); j++) {
-        sub_sigma.append(vars[j] == fog[j]);
-      }
-      ex sofog;
-      sofog = atom->getPredicate().subs(sub_sigma);
-
-      // compute the Bernstein control points
-      controlPts = BaseConverter(P.getAlpha(), sofog).getBernCoeffsMatrix();
-      this->synthControlPts.set(key, genFun, controlPts);
-
-    } else {
-      controlPts = this->synthControlPts.get_ctrl_pts(key);
-    }
-
-    // substitute numerical values in sofog
-    vector<double> base_vertex = P.getBaseVertex();
-    vector<double> lengths = P.getLenghts();
-
-    lst qvars(P.getQ());
-    lst bvars(P.getBeta());
-    lst para_sub;
+    // compose sigma(f(gamma(x)))
+    lst sub_sigma;
     for (unsigned int j = 0; j < this->vars.nops(); j++) {
-      para_sub.append(qvars[j] == base_vertex[j]);
-      para_sub.append(bvars[j] == lengths[j]);
-    }
-    ex num_sofog;
-    lst synth_controlPts;
-    // for (int j=0; j<controlPts.nops(); j++) {
-    for (lst::const_iterator j = controlPts.begin(); j != controlPts.end();
-         ++j) {
-      synth_controlPts.append((*j).subs(para_sub));
+      sub_sigma.append(vars[j] == fog[j]);
     }
 
-    // cout<<synth_controlPts;
+    const ex sofog = atom->getPredicate().subs(sub_sigma);
 
-    Polytope constraints(this->params, synth_controlPts);
+    // compute the Bernstein control points
+    lst controlPts
+        = BaseConverter(reachSet.get_alpha(), sofog).getBernCoeffsMatrix();
+
+    Polytope constraints(this->params, controlPts);
     result.add(intersect(pSet, constraints));
   }
 

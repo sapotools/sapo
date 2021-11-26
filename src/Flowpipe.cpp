@@ -49,7 +49,7 @@ const PolytopesUnion &Flowpipe::get(const unsigned int i) const
  */
 Flowpipe &Flowpipe::append(const Bundle &bundle)
 {
-  this->flowpipe.push_back(PolytopesUnion(bundle.getPolytope()));
+  this->flowpipe.push_back(PolytopesUnion(bundle));
 
   return *this;
 }

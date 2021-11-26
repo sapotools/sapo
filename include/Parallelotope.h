@@ -13,129 +13,72 @@
 
 #include "Polytope.h"
 
-struct poly_values { // numerical values for polytopes
-  std::vector<double> base_vertex;
-  std::vector<double> lenghts;
-};
-
+/**
+ * @brief A class to represent Parallelotope.
+ *
+ * Parallelotopes are internally represented as a base vertex,
+ * a set of versors, and the lengths of the corresponding
+ * tensors.
+ */
 class Parallelotope
 {
   using Vector = std::vector<double>;
   using Matrix = std::vector<Vector>;
 
 private:
-  unsigned int dim;              // dimension of the parallelotope
-  std::vector<GiNaC::lst> vars;  // variables appearing in generato function
-                                 // vars[0] q: base vertex
-                                 // vars[1] alpha : free variables \in [0,1]
-                                 // vars[2] beta : generator amplitudes
-  GiNaC::lst generator_function; // generator function
-  Matrix u;                      // versors
-  Matrix template_matrix;        // Template matrix
+  Matrix _versors; //!< versors
 
-  Vector hyperplaneThroughPts(const std::vector<Vector> &pts)
-      const; // find hyper plane passing through pts
-  Vector
-  lst2vec(const GiNaC::ex &list) const; // convert a lst to a vector of doubles
-  double euclidNorm(const Vector &v) const; // compute euclidean norm
-
-  std::vector<double> actual_base_vertex;
-  std::vector<double> actual_lenghts;
+  std::vector<double> _base_vertex; //!< base vertex
+  std::vector<double> _lengths;     //!< tensors original lengths
 
 public:
-  Parallelotope(const std::vector<GiNaC::lst> &vars, const Matrix &u);
-  Parallelotope(const std::vector<GiNaC::lst> &vars,
-                const Matrix &template_matrix, const Vector &offset);
-  Parallelotope(const std::vector<GiNaC::lst> &vars, const Polytope &P);
-
   /**
-   * Get the generator functions
+   * Constructor
    *
-   * @returns generator functions
+   * @param[in] template_matrix is the template matrix of the parallelotope
+   * @param[in] lower_bound is the lower bound offsets of the parallelotope
+   * @param[in] upper_bound is the upper bound offsets of the parallelotope
    */
-  const GiNaC::lst &getGeneratorFunction() const
-  {
-    return this->generator_function;
-  }
-
-  /**
-   * Get variables of base vertex
-   *
-   * @returns base vertex variables
-   */
-  const GiNaC::lst &getQ() const
-  {
-    return this->vars[0];
-  }
-
-  /**
-   * Get free variables
-   *
-   * @returns free variables
-   */
-  const GiNaC::lst &getAlpha() const
-  {
-    return this->vars[1];
-  }
-
-  /**
-   * Get variables of generator lengths
-   *
-   * @returns generator lengths variables
-   */
-  const GiNaC::lst &getBeta() const
-  {
-    return this->vars[2];
-  }
+  Parallelotope(const Matrix &template_matrix, const Vector &lower_bound,
+                const Vector &upper_bound);
 
   /**
    * Get the parallelotope dimension
    *
    * @returns parallelotope dimension
    */
-  const unsigned int &getDim() const
+  unsigned int dim() const
   {
-    return this->dim;
+    return (_versors.size() == 0 ? 0 : _versors.front().size());
   }
 
+  // TODO: test the following method
   /**
-   * Get the template of the parallelotope
+   * Build a polytope representing the parallelotope.
    *
-   * @returns parallelotope template
+   * @returns a polytope representing the parallelotope
    */
-  const std::vector<std::vector<double>> &getTemplate() const
+  operator Polytope() const;
+
+  const std::vector<double> &base_vertex() const
   {
-    return this->template_matrix;
+    return this->_base_vertex;
   }
 
-  // Representation conversion
-  Polytope
-  gen2const(const Vector &q,
-            const Vector &beta) const;       // from generator to constraints
-  poly_values const2gen(Polytope *LS) const; // from constraints to generators
-  Polytope getPolytope() const
+  const std::vector<double> &lengths() const
   {
-    return this->gen2const(this->actual_base_vertex, this->actual_lenghts);
+    return this->_lengths;
   }
 
-  const std::vector<double> &getBaseVertex() const
+  // TODO: this method does not return versors. Why is it
+  //       called in this way? Are we assuming that the
+  //       returned values are versors?
+  const Matrix &versors() const
   {
-    return this->actual_base_vertex;
-  }
-
-  const std::vector<double> &getLenghts() const
-  {
-    return this->actual_lenghts;
-  }
-
-  Matrix getVersors() const
-  {
-    return this->u;
+    return this->_versors;
   }
 
   friend void swap(Parallelotope &A, Parallelotope &B);
-
-  virtual ~Parallelotope();
 };
 
 #endif /* PARALLELOTOPE_H_ */

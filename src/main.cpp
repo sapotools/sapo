@@ -25,7 +25,7 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
 
   sapo.trans = data.getTransValue();
   sapo.decomp = data.getDecomposition() ? 1 : 0;
-  sapo.alpha = data.getAlpha();
+  sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();
   sapo.max_param_splits = data.getMaxParameterSplits();
   sapo.verbose = verbose;

@@ -19,10 +19,9 @@
 BaseConverter::BaseConverter(const GiNaC::lst &vars,
                              const GiNaC::ex &polynomial):
     vars(vars),
-    polynomial(polynomial)
+    polynomial(polynomial.expand())
 {
   // Put the polynomial in extended form and extract variables degrees
-  this->polynomial = this->polynomial.expand();
   for (auto var_it = std::begin(vars); var_it != end(vars); ++var_it) {
     this->degrees.push_back(this->polynomial.degree(*var_it));
   }

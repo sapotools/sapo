@@ -9,6 +9,8 @@
 #include "Polytope.h"
 #include "PolytopesUnion.h"
 
+#include "LinearAlgebra.h"
+
 #define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
 
 using namespace std;
@@ -141,7 +143,7 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
       const double min_value = minimize(this->A[cidx]);
       const double avg_value = (this->b[cidx] + min_value) / 2;
 
-      A.push_back(get_complementary(this->A[cidx]));
+      A.push_back(-this->A[cidx]);
       b.push_back(-avg_value);
 
       split(bvect_base, cidx + 1, tmp_covering, A, b);
