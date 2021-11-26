@@ -1634,7 +1634,9 @@ public:
             // if it does not exist, initialize it to the opportune value
             if (nz_elem_it == std::end(nz_row)) {
               nz_row[elem_it->first] = ratio * elem_it->second;
-              non_zero_below_diag[elem_it->first].insert(*nz_row_it);
+              if (elem_it->first < *nz_row_it) {
+                non_zero_below_diag[elem_it->first].insert(*nz_row_it);
+              }
             } else { // otherwise, it exists
               // increase it by the the opportune value
               nz_elem_it->second += ratio * elem_it->second;
