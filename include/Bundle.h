@@ -28,7 +28,6 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
-  GiNaC::lst alpha;                       //!< free variables \in [0,1]
   std::map<std::vector<int>, GiNaC::lst>
       bernCoeffs; //!< Bernstein coefficients map
 
@@ -156,26 +155,9 @@ public:
   Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &t_matrix);
 
-  /**
-   * Constructor that instantiates the bundle
-   *
-   * @param[in] alpha is a list of free variables
-   * @param[in] dir_matrix matrix of directions
-   * @param[in] offp upper offsets
-   * @param[in] offm lower offsets
-   * @param[in] t_matrix t_matrixs matrix
-   */
-  Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix, const Vector &offp,
-         const Vector &offm, const std::vector<std::vector<int>> &t_matrix);
-
   unsigned int dim() const
   {
     return (dir_matrix.size() == 0 ? 0 : dir_matrix.front().size());
-  }
-
-  unsigned int size() const
-  {
-    return dir_matrix.size();
   }
 
   unsigned int num_of_templates() const
@@ -183,7 +165,7 @@ public:
     return t_matrix.size();
   }
 
-  unsigned int num_of_dirs() const
+  unsigned int size() const
   {
     return this->dir_matrix.size();
   }
@@ -196,16 +178,6 @@ public:
   const std::vector<std::vector<double>> &get_directions() const
   {
     return this->dir_matrix;
-  }
-
-  /**
-   * Get free variables
-   *
-   * @returns free variables
-   */
-  const GiNaC::lst &get_alpha() const
-  {
-    return this->alpha;
   }
 
   const double &get_offsetp(long unsigned int i) const

@@ -9,11 +9,12 @@
 
 #include "Bundle.h"
 
-#include "LinearAlgebra.h"
 
 #include <limits>
 #include <string>
 #include <algorithm>
+
+#include "LinearAlgebra.h"
 
 #define _USE_MATH_DEFINES
 
@@ -26,7 +27,7 @@
  */
 Bundle::Bundle(const Bundle &orig):
     dir_matrix(orig.dir_matrix), offp(orig.offp), offm(orig.offm),
-    t_matrix(orig.t_matrix), Theta(orig.Theta), alpha(orig.alpha)
+    t_matrix(orig.t_matrix), Theta(orig.Theta)
 {
 }
 
@@ -47,7 +48,6 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.offm, B.offm);
   std::swap(A.t_matrix, B.t_matrix);
   std::swap(A.Theta, B.Theta);
-  std::swap(A.alpha, B.alpha);
 }
 
 /**
@@ -61,65 +61,6 @@ void swap(Bundle &A, Bundle &B)
 double orthProx(std::vector<double> v1, std::vector<double> v2)
 {
   return std::abs(angle(v1, v2) - M_PI_2);
-}
-
-/**
- * Constructor for bundles
- *
- * @param[in] alpha is a list of free variables
- * @param[in] dir_matrix matrix of directions
- * @param[in] offp upper offsets
- * @param[in] offm lower offsets
- * @param[in] t_matrix templates matrix
- */
-Bundle::Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix,
-               const Vector &offp, const Vector &offm,
-               const std::vector<std::vector<int>> &t_matrix):
-    dir_matrix(dir_matrix),
-    offp(offp), offm(offm), t_matrix(t_matrix), alpha(alpha)
-{
-  using namespace std;
-
-  if (dir_matrix.size() == 0) {
-    cout << "Bundle::Bundle : dir_matrix must be non empty";
-    exit(EXIT_FAILURE);
-  }
-  if (dir_matrix.size() != offp.size()) {
-    cout << "Bundle::Bundle : dir_matrix and offp must have the same size";
-    exit(EXIT_FAILURE);
-  }
-  if (dir_matrix.size() != offm.size()) {
-    cout << "Bundle::Bundle : dir_matrix and offm must have the same size";
-    exit(EXIT_FAILURE);
-  }
-  if (t_matrix.size() > 0) {
-    for (unsigned int i = 0; i < t_matrix.size(); i++) {
-      if (t_matrix[i].size() != this->dim()) {
-        cout << "Bundle::Bundle : t_matrix must have " << this->dim()
-             << " columns";
-        exit(EXIT_FAILURE);
-      }
-    }
-  } else {
-    cout << "Bundle::Bundle : t_matrix must be non empty";
-    exit(EXIT_FAILURE);
-  }
-
-  // initialize orthogonal proximity
-  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
-    Vector Thetai(this->num_of_dirs(), 0);
-    for (unsigned int j = i; j < this->num_of_dirs(); j++) {
-      this->Theta.push_back(Thetai);
-    }
-  }
-  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
-    this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->num_of_dirs(); j++) {
-      double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
-      this->Theta[i][j] = prox;
-      this->Theta[j][i] = prox;
-    }
-  }
 }
 
 /**
@@ -167,18 +108,13 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
     exit(EXIT_FAILURE);
   }
 
-  // generate the variables
-  const size_t &dim = t_matrix[0].size();
-
-  this->alpha = get_symbol_lst("f", dim); // Free variables
-
   // initialize orthogonal proximity
-  this->Theta = vector<vector<double>>(this->num_of_dirs(),
-                                       vector<double>(this->num_of_dirs(), 0));
+  this->Theta = vector<vector<double>>(this->size(),
+                                       vector<double>(this->size(), 0));
 
-  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
+  for (unsigned int i = 0; i < this->size(); i++) {
     this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->num_of_dirs(); j++) {
+    for (unsigned int j = i + 1; j < this->size(); j++) {
       double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
       this->Theta[i][j] = prox;
       this->Theta[j][i] = prox;
@@ -267,7 +203,7 @@ Bundle Bundle::get_canonical() const
     canoffp[i] = bund.maximize(this->dir_matrix[i]);
     canoffm[i] = bund.maximize(-this->dir_matrix[i]);
   }
-  return Bundle(alpha, dir_matrix, canoffp, canoffm, t_matrix);
+  return Bundle(dir_matrix, canoffp, canoffm, t_matrix);
 }
 
 /**
@@ -516,7 +452,7 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
     i++;
   }
 
-  return Bundle(alpha, dir_matrix, offp, offm, bestT);
+  return Bundle(dir_matrix, offp, offm, bestT);
 }
 
 GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
@@ -692,6 +628,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   vector<double> newDp(this->size(), std::numeric_limits<double>::max());
   vector<double> newDm = newDp;
 
+  GiNaC::lst alpha = get_symbol_lst("f", dim());
+
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
     for (unsigned int i = 0; i < this->dir_matrix.size(); i++) {
@@ -703,11 +641,8 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
-    // const lst &genFun = build_generator_functs(q, alpha, beta, P);
-
-    // lst subParatope = get_subs_from(P, q, beta);
+  
     const lst &genFun = build_instanciated_generator_functs(alpha, P);
-
     const lst genFun_f = sub_vars(f, vars, genFun);
 
     if (mode == 0) { // static mode
@@ -732,7 +667,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     }
   }
 
-  Bundle res = Bundle(alpha, this->dir_matrix, newDp, newDm, this->t_matrix);
+  Bundle res = Bundle(this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

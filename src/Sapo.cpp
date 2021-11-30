@@ -241,7 +241,6 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
       = synthesize_list(*this, reachSet, pSetList, formula);
 
   while (every_set_is_empty(res) && num_of_splits++ < max_splits) {
-    res.clear();
     pSetList = get_a_finer_covering(pSetList);
 
     res = synthesize_list(*this, reachSet, pSetList, formula);
@@ -384,11 +383,13 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
   PolytopesUnion result;
 
+  GiNaC::lst alpha = get_symbol_lst("f", reachSet.dim());
+
   for (unsigned int i = 0; i < reachSet.num_of_templates();
        i++) { // for each parallelotope
 
     Parallelotope P = reachSet.getParallelotope(i);
-    lst genFun = build_instanciated_generator_functs(reachSet.get_alpha(), P);
+    lst genFun = build_instanciated_generator_functs(alpha, P);
 
     const lst fog = sub_vars(this->dyns, vars, genFun);
 
@@ -402,7 +403,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
     // compute the Bernstein control points
     lst controlPts
-        = BaseConverter(reachSet.get_alpha(), sofog).getBernCoeffsMatrix();
+        = BaseConverter(alpha, sofog).getBernCoeffsMatrix();
 
     Polytope constraints(this->params, controlPts);
     result.add(intersect(pSet, constraints));
