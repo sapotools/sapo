@@ -13,11 +13,11 @@
 #include <limits>
 
 #include "LinearSystem.h"
+#include "SymbolicAlgebra.h"
 
 #define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
 
 using namespace std;
-using namespace GiNaC;
 
 std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
 {
@@ -223,6 +223,7 @@ bool LinearSystem::is_in(vector<double> Ai, const double bi) const
   return false;
 }
 
+// TODO: remove this method as it uses non-necessary symbolic expressions.
 /**
  * Constructor that instantiates a linear system from a set of symbolic
  * expressions
@@ -230,26 +231,28 @@ bool LinearSystem::is_in(vector<double> Ai, const double bi) const
  * @param[in] vars list of variables appearing in the constraints
  * @param[in] constraints symbolic constraints
  */
-LinearSystem::LinearSystem(const lst &vars, const lst &constraints)
+LinearSystem::LinearSystem(
+    const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+    const std::vector<SymbolicAlgebra::Expression<>> &constraints)
 {
-  lst lconstraints = constraints;
-  lconstraints.unique();
+  using namespace SymbolicAlgebra;
+  std::vector<Expression<>> lconstraints = constraints;
+  // lconstraints.unique();  // remove multiple copies of the same expression
 
-  for (lst::const_iterator c_it = begin(lconstraints);
-       c_it != end(lconstraints); ++c_it) {
+  for (auto c_it = begin(lconstraints); c_it != end(lconstraints); ++c_it) {
     vector<double> Ai;
-    ex const_term(*c_it);
+    Expression<> const_term(*c_it);
 
-    for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
+    for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
       // Extract the coefficient of the i-th variable (grade 1)
-      double coeff = ex_to<numeric>(evalf(c_it->coeff(*v_it, 1))).to_double();
+      double coeff = (c_it->coeff(*v_it, 1)).evaluate<double>();
       Ai.push_back(coeff);
 
       // Project to obtain the constant term
       const_term = const_term.coeff(*v_it, 0);
     }
 
-    double bi = ex_to<numeric>(evalf(const_term)).to_double();
+    double bi = const_term.evaluate<double>();
 
     if (!this->is_in(Ai, -bi)) {
       this->A.push_back(Ai);
@@ -332,21 +335,24 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double LinearSystem::minimize(const lst &vars, const ex &obj_fun) const
+double
+LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                       const SymbolicAlgebra::Expression<> &obj_fun) const
 {
+  using namespace SymbolicAlgebra;
 
   vector<double> obj_fun_coeffs;
-  ex const_term(obj_fun);
+  Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
-  for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
-    double coeff = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
+  for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
+    double coeff = (obj_fun.coeff(*v_it, 1)).evaluate<double>();
 
     obj_fun_coeffs.push_back(coeff);
     const_term = const_term.coeff(*v_it, 0);
   }
 
-  const double c = ex_to<numeric>(evalf(const_term)).to_double();
+  const double c = const_term.evaluate<double>();
   const double min = optimize(obj_fun_coeffs, GLP_MIN);
 
   return (min + c);
@@ -381,21 +387,23 @@ double LinearSystem::maximize(const vector<double> &obj_fun_coeffs) const
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maximize(const lst &vars, const ex &obj_fun) const
+double
+LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                       const SymbolicAlgebra::Expression<> &obj_fun) const
 {
+  using namespace SymbolicAlgebra;
 
   vector<double> obj_fun_coeffs;
-  ex const_term(obj_fun);
+  Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
-  for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
-    const double coeff
-        = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
+  for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
+    const double coeff = obj_fun.coeff(*v_it, 1).evaluate<double>();
     obj_fun_coeffs.push_back(coeff);
     const_term = const_term.coeff(*v_it, 0);
   }
 
-  const double c = ex_to<numeric>(evalf(const_term)).to_double();
+  const double c = const_term.evaluate<double>();
 
   return maximize(obj_fun_coeffs) + c;
 }

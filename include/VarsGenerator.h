@@ -11,15 +11,16 @@
 
 #include <string>
 
-#include <ginac/ginac.h>
+#include "SymbolicAlgebra.h"
 
-GiNaC::lst get_symbol_lst(const std::string &basename,
-                          const unsigned int number_of_symbols);
+std::vector<SymbolicAlgebra::Symbol<>>
+get_symbol_vector(const std::string &basename,
+                  const unsigned int number_of_symbols);
 
-inline GiNaC::lst get_symbol_lst(const char *basename,
-                                 const unsigned int number_of_symbols)
+inline std::vector<SymbolicAlgebra::Symbol<>>
+get_symbol_vector(const char *basename, const unsigned int number_of_symbols)
 {
-  return get_symbol_lst(std::string(basename), number_of_symbols);
+  return get_symbol_vector(std::string(basename), number_of_symbols);
 }
 
 #endif /* VARSGENERATOR_H_*/

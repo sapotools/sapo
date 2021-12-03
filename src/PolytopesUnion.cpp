@@ -10,7 +10,6 @@
 #include "PolytopesUnion.h"
 
 using namespace std;
-using namespace GiNaC;
 
 /**
  * Constructor that instantiates an empty set

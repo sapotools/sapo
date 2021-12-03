@@ -44,8 +44,7 @@ In order to compile the source code, the following packages are required:
 - <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
 - <a href="https://github.com/westes/flex">Flex</a> (version >=2.6.3)
 - <a href="https://www.gnu.org/software/bison/manual">Bison</a>
-- <a href="http://www.ginac.de/CLN/">CLN</a> (version>=1.3.6)
-- <a href="http://www.ginac.de/">GiNaC</a> (version>=1.7.8)
+- <a href="https://gmplib.org">GNU Multi-Precision Library</a>
 - <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >=5.0)
 
 ### Downloading and Compiling Sapo

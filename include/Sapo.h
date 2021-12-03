@@ -38,9 +38,12 @@ public:
   bool verbose;                  //!< display info
 
 private:
-  const GiNaC::lst &dyns;   //!< dynamics of the system
-  const GiNaC::lst &vars;   //!< variables of the system
-  const GiNaC::lst &params; //!< parameters of the system
+  const std::vector<SymbolicAlgebra::Expression<>>
+      &dyns; //!< dynamics of the system
+  const std::vector<SymbolicAlgebra::Symbol<>>
+      &vars; //!< variables of the system
+  const std::vector<SymbolicAlgebra::Symbol<>>
+      &params; //!< parameters of the system
 
   // TODO: check whether the following method is really needed/usable.
   std::vector<Bundle *>

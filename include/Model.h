@@ -9,8 +9,7 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
-#include <ginac/ginac.h>
-
+#include "SymbolicAlgebra.h"
 #include "Bundle.h"
 #include "PolytopesUnion.h"
 #include "STL.h"
@@ -19,9 +18,9 @@ class Model
 {
 
 protected:
-  GiNaC::lst vars;   // variables
-  GiNaC::lst params; // parameters
-  GiNaC::lst dyns;   // dynamics
+  std::vector<SymbolicAlgebra::Symbol<>> vars;     //!< variables
+  std::vector<SymbolicAlgebra::Symbol<>> params;   //!< parameters
+  std::vector<SymbolicAlgebra::Expression<>> dyns; //!< dynamics
 
   Bundle *reachSet; // Initial reach set
   PolytopesUnion *paraSet;
@@ -36,17 +35,17 @@ public:
     return this->name;
   }
 
-  const GiNaC::lst &getVars() const
+  const std::vector<SymbolicAlgebra::Symbol<>> &getVars() const
   {
     return this->vars;
   }
 
-  const GiNaC::lst &getParams() const
+  const std::vector<SymbolicAlgebra::Symbol<>> &getParams() const
   {
     return this->params;
   }
 
-  const GiNaC::lst &getDyns() const
+  const std::vector<SymbolicAlgebra::Expression<>> &getDyns() const
   {
     return this->dyns;
   }

@@ -16,11 +16,14 @@
  * @param[in] vars list of variables appearing the current polynomial
  * @param[in] polynomial polynomial to convert
  */
-BaseConverter::BaseConverter(const GiNaC::lst &vars,
-                             const GiNaC::ex &polynomial):
+BaseConverter::BaseConverter(
+    const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+    const SymbolicAlgebra::Expression<> &polynomial):
     vars(vars),
-    polynomial(polynomial.expand())
+    polynomial(polynomial)
 {
+  this->polynomial.expand();
+
   // Put the polynomial in extended form and extract variables degrees
   for (auto var_it = std::begin(vars); var_it != end(vars); ++var_it) {
     this->degrees.push_back(this->polynomial.degree(*var_it));
@@ -45,14 +48,15 @@ BaseConverter::BaseConverter(const GiNaC::lst &vars,
  * @param[in] polynomial polynomial to convert
  * @param[in] degrees of variables
  */
-BaseConverter::BaseConverter(const GiNaC::lst &vars,
-                             const GiNaC::ex &polynomial,
-                             const std::vector<unsigned int> &degrees):
+BaseConverter::BaseConverter(
+    const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+    const SymbolicAlgebra::Expression<> &polynomial,
+    const std::vector<unsigned int> &degrees):
     vars(vars),
     polynomial(polynomial), degrees(degrees)
 {
   // Put the polynomial in extended form and extract variables degrees
-  this->polynomial = this->polynomial.expand();
+  this->polynomial.expand();
 
   // Initialize the degree shifts
   initShifts();
@@ -73,8 +77,10 @@ BaseConverter::BaseConverter(const GiNaC::lst &vars,
  * @param[in] numerator of the rational polynomial to convert
  * @param[in] denominator of the rational polynomial to convert
  */
-BaseConverter::BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &num,
-                             const GiNaC::ex &denom):
+BaseConverter::BaseConverter(
+    const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+    const SymbolicAlgebra::Expression<> &num,
+    const SymbolicAlgebra::Expression<> &denom):
     vars(vars),
     num(num), denom(denom)
 {
@@ -143,14 +149,12 @@ BaseConverter::pos2multi_index(unsigned int position) const
   return multi_index;
 }
 
-void BaseConverter::initCoeffs(const GiNaC::ex &polynomial,
+void BaseConverter::initCoeffs(const SymbolicAlgebra::Expression<> &polynomial,
                                unsigned int var_idx,
                                const unsigned int position)
 {
-  using namespace GiNaC;
-
   // Base case, there's only one variable
-  if (var_idx == this->vars.nops() - 1) {
+  if (var_idx == this->vars.size() - 1) {
 
     for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
       this->coeffs[position + i] = polynomial.coeff(this->vars[var_idx], i);
@@ -240,12 +244,13 @@ bool multi_index_leq(const std::vector<unsigned int> &a,
  * @param[in] mi multi-index
  * @returns mi-th Bernstein coefficient
  */
-GiNaC::ex BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
+SymbolicAlgebra::Expression<>
+BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
 {
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
   unsigned int i = multi_index2pos(mi);
-  ex coeff = 0;
+  Expression<> coeff = 0.0;
 
   for (unsigned int j = 0; j <= i; j++) {
 
@@ -255,7 +260,7 @@ GiNaC::ex BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
       int ichoosej = multi_index_nChoosek(mi, mj);
       int dchoosej = multi_index_nChoosek(this->degrees, mj);
 
-      coeff = coeff + ((ex)ichoosej / (ex)dchoosej) * this->coeffs[j];
+      coeff += ((double)ichoosej * this->coeffs[j] / (double)dchoosej);
     }
   }
   return coeff;
@@ -266,15 +271,15 @@ GiNaC::ex BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
  *
  * @returns list of Bernstein coefficients
  */
-GiNaC::lst BaseConverter::getBernCoeffs() const
+std::vector<SymbolicAlgebra::Expression<>> BaseConverter::getBernCoeffs() const
 {
 
   // cout<<"\tComputing Bernstein coefficients...\n";
 
-  GiNaC::lst bern_coeffs;
+  std::vector<SymbolicAlgebra::Expression<>> bern_coeffs;
 
   for (unsigned int i = 0; i < this->coeffs.size(); i++) {
-    bern_coeffs.append(bernCoeff(pos2multi_index(i)));
+    bern_coeffs.push_back(bernCoeff(pos2multi_index(i)));
   }
 
   return bern_coeffs;
@@ -285,6 +290,7 @@ GiNaC::lst BaseConverter::getBernCoeffs() const
  *
  * @returns list of rational Bernstein coefficients
  */
+/*
 GiNaC::lst BaseConverter::getRationalBernCoeffs() const
 {
   using namespace std;
@@ -315,6 +321,7 @@ GiNaC::lst BaseConverter::getRationalBernCoeffs() const
   cout << "(Total points:" << bern_coeffs.nops() << ")\n";
   return bern_coeffs;
 }
+*/
 
 /**
  * Compute the list of multi-indices of the current polynomial
@@ -343,9 +350,9 @@ void BaseConverter::split(unsigned int direction, double split_point) const
 {
   using namespace std;
 
-  if (direction >= this->vars.nops()) {
+  if (direction >= this->vars.size()) {
     cerr << "BaseConverter::split : split direction must be between 0 and "
-         << this->vars.nops() << endl;
+         << this->vars.size() << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -357,10 +364,9 @@ void BaseConverter::split(unsigned int direction, double split_point) const
   // Extract list of multi-indices and max degree of direction
   vector<vector<unsigned int>> multi_index_list = this->getMultiIdxList();
 
-  GiNaC::lst B;
-  B = this->getBernCoeffs();
+  std::vector<SymbolicAlgebra::Expression<>> B = this->getBernCoeffs();
 
-  for (long unsigned int mi = 0; mi < B.nops(); mi++) {
+  for (long unsigned int mi = 0; mi < B.size(); mi++) {
 
     vector<unsigned int> i(this->pos2multi_index(mi));
 
@@ -388,8 +394,6 @@ void BaseConverter::split(unsigned int direction, double split_point) const
       }
     }
   }
-
-  cout << "\n" << B << "\n";
 }
 
 /**
@@ -410,6 +414,8 @@ unsigned int prod(const std::vector<unsigned int> &v, const unsigned int &a,
   return prod;
 }
 
+// TODO: replace this function by using the one provided by linear algebra
+// module.
 /**
  * Multiplication of two 2d matrices
  *
@@ -434,12 +440,11 @@ std::vector<std::vector<T>> matrixProd(const std::vector<std::vector<T>> &A,
 
   for (unsigned int i = 0; i < A.size(); i++) {
     for (unsigned int j = 0; j < B[0].size(); j++) {
-
       T inner_prod(0);
       for (long unsigned int k = 0; k < A[i].size(); k++) {
-        inner_prod = inner_prod + A[i][k] * B[k][j];
+        inner_prod += A[i][k] * B[k][j];
       }
-      product[i][j] = inner_prod;
+      std::swap(product[i][j], inner_prod);
     }
   }
 
@@ -583,22 +588,23 @@ std::vector<unsigned int> transp_naive(const std::vector<unsigned int> &b,
  * @param[in] degs dimensions of the matrix
  * @returns transposed matrix
  */
-std::vector<std::vector<GiNaC::ex>>
-transp(const std::vector<std::vector<GiNaC::ex>> &M,
+std::vector<std::vector<SymbolicAlgebra::Expression<>>>
+transp(const std::vector<std::vector<SymbolicAlgebra::Expression<>>> &M,
        const std::vector<unsigned int> &degs)
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
   const unsigned int prod_degs2n = prod(degs, 2, degs.size());
 
   const unsigned int rows_t = degs[1];
   const unsigned int cols_t = prod(degs, 2, degs.size()) * degs[0];
 
-  vector<vector<ex>> M_transp(rows_t, vector<ex>(cols_t, 0));
+  vector<vector<Expression<>>> M_transp(rows_t,
+                                        vector<Expression<>>(cols_t, 0.0));
 
   for (unsigned int i = 0; i < M.size(); i++) {
-    const std::vector<GiNaC::ex> &M_row = M[i];
+    const std::vector<SymbolicAlgebra::Expression<>> &M_row = M[i];
     for (unsigned int j = 0; j < M_row.size(); j++) {
       if (M_row[j] != 0) {
         const unsigned int ij_t_0 = first_transp(j, rows_t);
@@ -618,13 +624,13 @@ transp(const std::vector<std::vector<GiNaC::ex>> &M,
  * @param[in] n dimension of the matrix
  * @returns U tilde matrix
  */
-std::vector<std::vector<GiNaC::ex>> genUtilde(const unsigned int &n)
+std::vector<std::vector<SymbolicAlgebra::Expression<>>>
+genUtilde(const unsigned int &n)
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
-  vector<ex> Ui(n + 1, 0);
-  vector<vector<ex>> U(n + 1, Ui);
+  vector<vector<Expression<>>> U(n + 1, vector<Expression<>>(n + 1, 0.0));
 
   for (unsigned int i = 0; i < n + 1; i++) {
     U[i][0] = 1;
@@ -636,6 +642,7 @@ std::vector<std::vector<GiNaC::ex>> genUtilde(const unsigned int &n)
       U[i][j] = ((double)nChoosek(i, i - j)) / nChoosek(n, j);
     }
   }
+
   return U;
 }
 
@@ -644,10 +651,11 @@ std::vector<std::vector<GiNaC::ex>> genUtilde(const unsigned int &n)
  *
  * @returns list of Bernstein coefficients
  */
-GiNaC::lst BaseConverter::getBernCoeffsMatrix() const
+std::vector<SymbolicAlgebra::Expression<>>
+BaseConverter::getBernCoeffsMatrix() const
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
   // cout<<"\tComputing Bernstein coefficients...\n";
 
   // degrees increased by one
@@ -657,8 +665,8 @@ GiNaC::lst BaseConverter::getBernCoeffsMatrix() const
   }
 
   // initialize the matrix for the coefficients
-  vector<ex> Ai(prod(degrees_p, 1, degrees_p.size()), 0);
-  vector<vector<ex>> A(degrees_p[0], Ai);
+  vector<Expression<>> Ai(prod(degrees_p, 1, degrees_p.size()), 0.0);
+  vector<vector<Expression<>>> A(degrees_p[0], Ai);
 
   for (unsigned int i = 0; i < this->coeffs.size(); i++) {
     if (this->coeffs[i] != 0) {
@@ -667,17 +675,19 @@ GiNaC::lst BaseConverter::getBernCoeffsMatrix() const
     }
   }
 
-  vector<vector<ex>> UAt
+  vector<vector<Expression<>>> UAt
       = transp(matrixProd(genUtilde(this->degrees[0]), A), degrees_p);
   for (long unsigned int i = 1; i < this->degrees.size(); i++) {
     degrees_p = shift(degrees_p);
     UAt = transp(matrixProd(genUtilde(this->degrees[i]), UAt), degrees_p);
   }
 
-  GiNaC::lst bernCoeffs;
+  std::vector<Expression<>> bernCoeffs;
   for (long unsigned int i = 0; i < UAt.size(); i++) {
     for (long unsigned int j = 0; j < UAt[i].size(); j++) {
-      bernCoeffs.append(UAt[i][j]);
+
+      // TODO: remove expand to speed-up computation
+      bernCoeffs.push_back(UAt[i][j].expand());
     }
   }
 
@@ -709,7 +719,7 @@ void BaseConverter::print() const
  * @param[in] M matrix to print
  */
 template<typename T>
-void print(const std::vector<std::vector<GiNaC::ex>> &M)
+void print(const std::vector<std::vector<SymbolicAlgebra::Expression<>>> &M)
 {
   using namespace std;
 
@@ -726,15 +736,16 @@ void print(const std::vector<std::vector<GiNaC::ex>> &M)
  * coefficients
  */
 
-std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<unsigned int>>>
+std::pair<std::vector<SymbolicAlgebra::Expression<>>,
+          std::vector<std::vector<unsigned int>>>
 BaseConverter::compressZeroCoeffs() const
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
-  vector<ex> comp_coeffs;
+  vector<Expression<>> comp_coeffs;
   vector<vector<unsigned int>> comp_degs;
-  pair<vector<ex>, vector<vector<unsigned int>>> compression;
+  pair<vector<Expression<>>, vector<vector<unsigned int>>> compression;
 
   for (unsigned int i = 0; i < this->coeffs.size(); i++) {
     if (this->coeffs[i] != 0) {
@@ -751,19 +762,19 @@ BaseConverter::compressZeroCoeffs() const
 void BaseConverter::implicitMaxIndex() const
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
-  pair<vector<ex>, vector<vector<unsigned int>>> compression
+  pair<vector<Expression<>>, vector<vector<unsigned int>>> compression
       = this->compressZeroCoeffs();
   // Check the three properties (Uniqueness,Monotonicity, and Dominance)
-  vector<ex> coeffs = compression.first;
+  vector<Expression<>> coeffs = compression.first;
   vector<vector<unsigned int>> multi_index = compression.second;
-  vector<int> implicit_max(this->vars.nops(), -1);
+  vector<int> implicit_max(this->vars.size(), -1);
 
   // Check uniqueness
-  vector<unsigned int> unique(this->vars.nops(), 0);
-  vector<unsigned int> unique_deg(this->vars.nops(), -1);
-  for (unsigned int i = 0; i < this->vars.nops(); i++) {
+  vector<unsigned int> unique(this->vars.size(), 0);
+  vector<unsigned int> unique_deg(this->vars.size(), -1);
+  for (unsigned int i = 0; i < this->vars.size(); i++) {
     unsigned int j = 0;
     while ((j < coeffs.size()) && (unique[i] < 2)) {
       if (multi_index[j][i] > 0) {
@@ -780,8 +791,8 @@ void BaseConverter::implicitMaxIndex() const
   }
 
   // Check monotonicity
-  vector<int> increase(this->vars.nops(), 0);
-  for (long unsigned int i = 0; i < this->vars.nops(); i++) {
+  vector<int> increase(this->vars.size(), 0);
+  for (long unsigned int i = 0; i < this->vars.size(); i++) {
     long unsigned int j = 0;
     while ((j < coeffs.size()) && (increase[i])) {
       if (multi_index[j][i] > 0) {
@@ -790,8 +801,8 @@ void BaseConverter::implicitMaxIndex() const
       j++;
     }
   }
-  vector<int> decrease(this->vars.nops(), 0);
-  for (long unsigned int i = 0; i < this->vars.nops(); i++) {
+  vector<int> decrease(this->vars.size(), 0);
+  for (long unsigned int i = 0; i < this->vars.size(); i++) {
     long unsigned int j = 0;
     while ((j < coeffs.size()) && (decrease[i])) {
       if (multi_index[j][i] > 0) {

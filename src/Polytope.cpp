@@ -14,7 +14,6 @@
 #define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
 
 using namespace std;
-using namespace GiNaC;
 
 /**
  * Check whether one polytope contains another polytope.

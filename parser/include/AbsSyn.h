@@ -1,7 +1,6 @@
 #ifndef __ABSSYN_H__
 #define __ABSSYN_H__
 
-#include <ginac/ginac.h>
 #include <iostream>
 #include <numeric> // iota
 #include <string>
@@ -16,6 +15,8 @@
 #include "Eventually.h"
 #include "STL.h"
 #include "Until.h"
+
+#include "SymbolicAlgebra.h"
 
 namespace AbsSyn
 {
@@ -129,9 +130,9 @@ public:
   double evaluate(const InputData &im)
       const; // evaluates the value of a numeric expression
 
-  GiNaC::ex
-  toEx(const InputData &m, const GiNaC::lst &vars,
-       const GiNaC::lst &params) const; // converts an Expr to a GiNaC ex
+  SymbolicAlgebra::Expression<>
+  toEx(const InputData &m, const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+       const std::vector<SymbolicAlgebra::Symbol<>> &params) const;
 
 protected:
   Expr()
@@ -220,9 +221,17 @@ public:
    */
   bool simplify();
 
-  std::shared_ptr<STL> toSTL(const InputData &m, const GiNaC::lst &vars,
-                             const GiNaC::lst &params)
-      const; // transforms a Formula into a SAPO STL formula
+  /**
+   * @brief Transforms a Formula into a SAPO STL formula.
+   *
+   * @param m is the input data object.
+   * @param vars is the vector of variable symbols.
+   * @param params is the vector of parameter symbols.
+   * @return a pointer to the STL formula.
+   */
+  std::shared_ptr<STL>
+  toSTL(const InputData &m, const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+        const std::vector<SymbolicAlgebra::Symbol<>> &params) const;
 
 protected:
   Formula()
