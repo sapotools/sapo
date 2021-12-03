@@ -30,6 +30,33 @@ protected:
   std::string name;
 
 public:
+  Model():
+      vars(), params(), dyns(), reachSet(NULL), paraSet(NULL), spec(NULL),
+      name("Unknown")
+  {
+  }
+
+  Model(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+        const std::vector<SymbolicAlgebra::Expression<>> &dyns,
+        const Bundle &reachSet, const std::string name = "Unknown"):
+      vars(vars),
+      params(), dyns(dyns), reachSet(new Bundle(reachSet)), paraSet(NULL),
+      spec(NULL), name(name)
+  {
+  }
+
+  Model(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+        const std::vector<SymbolicAlgebra::Symbol<>> &params,
+        const std::vector<SymbolicAlgebra::Expression<>> &dyns,
+        const Bundle &reachSet, const PolytopesUnion &paraSet,
+        const std::shared_ptr<STL> specification,
+        const std::string name = "Unknown"):
+      vars(vars),
+      params(params), dyns(dyns), reachSet(new Bundle(reachSet)),
+      paraSet(new PolytopesUnion(paraSet)), spec(specification), name(name)
+  {
+  }
+
   const std::string &getName() const
   {
     return this->name;
