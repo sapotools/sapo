@@ -25,7 +25,6 @@
 #include "Model.h"
 #include "STL.h"
 #include "Until.h"
-#include "ControlPointStorage.h"
 
 class Sapo
 {
@@ -43,10 +42,6 @@ private:
   const GiNaC::lst &vars;   //!< variables of the system
   const GiNaC::lst &params; //!< parameters of the system
 
-  // TODO: check whether the following two members are really Sapo properties
-  ControlPointStorage reachControlPts; //!< symbolic control points
-  ControlPointStorage synthControlPts; //!< symbolic control points
-
   // TODO: check whether the following method is really needed/usable.
   std::vector<Bundle *>
   reachWitDec(Bundle &initSet,
@@ -61,17 +56,17 @@ private:
    * @returns refined sets of parameters
    */
   template<typename T>
-  PolytopesUnion
-  transition_and_synthesis(const Bundle &reachSet, const PolytopesUnion &pSet,
-                           const std::shared_ptr<T> formula, const int time)
+  PolytopesUnion transition_and_synthesis(const Bundle &reachSet,
+                                          const PolytopesUnion &pSet,
+                                          const std::shared_ptr<T> formula,
+                                          const int time) const
   {
     PolytopesUnion result;
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle newReachSet
-          = reachSet.transform(this->vars, this->params, this->dyns, *p_it,
-                               this->reachControlPts, this->trans);
+      Bundle newReachSet = reachSet.transform(this->vars, this->params,
+                                              this->dyns, *p_it, this->trans);
 
       // TODO: Check whether the object tmpLSset can be removed
       result.add(synthesize(newReachSet, pSet, formula, time + 1));
@@ -89,7 +84,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Atom> formula);
+                            const std::shared_ptr<Atom> formula) const;
 
   /**
    * Parmeter synthesis for conjunctions
@@ -100,7 +95,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Conjunction> formula);
+                            const std::shared_ptr<Conjunction> formula) const;
 
   /**
    * Parmeter synthesis for disjunctions
@@ -111,7 +106,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Disjunction> formula);
+                            const std::shared_ptr<Disjunction> formula) const;
 
   /**
    * Parameter synthesis for until formulas
@@ -124,7 +119,7 @@ private:
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
                             const std::shared_ptr<Until> formula,
-                            const int time);
+                            const int time) const;
 
   /**
    * Parameter synthesis for always formulas
@@ -137,7 +132,7 @@ private:
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
                             const std::shared_ptr<Always> formula,
-                            const int time);
+                            const int time) const;
   /**
    * Parmeter synthesis for the eventually fomulas
    *
@@ -148,7 +143,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Eventually> ev);
+                            const std::shared_ptr<Eventually> ev) const;
 
 public:
   /**
@@ -166,7 +161,7 @@ public:
    * @param[in] k time horizon
    * @returns the reached flowpipe
    */
-  Flowpipe reach(const Bundle &initSet, unsigned int k);
+  Flowpipe reach(const Bundle &initSet, unsigned int k) const;
 
   /**
    * Reachable set computation for parameteric dynamical systems
@@ -177,7 +172,7 @@ public:
    * @returns the reached flowpipe
    */
   Flowpipe reach(const Bundle &initSet, const PolytopesUnion &pSet,
-                 unsigned int k);
+                 unsigned int k) const;
 
   /**
    * Parameter synthesis method
@@ -188,7 +183,7 @@ public:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL> formula);
+                            const std::shared_ptr<STL> formula) const;
 
   /**
    * Parameter synthesis with splits
@@ -200,10 +195,10 @@ public:
    *                       parameter set to identify a non-null solution
    * @returns the list of refined parameter sets
    */
-  std::list<PolytopesUnion>
-  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-             const std::shared_ptr<STL> formula,
-             const unsigned int max_splits); // parameter synthesis
+  std::list<PolytopesUnion> synthesize(const Bundle &reachSet,
+                                       const PolytopesUnion &pSet,
+                                       const std::shared_ptr<STL> formula,
+                                       const unsigned int max_splits) const;
   virtual ~Sapo();
 };
 
