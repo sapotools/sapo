@@ -61,7 +61,7 @@ inline std::vector<double> approx<double>(std::vector<double> &&orig,
                                           const unsigned short decimal)
 {
   if (decimal == std::numeric_limits<double>::digits10) {
-    return orig;
+    return std::move(orig);
   }
 
   const double mult = std::pow(10, decimal);
@@ -69,7 +69,7 @@ inline std::vector<double> approx<double>(std::vector<double> &&orig,
     *it = floor(*it * mult) / mult;
   }
 
-  return orig;
+  return std::move(orig);
 }
 
 /**

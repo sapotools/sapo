@@ -13,6 +13,7 @@ find_path(GMP_INCLUDE_DIR
   /usr/include/
   /usr/local/include/
   /opt/local/include/
+  /opt/homebrew/include/
   DOC "The directory containing the GMP header files"
   )
 
@@ -22,6 +23,7 @@ find_path(GMPXX_INCLUDE_DIR
   /usr/include/
   /usr/local/include/
   /opt/local/include/
+  /opt/homebrew/include/
   DOC "The directory containing the GMP header files"
   )
 
@@ -33,6 +35,7 @@ find_path(GMP_LIBRARY_DIR
   /usr/lib/x86_64-linux-gnu/
   /usr/local/lib/
   /opt/local/lib/
+  /opt/homebrew/lib/
   DOC "Directory containing the GMP library"
   )
 
@@ -49,6 +52,7 @@ find_path(GMPXX_LIBRARY_DIR
   /usr/lib/x86_64-linux-gnu/
   /usr/local/lib/
   /opt/local/lib/
+  /opt/homebrew/lib/
   DOC "Directory containing the GMPXX library"
   )
 
@@ -71,6 +75,7 @@ if(NOT GMP_FIND_VERSION)
   set(GMP_FIND_VERSION
     "${GMP_FIND_VERSION_MAJOR}.${GMP_FIND_VERSION_MINOR}.${GMP_FIND_VERSION_PATCH}")
 endif()
+
 
 if(GMP_INCLUDE_DIR AND GMP_LIB)
 
@@ -103,7 +108,7 @@ if(GMP_INCLUDE_DIR AND GMP_LIB)
   try_compile(GMP_VERSION_OK
           "${PROJECT_BINARY_DIR}"
           "${PROJECT_BINARY_DIR}/gmp-version-check.cpp"
-          CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${GMP_INCLUDE_DIRS}")
+          CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${GMP_INCLUDE_DIR}")
 endif()
 
 if(NOT GMP_VERSION_OK)

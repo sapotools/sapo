@@ -8,9 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-#For shared libraries:
-set ( PROJECT_LINK_LIBS glpk )
-
 include_directories(include include/STL parser/include)
 
 find_package(FLEX 2.6.3 REQUIRED)
@@ -22,16 +19,8 @@ bison_target(input_parser parser/parser.yy
              ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
              DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
+find_package(GLPK REQUIRED)
 find_package(GMP REQUIRED)
-
-# This is to support brew
-include_directories(/usr/local/Cellar/glpk/5.0/include)
-include_directories(/usr/local/include)
-
-link_directories( /usr/local/Cellar/glpk/5.0/lib )
-link_directories( /usr/local/lib )
-# end brew support
-
 
 execute_process(
         COMMAND git branch --show-current
@@ -81,7 +70,7 @@ add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE}
 set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
-target_link_libraries(sapo ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp)
+target_link_libraries(sapo GMP::gmpxx GMP::gmp GLPK::glpk)
 
 install(TARGETS sapo DESTINATION bin)
 

@@ -7,6 +7,8 @@
 #include "driver.h"
 #include "AbsSyn.h"
 #include "parser.h"
+
+#pragma GCC diagnostic ignored "-Wsign-compare"
 %}
 
 %option noyywrap nounput noinput batch debug
@@ -27,7 +29,7 @@ ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"
   // Code run each time a pattern is matched.
   #define YY_USER_ACTION \
 		loc.step();\
-		for (int i = 0; i < yyleng; i++) {\
+		for (unsigned int i = 0; i < yyleng; i++) {\
 			if (yytext[i] == '\n') { loc.lines(); loc.step(); }\
 			else { loc.columns(); }\
 		}
