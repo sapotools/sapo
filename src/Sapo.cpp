@@ -251,19 +251,18 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
+#if WITH_THREADS
+  std::vector<PolytopesUnion> vect_res(pSetList.size());
 
-#if WITH_THREADS && false
-
-  ThreadSafeList<PolytopesUnion> results;
   auto synthesize_funct
-      = [&results, &sapo, &reachSet, &formula](const PolytopesUnion &pSet) {
-          results.push_back(sapo.synthesize(reachSet, pSet, formula));
+      = [&vect_res, &sapo, &reachSet, &formula](const PolytopesUnion &pSet, const unsigned int idx) {
+          vect_res[idx] = sapo.synthesize(reachSet, pSet, formula);
         };
 
   std::vector<std::thread> threads;
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
        ++ps_it) {
-    threads.push_back(std::thread(synthesize_funct, std::ref(*ps_it)));
+    threads.push_back(std::thread(synthesize_funct, std::ref(*ps_it), threads.size()));
   }
 
   for (std::thread &th: threads) {
@@ -271,19 +270,18 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
       th.join();
   }
 
-  return results.get_list();
+  return std::list<PolytopesUnion>(std::make_move_iterator(vect_res.begin()),
+                                   std::make_move_iterator(vect_res.end()));
 
 #else // WITH_THREADS
   std::list<PolytopesUnion> results;
 
-  std::vector<std::thread> threads;
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
        ++ps_it) {
     results.push_back(sapo.synthesize(reachSet, *ps_it, formula));
   }
 
   return results;
-
 #endif // WITH_THREADS
 }
 

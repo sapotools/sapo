@@ -149,6 +149,7 @@ BaseConverter::pos2multi_index(unsigned int position) const
   return multi_index;
 }
 
+// TODO: Parallelize the following method.
 void BaseConverter::initCoeffs(const SymbolicAlgebra::Expression<> &polynomial,
                                unsigned int var_idx,
                                const unsigned int position)
