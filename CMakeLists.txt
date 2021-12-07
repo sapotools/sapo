@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include_directories(include include/STL parser/include)
@@ -66,8 +68,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE}
 	            ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
-
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
 
 target_compile_features(sapo PRIVATE cxx_range_for)
 target_link_libraries(sapo GMP::gmpxx GMP::gmp GLPK::glpk)

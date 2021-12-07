@@ -100,6 +100,7 @@ if(GMP_INCLUDE_DIR AND GMP_LIB)
   "#endif\n"
   "#endif\n"
   "#endif\n"
+  "#pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
   "\n"
   "int main(int argc, char** argv) { return 0; }\n")
 
