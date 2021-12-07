@@ -153,17 +153,33 @@ void BaseConverter::initCoeffs(const SymbolicAlgebra::Expression<> &polynomial,
                                unsigned int var_idx,
                                const unsigned int position)
 {
+  auto coeffs = polynomial.get_coeffs(this->vars[var_idx]);
+
   // Base case, there's only one variable
   if (var_idx == this->vars.size() - 1) {
 
     for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
-      this->coeffs[position + i] = polynomial.coeff(this->vars[var_idx], i);
+      auto found = coeffs.find(i);
+
+      if (found == std::end(coeffs)) {
+        this->coeffs[position + i] = 0;
+      } else {
+        this->coeffs[position + i] = found->second;
+      }
     }
   } else {
     const unsigned int next_idx = var_idx + 1;
     for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
-      initCoeffs(polynomial.coeff(this->vars[var_idx], i), next_idx,
-                 position + i * this->shifts[next_idx]); // Recursive call
+      auto found = coeffs.find(i);
+
+      if (found == std::end(coeffs)) {
+        SymbolicAlgebra::Expression<> zero(0);
+        initCoeffs(zero, next_idx,
+                   position + i * this->shifts[next_idx]);
+      } else {
+        initCoeffs(found->second, next_idx,
+                   position + i * this->shifts[next_idx]);
+      }
     }
   }
 }

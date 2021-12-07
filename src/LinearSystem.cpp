@@ -245,11 +245,11 @@ LinearSystem::LinearSystem(
 
     for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
       // Extract the coefficient of the i-th variable (grade 1)
-      double coeff = (c_it->coeff(*v_it, 1)).evaluate<double>();
+      double coeff = (c_it->get_coeff(*v_it, 1)).evaluate<double>();
       Ai.push_back(coeff);
 
       // Project to obtain the constant term
-      const_term = const_term.coeff(*v_it, 0);
+      const_term = const_term.get_coeff(*v_it, 0);
     }
 
     double bi = const_term.evaluate<double>();
@@ -346,10 +346,10 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
-    double coeff = (obj_fun.coeff(*v_it, 1)).evaluate<double>();
+    double coeff = (obj_fun.get_coeff(*v_it, 1)).evaluate<double>();
 
     obj_fun_coeffs.push_back(coeff);
-    const_term = const_term.coeff(*v_it, 0);
+    const_term = const_term.get_coeff(*v_it, 0);
   }
 
   const double c = const_term.evaluate<double>();
@@ -398,9 +398,9 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
-    const double coeff = obj_fun.coeff(*v_it, 1).evaluate<double>();
+    const double coeff = obj_fun.get_coeff(*v_it, 1).evaluate<double>();
     obj_fun_coeffs.push_back(coeff);
-    const_term = const_term.coeff(*v_it, 0);
+    const_term = const_term.get_coeff(*v_it, 0);
   }
 
   const double c = const_term.evaluate<double>();

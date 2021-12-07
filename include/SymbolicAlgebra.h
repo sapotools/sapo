@@ -6,9 +6,17 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <type_traits>
 
 #include <gmpxx.h>
 
+
+/*!
+ *  \addtogroup SymbolicAlgebra
+ *  @{
+ */
+
+//! Symbolic algebra namespace
 namespace SymbolicAlgebra
 {
 
@@ -42,7 +50,7 @@ class Expression;
  *
  * @tparam C is the type of numeric constants.
  */
-template<typename C = mpq_class>
+template<typename C = double>
 class Symbol : public Expression<C>
 {
 public:
@@ -127,7 +135,7 @@ std::vector<std::string> Symbol<C>::_symbol_names;
  *
  * @tparam C is the type of numeric constants.
  */
-template<typename C = mpq_class>
+template<typename C = double>
 class Expression
 {
 protected:
@@ -160,7 +168,13 @@ public:
    *
    * @param value is the value of the expression.
    */
-  Expression(const double value);
+  template<typename T = C>
+  Expression(const double value,
+             typename std::enable_if<!std::is_same<T, double>::value,
+                                     int>::type * = nullptr):
+      _ex(new _constant_type<C>(static_cast<C>(value)))
+  {
+  }
 
   /**
    * @brief Build a constant expression.
@@ -218,9 +232,29 @@ public:
    * @param degree is the degree of the aimed term.
    * @return The coefficient of the term `symb^{degree}`.
    */
-  inline Expression<C> coeff(const Symbol<C> &symb, const int degree) const
+  inline Expression<C> get_coeff(const Symbol<C> &symb, const int degree) const
   {
-    return Expression<C>(_ex->coeff(symb.get_id(), degree));
+    return Expression<C>(_ex->get_coeff(symb.get_id(), degree));
+  }
+
+  /**
+   * @brief Get the coefficients of the polynomial expression.
+   *
+   * @param symbol_id is the symbol id whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on the
+   *          symbol whose id is `symbol_id`.
+   */
+  std::map<int, Expression<C>> get_coeffs(const Symbol<C> &symbol) const
+  {
+    std::map<int, Expression<C>> coeffs;
+
+    auto base_coeffs = _ex->get_coeffs(symbol.get_id());
+    for (auto it = std::begin(base_coeffs); it != std::end(base_coeffs);
+         ++it) {
+      coeffs[it->first] = Expression<C>(it->second);
+    }
+
+    return coeffs;
   }
 
   /**
@@ -647,8 +681,18 @@ public:
    * @return The coefficient of the term in which the symbol having id
    * `symbol_id` has degree `degree`.
    */
-  virtual _base_expression_type<C> *coeff(const SymbolIdType &symbol_id,
-                                          const int &degree) const = 0;
+  virtual _base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                              const int &degree) const = 0;
+
+  /**
+   * @brief Get the coefficients of the polynomial expression.
+   *
+   * @param symbol_id is the symbol id whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on the
+   *          symbol whose id is `symbol_id`.
+   */
+  virtual std::map<int, _base_expression_type<C> *>
+  get_coeffs(const SymbolIdType &symbol_id) const = 0;
 
   /**
    * @brief Get the degree of a symbol.
@@ -915,12 +959,31 @@ public:
    * @return The coefficient of the term in which the symbol having id
    * `symbol_id` has degree `degree`.
    */
-  _base_expression_type<C> *coeff(const SymbolIdType &symbol_id,
-                                  const int &degree) const
+  _base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                      const int &degree) const
   {
     (void)symbol_id;
 
     return new _constant_type(degree == 0 ? _value : 0);
+  }
+
+  /**
+   * @brief Get the coefficients of the polynomial expression.
+   *
+   * @param symbol_id is the symbol id whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on the
+   *          symbol whose id is `symbol_id`.
+   */
+  std::map<int, _base_expression_type<C> *>
+  get_coeffs(const SymbolIdType &symbol_id) const
+  {
+    (void)symbol_id;
+
+    std::map<int, _base_expression_type<C> *> res;
+
+    res[0] = new _constant_type<C>(_value);
+
+    return res;
   }
 
   /**
@@ -1281,8 +1344,8 @@ public:
    * @return The coefficient of the term in which the symbol having id
    * `symbol_id` has degree `degree`.
    */
-  _base_expression_type<C> *coeff(const SymbolIdType &symbol_id,
-                                  const int &degree) const
+  _base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                      const int &degree) const
   {
     _base_expression_type<C> *total_coeff = new _finite_sum_type<C>();
 
@@ -1291,10 +1354,39 @@ public:
     }
 
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
-      total_coeff = total_coeff->add((*it)->coeff(symbol_id, degree));
+      total_coeff = total_coeff->add((*it)->get_coeff(symbol_id, degree));
     }
 
     return total_coeff;
+  }
+
+  /**
+   * @brief Get the coefficients of the polynomial expression.
+   *
+   * @param symbol_id is the symbol id whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on the
+   *          symbol whose id is `symbol_id`.
+   */
+  std::map<int, _base_expression_type<C> *>
+  get_coeffs(const SymbolIdType &symbol_id) const
+  {
+    std::map<int, _base_expression_type<C> *> res;
+
+    res[0] = new _constant_type<C>(this->_constant);
+
+    for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
+      auto map_it = (*it)->get_coeffs(symbol_id);
+      for (auto it_coeff = std::begin(map_it); it_coeff != std::end(map_it);
+           ++it_coeff) {
+        if (res.find(it_coeff->first) == std::end(res)) {
+          res[it_coeff->first] = it_coeff->second;
+        } else {
+          res[it_coeff->first] = res[it_coeff->first]->add(it_coeff->second);
+        }
+      }
+    }
+
+    return res;
   }
 
   /**
@@ -1704,8 +1796,8 @@ public:
    * @return The coefficient of the term in which the symbol having id
    * `symbol_id` has degree `degree`.
    */
-  _base_expression_type<C> *coeff(const SymbolIdType &symbol_id,
-                                  const int &degree) const
+  _base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                      const int &degree) const
   {
     C constant = this->_constant;
 
@@ -1748,6 +1840,50 @@ public:
     delete res;
 
     return new _constant_type<C>(0);
+  }
+
+  /**
+   * @brief Get the coefficients of the polynomial expression.
+   *
+   * @param symbol_id is the symbol id whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on the
+   *          symbol whose id is `symbol_id`.
+   */
+  std::map<int, _base_expression_type<C> *>
+  get_coeffs(const SymbolIdType &symbol_id) const
+  {
+    if (_denominator.size() > 0) {
+      throw std::runtime_error(
+          "coeff does not support non-constant denominator");
+    }
+
+    std::map<int, _base_expression_type<C> *> res;
+
+    res[0] = new _constant_type<C>(this->_constant);
+
+    for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
+      auto map_it = (*it)->get_coeffs(symbol_id);
+      std::map<int, _base_expression_type<C> *> next_res;
+      for (auto res_coeff = std::begin(res); res_coeff != std::end(res);
+           ++res_coeff) {
+        for (auto it_coeff = std::begin(map_it); it_coeff != std::end(map_it);
+             ++it_coeff) {
+          const int degree = res_coeff->first + it_coeff->first;
+          auto res_coeff_clone = res_coeff->second->clone();
+          res_coeff_clone = res_coeff_clone->multiply(it_coeff->second);
+          if (next_res.find(degree) == std::end(next_res)) {
+            next_res[degree] = res_coeff_clone;
+          } else {
+            next_res[degree] = next_res[degree]->add(res_coeff_clone);
+          }
+        }
+        delete res_coeff->second;
+      }
+
+      std::swap(res, next_res);
+    }
+
+    return res;
   }
 
   /**
@@ -1944,10 +2080,31 @@ public:
    * @return The coefficient of the term in which the symbol having id
    * `symbol_id` has degree `degree`.
    */
-  _base_expression_type<C> *coeff(const SymbolIdType &symbol_id,
-                                  const int &degree) const
+  _base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                      const int &degree) const
   {
     return new _constant_type<C>((degree == 1 && symbol_id == _id) ? 1 : 0);
+  }
+
+  /**
+   * @brief Get the coefficients of the polynomial expression.
+   *
+   * @param symbol_id is the symbol id whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on the
+   *          symbol whose id is `symbol_id`.
+   */
+  std::map<int, _base_expression_type<C> *>
+  get_coeffs(const SymbolIdType &symbol_id) const
+  {
+    std::map<int, _base_expression_type<C> *> res;
+
+    if (symbol_id == _id) {
+      res[1] = new _constant_type<C>(1);
+    } else {
+      res[0] = this->clone();
+    }
+
+    return res;
   }
 
   /**
@@ -1997,11 +2154,13 @@ Expression<C>::Expression(const int value):
 {
 }
 
+/*
 template<typename C>
 Expression<C>::Expression(const double value):
     _ex(new _constant_type<C>(static_cast<C>(value)))
 {
 }
+*/
 
 template<typename C>
 Expression<C>::Expression(const C value): _ex(new _constant_type<C>(value))
@@ -3119,7 +3278,9 @@ constexpr bool operator<(const Symbol<C> &a, const Symbol<C> &b)
   return a.get_id() < b.get_id();
 }
 
-} // namespace SymbolicAlgebra
+}
+
+/*! @} End of SymbolicAlgebra group */
 
 namespace std
 {
