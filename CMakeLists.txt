@@ -6,8 +6,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#For shared libraries:
-set ( PROJECT_LINK_LIBS ginac glpk cln )
+set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include_directories(include include/STL parser/include)
 
@@ -33,18 +34,8 @@ add_compile_definitions(WITH_THREADS)
 set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} Threads::Threads)
 endif()
 
-# This is to support brew
-include_directories(/usr/local/Cellar/ginac/1.8.1/include) 
-include_directories(/usr/local/Cellar/cln/1.3.4/include)
-include_directories(/usr/local/Cellar/glpk/5.0/include)
-include_directories(/usr/local/include)
-
-link_directories( /usr/local/Cellar/ginac/1.8.1/lib )
-link_directories( /usr/local/Cellar/cln/1.3.4/lib )
-link_directories( /usr/local/Cellar/glpk/5.0/lib )
-link_directories( /usr/local/lib )
-# end brew support
-
+find_package(GLPK REQUIRED)
+find_package(GMP REQUIRED)
 
 execute_process(
         COMMAND git branch --show-current
@@ -92,7 +83,7 @@ add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE}
 	            ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
 
 target_compile_features(sapo PRIVATE cxx_range_for)
-target_link_libraries(sapo ${PROJECT_LINK_LIBS} )
+target_link_libraries(sapo GMP::gmpxx GMP::gmp GLPK::glpk)
 
 install(TARGETS sapo DESTINATION bin)
 

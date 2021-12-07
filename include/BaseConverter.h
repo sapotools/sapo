@@ -10,21 +10,25 @@
 #define BASECONVERTER_H_
 
 #include <vector>
-#include <ginac/ginac.h>
+
+#include "SymbolicAlgebra.h"
 
 class BaseConverter
 {
 private:
-  const GiNaC::lst &vars; // list of variables
-  GiNaC::ex polynomial;   // polynomial in symbolic form
-  GiNaC::ex num, denom;   // numerator and denominator for rational polynomials
+  const std::vector<SymbolicAlgebra::Symbol<>> &vars; // list of variables
+  SymbolicAlgebra::Expression<> polynomial; // polynomial in symbolic form
+  SymbolicAlgebra::Expression<> num,
+      denom; // numerator and denominator for rational polynomials
   std::vector<unsigned int> degrees; // collection of degrees
   std::vector<unsigned int> shifts;  // degree shifts
-  std::vector<GiNaC::ex> coeffs;     // list of the coefficients
+  std::vector<SymbolicAlgebra::Expression<>>
+      coeffs; // list of the coefficients
 
   // TODO: complete two the following methods if necessary. Otherwise, remove
   // them operations on multidimensional matrices
-  std::pair<std::vector<GiNaC::ex>, std::vector<std::vector<unsigned int>>>
+  std::pair<std::vector<SymbolicAlgebra::Expression<>>,
+            std::vector<std::vector<unsigned int>>>
   compressZeroCoeffs() const;
   void implicitMaxIndex() const;
 
@@ -56,7 +60,7 @@ private:
    *
    * @param[in] polynomial polynomial from which to extract the coefficients
    */
-  void initCoeffs(const GiNaC::ex &polynomial)
+  void initCoeffs(const SymbolicAlgebra::Expression<> &polynomial)
   {
     initCoeffs(polynomial, 0, 0);
   }
@@ -69,24 +73,29 @@ private:
    * @param[in] var_idx index of the variable to be considered
    * @param[in] pos is the position of the next coefficients to be initialized
    */
-  void initCoeffs(const GiNaC::ex &polynomial, unsigned int var_idx,
+  void initCoeffs(const SymbolicAlgebra::Expression<> &polynomial,
+                  unsigned int var_idx,
                   const unsigned int pos); // extract and initialize
                                            // the coefficients
                                            // of the polynomial
 
 public:
   // constructors
-  BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &polynomial);
-  BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &polynomial,
+  BaseConverter(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                const SymbolicAlgebra::Expression<> &polynomial);
+  BaseConverter(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                const SymbolicAlgebra::Expression<> &polynomial,
                 const std::vector<unsigned int> &degrees);
-  BaseConverter(const GiNaC::lst &vars, const GiNaC::ex &num,
-                const GiNaC::ex &denom);
+  BaseConverter(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                const SymbolicAlgebra::Expression<> &num,
+                const SymbolicAlgebra::Expression<> &denom);
 
   // get Bernstein coefficients
-  GiNaC::ex bernCoeff(const std::vector<unsigned int> &mi) const;
-  GiNaC::lst getBernCoeffs() const;
-  GiNaC::lst getRationalBernCoeffs() const;
-  GiNaC::lst getBernCoeffsMatrix() const;
+  SymbolicAlgebra::Expression<>
+  bernCoeff(const std::vector<unsigned int> &mi) const;
+  std::vector<SymbolicAlgebra::Expression<>> getBernCoeffs() const;
+  // std::vector<SymbolicAlgebra::Expression<>> getRationalBernCoeffs() const;
+  std::vector<SymbolicAlgebra::Expression<>> getBernCoeffsMatrix() const;
 
   // operations of split
   std::vector<std::vector<unsigned int>> getMultiIdxList() const;

@@ -11,10 +11,10 @@
 #define LINEARSYSTEM_H_
 
 #include <iostream>
-
-#include <ginac/ginac.h>
 #include <utility>
 #include <vector>
+
+#include "SymbolicAlgebra.h"
 
 #include "JSONStreamer.h"
 
@@ -104,7 +104,8 @@ public:
    * @param[in] vars list of variables appearing in the constraints
    * @param[in] constraints symbolic constraints
    */
-  LinearSystem(const GiNaC::lst &vars, const GiNaC::lst &constraints);
+  LinearSystem(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+               const std::vector<SymbolicAlgebra::Expression<>> &constraints);
 
   /**
    * Deep assignament method
@@ -175,7 +176,8 @@ public:
    * @param[in] obj_fun objective function
    * @return minimum
    */
-  double minimize(const GiNaC::lst &vars, const GiNaC::ex &obj_fun) const;
+  double minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                  const SymbolicAlgebra::Expression<> &obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -184,7 +186,8 @@ public:
    * @param[in] obj_fun objective function
    * @return maximum
    */
-  double maximize(const GiNaC::lst &vars, const GiNaC::ex &obj_fun) const;
+  double maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                  const SymbolicAlgebra::Expression<> &obj_fun) const;
 
   /**
    * Minimize the linear system

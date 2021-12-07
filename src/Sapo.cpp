@@ -36,7 +36,6 @@ Sapo::Sapo(Model *model):
 Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k) const
 {
   using namespace std;
-  using namespace GiNaC;
 
   Flowpipe flowpipe(initSet.get_directions());
 
@@ -312,7 +311,6 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
       = synthesize_list(*this, reachSet, pSetList, formula);
 
   while (every_set_is_empty(res) && num_of_splits++ < max_splits) {
-    res.clear();
     pSetList = get_a_finer_covering(pSetList);
 
     res = synthesize_list(*this, reachSet, pSetList, formula);
@@ -451,29 +449,33 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const std::shared_ptr<Atom> atom) const
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
   PolytopesUnion result;
+
+  std::vector<Symbol<>> alpha = get_symbol_vector("f", reachSet.dim());
 
   for (unsigned int i = 0; i < reachSet.num_of_templates();
        i++) { // for each parallelotope
 
     Parallelotope P = reachSet.getParallelotope(i);
-    lst genFun = build_instanciated_generator_functs(reachSet.get_alpha(), P);
+    std::vector<Expression<>> genFun
+        = build_instanciated_generator_functs(alpha, P);
 
-    const lst fog = sub_vars(this->dyns, vars, genFun);
+    const std::vector<Expression<>> fog = sub_vars(this->dyns, vars, genFun);
 
     // compose sigma(f(gamma(x)))
-    lst sub_sigma;
-    for (unsigned int j = 0; j < this->vars.nops(); j++) {
-      sub_sigma.append(vars[j] == fog[j]);
+    Expression<>::replacement_type repl;
+    for (unsigned int j = 0; j < this->vars.size(); j++) {
+      repl[vars[j]] = fog[j];
     }
 
-    const ex sofog = atom->getPredicate().subs(sub_sigma);
+    Expression<> sofog = atom->getPredicate();
+    sofog.replace(repl);
 
     // compute the Bernstein control points
-    lst controlPts
-        = BaseConverter(reachSet.get_alpha(), sofog).getBernCoeffsMatrix();
+    std::vector<Expression<>> controlPts
+        = BaseConverter(alpha, sofog).getBernCoeffsMatrix();
 
     Polytope constraints(this->params, controlPts);
     result.add(intersect(pSet, constraints));

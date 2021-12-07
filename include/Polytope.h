@@ -59,7 +59,8 @@ public:
    * @param[in] vars list of variables appearing in the constraints
    * @param[in] constraints symbolic constraints
    */
-  Polytope(const GiNaC::lst &vars, const GiNaC::lst &constraints):
+  Polytope(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+           const std::vector<SymbolicAlgebra::Expression<>> &constraints):
       LinearSystem(vars, constraints)
   {
   }

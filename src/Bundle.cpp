@@ -9,11 +9,11 @@
 
 #include "Bundle.h"
 
-#include "LinearAlgebra.h"
-
 #include <limits>
 #include <string>
 #include <algorithm>
+
+#include "LinearAlgebra.h"
 
 #define _USE_MATH_DEFINES
 
@@ -26,7 +26,7 @@
  */
 Bundle::Bundle(const Bundle &orig):
     dir_matrix(orig.dir_matrix), offp(orig.offp), offm(orig.offm),
-    t_matrix(orig.t_matrix), Theta(orig.Theta), alpha(orig.alpha)
+    t_matrix(orig.t_matrix), Theta(orig.Theta)
 {
 }
 
@@ -47,7 +47,6 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.offm, B.offm);
   std::swap(A.t_matrix, B.t_matrix);
   std::swap(A.Theta, B.Theta);
-  std::swap(A.alpha, B.alpha);
 }
 
 /**
@@ -61,65 +60,6 @@ void swap(Bundle &A, Bundle &B)
 double orthProx(std::vector<double> v1, std::vector<double> v2)
 {
   return std::abs(angle(v1, v2) - M_PI_2);
-}
-
-/**
- * Constructor for bundles
- *
- * @param[in] alpha is a list of free variables
- * @param[in] dir_matrix matrix of directions
- * @param[in] offp upper offsets
- * @param[in] offm lower offsets
- * @param[in] t_matrix templates matrix
- */
-Bundle::Bundle(const GiNaC::lst &alpha, const Matrix &dir_matrix,
-               const Vector &offp, const Vector &offm,
-               const std::vector<std::vector<int>> &t_matrix):
-    dir_matrix(dir_matrix),
-    offp(offp), offm(offm), t_matrix(t_matrix), alpha(alpha)
-{
-  using namespace std;
-
-  if (dir_matrix.size() == 0) {
-    cout << "Bundle::Bundle : dir_matrix must be non empty";
-    exit(EXIT_FAILURE);
-  }
-  if (dir_matrix.size() != offp.size()) {
-    cout << "Bundle::Bundle : dir_matrix and offp must have the same size";
-    exit(EXIT_FAILURE);
-  }
-  if (dir_matrix.size() != offm.size()) {
-    cout << "Bundle::Bundle : dir_matrix and offm must have the same size";
-    exit(EXIT_FAILURE);
-  }
-  if (t_matrix.size() > 0) {
-    for (unsigned int i = 0; i < t_matrix.size(); i++) {
-      if (t_matrix[i].size() != this->dim()) {
-        cout << "Bundle::Bundle : t_matrix must have " << this->dim()
-             << " columns";
-        exit(EXIT_FAILURE);
-      }
-    }
-  } else {
-    cout << "Bundle::Bundle : t_matrix must be non empty";
-    exit(EXIT_FAILURE);
-  }
-
-  // initialize orthogonal proximity
-  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
-    Vector Thetai(this->num_of_dirs(), 0);
-    for (unsigned int j = i; j < this->num_of_dirs(); j++) {
-      this->Theta.push_back(Thetai);
-    }
-  }
-  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
-    this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->num_of_dirs(); j++) {
-      double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
-      this->Theta[i][j] = prox;
-      this->Theta[j][i] = prox;
-    }
-  }
 }
 
 /**
@@ -137,7 +77,6 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
     offp(offp), offm(offm), t_matrix(t_matrix)
 {
   using namespace std;
-  using namespace GiNaC;
 
   if (dir_matrix.size() == 0) {
     std::cerr << "Bundle::Bundle : dir_matrix must be non empty" << std::endl;
@@ -167,18 +106,13 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
     exit(EXIT_FAILURE);
   }
 
-  // generate the variables
-  const size_t &dim = t_matrix[0].size();
-
-  this->alpha = get_symbol_lst("f", dim); // Free variables
-
   // initialize orthogonal proximity
-  this->Theta = vector<vector<double>>(this->num_of_dirs(),
-                                       vector<double>(this->num_of_dirs(), 0));
+  this->Theta
+      = vector<vector<double>>(this->size(), vector<double>(this->size(), 0));
 
-  for (unsigned int i = 0; i < this->num_of_dirs(); i++) {
+  for (unsigned int i = 0; i < this->size(); i++) {
     this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->num_of_dirs(); j++) {
+    for (unsigned int j = i + 1; j < this->size(); j++) {
       double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
       this->Theta[i][j] = prox;
       this->Theta[j][i] = prox;
@@ -267,7 +201,7 @@ Bundle Bundle::get_canonical() const
     canoffp[i] = bund.maximize(this->dir_matrix[i]);
     canoffm[i] = bund.maximize(-this->dir_matrix[i]);
   }
-  return Bundle(alpha, dir_matrix, canoffp, canoffm, t_matrix);
+  return Bundle(dir_matrix, canoffp, canoffm, t_matrix);
 }
 
 /**
@@ -516,34 +450,40 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
     i++;
   }
 
-  return Bundle(alpha, dir_matrix, offp, offm, bestT);
+  return Bundle(dir_matrix, offp, offm, bestT);
 }
 
-GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
-                    const GiNaC::lst &expressions)
+std::vector<SymbolicAlgebra::Expression<>>
+sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
+         const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+         const std::vector<SymbolicAlgebra::Expression<>> &expressions)
 {
-  GiNaC::lst sub;
+  using namespace SymbolicAlgebra;
 
-  for (unsigned int k = 0; k < vars.nops(); ++k) {
-    sub.append(vars[k] == expressions[k]);
+  Expression<>::replacement_type repl;
+
+  for (unsigned int k = 0; k < vars.size(); ++k) {
+    repl[vars[k]] = expressions[k];
   }
 
-  GiNaC::lst results;
+  std::vector<Expression<>> results;
   for (auto ex_it = std::begin(ex_list); ex_it != std::end(ex_list); ++ex_it) {
-    results.append(ex_it->subs(sub));
+    results.push_back(Expression<>(*ex_it).replace(repl));
   }
 
   return results;
 }
 
-GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &f,
-                               const std::vector<double> &dir_vector)
+std::vector<SymbolicAlgebra::Expression<>>
+compute_Bern_coeffs(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
+                    const std::vector<SymbolicAlgebra::Expression<>> &f,
+                    const std::vector<double> &dir_vector)
 {
-  GiNaC::ex Lfog = 0;
+  SymbolicAlgebra::Expression<> Lfog = 0;
   // upper facets
   for (unsigned int k = 0; k < dir_vector.size(); k++) {
     if (dir_vector[k] != 0) {
-      Lfog = Lfog + dir_vector[k] * f[k];
+      Lfog += dir_vector[k] * f[k];
     }
   }
 
@@ -559,57 +499,59 @@ GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &f,
  * @return the symbolic equations representing the the variable
  *         substitutions for `P`.
  */
-GiNaC::lst get_subs_from(const Parallelotope &P, const GiNaC::lst &q,
-                         const GiNaC::lst &beta)
+SymbolicAlgebra::Expression<>::replacement_type
+get_subs_from(const Parallelotope &P,
+              const std::vector<SymbolicAlgebra::Symbol<>> &q,
+              const std::vector<SymbolicAlgebra::Symbol<>> &beta)
 {
+  using namespace SymbolicAlgebra;
+
   const std::vector<double> &base_vertex = P.base_vertex();
   const std::vector<double> &lengths = P.lengths();
 
-  GiNaC::lst subs;
+  Expression<>::replacement_type repl;
 
-  for (unsigned int k = 0; k < q.nops(); k++) {
-    subs.append(q[k] == base_vertex[k]);
-    subs.append(beta[k] == lengths[k]);
+  for (unsigned int k = 0; k < q.size(); k++) {
+    repl[q[k]] = base_vertex[k];
+    repl[beta[k]] = lengths[k];
   }
 
-  return subs;
+  return repl;
 }
 
-double Bundle::MaxCoeffFinder::coeff_eval_p(const GiNaC::ex &c) const
+double Bundle::MaxCoeffFinder::coeff_eval_p(
+    const SymbolicAlgebra::Expression<> &c) const
 {
-  using namespace GiNaC;
-
-  return ex_to<numeric>(c).to_double();
+  return c.evaluate<double>();
 }
 
-double Bundle::MaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
+double Bundle::MaxCoeffFinder::coeff_eval_m(
+    const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  using namespace GiNaC;
-
-  double value = ex_to<numeric>(bernCoeff).to_double();
+  double value = bernCoeff.evaluate<double>();
 
   // TODO: The following conditional evaluation avoids -0
   //       values. Check the difference between -0 and 0.
   return (value == 0 ? 0 : -value);
 }
 
-double
-Bundle::ParamMaxCoeffFinder::coeff_eval_p(const GiNaC::ex &bernCoeff) const
+double Bundle::ParamMaxCoeffFinder::coeff_eval_p(
+    const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
   return paraSet.maximize(params, bernCoeff);
 }
 
-double
-Bundle::ParamMaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
+double Bundle::ParamMaxCoeffFinder::coeff_eval_m(
+    const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
   return paraSet.maximize(params, -bernCoeff);
 };
 
-Bundle::MaxCoeffFinder::MaxCoeffType
-Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs) const
+Bundle::MaxCoeffFinder::MaxCoeffType Bundle::MaxCoeffFinder::find_max_coeffs(
+    const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const
 {
   // find the maximum coefficient
-  GiNaC::lst::const_iterator b_coeff_it = b_coeffs.begin();
+  auto b_coeff_it = b_coeffs.begin();
 
   double maxCoeffp = coeff_eval_p(*b_coeff_it);
   double maxCoeffm = coeff_eval_m(*b_coeff_it);
@@ -647,13 +589,14 @@ Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs) const
  * @param P is the considered parallelotope.
  * @return The generator function of `P`.
  */
-GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
-                                               const Parallelotope &P)
+std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
+    const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
+    const Parallelotope &P)
 {
-  GiNaC::lst gen_functs;
+  std::vector<SymbolicAlgebra::Expression<>> gen_functs;
   for (auto it = std::begin(P.base_vertex()); it != std::end(P.base_vertex());
        ++it) {
-    gen_functs.append(*it);
+    gen_functs.push_back(*it);
   }
 
   const std::vector<std::vector<double>> &versors = P.versors();
@@ -665,7 +608,7 @@ GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
     if (P.lengths()[i] != 0) {
       std::vector<double> vector = P.lengths()[i] * versors[i];
       for (unsigned int j = 0; j < vector.size(); j++) {
-        gen_functs[j] = gen_functs[j] + alpha[i] * vector[j];
+        gen_functs[j] += alpha[i] * vector[j];
       }
     }
   }
@@ -682,15 +625,18 @@ GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                         const std::vector<SymbolicAlgebra::Expression<>> &f,
                          const Bundle::MaxCoeffFinder *max_finder,
                          int mode) const
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
   vector<double> newDp(this->size(), std::numeric_limits<double>::max());
   vector<double> newDm = newDp;
+
+  std::vector<Symbol<>> alpha = get_symbol_vector("f", dim());
 
   vector<int> dirs_to_bound;
   if (mode) { // dynamic transformation
@@ -703,12 +649,11 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
 
     Parallelotope P = this->getParallelotope(i);
-    // const lst &genFun = build_generator_functs(q, alpha, beta, P);
 
-    // lst subParatope = get_subs_from(P, q, beta);
-    const lst &genFun = build_instanciated_generator_functs(alpha, P);
-
-    const lst genFun_f = sub_vars(f, vars, genFun);
+    const std::vector<SymbolicAlgebra::Expression<>> &genFun
+        = build_instanciated_generator_functs(alpha, P);
+    const std::vector<SymbolicAlgebra::Expression<>> genFun_f
+        = sub_vars(f, vars, genFun);
 
     if (mode == 0) { // static mode
       dirs_to_bound = this->t_matrix[i];
@@ -716,7 +661,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
 
     // for each direction
     for (unsigned int j = 0; j < dirs_to_bound.size(); j++) {
-      lst bernCoeffs
+      std::vector<SymbolicAlgebra::Expression<>> bernCoeffs
           = compute_Bern_coeffs(alpha, genFun_f, dir_matrix[dirs_to_bound[j]]);
 
       auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
@@ -732,7 +677,7 @@ Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
     }
   }
 
-  Bundle res = Bundle(alpha, this->dir_matrix, newDp, newDm, this->t_matrix);
+  Bundle res = Bundle(this->dir_matrix, newDp, newDm, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

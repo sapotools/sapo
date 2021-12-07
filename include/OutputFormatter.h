@@ -301,12 +301,12 @@ public:
   static std::string set_separator()
   {
     return OutputFormatter<JSON::ostream>::list_separator();
-    ;
   }
 
   static std::string empty_set()
   {
-    return OutputFormatter<JSON::ostream>::empty_set();
+    return OutputFormatter<JSON::ostream>::set_begin()
+           + OutputFormatter<JSON::ostream>::set_end();
   }
 
   static std::string object_header()
