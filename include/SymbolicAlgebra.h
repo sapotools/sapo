@@ -10,7 +10,6 @@
 
 #include <gmpxx.h>
 
-
 /*!
  *  \addtogroup SymbolicAlgebra
  *  @{
@@ -208,7 +207,7 @@ public:
    * This method turns this expression into an algebraic equivalent
    * sum of products.
    *
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   Expression<C> &expand();
 
@@ -277,7 +276,7 @@ public:
    * @brief Assign an expression.
    *
    * @param rhs is the expression to be assigned.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator=(const Expression<C> &rhs);
 
@@ -285,7 +284,7 @@ public:
    * @brief Assign an expression.
    *
    * @param rhs is the expression to be assigned.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator=(Expression<C> &&rhs);
 
@@ -293,7 +292,7 @@ public:
    * @brief Add an expression to the current one.
    *
    * @param rhs is the expression to be added.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator+=(const Expression<C> &rhs);
 
@@ -301,7 +300,7 @@ public:
    * @brief Subtract an expression to the current one.
    *
    * @param rhs is the expression to be subtracted.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator-=(const Expression<C> &rhs);
 
@@ -309,7 +308,7 @@ public:
    * @brief Multiply an expression to the current one.
    *
    * @param rhs is the expression to be multiplied.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator*=(const Expression<C> &rhs);
 
@@ -317,7 +316,7 @@ public:
    * @brief Divide an expression to the current one.
    *
    * @param rhs is the expression to be divided.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator/=(const Expression<C> &rhs);
 
@@ -325,7 +324,7 @@ public:
    * @brief Add an expression to the current one.
    *
    * @param rhs is the expression to be added.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator+=(Expression<C> &&rhs);
 
@@ -333,7 +332,7 @@ public:
    * @brief Subtract an expression to the current one.
    *
    * @param rhs is the expression to be subtracted.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator-=(Expression<C> &&rhs);
 
@@ -341,7 +340,7 @@ public:
    * @brief Multiply an expression to the current one.
    *
    * @param rhs is the expression to be multiplied.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator*=(Expression<C> &&rhs);
 
@@ -349,9 +348,77 @@ public:
    * @brief Divide an expression to the current one.
    *
    * @param rhs is the expression to be divided.
-   * @return A reference to to the updated object.
+   * @return A reference to the updated object.
    */
   const Expression<C> &operator/=(Expression<C> &&rhs);
+
+  /**
+   * @brief Add a numeric value to the current expression.
+   *
+   * @tparam T is the type of the numeric value.
+   * @param value is the numeric value to be added.
+   * @return A reference to the updated object.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  const Expression<C> &operator+=(const T value)
+  {
+    _ex = _ex->add(static_cast<C>(value));
+
+    return *this;
+  }
+
+  /**
+   * @brief Subtract a numeric value from the current expression.
+   *
+   * @tparam T is the type of the numeric value.
+   * @param value is the numeric value to be subtracted.
+   * @return A reference to the updated object.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  const Expression<C> &operator-=(const T value)
+  {
+    _ex = _ex->subtract(static_cast<C>(value));
+
+    return *this;
+  }
+
+  /**
+   * @brief Multiply a numeric value and the current expression.
+   *
+   * @tparam T is the type of the numeric value.
+   * @param value is the numeric value to be multiplied.
+   * @return A reference to the updated object.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  const Expression<C> &operator*=(const T value)
+  {
+    _ex = _ex->multiply(static_cast<C>(value));
+
+    return *this;
+  }
+
+  /**
+   * @brief Divide an expression to the current one.
+   *
+   * @tparam T is the type of the numeric value.
+   * @param value is the numeric divisor.
+   * @return A reference to the updated object.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  const Expression<C> &operator/=(const T value)
+  {
+    _ex = _ex->be_divided_by(static_cast<C>(value));
+
+    return *this;
+  }
 
   /**
    * @brief Complement the expression.
@@ -409,6 +476,188 @@ public:
   friend Expression<T> operator/(const Expression<T> &lhs,
                                  Expression<T> &&rhs);
 
+  /**
+   * @brief Sum an expression and a numeric value.
+   *
+   * This method builds an expression that represents the sum of the two
+   * expressions passed as parameters.
+   *
+   * @tparam T is the type of numeric value.
+   * @param lhs is an expression.
+   * @param value is an expression.
+   * @return An expression that represents the sum `lhs + value`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend Expression<C> operator+(const Expression<C> &lhs, const T value)
+  {
+    if (value == 0) {
+      return lhs;
+    }
+
+    _base_expression_type<C> *lhs_ex = lhs._ex->clone();
+
+    return Expression<C>(lhs_ex->add(static_cast<C>(value)));
+  }
+
+  /**
+   * @brief Subtract an expression from a numeric value.
+   *
+   * This method builds an expression that represents the subtraction
+   * of an expression from a numeric value.
+   *
+   * @tparam T is the type of numeric value.
+   * @param value is an expression.
+   * @param rhs is an expression.
+   * @return An expression that represents the subtraction `value - rhs`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend inline Expression<C> operator-(const T value,
+                                        const Expression<C> &rhs)
+  {
+    return ((-rhs) + value);
+  }
+
+  /**
+   * @brief Multiply an expression and a numeric value.
+   *
+   * This method builds an expression that represents the product
+   * of an expression and a numeric value.
+   *
+   * @tparam T is the type of numeric value.
+   * @param value is an expression.
+   * @param rhs is an expression.
+   * @return An expression that represents the subtraction `value * rhs`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend Expression<C> operator*(const T value, const Expression<C> &rhs)
+  {
+    if (value == 0) {
+      return 0;
+    }
+
+    if (value == 1) {
+      return rhs;
+    }
+
+    _base_expression_type<C> *rhs_ex = rhs._ex->clone();
+
+    return Expression<C>(rhs_ex->multiply(static_cast<C>(value)));
+  }
+
+  /**
+   * @brief Divide a constant value by an expression.
+   *
+   * This method builds an expression that represents the division between
+   * a constant value and an expression.
+   *
+   * @tparam T is the type of numeric value.
+   * @param value is a constant value.
+   * @param rhs is an expression.
+   * @return An expression that represents the division `lhs / value`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend Expression<C> operator/(const T value, const Expression<C> &rhs)
+  {
+    if (value == 0) {
+      return 0;
+    }
+
+    return Expression<C>(value) / rhs;
+  }
+
+  /**
+   * @brief Sum an expression and a numeric value.
+   *
+   * This method builds an expression that represents the sum of the two
+   * expressions passed as parameters.
+   *
+   * @tparam T is the type of numeric value.
+   * @param lhs is an expression.
+   * @param value is an expression.
+   * @return An expression that represents the sum `lhs + value`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend inline Expression<C> operator+(const T value,
+                                        const Expression<C> &rhs)
+  {
+    return rhs + value;
+  }
+
+  /**
+   * @brief Subtract a numeric value from an expression.
+   *
+   * This method builds an expression that represents the subtraction
+   * of a numeric value from an expression.
+   *
+   * @tparam T is the type of numeric value.
+   * @param lhs is an expression.
+   * @param value is an expression.
+   * @return An expression that represents the subtraction `lhs - value`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend inline Expression<C> operator-(const Expression<C> &lhs,
+                                        const T value)
+  {
+    return (lhs + (-value));
+  }
+
+  /**
+   * @brief Multiply an expression and a numeric value.
+   *
+   * This method builds an expression that represents the product
+   * of an expression and a numeric value.
+   *
+   * @tparam T is the type of numeric value.
+   * @param lhs is an expression.
+   * @param value is an expression.
+   * @return An expression that represents the subtraction `lhs * value`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend inline Expression<C> operator*(const Expression<C> &lhs,
+                                        const T value)
+  {
+    return value * lhs;
+  }
+
+  /**
+   * @brief Divide an expression by a constant.
+   *
+   * This method builds an expression that represents the division between an
+   * expression and a constant value.
+   *
+   * @tparam C1 is the type of numeric constants in the expression.
+   * @tparam T is the type of numeric value.
+   * @param lhs is an expression.
+   * @param value is a constant value.
+   * @return An expression that represents the division `lhs / value`.
+   */
+  template<typename T,
+           typename
+           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  friend inline Expression<C> operator/(const Expression<C> &lhs,
+                                        const T value)
+  {
+    if (value == 1) {
+      return lhs;
+    }
+
+    return lhs * (1 / static_cast<C>(value));
+  }
+
   template<typename T>
   friend Expression<T> operator+(Expression<T> &&lhs, Expression<T> &&rhs);
   template<typename T>
@@ -456,7 +705,7 @@ public:
    * current object and the parameter. This is done by merging the two
    * representations and deallocating the non-necessary components. The
    * original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression to be added.
    * @return a pointer to an expression that represents the sum among
@@ -464,11 +713,23 @@ public:
    */
   virtual _base_expression_type<C> *add(_base_expression_type<C> *op)
   {
+    if (!(this->has_symbols()) && this->evaluate() == 0) {
+      delete this;
+
+      return op;
+    }
     switch (op->type()) {
     case CONSTANT: {
+      C op_value = op->evaluate();
+      if (op_value == 0) {
+        delete op;
+
+        return this;
+      }
+
       _finite_sum_type<C> *sum = new _finite_sum_type<C>();
 
-      sum->_constant = ((_constant_type<C> *)op)->get_value();
+      sum->_constant = op_value;
 
       delete op;
 
@@ -502,8 +763,7 @@ public:
    */
   virtual _base_expression_type<C> *subtract(_base_expression_type<C> *op)
   {
-    if (op->type() == CONSTANT
-        && ((_constant_type<C> *)op)->get_value() == 0) {
+    if (!(op->has_symbols()) && op->evaluate() == 0) {
       delete op;
 
       return this;
@@ -518,7 +778,7 @@ public:
    * of the parameter and the current object. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression that multiplies the current object.
    * @return a pointer to an expression that represents the multiplication
@@ -526,11 +786,28 @@ public:
    */
   virtual _base_expression_type<C> *multiply(_base_expression_type<C> *op)
   {
+    if (!(this->has_symbols()) && this->evaluate() == 1) {
+      delete this;
+
+      return op;
+    }
+    if (!(this->has_symbols()) && this->evaluate() == 0) {
+      delete op;
+
+      return this;
+    }
     switch (op->type()) {
     case CONSTANT: {
+      const C op_value = op->evaluate();
+      if (op_value == 1) {
+        delete op;
+
+        return this;
+      }
+
       _finite_prod_type<C> *prod = new _finite_prod_type<C>();
 
-      prod->_constant = ((_constant_type<C> *)op)->get_value();
+      prod->_constant = op_value;
 
       delete op;
 
@@ -556,19 +833,35 @@ public:
    * of the current object by the parameter. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression that divides the current object.
    * @return a pointer to an expression that represents the division
    *          of the current object by the parameter.
    */
-  virtual _base_expression_type<C> *divide(_base_expression_type<C> *op)
+  virtual _base_expression_type<C> *be_divided_by(_base_expression_type<C> *op)
   {
+    if (!(this->has_symbols()) && this->evaluate() == 1) {
+      delete this;
+
+      return op;
+    }
+    if (!(this->has_symbols()) && this->evaluate() == 0) {
+      delete op;
+
+      return this;
+    }
     switch (op->type()) {
     case CONSTANT: {
+      const C op_value = op->evaluate();
+      if (op_value == 1) {
+        delete op;
+
+        return this;
+      }
       _finite_prod_type<C> *prod = new _finite_prod_type<C>();
 
-      prod->_constant = 1 / ((_constant_type<C> *)op)->get_value();
+      prod->_constant = 1 / op_value;
 
       delete op;
 
@@ -594,6 +887,88 @@ public:
   }
 
   /**
+   * @brief Add a value to the current expression.
+   *
+   * This method builds an expression that represents the sum among the
+   * current object and a constant value. The original expression
+   * depicted by the current object will not be available anymore after
+   * the execution.
+   *
+   * @param value is the constant value to be added.
+   * @return a pointer to an expression that represents the sum among
+   *              the current object and the constant value.
+   */
+  virtual _base_expression_type<C> *add(const C &value)
+  {
+    _finite_sum_type<C> *sum = new _finite_sum_type<C>();
+
+    sum->_constant = value;
+    sum->_sum.push_back(this);
+
+    return sum;
+  }
+
+  /**
+   * @brief Subtract a value to the current expression.
+   *
+   * This method builds an expression that represents the subtraction
+   * of a constant value from the current expression. The original
+   * expression depicted by the current object will not be available
+   * anymore after the call.
+   *
+   * @param value is the constant value to be subtracted.
+   * @return a pointer to an expression that represents the subtraction
+   *              among the current object and the constant value.
+   */
+  virtual inline _base_expression_type<C> *subtract(const C &value)
+  {
+    const C compl_value = -value;
+
+    return this->add(compl_value);
+  }
+
+  /**
+   * @brief Multiply a value to the current expression.
+   *
+   * This method builds an expression that represents the product
+   * between the current object and a constant value. The original
+   * expression depicted by the current object will not be available
+   * anymore after the call.
+   *
+   * @param value is the constant value to be multiplied.
+   * @return a pointer to an expression that represents the product
+   *              between the current object and the constant value.
+   */
+  virtual _base_expression_type<C> *multiply(const C &value)
+  {
+    _finite_prod_type<C> *prod = new _finite_prod_type<C>();
+
+    prod->_constant = value;
+    prod->_numerator.push_back(this);
+
+    return prod;
+  }
+
+  /**
+   * @brief Divide the current expression by a costant value.
+   *
+   * This method builds an expression that represents the division
+   * of the current object by the parameter. The original
+   * expression depicted by the current object will not be
+   * available anymore after the call.
+   *
+   * @param value is the value that divides the current object.
+   * @return a pointer to an expression that represents the division
+   *          of the current object by the constant value.
+   */
+  virtual _base_expression_type<C> *be_divided_by(const C &value)
+  {
+    const C rec_value = 1 / value;
+
+    return this->multiply(rec_value);
+  }
+
+  /**
    * @brief Complement the expression.
    *
    * @return the complementar expression.
@@ -605,7 +980,7 @@ public:
    *
    * This method multiplies all the product in a list by the current object and
    * returns the list of the products. The list of products will be not
-   * available anymore after the execution.
+   * available anymore after the call.
    *
    * @param prods is a list of products.
    * @return the list of the products between the current object and the
@@ -651,6 +1026,13 @@ public:
    * @return The set of the symbol ids in the expression.
    */
   virtual std::set<SymbolIdType> get_symbol_ids() const = 0;
+
+  /**
+   * @brief Test the presence of any symbol.
+   *
+   * @return true if and only if the expression as one symbol at least.
+   */
+  virtual bool has_symbols() const = 0;
 
   /**
    * @brief Replace symbol occurences by using expressions.
@@ -782,7 +1164,7 @@ public:
    * current object and the parameter. This is done by merging the two
    * representations and deallocating the non-necessary components. The
    * original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression to be added.
    * @return a pointer to an expression that represents the sum among
@@ -790,9 +1172,14 @@ public:
    */
   _base_expression_type<C> *add(_base_expression_type<C> *op)
   {
+    if (this->evaluate() == 0) {
+      delete this;
+
+      return op;
+    }
     switch (op->type()) {
     case CONSTANT:
-      _value += ((_constant_type<C> *)op)->_value;
+      _value += op->evaluate();
 
       delete op;
 
@@ -810,7 +1197,7 @@ public:
    * of the parameter from the current object. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression to be subtracted.
    * @return a pointer to an expression that represents the subtraction
@@ -818,9 +1205,14 @@ public:
    */
   _base_expression_type<C> *subtract(_base_expression_type<C> *op)
   {
+    if (this->evaluate() == 0) {
+      delete this;
+
+      return op;
+    }
     switch (op->type()) {
     case CONSTANT:
-      _value -= ((_constant_type<C> *)op)->_value;
+      _value -= op->evaluate();
 
       delete op;
 
@@ -839,7 +1231,7 @@ public:
    * of the parameter and the current object. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression that multiplies the current object.
    * @return a pointer to an expression that represents the multiplication
@@ -847,9 +1239,19 @@ public:
    */
   _base_expression_type<C> *multiply(_base_expression_type<C> *op)
   {
+    if (this->evaluate() == 0) {
+      delete op;
+
+      return this;
+    }
+    if (this->evaluate() == 1) {
+      delete this;
+
+      return op;
+    }
     switch (op->type()) {
     case CONSTANT:
-      _value *= ((_constant_type<C> *)op)->_value;
+      _value *= op->evaluate();
 
       delete op;
 
@@ -867,17 +1269,27 @@ public:
    * of the current object by the parameter. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression that divides the current object.
    * @return a pointer to an expression that represents the division
    *          of the current object by the parameter.
    */
-  _base_expression_type<C> *divide(_base_expression_type<C> *op)
+  _base_expression_type<C> *be_divided_by(_base_expression_type<C> *op)
   {
+    if (this->evaluate() == 0) {
+      delete op;
+
+      return this;
+    }
+    if (this->evaluate() == 1) {
+      delete this;
+
+      return op;
+    }
     switch (op->type()) {
     case CONSTANT:
-      _value /= ((_constant_type<C> *)op)->_value;
+      _value /= op->evaluate();
 
       delete op;
 
@@ -887,8 +1299,84 @@ public:
       _finite_prod_type<C> *prod = new _finite_prod_type<C>();
 
       prod->multiply(this);
-      return prod->divide(op);
+      return prod->be_divided_by(op);
     }
+  }
+
+  /**
+   * @brief Add a value to the current expression.
+   *
+   * This method builds an expression that represents the sum among the
+   * current object and a constant value. The original expression
+   * depicted by the current object will not be available anymore after
+   * the execution.
+   *
+   * @param value is the constant value to be added.
+   * @return a pointer to an expression that represents the sum among
+   *              the current object and the constant value.
+   */
+  _base_expression_type<C> *add(const C &value)
+  {
+    _value += value;
+
+    return this;
+  }
+
+  /**
+   * @brief Subtract a value to the current expression.
+   *
+   * This method builds an expression that represents the subtraction
+   * of a constant value from the current expression. The original
+   * expression depicted by the current object will not be available
+   * anymore after the call.
+   *
+   * @param value is the constant value to be subtracted.
+   * @return a pointer to an expression that represents the subtraction
+   *              of the constant value from the current object.
+   */
+  _base_expression_type<C> *subtract(const C &value)
+  {
+    _value -= value;
+
+    return this;
+  }
+
+  /**
+   * @brief Multiply a value to the current expression.
+   *
+   * This method builds an expression that represents the product
+   * between the current object and a constant value. The original
+   * expression depicted by the current object will not be available
+   * anymore after the call.
+   *
+   * @param value is the constant value to be multiplied.
+   * @return a pointer to an expression that represents the product
+   *              between the current object and the constant value.
+   */
+  _base_expression_type<C> *multiply(const C &value)
+  {
+    _value *= value;
+
+    return this;
+  }
+
+  /**
+   * @brief Divide the current expression by a costant value.
+   *
+   * This method builds an expression that represents the division
+   * of the current object by the parameter. The original
+   * expression depicted by the current object will not be
+   * available anymore after the call.
+   *
+   * @param value is the value that divides the current object.
+   * @return a pointer to an expression that represents the division
+   *          of the current object by the constant value.
+   */
+  _base_expression_type<C> *be_divided_by(const C &value)
+  {
+    _value /= value;
+
+    return this;
   }
 
   /**
@@ -939,6 +1427,16 @@ public:
   std::set<SymbolIdType> get_symbol_ids() const
   {
     return std::set<SymbolIdType>();
+  }
+
+  /**
+   * @brief Test the presence of any symbol.
+   *
+   * @return true if and only if the expression as one symbol at least.
+   */
+  bool has_symbols() const
+  {
+    return false;
   }
 
   /**
@@ -1008,6 +1506,16 @@ public:
   {
     os << _value;
   }
+
+  ~_constant_type()
+  {
+    /*
+    std::cout << "QUI ";
+    this->print(std::cout);
+
+    std::cout << " T" <<std::endl;
+    */
+  }
 };
 
 /**
@@ -1074,7 +1582,7 @@ public:
    * current object and the parameter. This is done by merging the two
    * representations and deallocating the non-necessary components. The
    * original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression to be added.
    * @return a pointer to an expression that represents the sum among
@@ -1094,7 +1602,7 @@ public:
       return this;
     }
     case CONSTANT:
-      _constant += ((_constant_type<C> *)op)->get_value();
+      _constant += op->evaluate();
 
       delete op;
 
@@ -1115,11 +1623,49 @@ public:
   };
 
   /**
+   * @brief Add a value to the current expression.
+   *
+   * This method builds an expression that represents the sum among the
+   * current object and a constant value. The original expression
+   * depicted by the current object will not be available anymore after
+   * the execution.
+   *
+   * @param value is the constant value to be added.
+   * @return a pointer to an expression that represents the sum among
+   *              the current object and the constant value.
+   */
+  _base_expression_type<C> *add(const C &value)
+  {
+    _constant += value;
+
+    return this;
+  }
+
+  /**
+   * @brief Subtract a value to the current expression.
+   *
+   * This method builds an expression that represents the subtraction
+   * of a constant value from the current expression. The original
+   * expression depicted by the current object will not be available
+   * anymore after the call.
+   *
+   * @param value is the constant value to be subtracted.
+   * @return a pointer to an expression that represents the sum among
+   *              the current object and the constant value.
+   */
+  _base_expression_type<C> *subtract(const C &value)
+  {
+    _constant -= value;
+
+    return this;
+  }
+
+  /**
    * @brief Multiply all the products in a list by the current object.
    *
    * This method multiplies all the product in a list by the current object and
    * returns the list of the products. The list of products will be not
-   * available anymore after the execution.
+   * available anymore after the call.
    *
    * @param prods is a list of products.
    * @return the list of the products between the current object and the
@@ -1140,8 +1686,10 @@ public:
     }
     _sum.clear();
 
-    for (auto p_it = std::begin(prods); p_it != std::end(prods); ++p_it) {
-      result.push_back((*p_it)->multiply(new _constant_type<C>(_constant)));
+    if (_constant != 0) {
+      for (auto p_it = std::begin(prods); p_it != std::end(prods); ++p_it) {
+        result.push_back((*p_it)->multiply(_constant));
+      }
     }
     prods.clear();
 
@@ -1244,6 +1792,22 @@ public:
     }
 
     return ids;
+  }
+
+  /**
+   * @brief Test the presence of any symbol.
+   *
+   * @return true if and only if the expression as one symbol at least.
+   */
+  bool has_symbols() const
+  {
+    for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
+      if ((*it)->has_symbols()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -1354,7 +1918,11 @@ public:
     }
 
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
-      total_coeff = total_coeff->add((*it)->get_coeff(symbol_id, degree));
+      auto coeff_it = (*it)->get_coeff(symbol_id, degree);
+
+      if (coeff_it != nullptr) {
+        total_coeff = total_coeff->add(coeff_it);
+      }
     }
 
     return total_coeff;
@@ -1551,7 +2119,7 @@ public:
    * of the parameter and the current object. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression that multiplies the current object.
    * @return a pointer to an expression that represents the multiplication
@@ -1615,13 +2183,13 @@ public:
    * of the current object by the parameter. This is done by merging
    * the two representations and deallocating the non-necessary components.
    * The original expressions depicted by the current object and by the
-   * parameter will not be available anymore after the execution.
+   * parameter will not be available anymore after the call.
    *
    * @param op is the expression that divides the current object.
    * @return a pointer to an expression that represents the division
    *          of the current object by the parameter.
    */
-  _base_expression_type<C> *divide(_base_expression_type<C> *op)
+  _base_expression_type<C> *be_divided_by(_base_expression_type<C> *op)
   {
     switch (op->type()) {
     case FINITE_PROD: {
@@ -1648,6 +2216,44 @@ public:
     default:
       _denominator.push_back(op);
     }
+
+    return this;
+  }
+
+  /**
+   * @brief Multiply a value to the current expression.
+   *
+   * This method builds an expression that represents the product
+   * between the current object and a constant value. The original
+   * expression depicted by the current object will not be available
+   * anymore after the call.
+   *
+   * @param value is the constant value to be multiplied.
+   * @return a pointer to an expression that represents the product
+   *              between the current object and the constant value.
+   */
+  _base_expression_type<C> *multiply(const C &value)
+  {
+    _constant *= value;
+
+    return this;
+  }
+
+  /**
+   * @brief Divide the current expression by a costant value.
+   *
+   * This method builds an expression that represents the division
+   * of the current object by the parameter. The original
+   * expression depicted by the current object will not be
+   * available anymore after the call.
+   *
+   * @param value is the value that divides the current object.
+   * @return a pointer to an expression that represents the division
+   *          of the current object by the constant value.
+   */
+  _base_expression_type<C> *be_divided_by(const C &value)
+  {
+    _constant /= value;
 
     return this;
   }
@@ -1734,6 +2340,24 @@ public:
   }
 
   /**
+   * @brief Test the presence of any symbol.
+   *
+   * @return true if and only if the expression as one symbol at least.
+   */
+  bool has_symbols() const
+  {
+    for (auto &_list: {_numerator, _denominator}) {
+      for (auto it = std::begin(_list); it != std::end(_list); ++it) {
+        if ((*it)->has_symbols()) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * @brief Replace symbol occurences by using expressions.
    *
    * This method replaces any occurence of the symbols whose ids are in
@@ -1759,7 +2383,7 @@ public:
     for (auto it = std::begin(_denominator); it != std::end(_denominator);
          ++it) {
       if (!(*it)->is_zero()) {
-        result->divide((*it)->replace(replacements));
+        result->be_divided_by((*it)->replace(replacements));
       } else {
         delete *it;
       }
@@ -1818,6 +2442,11 @@ public:
       case SYMBOL:
         if (((_symbol_type<C> *)(*it))->get_id() == symbol_id) {
           ++degree_counter;
+          if (degree_counter > degree) {
+            delete res;
+
+            return new _constant_type<C>(0);
+          }
         } else {
           res = res->multiply((*it)->clone());
         }
@@ -1879,7 +2508,6 @@ public:
         }
         delete res_coeff->second;
       }
-
       std::swap(res, next_res);
     }
 
@@ -2039,6 +2667,16 @@ public:
   }
 
   /**
+   * @brief Test the presence of any symbol.
+   *
+   * @return true if and only if the expression as one symbol at least.
+   */
+  bool has_symbols() const
+  {
+    return true;
+  }
+
+  /**
    * @brief Replace symbol occurences by using expressions.
    *
    * This method replaces any occurence of the symbols whose ids are in
@@ -2144,7 +2782,7 @@ Expression<C>::Expression(_base_expression_type<C> *_ex): _ex(_ex)
 }
 
 template<typename C>
-Expression<C>::Expression(): _ex(NULL)
+Expression<C>::Expression(): _ex(nullptr)
 {
 }
 
@@ -2154,14 +2792,6 @@ Expression<C>::Expression(const int value):
 {
 }
 
-/*
-template<typename C>
-Expression<C>::Expression(const double value):
-    _ex(new _constant_type<C>(static_cast<C>(value)))
-{
-}
-*/
-
 template<typename C>
 Expression<C>::Expression(const C value): _ex(new _constant_type<C>(value))
 {
@@ -2169,7 +2799,7 @@ Expression<C>::Expression(const C value): _ex(new _constant_type<C>(value))
 
 template<typename C>
 Expression<C>::Expression(const Expression<C> &orig):
-    _ex((orig._ex == NULL ? NULL : orig._ex->clone()))
+    _ex((orig._ex == nullptr ? nullptr : orig._ex->clone()))
 {
 }
 
@@ -2177,7 +2807,7 @@ template<typename C>
 Expression<C> &
 Expression<C>::replace(const Expression<C>::replacement_type &replacement)
 {
-  if (this->_ex == NULL) {
+  if (this->_ex == nullptr) {
     return *this;
   }
   std::map<typename Symbol<C>::SymbolIdType, _base_expression_type<C> *>
@@ -2207,9 +2837,9 @@ Expression<C> &Expression<C>::expand()
 template<typename C>
 Expression<C>::~Expression()
 {
-  if (_ex != NULL) {
+  if (_ex != nullptr) {
     delete _ex;
-    _ex = NULL;
+    _ex = nullptr;
   }
 }
 
@@ -2266,7 +2896,7 @@ const Expression<C> &Expression<C>::operator/=(const Expression<C> &rhs)
 {
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
-  _ex = _ex->divide(rhs_ex);
+  _ex = _ex->be_divided_by(rhs_ex);
 
   return *this;
 }
@@ -2275,7 +2905,7 @@ template<typename C>
 const Expression<C> &Expression<C>::operator+=(Expression<C> &&rhs)
 {
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   _ex = _ex->add(rhs_ex);
 
@@ -2286,7 +2916,7 @@ template<typename C>
 const Expression<C> &Expression<C>::operator-=(Expression<C> &&rhs)
 {
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   _ex = _ex->subtract(rhs_ex);
 
@@ -2297,7 +2927,7 @@ template<typename C>
 const Expression<C> &Expression<C>::operator*=(Expression<C> &&rhs)
 {
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   _ex = _ex->multiply(rhs_ex);
 
@@ -2308,12 +2938,55 @@ template<typename C>
 const Expression<C> &Expression<C>::operator/=(Expression<C> &&rhs)
 {
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
-  _ex = _ex->divide(rhs_ex);
+  _ex = _ex->be_divided_by(rhs_ex);
 
   return *this;
 }
+
+/*
+template<typename C>
+template<typename T, typename = typename
+std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
+&Expression<C>::operator+=(const T value)
+{
+  _ex = _ex->add(static_cast<C>(value));
+
+  return *this;
+}
+
+
+template<typename C>
+template<typename T, typename = typename
+std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
+&Expression<C>::operator-=(const T value)
+{
+  _ex = _ex->subtract(static_cast<C>(value));
+
+  return *this;
+}
+
+template<typename C>
+template<typename T, typename = typename
+std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
+&Expression<C>::operator*=(const T value)
+{
+  _ex = _ex->multiply(static_cast<C>(value));
+
+  return *this;
+}
+
+template<typename C>
+template<typename T, typename = typename
+std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
+&Expression<C>::operator/=(const T value)
+{
+  _ex = _ex->be_divided_by(static_cast<C>(value));
+
+  return *this;
+}
+*/
 
 /**
  * @brief Check whether an expression is equivalent to a constant value.
@@ -2327,7 +3000,7 @@ const Expression<C> &Expression<C>::operator/=(Expression<C> &&rhs)
 template<typename C>
 inline bool operator==(const Expression<C> &lhs, const C rhs)
 {
-  return (lhs._ex->get_symbol_ids().size() == 0 && lhs._ex->evaluate() == rhs);
+  return (!(lhs._ex->has_symbols()) && lhs._ex->evaluate() == rhs);
 }
 
 /**
@@ -2447,7 +3120,7 @@ inline bool operator!=(const int lhs, const Expression<C> &rhs)
 template<typename C>
 inline bool operator>(const Expression<C> &lhs, const C rhs)
 {
-  return (lhs._ex->get_symbol_ids().size() == 0 && lhs._ex->evaluate() > rhs);
+  return (!(lhs._ex->has_symbols()) && lhs._ex->evaluate() > rhs);
 }
 
 /**
@@ -2477,7 +3150,7 @@ inline bool operator>(const Expression<C> &lhs, const int rhs)
 template<typename C>
 inline bool operator>(const C lhs, const Expression<C> &rhs)
 {
-  return (rhs._ex.get_symbol_ids().size() == 0 && rhs._ex->evaluate() < lhs);
+  return (!(rhs._ex->has_symbols()) && rhs._ex->evaluate() < lhs);
 }
 
 /**
@@ -2577,46 +3250,6 @@ Expression<C> operator+(const Expression<C> &lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Sum an expression and a constant value.
- *
- * This method builds an expression that represents the sum of an
- * an expression and a constant value.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the sum `lhs + rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator+(const Expression<C1> &lhs, const C2 rhs)
-{
-  return lhs + Expression<C1>(static_cast<C1>(rhs));
-}
-
-/**
- * @brief Sum a constant value and an expression.
- *
- * This method builds an expression that represents the sum of
- * a constant value and an expression.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the sum `lhs + rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator+(const C2 lhs, const Expression<C1> &rhs)
-{
-  return rhs + lhs;
-}
-
-/**
  * @brief Sum two expressions.
  *
  * This method builds an expression that represents the sum of the two
@@ -2631,7 +3264,7 @@ template<typename C>
 Expression<C> operator+(Expression<C> &&lhs, const Expression<C> &rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
@@ -2655,7 +3288,7 @@ Expression<C> operator+(const Expression<C> &lhs, Expression<C> &&rhs)
   _base_expression_type<C> *lhs_ex = lhs._ex->clone();
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   return Expression<C>(lhs_ex->add(rhs_ex));
 }
@@ -2675,10 +3308,10 @@ template<typename C>
 Expression<C> operator+(Expression<C> &&lhs, Expression<C> &&rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   return Expression<C>(lhs_ex->add(rhs_ex));
 }
@@ -2705,46 +3338,6 @@ Expression<C> operator-(const Expression<C> &lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Subtract a constant value from an expression.
- *
- * This method builds an expression that represents the subtraction of a
- * constant value from an expression.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the subtraction `lhs - rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator-(const Expression<C1> &lhs, const C2 rhs)
-{
-  return lhs - Expression<C1>(static_cast<C1>(rhs));
-}
-
-/**
- * @brief Subtract a constant value from an expression.
- *
- * This method builds an expression that represents the subtraction of a
- * constant value from an expression.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the subtraction `lhs - rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator-(const C2 lhs, const Expression<C1> &rhs)
-{
-  return Expression<C1>(static_cast<C1>(lhs)) - rhs;
-}
-
-/**
  * @brief Subtract two expressions.
  *
  * This method builds an expression that represents the subtraction between the
@@ -2759,7 +3352,7 @@ template<typename C>
 Expression<C> operator-(Expression<C> &&lhs, const Expression<C> &rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
@@ -2783,7 +3376,7 @@ Expression<C> operator-(const Expression<C> &lhs, Expression<C> &&rhs)
   _base_expression_type<C> *lhs_ex = lhs._ex->clone();
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   return Expression<C>(lhs_ex->subtract(rhs_ex));
 }
@@ -2803,10 +3396,10 @@ template<typename C>
 Expression<C> operator-(Expression<C> &&lhs, Expression<C> &&rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   return Expression<C>(lhs_ex->subtract(rhs_ex));
 }
@@ -2833,46 +3426,6 @@ Expression<C> operator*(const Expression<C> &lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Multiply an expression and a constant value.
- *
- * This method builds an expression that represents the mutiplication
- * of an an expression and a constant value.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the multiplication `lhs * rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator*(const Expression<C1> &lhs, const C2 rhs)
-{
-  return lhs * Expression<C1>(static_cast<C1>(rhs));
-}
-
-/**
- * @brief Multiply a constant value and an expression.
- *
- * This method builds an expression that represents the mutiplication
- * of an an expression and a constant value.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the multiplication `lhs * rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator*(const C2 lhs, const Expression<C1> &rhs)
-{
-  return rhs * lhs;
-}
-
-/**
  * @brief Mutiply two expressions.
  *
  * This method builds an expression that represents the multiplication of the
@@ -2887,7 +3440,7 @@ template<typename C>
 Expression<C> operator*(Expression<C> &&lhs, const Expression<C> &rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
@@ -2911,7 +3464,7 @@ Expression<C> operator*(const Expression<C> &lhs, Expression<C> &&rhs)
   _base_expression_type<C> *lhs_ex = lhs._ex->clone();
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   return Expression<C>(lhs_ex->multiply(rhs_ex));
 }
@@ -2931,10 +3484,10 @@ template<typename C>
 Expression<C> operator*(Expression<C> &&lhs, Expression<C> &&rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
   return Expression<C>(lhs_ex->multiply(rhs_ex));
 }
@@ -2957,47 +3510,7 @@ Expression<C> operator/(const Expression<C> &lhs, const Expression<C> &rhs)
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
-  return Expression<C>(lhs_ex->divide(rhs_ex));
-}
-
-/**
- * @brief Divide an expression by a constant value.
- *
- * This method builds an expression that represents the division among
- * an expression and a constat value.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the division `lhs / rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator/(const Expression<C1> &lhs, const C2 rhs)
-{
-  return lhs / Expression<C1>(static_cast<C1>(rhs));
-}
-
-/**
- * @brief Divide a constant value by an expression.
- *
- * This method builds an expression that the division among a
- * constant value and an expression.
- *
- * @tparam C1 is the type of expression numeric constants.
- * @tparam C2 is the type of constant value.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the subtraction `lhs - rhs`.
- */
-template<typename C1, typename C2,
-         typename
-         = typename std::enable_if<std::is_arithmetic<C2>::value, C2>::type>
-inline Expression<C1> operator/(const C2 lhs, const Expression<C1> &rhs)
-{
-  return Expression<C1>(static_cast<C1>(lhs)) / rhs;
+  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
 }
 
 /**
@@ -3015,11 +3528,11 @@ template<typename C>
 Expression<C> operator/(Expression<C> &&lhs, const Expression<C> &rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
-  return Expression<C>(lhs_ex->divide(rhs_ex));
+  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
 }
 
 /**
@@ -3039,9 +3552,9 @@ Expression<C> operator/(const Expression<C> &lhs, Expression<C> &&rhs)
   _base_expression_type<C> *lhs_ex = lhs._ex->clone();
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
-  return Expression<C>(lhs_ex->divide(rhs_ex));
+  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
 }
 
 /**
@@ -3059,186 +3572,12 @@ template<typename C>
 Expression<C> operator/(Expression<C> &&lhs, Expression<C> &&rhs)
 {
   _base_expression_type<C> *lhs_ex = lhs._ex;
-  lhs._ex = NULL;
+  lhs._ex = nullptr;
 
   _base_expression_type<C> *rhs_ex = rhs._ex;
-  rhs._ex = NULL;
+  rhs._ex = nullptr;
 
-  return Expression<C>(lhs_ex->divide(rhs_ex));
-}
-
-/**
- * @brief Sum an expression and a constant.
- *
- * This method builds an expression that represents the sum of
- * an expression and a constant.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the sum `lhs + rhs`.
- */
-template<typename T>
-Expression<T> operator+(const Expression<T> &lhs, const T rhs)
-{
-  if (rhs == 0) {
-    return lhs;
-  }
-
-  return lhs + Expression<T>(rhs);
-}
-
-/**
- * @brief Subtract a constant from an expression.
- *
- * This method builds an expression that represents the subtraction of
- * a constant from an expression
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the sum `lhs - rhs`.
- */
-template<typename T>
-Expression<T> operator-(const Expression<T> &lhs, const T rhs)
-{
-  if (rhs == 0) {
-    return lhs;
-  }
-
-  return lhs - Expression<T>(rhs);
-}
-
-/**
- * @brief Multiply an expression and a constant.
- *
- * This method builds an expression that represents the multiplication between
- * an expression and a constant.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the multiplication `lhs * rhs`.
- */
-template<typename T>
-Expression<T> operator*(const Expression<T> &lhs, const T rhs)
-{
-  if (rhs == 1) {
-    return lhs;
-  }
-
-  if (rhs == 0) {
-    return Expression<T>(rhs);
-  }
-
-  return lhs * Expression<T>(rhs);
-}
-/**
- * @brief Divide an expression by a constant.
- *
- * This method builds an expression that represents the division between an
- * expression and a constant value.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is an expression.
- * @param rhs is a constant value.
- * @return An expression that represents the division `lhs / rhs`.
- */
-template<typename T>
-Expression<T> operator/(const Expression<T> &lhs, const T rhs)
-{
-  if (rhs == 1) {
-    return lhs;
-  }
-
-  return lhs / Expression<T>(rhs);
-}
-
-/**
- * @brief Sum a constant and an expression.
- *
- * This method builds an expression that represents the sum of
- * a constant and an expression.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the sum `lhs + rhs`.
- */
-template<typename T>
-Expression<T> operator+(const T lhs, const Expression<T> &rhs)
-{
-  if (lhs == 0) {
-    return rhs;
-  }
-
-  return Expression<T>(lhs) + rhs;
-}
-
-/**
- * @brief Subtract an expression from a constant.
- *
- * This method builds an expression that represents the subtraction of
- * an expression from a constant.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the subtraction `lhs - rhs`.
- */
-template<typename T>
-Expression<T> operator-(const T lhs, const Expression<T> &rhs)
-{
-  if (lhs == 0) {
-    return rhs;
-  }
-
-  return Expression<T>(lhs) - rhs;
-}
-/**
- * @brief Multiply a constant and an expression.
- *
- * This method builds an expression that represents the multiplication of a
- * constant value and an expression.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the multiplication `lhs * rhs`.
- */
-template<typename T>
-Expression<T> operator*(const T lhs, const Expression<T> &rhs)
-{
-  if (lhs == 1) {
-    return rhs;
-  }
-
-  if (lhs == 0) {
-    return Expression<T>(lhs);
-  }
-
-  return Expression<T>(lhs) * rhs;
-}
-
-/**
- * @brief Divide a constant by an expression.
- *
- * This method builds an expression that represents the division between a
- * constant value and an expression.
- *
- * @tparam C is the type of numeric constants.
- * @param lhs is a constant value.
- * @param rhs is an expression.
- * @return An expression that represents the division `lhs / rhs`.
- */
-template<typename T>
-Expression<T> operator/(const T lhs, const Expression<T> &rhs)
-{
-  if (lhs == 0) {
-    return Expression<T>(lhs);
-  }
-
-  return Expression<T>(lhs) / rhs;
+  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
 }
 
 template<typename C>
@@ -3268,7 +3607,7 @@ Symbol<C>::Symbol(const std::string &name): Expression<C>()
 
 template<typename C>
 Symbol<C>::Symbol(const Symbol<C> &orig):
-    Expression<C>((orig._ex == NULL ? NULL : orig._ex->clone()))
+    Expression<C>((orig._ex == nullptr ? nullptr : orig._ex->clone()))
 {
 }
 
@@ -3309,7 +3648,7 @@ template<typename C>
 std::ostream &operator<<(std::ostream &os,
                          const SymbolicAlgebra::Expression<C> &ex)
 {
-  if (ex._ex != NULL) {
+  if (ex._ex != nullptr) {
     ex._ex->print(os);
   }
 

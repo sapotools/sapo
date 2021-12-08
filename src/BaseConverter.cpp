@@ -32,9 +32,8 @@ BaseConverter::BaseConverter(
   // Initialize the degree shifts
   initShifts();
 
-  for (unsigned int i = 0; i < this->shifts[0]; i++) {
-    this->coeffs.push_back(0);
-  }
+  this->coeffs
+      = std::vector<SymbolicAlgebra::Expression<>>(this->shifts[0], 0);
 
   // Initialize the coefficients vector
   initCoeffs(this->polynomial);
@@ -153,30 +152,28 @@ void BaseConverter::initCoeffs(const SymbolicAlgebra::Expression<> &polynomial,
                                unsigned int var_idx,
                                const unsigned int position)
 {
-  auto coeffs = polynomial.get_coeffs(this->vars[var_idx]);
+  if (polynomial == 0) {
+    return;
+  }
+
+  auto p_coeffs = polynomial.get_coeffs(this->vars[var_idx]);
 
   // Base case, there's only one variable
   if (var_idx == this->vars.size() - 1) {
 
     for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
-      auto found = coeffs.find(i);
+      auto found = p_coeffs.find(i);
 
-      if (found == std::end(coeffs)) {
-        this->coeffs[position + i] = 0;
-      } else {
+      if (found != std::end(p_coeffs)) {
         this->coeffs[position + i] = found->second;
       }
     }
   } else {
     const unsigned int next_idx = var_idx + 1;
     for (unsigned int i = 0; i <= this->degrees[var_idx]; i++) {
-      auto found = coeffs.find(i);
+      auto found = p_coeffs.find(i);
 
-      if (found == std::end(coeffs)) {
-        SymbolicAlgebra::Expression<> zero(0);
-        initCoeffs(zero, next_idx,
-                   position + i * this->shifts[next_idx]);
-      } else {
+      if (found != std::end(p_coeffs)) {
         initCoeffs(found->second, next_idx,
                    position + i * this->shifts[next_idx]);
       }
@@ -266,17 +263,20 @@ BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
   using namespace SymbolicAlgebra;
 
   unsigned int i = multi_index2pos(mi);
-  Expression<> coeff = 0.0;
+  Expression<> coeff = 0;
 
   for (unsigned int j = 0; j <= i; j++) {
 
-    std::vector<unsigned int> mj = pos2multi_index(j);
-    if (multi_index_leq(mj, mi)) {
+    if (this->coeffs[j] != 0) {
 
-      int ichoosej = multi_index_nChoosek(mi, mj);
-      int dchoosej = multi_index_nChoosek(this->degrees, mj);
+      std::vector<unsigned int> mj = pos2multi_index(j);
+      if (multi_index_leq(mj, mi)) {
 
-      coeff += ((double)ichoosej * this->coeffs[j] / (double)dchoosej);
+        int ichoosej = multi_index_nChoosek(mi, mj);
+        int dchoosej = multi_index_nChoosek(this->degrees, mj);
+
+        coeff += ((double)ichoosej * this->coeffs[j] / (double)dchoosej);
+      }
     }
   }
   return coeff;
@@ -703,7 +703,11 @@ BaseConverter::getBernCoeffsMatrix() const
     for (long unsigned int j = 0; j < UAt[i].size(); j++) {
 
       // TODO: remove expand to speed-up computation
-      bernCoeffs.push_back(UAt[i][j].expand());
+      if (UAt[i][j] != 0) {
+        bernCoeffs.push_back(UAt[i][j].expand());
+      } else {
+        bernCoeffs.push_back(UAt[i][j]);
+      }
     }
   }
 
