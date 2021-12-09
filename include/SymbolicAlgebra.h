@@ -415,7 +415,7 @@ public:
            = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
   const Expression<C> &operator/=(const T value)
   {
-    _ex = _ex->be_divided_by(static_cast<C>(value));
+    _ex = _ex->divided_by(static_cast<C>(value));
 
     return *this;
   }
@@ -839,7 +839,7 @@ public:
    * @return a pointer to an expression that represents the division
    *          of the current object by the parameter.
    */
-  virtual _base_expression_type<C> *be_divided_by(_base_expression_type<C> *op)
+  virtual _base_expression_type<C> *divided_by(_base_expression_type<C> *op)
   {
     if (!(this->has_symbols()) && this->evaluate() == 1) {
       delete this;
@@ -961,7 +961,7 @@ public:
    * @return a pointer to an expression that represents the division
    *          of the current object by the constant value.
    */
-  virtual _base_expression_type<C> *be_divided_by(const C &value)
+  virtual _base_expression_type<C> *divided_by(const C &value)
   {
     const C rec_value = 1 / value;
 
@@ -1275,7 +1275,7 @@ public:
    * @return a pointer to an expression that represents the division
    *          of the current object by the parameter.
    */
-  _base_expression_type<C> *be_divided_by(_base_expression_type<C> *op)
+  _base_expression_type<C> *divided_by(_base_expression_type<C> *op)
   {
     if (this->evaluate() == 0) {
       delete op;
@@ -1299,7 +1299,7 @@ public:
       _finite_prod_type<C> *prod = new _finite_prod_type<C>();
 
       prod->multiply(this);
-      return prod->be_divided_by(op);
+      return prod->divided_by(op);
     }
   }
 
@@ -1372,7 +1372,7 @@ public:
    * @return a pointer to an expression that represents the division
    *          of the current object by the constant value.
    */
-  _base_expression_type<C> *be_divided_by(const C &value)
+  _base_expression_type<C> *divided_by(const C &value)
   {
     _value /= value;
 
@@ -2189,7 +2189,7 @@ public:
    * @return a pointer to an expression that represents the division
    *          of the current object by the parameter.
    */
-  _base_expression_type<C> *be_divided_by(_base_expression_type<C> *op)
+  _base_expression_type<C> *divided_by(_base_expression_type<C> *op)
   {
     switch (op->type()) {
     case FINITE_PROD: {
@@ -2251,7 +2251,7 @@ public:
    * @return a pointer to an expression that represents the division
    *          of the current object by the constant value.
    */
-  _base_expression_type<C> *be_divided_by(const C &value)
+  _base_expression_type<C> *divided_by(const C &value)
   {
     _constant /= value;
 
@@ -2383,7 +2383,7 @@ public:
     for (auto it = std::begin(_denominator); it != std::end(_denominator);
          ++it) {
       if (!(*it)->is_zero()) {
-        result->be_divided_by((*it)->replace(replacements));
+        result->divided_by((*it)->replace(replacements));
       } else {
         delete *it;
       }
@@ -2896,7 +2896,7 @@ const Expression<C> &Expression<C>::operator/=(const Expression<C> &rhs)
 {
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
-  _ex = _ex->be_divided_by(rhs_ex);
+  _ex = _ex->divided_by(rhs_ex);
 
   return *this;
 }
@@ -2940,53 +2940,10 @@ const Expression<C> &Expression<C>::operator/=(Expression<C> &&rhs)
   _base_expression_type<C> *rhs_ex = rhs._ex;
   rhs._ex = nullptr;
 
-  _ex = _ex->be_divided_by(rhs_ex);
+  _ex = _ex->divided_by(rhs_ex);
 
   return *this;
 }
-
-/*
-template<typename C>
-template<typename T, typename = typename
-std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
-&Expression<C>::operator+=(const T value)
-{
-  _ex = _ex->add(static_cast<C>(value));
-
-  return *this;
-}
-
-
-template<typename C>
-template<typename T, typename = typename
-std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
-&Expression<C>::operator-=(const T value)
-{
-  _ex = _ex->subtract(static_cast<C>(value));
-
-  return *this;
-}
-
-template<typename C>
-template<typename T, typename = typename
-std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
-&Expression<C>::operator*=(const T value)
-{
-  _ex = _ex->multiply(static_cast<C>(value));
-
-  return *this;
-}
-
-template<typename C>
-template<typename T, typename = typename
-std::enable_if<std::is_arithmetic<T>::value, T>::type> const Expression<C>
-&Expression<C>::operator/=(const T value)
-{
-  _ex = _ex->be_divided_by(static_cast<C>(value));
-
-  return *this;
-}
-*/
 
 /**
  * @brief Check whether an expression is equivalent to a constant value.
@@ -3510,7 +3467,7 @@ Expression<C> operator/(const Expression<C> &lhs, const Expression<C> &rhs)
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
-  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
+  return Expression<C>(lhs_ex->divided_by(rhs_ex));
 }
 
 /**
@@ -3532,7 +3489,7 @@ Expression<C> operator/(Expression<C> &&lhs, const Expression<C> &rhs)
 
   _base_expression_type<C> *rhs_ex = rhs._ex->clone();
 
-  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
+  return Expression<C>(lhs_ex->divided_by(rhs_ex));
 }
 
 /**
@@ -3554,7 +3511,7 @@ Expression<C> operator/(const Expression<C> &lhs, Expression<C> &&rhs)
   _base_expression_type<C> *rhs_ex = rhs._ex;
   rhs._ex = nullptr;
 
-  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
+  return Expression<C>(lhs_ex->divided_by(rhs_ex));
 }
 
 /**
@@ -3577,7 +3534,7 @@ Expression<C> operator/(Expression<C> &&lhs, Expression<C> &&rhs)
   _base_expression_type<C> *rhs_ex = rhs._ex;
   rhs._ex = nullptr;
 
-  return Expression<C>(lhs_ex->be_divided_by(rhs_ex));
+  return Expression<C>(lhs_ex->divided_by(rhs_ex));
 }
 
 template<typename C>
