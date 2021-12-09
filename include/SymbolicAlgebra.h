@@ -10,7 +10,6 @@
 
 #include <gmpxx.h>
 
-
 /*!
  *  \addtogroup SymbolicAlgebra
  *  @{

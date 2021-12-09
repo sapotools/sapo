@@ -9,6 +9,14 @@
 
 #include "Bundle.h"
 
+#if WITH_THREADS
+
+#include <thread>
+#include <mutex>
+#include <shared_mutex>
+
+#endif // WITH_THREADS
+
 #include <limits>
 #include <string>
 #include <algorithm>
@@ -630,54 +638,96 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
                          const Bundle::MaxCoeffFinder *max_finder,
                          int mode) const
 {
+  class minCoeffType
+  {
+#if WITH_THREADS
+    mutable std::shared_timed_mutex mutex;
+#endif
+    double _value;
+
+  public:
+    minCoeffType(): _value(std::numeric_limits<double>::max()) {}
+
+    inline operator double() const
+    {
+      return _value;
+    }
+
+    void update(const double &value)
+    {
+
+#if WITH_THREADS
+      std::unique_lock<std::shared_timed_mutex> wlock(mutex, std::defer_lock);
+#endif
+
+      if (_value > value) {
+        _value = value;
+      }
+    }
+  };
+
   using namespace std;
   using namespace SymbolicAlgebra;
 
-  vector<double> newDp(this->size(), std::numeric_limits<double>::max());
-  vector<double> newDm = newDp;
+  vector<minCoeffType> tp_coeffs(this->size());
+  vector<minCoeffType> tm_coeffs(this->size());
 
   std::vector<Symbol<>> alpha = get_symbol_vector("f", dim());
 
-  vector<int> dirs_to_bound;
-  if (mode) { // dynamic transformation
-    for (unsigned int i = 0; i < this->dir_matrix.size(); i++) {
-      dirs_to_bound.push_back(i);
-    }
-  }
-
-  // for each parallelotope
-  for (unsigned int i = 0; i < this->num_of_templates(); i++) {
-
-    Parallelotope P = this->getParallelotope(i);
+  auto minimizeCoeffs = [&tp_coeffs, &tm_coeffs, &vars, &alpha, &f,
+                         &max_finder, &mode](const Bundle *bundle,
+                                             const unsigned int template_num) {
+    Parallelotope P = bundle->getParallelotope(template_num);
 
     const std::vector<SymbolicAlgebra::Expression<>> &genFun
         = build_instanciated_generator_functs(alpha, P);
     const std::vector<SymbolicAlgebra::Expression<>> genFun_f
         = sub_vars(f, vars, genFun);
 
-    if (mode == 0) { // static mode
-      dirs_to_bound = this->t_matrix[i];
-    }
+    const std::vector<int> &t_matrix_i = bundle->t_matrix[template_num];
+
+    unsigned int dir_b;
 
     // for each direction
-    for (unsigned int j = 0; j < dirs_to_bound.size(); j++) {
+    const size_t num_of_dirs
+        = (mode == 0 ? t_matrix_i.size() : bundle->dir_matrix.size());
+
+    for (unsigned int j = 0; j < num_of_dirs; j++) {
+      if (mode == 0) {
+        dir_b = t_matrix_i[j];
+      } else {
+        dir_b = j;
+      }
       std::vector<SymbolicAlgebra::Expression<>> bernCoeffs
-          = compute_Bern_coeffs(alpha, genFun_f, dir_matrix[dirs_to_bound[j]]);
+          = compute_Bern_coeffs(alpha, genFun_f, bundle->dir_matrix[dir_b]);
 
       auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
 
-      const unsigned int &dir_b = dirs_to_bound[j];
-      if (newDp[dir_b] > maxCoeff.p) {
-        newDp[dir_b] = maxCoeff.p;
-      }
-
-      if (newDm[dir_b] > maxCoeff.m) {
-        newDm[dir_b] = maxCoeff.m;
-      }
+      tp_coeffs[dir_b].update(maxCoeff.p);
+      tm_coeffs[dir_b].update(maxCoeff.m);
     }
+  };
+
+  // for each parallelotope
+  std::vector<std::thread> threads;
+  for (unsigned int i = 0; i < this->num_of_templates(); i++) {
+    threads.push_back(std::thread(minimizeCoeffs, this, i));
   }
 
-  Bundle res = Bundle(this->dir_matrix, newDp, newDm, this->t_matrix);
+  for (std::thread &th: threads) {
+    if (th.joinable())
+      th.join();
+  }
+
+  std::vector<double> p_coeffs, m_coeffs;
+  for (auto it = std::begin(tp_coeffs); it != std::end(tp_coeffs); ++it) {
+    p_coeffs.push_back(*it);
+  }
+  for (auto it = std::begin(tm_coeffs); it != std::end(tm_coeffs); ++it) {
+    m_coeffs.push_back(*it);
+  }
+
+  Bundle res = Bundle(this->dir_matrix, p_coeffs, m_coeffs, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

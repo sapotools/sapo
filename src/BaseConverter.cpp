@@ -175,8 +175,7 @@ void BaseConverter::initCoeffs(const SymbolicAlgebra::Expression<> &polynomial,
 
       if (found == std::end(coeffs)) {
         SymbolicAlgebra::Expression<> zero(0);
-        initCoeffs(zero, next_idx,
-                   position + i * this->shifts[next_idx]);
+        initCoeffs(zero, next_idx, position + i * this->shifts[next_idx]);
       } else {
         initCoeffs(found->second, next_idx,
                    position + i * this->shifts[next_idx]);
