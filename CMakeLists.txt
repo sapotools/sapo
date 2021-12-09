@@ -35,6 +35,8 @@ endif()
 find_package(GLPK REQUIRED)
 find_package(GMP REQUIRED)
 
+set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp GLPK::glpk)
+
 execute_process(
         COMMAND git branch --show-current
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -81,7 +83,7 @@ add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE}
 	            ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
 
 target_compile_features(sapo PRIVATE cxx_range_for)
-target_link_libraries(sapo GMP::gmpxx GMP::gmp GLPK::glpk)
+target_link_libraries(sapo ${PROJECT_LINK_LIBS})
 
 install(TARGETS sapo DESTINATION bin)
 
