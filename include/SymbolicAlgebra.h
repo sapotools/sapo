@@ -1765,6 +1765,8 @@ public:
     }
     _denominator.clear();
 
+    delete this;
+
     return result;
   }
 
