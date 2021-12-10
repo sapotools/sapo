@@ -116,6 +116,6 @@ foreach(test_name ${sapo_tests})
    add_test(NAME ${test_name}
 	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name}
 	                 -DTEST_DIR=${CMAKE_SOURCE_DIR}/examples
-			 -P ${CMAKE_SOURCE_DIR}/runtests.cmake)
+			 -P ${CMAKE_MODULE_PATH}/runtests.cmake)
    set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP sapo_compilation)
 endforeach()
