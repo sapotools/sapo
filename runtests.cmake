@@ -1,5 +1,5 @@
 macro(SAPO_TEST TEST_NAME TEST_DIR)
-    execute_process(COMMAND bin/sapo ${TEST_DIR}/${TEST_NAME}.sil
+    execute_process(COMMAND bin/sapo -t ${TEST_DIR}/${TEST_NAME}.sil
                     RESULT_VARIABLE CMD_RESULT
                     OUTPUT_FILE ${TEST_NAME}.out)
     if(CMD_RESULT)

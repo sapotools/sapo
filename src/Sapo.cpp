@@ -9,10 +9,13 @@
 
 #include "Sapo.h"
 
-#if WITH_THREADS
+#ifdef WITH_THREADS
 #include <thread>
 #include <shared_mutex>
 
+#include "Semaphore.h"
+
+extern Semaphore thread_slots;
 #endif // WITH_THREADS
 
 /**
@@ -198,7 +201,7 @@ get_a_finer_covering(const std::list<PolytopesUnion> &orig)
   return result;
 }
 
-#if WITH_THREADS
+#ifdef WITH_THREADS
 template<typename T>
 class ThreadSafeList
 {
@@ -251,13 +254,19 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
-#if WITH_THREADS
+#ifdef WITH_THREADS
   std::vector<PolytopesUnion> vect_res(pSetList.size());
 
   auto synthesize_funct
       = [&vect_res, &sapo, &reachSet, &formula](const PolytopesUnion &pSet,
                                                 const unsigned int idx) {
+          // reserve a slot for this thread
+          thread_slots.reserve();
+
           vect_res[idx] = sapo.synthesize(reachSet, pSet, formula);
+
+          // release the slot of this thread
+          thread_slots.release();
         };
 
   std::vector<std::thread> threads;
@@ -267,10 +276,17 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
         std::thread(synthesize_funct, std::ref(*ps_it), threads.size()));
   }
 
+  // release the slot of this thread while waiting
+  // for other threads
+  thread_slots.release();
+
   for (std::thread &th: threads) {
     if (th.joinable())
       th.join();
   }
+
+  // reserve a slot for this thread
+  thread_slots.reserve();
 
   return std::list<PolytopesUnion>(std::make_move_iterator(vect_res.begin()),
                                    std::make_move_iterator(vect_res.end()));

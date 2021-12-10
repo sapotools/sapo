@@ -9,11 +9,15 @@
 
 #include "PolytopesUnion.h"
 
-#if WITH_THREADS
+#ifdef WITH_THREADS
 
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
+
+#include "Semaphore.h"
+
+extern Semaphore thread_slots;
 
 #endif // WITH_THREADS
 
@@ -90,7 +94,7 @@ PolytopesUnion &PolytopesUnion::operator=(PolytopesUnion &&orig)
 bool PolytopesUnion::contains(const Polytope &P)
 {
 
-#if WITH_THREADS
+#ifdef WITH_THREADS
   class ThreadResult
   {
     mutable std::shared_timed_mutex mutex;
@@ -117,9 +121,15 @@ bool PolytopesUnion::contains(const Polytope &P)
   ThreadResult result;
 
   auto check_and_update = [&result, &P](const Polytope &P1) {
+    // reserve a slot for this thread
+    thread_slots.reserve();
+
     if (!result.get() && P1.contains(P)) {
       result.set(true);
     }
+
+    // release the slot of this thread
+    thread_slots.release();
   };
 
   std::vector<std::thread> threads;
@@ -127,10 +137,17 @@ bool PolytopesUnion::contains(const Polytope &P)
     threads.push_back(std::thread(check_and_update, std::ref(*it)));
   }
 
+  // release the slot of this thread while waiting
+  // for other threads
+  thread_slots.release();
+
   for (std::thread &th: threads) {
     if (th.joinable())
       th.join();
   }
+
+  // reserve a slot for this thread
+  thread_slots.reserve();
 
   return result.get();
 #else  // WITH_THREADS
@@ -231,10 +248,15 @@ PolytopesUnion &PolytopesUnion::simplify()
   ThreadResult result;
   auto test_emptiness_and_simplify
       = [&result](Polytope &P, const unsigned int i) {
+          // reserve a slot for this thread
+          thread_slots.reserve();
+
           if (!P.is_empty()) {
             P.simplify();
             result.set_non_empty(i);
           }
+          // release the current thread slot
+          thread_slots.release();
         };
 
   std::vector<std::thread> threads;
@@ -243,10 +265,16 @@ PolytopesUnion &PolytopesUnion::simplify()
         std::thread(test_emptiness_and_simplify, std::ref((*this)[i]), i));
   }
 
+  // release the current thread slot while waiting
+  // for the other threads
+  thread_slots.release();
+
   for (std::thread &th: threads) {
     if (th.joinable())
       th.join();
   }
+  // reserve a slot for this thread
+  thread_slots.reserve();
 
   PolytopesUnion Pu;
   for (unsigned int i = 0; i < result.get_non_empty(); ++i) {
