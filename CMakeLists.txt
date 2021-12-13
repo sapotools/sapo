@@ -21,21 +21,25 @@ bison_target(input_parser parser/parser.yy
              ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
              DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
 
-set(WITH_THREADS ON)
+find_package(GLPK REQUIRED)
+find_package(GMP REQUIRED)
 
-if(WITH_THREADS)
+set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp GLPK::glpk)
+
+if (GLPK_THREADS)
+find_package(Threads)
+
+if(Threads_FOUND)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
-find_package(Threads REQUIRED)
 
 add_compile_definitions(WITH_THREADS)
 
 set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} Threads::Threads)
 endif()
+else()
+message("Found GLPK does not support thread local memory. Building standard version.")
+endif()
 
-find_package(GLPK REQUIRED)
-find_package(GMP REQUIRED)
-
-set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp GLPK::glpk)
 
 execute_process(
         COMMAND git branch --show-current

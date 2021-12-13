@@ -16,3 +16,4 @@ Testing/
 build/
 uftrace.data*/
 gmp-version-check.cpp
+glpk-check.cpp
