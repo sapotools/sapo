@@ -475,6 +475,16 @@ public:
     max_param_splits = n;
   }
 
+  const bool &isPreSplitsSet() const
+  {
+    return presplits;
+  }
+
+  void setPreSplits(const bool presplits)
+  {
+    this->presplits = presplits;
+  }
+
   unsigned getVarNum() const
   {
     return vars.size();
@@ -718,6 +728,7 @@ protected:
   bool iter_set;
 
   unsigned int max_param_splits;
+  bool presplits;
 
   std::vector<Variable *> vars;
   std::vector<Parameter *> params;

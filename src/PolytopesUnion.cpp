@@ -105,14 +105,14 @@ bool PolytopesUnion::contains(const Polytope &P)
 
     bool get() const
     {
-      std::shared_lock<std::shared_timed_mutex> rlock(mutex, std::defer_lock);
+      std::shared_lock<std::shared_timed_mutex> rlock(mutex);
 
       return value;
     }
 
     void set(const bool &value)
     {
-      std::unique_lock<std::shared_timed_mutex> wlock(mutex, std::defer_lock);
+      std::unique_lock<std::shared_timed_mutex> wlock(mutex);
 
       this->value = value;
     }
@@ -120,7 +120,7 @@ bool PolytopesUnion::contains(const Polytope &P)
 
   ThreadResult result;
 
-  auto check_and_update = [&result, &P](const Polytope &P1) {
+  auto check_and_update = [&result, &P](const Polytope P1) {
     // reserve a slot for this thread
     thread_slots.reserve();
 
@@ -134,7 +134,7 @@ bool PolytopesUnion::contains(const Polytope &P)
 
   std::vector<std::thread> threads;
   for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-    threads.push_back(std::thread(check_and_update, std::ref(*it)));
+    threads.push_back(std::thread(check_and_update, *it));
   }
 
   // release the slot of this thread while waiting
@@ -213,24 +213,21 @@ PolytopesUnion &PolytopesUnion::simplify()
 
     unsigned int get_non_empty() const
     {
-      std::shared_lock<std::shared_timed_mutex> read_lock(mutex,
-                                                          std::defer_lock);
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex);
 
       return non_empty;
     }
 
     void set_non_empty(const unsigned int &index)
     {
-      std::unique_lock<std::shared_timed_mutex> write_lock(mutex,
-                                                           std::defer_lock);
+      std::unique_lock<std::shared_timed_mutex> write_lock(mutex);
 
       this->new_position[non_empty++] = index;
     }
 
     unsigned int old_pos(const unsigned int &new_index) const
     {
-      std::shared_lock<std::shared_timed_mutex> read_lock(mutex,
-                                                          std::defer_lock);
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex);
 
       return this->new_position.at(new_index);
     }

@@ -124,7 +124,8 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
                                     const unsigned int cidx,
                                     std::list<Polytope> &tmp_covering,
                                     std::vector<std::vector<double>> &A,
-                                    std::vector<double> &b) const
+                                    std::vector<double> &b,
+                                    const unsigned int num_of_splits) const
 {
   if (this->A.size() == cidx) {
     Polytope ls(A, b);
@@ -140,37 +141,41 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
 
     try {
       const double min_value = minimize(this->A[cidx]);
-      const double avg_value = (this->b[cidx] + min_value) / 2;
 
       A.push_back(-this->A[cidx]);
-      b.push_back(-avg_value);
+      if (num_of_splits > 0) {
+        const double avg_value = (this->b[cidx] + min_value) / 2;
+        b.push_back(-avg_value);
 
-      split(bvect_base, cidx + 1, tmp_covering, A, b);
+        split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits - 1);
 
-      b[b.size() - 1] = -min_value;
-      b[b.size() - 2] = avg_value;
+        b[b.size() - 1] = -min_value;
+        b[b.size() - 2] = avg_value;
 
-      split(bvect_base, cidx + 1, tmp_covering, A, b);
+        split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits - 1);
+      } else {
+        b.push_back(-min_value);
+        split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits);
+      }
 
       A.pop_back();
       b.pop_back();
-
     } catch (std::logic_error &e) {
       std::cerr << "This polytope is open." << std::endl;
 
-      split(bvect_base, cidx + 1, tmp_covering, A, b);
+      split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits);
     }
 
     A.pop_back();
     b.pop_back();
   } else {
-    split(bvect_base, cidx + 1, tmp_covering, A, b);
+    split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits);
   }
 
   return tmp_covering;
 }
 
-std::list<Polytope> Polytope::split() const
+std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
 {
   std::list<Polytope> result;
 
@@ -179,7 +184,7 @@ std::list<Polytope> Polytope::split() const
   std::vector<std::vector<double>> A;
   std::vector<double> b;
 
-  split(bvect_base, 0, result, A, b);
+  split(bvect_base, 0, result, A, b, num_of_splits);
 
   return result;
 }

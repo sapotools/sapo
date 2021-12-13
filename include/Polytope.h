@@ -15,11 +15,10 @@ class Polytope : public LinearSystem
 {
 
 private:
-  std::list<Polytope> split(const std::vector<bool> &bvect_base,
-                            const unsigned int cidx,
-                            std::list<Polytope> &tmp_covering,
-                            std::vector<std::vector<double>> &A,
-                            std::vector<double> &b) const;
+  std::list<Polytope>
+  split(const std::vector<bool> &bvect_base, const unsigned int cidx,
+        std::list<Polytope> &tmp_covering, std::vector<std::vector<double>> &A,
+        std::vector<double> &b, const unsigned int num_of_splits) const;
 
 public:
   /**
@@ -111,7 +110,24 @@ public:
    *  @return A list of polytopes such that their union equals
    *      the original polytope.
    */
-  std::list<Polytope> split() const;
+  inline std::list<Polytope> split() const
+  {
+    return this->split(this->A.size());
+  }
+
+  /**
+   *  Split a polytope in a list of polytopes.
+   *
+   *  This method splits a polytope in a list of polytopes such
+   *  that their set union equals the original polytope. Each
+   *  polytope in the original list is split in
+   *  $2^\textrm{num_of_splits}$ polytopes at most.
+   *
+   * @param num_of_splits is the number of splits to performed.
+   * @return A list of polytopes such that their union equals
+   *      the original polytope.
+   */
+  std::list<Polytope> split(const unsigned int num_of_splits) const;
 
   /**
    * Update a polytope by intersecting it with another one.

@@ -411,6 +411,7 @@ InputData::InputData()
   iter_set = false;
 
   max_param_splits = 0;
+  presplits = false;
 
   spec = NULL;
 

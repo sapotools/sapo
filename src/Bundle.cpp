@@ -653,6 +653,9 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
     inline operator double() const
     {
+#ifdef WITH_THREADS
+      std::shared_lock<std::shared_timed_mutex> readlock(mutex);
+#endif
       return _value;
     }
 
@@ -660,7 +663,7 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
     {
 
 #ifdef WITH_THREADS
-      std::unique_lock<std::shared_timed_mutex> wlock(mutex, std::defer_lock);
+      std::unique_lock<std::shared_timed_mutex> writelock(mutex);
 #endif
 
       if (_value > value) {
@@ -739,7 +742,7 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
   // reserve thread slot after all the other threads end
   thread_slots.reserve();
-#else
+#else // WITH_THREADS
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
     minimizeCoeffs(this, i);
   }

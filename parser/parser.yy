@@ -47,6 +47,7 @@
 	SPEC
 	ITER
 	PSPLITS
+	PRESPLITS
 	DIR
 	TEMPL
 	PDIR
@@ -80,6 +81,8 @@
 	COLON				":"
 	SEMICOLON		";"
 	COMMA				","
+	ON 				"on"
+	OFF				"off"
 ;
 
 %token <std::string> IDENT
@@ -204,6 +207,14 @@ header			: PROB ":" problemType ";"
 							}
 
 							drv.data.setMaxParameterSplits($3);
+						}
+						| PRESPLITS ":" ON ";"
+						{
+							drv.data.setPreSplits(true);
+						}
+						| PRESPLITS ":" OFF ";"
+						{
+							drv.data.setPreSplits(false);
 						}
 symbolList	: symbol {}
 						| symbolList symbol {}

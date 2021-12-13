@@ -35,6 +35,7 @@ public:
   std::string plot;     //!< the name of the file were to plot the reach set
   unsigned int time_horizon;     //!< the computation time horizon
   unsigned int max_param_splits; //!< maximum number of splits in synthesis
+  unsigned int num_of_presplits; //!< number of presplits in synthesis
   bool verbose;                  //!< display info
 
 private:
@@ -196,13 +197,14 @@ public:
    * @param[in] formula is an STL formula providing the specification
    * @param[in] max_splits maximum number of splits of the original
    *                       parameter set to identify a non-null solution
+   * @param[in] num_of_presplits is number of splits to be performed before
+   *                             the computation
    * @returns the list of refined parameter sets
    */
-  std::list<PolytopesUnion> synthesize(const Bundle &reachSet,
-                                       const PolytopesUnion &pSet,
-                                       const std::shared_ptr<STL> formula,
-                                       const unsigned int max_splits) const;
-  virtual ~Sapo();
+  std::list<PolytopesUnion>
+  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+             const std::shared_ptr<STL> formula, const unsigned int max_splits,
+             const unsigned int num_of_presplits = 0) const;
 };
 
 #endif /* SAPO_H_ */
