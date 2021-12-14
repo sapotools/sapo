@@ -131,8 +131,11 @@ public:
   }
 };
 
+#ifdef WITH_THREADS
 template<typename C>
 std::mutex Symbol<C>::_mutex;
+#endif // WITH_THREADS
+
 template<typename C>
 std::map<std::string, typename Symbol<C>::SymbolIdType>
     Symbol<C>::_declared_symbols;
