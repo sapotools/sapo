@@ -8,6 +8,11 @@
 #include <vector>
 #include <type_traits>
 
+#ifdef WITH_THREADS
+#include <mutex>
+
+#endif // WITH_THREADS
+
 #include <gmpxx.h>
 
 /*!
@@ -54,6 +59,12 @@ class Symbol : public Expression<C>
 {
 public:
   typedef unsigned int SymbolIdType; //!< The type of symbol identificators
+
+#ifdef WITH_THREADS
+
+  static std::mutex _mutex;
+
+#endif // WITH_THREADS
 
 protected:
   static std::map<std::string, SymbolIdType>
@@ -120,6 +131,8 @@ public:
   }
 };
 
+template<typename C>
+std::mutex Symbol<C>::_mutex;
 template<typename C>
 std::map<std::string, typename Symbol<C>::SymbolIdType>
     Symbol<C>::_declared_symbols;
@@ -1447,6 +1460,8 @@ public:
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
       delete *it;
     }
+
+    _sum.clear();
   }
 
   template<typename T>
@@ -1947,6 +1962,9 @@ public:
         delete *it;
       }
     }
+
+    _numerator.clear();
+    _denominator.clear();
   }
 
   template<typename T>
@@ -3255,6 +3273,10 @@ Symbol<C>::Symbol(const char *name): Symbol<C>(std::string(name))
 template<typename C>
 Symbol<C>::Symbol(const std::string &name): Expression<C>()
 {
+#ifdef WITH_THREADS
+  std::unique_lock<std::mutex> lock(_mutex);
+#endif // WITH_THREADS
+
   auto found_symb = _declared_symbols.find(name);
 
   if (found_symb == std::end(_declared_symbols)) {
