@@ -110,7 +110,7 @@ This option can take as parameter either nothing or one natural number greater t
 ```sh
 ./bin/sapo -t path/to/file.sil
 ```
-`sapo` uses the maximum number of concurrent threads for the executing achitecture, while the line
+`sapo` uses the maximum number of concurrent threads for the executing architecture, while the line
 ```sh
 ./bin/sapo -t 5 path/to/file.sil
 ```
