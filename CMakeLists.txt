@@ -26,6 +26,9 @@ find_package(GMP REQUIRED)
 
 set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp GLPK::glpk)
 
+set(THREADED_VERSION TRUE CACHE BOOL "Enable/disable threaded version compilation")
+
+if(THREADED_VERSION)
 if (GLPK_THREADS)
 find_package(Threads)
 
@@ -39,7 +42,9 @@ endif()
 else()
 message("Found GLPK does not support thread local memory. Building standard version.")
 endif()
-
+else()
+message("Threaded version disabled.")
+endif()
 
 execute_process(
         COMMAND git branch --show-current
