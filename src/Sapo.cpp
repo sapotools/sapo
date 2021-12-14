@@ -9,6 +9,15 @@
 
 #include "Sapo.h"
 
+#ifdef WITH_THREADS
+#include <thread>
+#include <shared_mutex>
+
+#include "Semaphore.h"
+
+extern Semaphore thread_slots;
+#endif // WITH_THREADS
+
 /**
  * Constructor that instantiates Sapo
  *
@@ -30,7 +39,6 @@ Sapo::Sapo(Model *model):
 Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k) const
 {
   using namespace std;
-  using namespace GiNaC;
 
   Flowpipe flowpipe(initSet.get_directions());
 
@@ -162,7 +170,9 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
 }
 
 std::list<PolytopesUnion>
-get_a_finer_covering(const std::list<PolytopesUnion> &orig)
+get_a_finer_covering(const std::list<PolytopesUnion> &orig,
+                     const unsigned int num_of_polytope_splits
+                     = std::numeric_limits<unsigned>::max())
 {
   std::list<PolytopesUnion> result;
   for (auto ps_it = std::cbegin(orig); ps_it != std::cend(orig); ++ps_it) {
@@ -176,22 +186,64 @@ get_a_finer_covering(const std::list<PolytopesUnion> &orig)
     case 1: // the polytopes union contains exacly one polytope
     {       // then, split it by using Polytope::get_a_finer_covering();
 
-      std::list<Polytope> f_cov = (ps_it->begin())->split();
+      std::list<Polytope> f_cov
+          = (ps_it->begin())->split(num_of_polytope_splits);
       for (auto ls_it = std::begin(f_cov); ls_it != std::end(f_cov); ++ls_it) {
         result.push_back(*ls_it);
       }
-    } break;
-    case 2: // the polytopes union contains more than one polytope
-    {       // then, unpack them
+      break;
+    }
+    case 2:  // the polytopes union contains more than one polytope
+    default: // then, unpack them
+    {
       for (auto ls_it = ps_it->begin(); ls_it != ps_it->end(); ++ls_it) {
         result.push_back(*ls_it);
       }
-    } break;
+      break;
+    }
     }
   }
 
   return result;
 }
+
+#ifdef WITH_THREADS
+template<typename T>
+class ThreadSafeList
+{
+  std::list<T> list;
+  mutable std::shared_timed_mutex mutex;
+
+public:
+  ThreadSafeList(): list() {}
+
+  ThreadSafeList(const std::list<T> &list): list(list) {}
+
+  ThreadSafeList<T> &push_back(T &&obj)
+  {
+    std::unique_lock<std::shared_timed_mutex> writelock(mutex);
+
+    list.push_back(obj);
+
+    return *this;
+  }
+
+  ThreadSafeList<T> &push_back(const T &obj)
+  {
+    std::unique_lock<std::shared_timed_mutex> writelock(mutex);
+
+    list.push_back(obj);
+
+    return *this;
+  }
+
+  const std::list<T> &get_list() const
+  {
+    std::shared_lock<std::shared_timed_mutex> readlock(mutex);
+    return list;
+  }
+};
+#endif // WITH_THREADS
 
 /**
  * Parameter synthesis
@@ -203,10 +255,48 @@ get_a_finer_covering(const std::list<PolytopesUnion> &orig)
  * @returns the list of refined parameter sets
  */
 std::list<PolytopesUnion>
-synthesize_list(const Sapo &sapo, Bundle reachSet,
+synthesize_list(const Sapo &sapo, const Bundle &reachSet,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
+
+#ifdef WITH_THREADS
+  std::vector<PolytopesUnion> vect_res(pSetList.size());
+
+  auto synthesize_funct
+      = [&vect_res, &sapo, &reachSet, &formula](const PolytopesUnion pSet,
+                                                const unsigned int idx) {
+          // reserve a slot for this thread
+          thread_slots.reserve();
+
+          vect_res[idx] = sapo.synthesize(reachSet, pSet, formula);
+
+          // release the slot of this thread
+          thread_slots.release();
+        };
+
+  std::vector<std::thread> threads;
+  for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
+       ++ps_it) {
+    threads.push_back(std::thread(synthesize_funct, *ps_it, threads.size()));
+  }
+
+  // release the slot of this thread while waiting
+  // for other threads
+  thread_slots.release();
+
+  for (std::thread &th: threads) {
+    if (th.joinable())
+      th.join();
+  }
+
+  // reserve a slot for this thread
+  thread_slots.reserve();
+
+  return std::list<PolytopesUnion>(std::make_move_iterator(vect_res.begin()),
+                                   std::make_move_iterator(vect_res.end()));
+
+#else  // WITH_THREADS
   std::list<PolytopesUnion> results;
 
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
@@ -215,6 +305,7 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
   }
 
   return results;
+#endif // WITH_THREADS
 }
 
 /**
@@ -225,16 +316,21 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
  * @param[in] formula is an STL formula providing the specification
  * @param[in] max_splits maximum number of splits of the original
  *                       parameter set to identify a non-null solution
+ * @param[in] num_of_presplits is number of splits to be performed before
+ *                             the computation
  * @returns the list of refined parameter sets
  */
-std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
-                                           const PolytopesUnion &pSet,
-                                           const std::shared_ptr<STL> formula,
-                                           const unsigned int max_splits) const
+std::list<PolytopesUnion>
+Sapo::synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+                 const std::shared_ptr<STL> formula,
+                 const unsigned int max_splits,
+                 const unsigned int num_of_presplits) const
 {
-  using namespace std;
-
   std::list<PolytopesUnion> pSetList{pSet};
+
+  if (num_of_presplits > 1) {
+    pSetList = get_a_finer_covering(pSetList, num_of_presplits);
+  }
 
   unsigned int num_of_splits = 0;
   std::list<PolytopesUnion> res
@@ -251,7 +347,7 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
   }
 
   if (this->verbose) {
-    cout << "done" << endl;
+    std::cout << "done" << std::endl;
   }
 
   return res;
@@ -379,30 +475,32 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const std::shared_ptr<Atom> atom) const
 {
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
   PolytopesUnion result;
 
-  GiNaC::lst alpha = get_symbol_lst("f", reachSet.dim());
+  std::vector<Symbol<>> alpha = get_symbol_vector("f", reachSet.dim());
 
   for (unsigned int i = 0; i < reachSet.num_of_templates();
        i++) { // for each parallelotope
 
     Parallelotope P = reachSet.getParallelotope(i);
-    lst genFun = build_instanciated_generator_functs(alpha, P);
+    std::vector<Expression<>> genFun
+        = build_instanciated_generator_functs(alpha, P);
 
-    const lst fog = sub_vars(this->dyns, vars, genFun);
+    const std::vector<Expression<>> fog = sub_vars(this->dyns, vars, genFun);
 
     // compose sigma(f(gamma(x)))
-    lst sub_sigma;
-    for (unsigned int j = 0; j < this->vars.nops(); j++) {
-      sub_sigma.append(vars[j] == fog[j]);
+    Expression<>::replacement_type repl;
+    for (unsigned int j = 0; j < this->vars.size(); j++) {
+      repl[vars[j]] = fog[j];
     }
 
-    const ex sofog = atom->getPredicate().subs(sub_sigma);
+    Expression<> sofog = atom->getPredicate();
+    sofog.replace(repl);
 
     // compute the Bernstein control points
-    lst controlPts
+    std::vector<Expression<>> controlPts
         = BaseConverter(alpha, sofog).getBernCoeffsMatrix();
 
     Polytope constraints(this->params, controlPts);
@@ -511,9 +609,4 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   // If none of the above condition holds, then it must holds that :
   // 			t_itvl.begin()<=time and t_itvl.end()==time
   return this->synthesize(reachSet, pSet, formula->getSubFormula());
-}
-
-Sapo::~Sapo()
-{
-  // TODO Auto-generated destructor stub
 }

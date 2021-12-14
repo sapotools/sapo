@@ -9,6 +9,16 @@
 
 #include "Bundle.h"
 
+#ifdef WITH_THREADS
+
+#include <thread>
+#include <mutex>
+#include <shared_mutex>
+
+#include "Semaphore.h"
+
+extern Semaphore thread_slots;
+#endif // WITH_THREADS
 
 #include <limits>
 #include <string>
@@ -78,7 +88,6 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
     offp(offp), offm(offm), t_matrix(t_matrix)
 {
   using namespace std;
-  using namespace GiNaC;
 
   if (dir_matrix.size() == 0) {
     std::cerr << "Bundle::Bundle : dir_matrix must be non empty" << std::endl;
@@ -109,8 +118,8 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
   }
 
   // initialize orthogonal proximity
-  this->Theta = vector<vector<double>>(this->size(),
-                                       vector<double>(this->size(), 0));
+  this->Theta
+      = vector<vector<double>>(this->size(), vector<double>(this->size(), 0));
 
   for (unsigned int i = 0; i < this->size(); i++) {
     this->Theta[i][i] = 0;
@@ -455,31 +464,37 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
   return Bundle(dir_matrix, offp, offm, bestT);
 }
 
-GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
-                    const GiNaC::lst &expressions)
+std::vector<SymbolicAlgebra::Expression<>>
+sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
+         const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+         const std::vector<SymbolicAlgebra::Expression<>> &expressions)
 {
-  GiNaC::lst sub;
+  using namespace SymbolicAlgebra;
 
-  for (unsigned int k = 0; k < vars.nops(); ++k) {
-    sub.append(vars[k] == expressions[k]);
+  Expression<>::replacement_type repl;
+
+  for (unsigned int k = 0; k < vars.size(); ++k) {
+    repl[vars[k]] = expressions[k];
   }
 
-  GiNaC::lst results;
+  std::vector<Expression<>> results;
   for (auto ex_it = std::begin(ex_list); ex_it != std::end(ex_list); ++ex_it) {
-    results.append(ex_it->subs(sub));
+    results.push_back(Expression<>(*ex_it).replace(repl));
   }
 
   return results;
 }
 
-GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &f,
-                               const std::vector<double> &dir_vector)
+std::vector<SymbolicAlgebra::Expression<>>
+compute_Bern_coeffs(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
+                    const std::vector<SymbolicAlgebra::Expression<>> &f,
+                    const std::vector<double> &dir_vector)
 {
-  GiNaC::ex Lfog = 0;
+  SymbolicAlgebra::Expression<> Lfog = 0;
   // upper facets
   for (unsigned int k = 0; k < dir_vector.size(); k++) {
     if (dir_vector[k] != 0) {
-      Lfog = Lfog + dir_vector[k] * f[k];
+      Lfog += dir_vector[k] * f[k];
     }
   }
 
@@ -495,57 +510,59 @@ GiNaC::lst compute_Bern_coeffs(const GiNaC::lst &alpha, const GiNaC::lst &f,
  * @return the symbolic equations representing the the variable
  *         substitutions for `P`.
  */
-GiNaC::lst get_subs_from(const Parallelotope &P, const GiNaC::lst &q,
-                         const GiNaC::lst &beta)
+SymbolicAlgebra::Expression<>::replacement_type
+get_subs_from(const Parallelotope &P,
+              const std::vector<SymbolicAlgebra::Symbol<>> &q,
+              const std::vector<SymbolicAlgebra::Symbol<>> &beta)
 {
+  using namespace SymbolicAlgebra;
+
   const std::vector<double> &base_vertex = P.base_vertex();
   const std::vector<double> &lengths = P.lengths();
 
-  GiNaC::lst subs;
+  Expression<>::replacement_type repl;
 
-  for (unsigned int k = 0; k < q.nops(); k++) {
-    subs.append(q[k] == base_vertex[k]);
-    subs.append(beta[k] == lengths[k]);
+  for (unsigned int k = 0; k < q.size(); k++) {
+    repl[q[k]] = base_vertex[k];
+    repl[beta[k]] = lengths[k];
   }
 
-  return subs;
+  return repl;
 }
 
-double Bundle::MaxCoeffFinder::coeff_eval_p(const GiNaC::ex &c) const
+double Bundle::MaxCoeffFinder::coeff_eval_p(
+    const SymbolicAlgebra::Expression<> &c) const
 {
-  using namespace GiNaC;
-
-  return ex_to<numeric>(c).to_double();
+  return c.evaluate<double>();
 }
 
-double Bundle::MaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
+double Bundle::MaxCoeffFinder::coeff_eval_m(
+    const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  using namespace GiNaC;
-
-  double value = ex_to<numeric>(bernCoeff).to_double();
+  double value = bernCoeff.evaluate<double>();
 
   // TODO: The following conditional evaluation avoids -0
   //       values. Check the difference between -0 and 0.
   return (value == 0 ? 0 : -value);
 }
 
-double
-Bundle::ParamMaxCoeffFinder::coeff_eval_p(const GiNaC::ex &bernCoeff) const
+double Bundle::ParamMaxCoeffFinder::coeff_eval_p(
+    const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
   return paraSet.maximize(params, bernCoeff);
 }
 
-double
-Bundle::ParamMaxCoeffFinder::coeff_eval_m(const GiNaC::ex &bernCoeff) const
+double Bundle::ParamMaxCoeffFinder::coeff_eval_m(
+    const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
   return paraSet.maximize(params, -bernCoeff);
 };
 
-Bundle::MaxCoeffFinder::MaxCoeffType
-Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs) const
+Bundle::MaxCoeffFinder::MaxCoeffType Bundle::MaxCoeffFinder::find_max_coeffs(
+    const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const
 {
   // find the maximum coefficient
-  GiNaC::lst::const_iterator b_coeff_it = b_coeffs.begin();
+  auto b_coeff_it = b_coeffs.begin();
 
   double maxCoeffp = coeff_eval_p(*b_coeff_it);
   double maxCoeffm = coeff_eval_m(*b_coeff_it);
@@ -583,13 +600,14 @@ Bundle::MaxCoeffFinder::find_max_coeffs(const GiNaC::lst &b_coeffs) const
  * @param P is the considered parallelotope.
  * @return The generator function of `P`.
  */
-GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
-                                               const Parallelotope &P)
+std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
+    const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
+    const Parallelotope &P)
 {
-  GiNaC::lst gen_functs;
+  std::vector<SymbolicAlgebra::Expression<>> gen_functs;
   for (auto it = std::begin(P.base_vertex()); it != std::end(P.base_vertex());
        ++it) {
-    gen_functs.append(*it);
+    gen_functs.push_back(*it);
   }
 
   const std::vector<std::vector<double>> &versors = P.versors();
@@ -601,7 +619,7 @@ GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
     if (P.lengths()[i] != 0) {
       std::vector<double> vector = P.lengths()[i] * versors[i];
       for (unsigned int j = 0; j < vector.size(); j++) {
-        gen_functs[j] = gen_functs[j] + alpha[i] * vector[j];
+        gen_functs[j] += alpha[i] * vector[j];
       }
     }
   }
@@ -618,56 +636,127 @@ GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
  * @param[in] mode transformation mode (0=OFO,1=AFO)
  * @returns transformed bundle
  */
-Bundle Bundle::transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                         const std::vector<SymbolicAlgebra::Expression<>> &f,
                          const Bundle::MaxCoeffFinder *max_finder,
                          int mode) const
 {
+  class minCoeffType
+  {
+#ifdef WITH_THREADS
+    mutable std::shared_timed_mutex mutex;
+#endif
+    double _value;
+
+  public:
+    minCoeffType(): _value(std::numeric_limits<double>::max()) {}
+
+    inline operator double() const
+    {
+#ifdef WITH_THREADS
+      std::shared_lock<std::shared_timed_mutex> readlock(mutex);
+#endif
+      return _value;
+    }
+
+    void update(const double &value)
+    {
+
+#ifdef WITH_THREADS
+      std::unique_lock<std::shared_timed_mutex> writelock(mutex);
+#endif
+
+      if (_value > value) {
+        _value = value;
+      }
+    }
+  };
+
   using namespace std;
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
-  vector<double> newDp(this->size(), std::numeric_limits<double>::max());
-  vector<double> newDm = newDp;
+  vector<minCoeffType> tp_coeffs(this->size());
+  vector<minCoeffType> tm_coeffs(this->size());
 
-  GiNaC::lst alpha = get_symbol_lst("f", dim());
+  std::vector<Symbol<>> alpha = get_symbol_vector("f", dim());
 
-  vector<int> dirs_to_bound;
-  if (mode) { // dynamic transformation
-    for (unsigned int i = 0; i < this->dir_matrix.size(); i++) {
-      dirs_to_bound.push_back(i);
-    }
-  }
+  auto minimizeCoeffs = [&tp_coeffs, &tm_coeffs, &vars, &alpha, &f,
+                         &max_finder, &mode](const Bundle *bundle,
+                                             const unsigned int template_num) {
+#ifdef WITH_THREADS
+    extern Semaphore thread_slots;
 
-  // for each parallelotope
-  for (unsigned int i = 0; i < this->num_of_templates(); i++) {
+    thread_slots.reserve();
+#endif
 
-    Parallelotope P = this->getParallelotope(i);
-  
-    const lst &genFun = build_instanciated_generator_functs(alpha, P);
-    const lst genFun_f = sub_vars(f, vars, genFun);
+    Parallelotope P = bundle->getParallelotope(template_num);
 
-    if (mode == 0) { // static mode
-      dirs_to_bound = this->t_matrix[i];
-    }
+    const std::vector<SymbolicAlgebra::Expression<>> &genFun
+        = build_instanciated_generator_functs(alpha, P);
+    const std::vector<SymbolicAlgebra::Expression<>> genFun_f
+        = sub_vars(f, vars, genFun);
+
+    const std::vector<int> &t_matrix_i = bundle->t_matrix[template_num];
+
+    unsigned int dir_b;
 
     // for each direction
-    for (unsigned int j = 0; j < dirs_to_bound.size(); j++) {
-      lst bernCoeffs
-          = compute_Bern_coeffs(alpha, genFun_f, dir_matrix[dirs_to_bound[j]]);
+    const size_t num_of_dirs
+        = (mode == 0 ? t_matrix_i.size() : bundle->dir_matrix.size());
+
+    for (unsigned int j = 0; j < num_of_dirs; j++) {
+      if (mode == 0) {
+        dir_b = t_matrix_i[j];
+      } else {
+        dir_b = j;
+      }
+      std::vector<SymbolicAlgebra::Expression<>> bernCoeffs
+          = compute_Bern_coeffs(alpha, genFun_f, bundle->dir_matrix[dir_b]);
 
       auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
 
-      const unsigned int &dir_b = dirs_to_bound[j];
-      if (newDp[dir_b] > maxCoeff.p) {
-        newDp[dir_b] = maxCoeff.p;
-      }
-
-      if (newDm[dir_b] > maxCoeff.m) {
-        newDm[dir_b] = maxCoeff.m;
-      }
+      tp_coeffs[dir_b].update(maxCoeff.p);
+      tm_coeffs[dir_b].update(maxCoeff.m);
     }
+
+#ifdef WITH_THREADS
+    thread_slots.release();
+#endif
+  };
+
+#ifdef WITH_THREADS
+  // for each parallelotope
+  std::vector<std::thread> threads;
+  for (unsigned int i = 0; i < this->num_of_templates(); i++) {
+    threads.push_back(std::thread(minimizeCoeffs, this, i));
   }
 
-  Bundle res = Bundle(this->dir_matrix, newDp, newDm, this->t_matrix);
+  // release the current thread slot while waiting
+  // for the other threads
+  thread_slots.release();
+
+  for (std::thread &th: threads) {
+    if (th.joinable())
+      th.join();
+  }
+
+  // reserve thread slot after all the other threads end
+  thread_slots.reserve();
+#else  // WITH_THREADS
+  for (unsigned int i = 0; i < this->num_of_templates(); i++) {
+    minimizeCoeffs(this, i);
+  }
+#endif // WITH_THREADS
+
+  std::vector<double> p_coeffs, m_coeffs;
+  for (auto it = std::begin(tp_coeffs); it != std::end(tp_coeffs); ++it) {
+    p_coeffs.push_back(*it);
+  }
+  for (auto it = std::begin(tm_coeffs); it != std::end(tm_coeffs); ++it) {
+    m_coeffs.push_back(*it);
+  }
+
+  Bundle res = Bundle(this->dir_matrix, p_coeffs, m_coeffs, this->t_matrix);
   if (mode == 0) {
     return res.get_canonical();
   }

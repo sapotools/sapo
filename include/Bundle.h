@@ -19,8 +19,6 @@ class Bundle
 {
   using Vector = std::vector<double>;
   using Matrix = std::vector<Vector>;
-  using CtrlPointType
-      = std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>;
 
 private:
   Matrix dir_matrix;                      //!< direction matrix
@@ -28,8 +26,6 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
-  std::map<std::vector<int>, GiNaC::lst>
-      bernCoeffs; //!< Bernstein coefficients map
 
   /**
    * Compute the distances between the half-spaced of the parallelotopes
@@ -50,7 +46,8 @@ private:
      * coefficient.
      * @return The numerical evaluation of Bernstein coefficient upper-bound.
      */
-    virtual double coeff_eval_p(const GiNaC::ex &bernCoeff) const;
+    virtual double
+    coeff_eval_p(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
     /**
      * @brief Evaluate the Bernstein coefficient lower-bound complementary.
@@ -60,7 +57,8 @@ private:
      * @return The numerical evaluation of Bernstein coefficient
      *         lower-bound complementary.
      */
-    virtual double coeff_eval_m(const GiNaC::ex &bernCoeff) const;
+    virtual double
+    coeff_eval_m(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
   public:
     typedef struct MaxCoeffType {
@@ -82,7 +80,8 @@ private:
      *         upper-bound for all the Bernstein coefficients in
      *         `b_coeffs`.
      */
-    MaxCoeffType find_max_coeffs(const GiNaC::lst &b_coeffs) const;
+    MaxCoeffType find_max_coeffs(
+        const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const;
   };
 
   /**
@@ -91,7 +90,7 @@ private:
    */
   class ParamMaxCoeffFinder : public MaxCoeffFinder
   {
-    const GiNaC::lst &params;
+    const std::vector<SymbolicAlgebra::Symbol<>> &params;
     const Polytope &paraSet;
     /**
      * @brief Evaluate the parametric Bernstein coefficient upper-bound.
@@ -101,7 +100,7 @@ private:
      * @return The numerical evaluation of parametric Bernstein
      *         coefficient upper-bound.
      */
-    double coeff_eval_p(const GiNaC::ex &bernCoeff) const;
+    double coeff_eval_p(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
     /**
      * @brief Evaluate the parametric Bernstein coefficient lower-bound
@@ -112,7 +111,7 @@ private:
      * @return The numerical evaluation of parametric Bernstein coefficient
      *         lower-bound complementary.
      */
-    double coeff_eval_m(const GiNaC::ex &bernCoeff) const;
+    double coeff_eval_m(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
   public:
     /**
@@ -121,8 +120,10 @@ private:
      * @param params is the list of parameters.
      * @param paraSet is the set of admissible values for parameters.
      */
-    ParamMaxCoeffFinder(const GiNaC::lst &params, const Polytope &paraSet):
-        MaxCoeffFinder(), params(params), paraSet(paraSet)
+    ParamMaxCoeffFinder(const std::vector<SymbolicAlgebra::Symbol<>> &params,
+                        const Polytope &paraSet):
+        MaxCoeffFinder(),
+        params(params), paraSet(paraSet)
     {
     }
   };
@@ -136,7 +137,8 @@ private:
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+  Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                   const std::vector<SymbolicAlgebra::Expression<>> &f,
                    const MaxCoeffFinder *max_finder, int mode) const;
 
 public:
@@ -252,7 +254,8 @@ public:
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
+  inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                          const std::vector<SymbolicAlgebra::Expression<>> &f,
                           int mode) const
   {
     MaxCoeffFinder max_finder;
@@ -270,9 +273,10 @@ public:
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
-                          const GiNaC::lst &f, const Polytope &paraSet,
-                          int mode) const
+  inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                          const std::vector<SymbolicAlgebra::Symbol<>> &params,
+                          const std::vector<SymbolicAlgebra::Expression<>> &f,
+                          const Polytope &paraSet, int mode) const
   {
     ParamMaxCoeffFinder max_finder(params, paraSet);
 
@@ -285,11 +289,15 @@ public:
 
   friend void swap(Bundle &A, Bundle &B);
 };
-
 void swap(Bundle &A, Bundle &B);
 
-GiNaC::lst build_instanciated_generator_functs(const GiNaC::lst &alpha,
-                                               const Parallelotope &P);
-GiNaC::lst sub_vars(const GiNaC::lst &ex_list, const GiNaC::lst &vars,
-                    const GiNaC::lst &expressions);
+std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
+    const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
+    const Parallelotope &P);
+
+std::vector<SymbolicAlgebra::Expression<>>
+sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
+         const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+         const std::vector<SymbolicAlgebra::Expression<>> &expressions);
+
 #endif /* BUNDLE_H_ */

@@ -10,18 +10,19 @@
 
 #include <sstream>
 
-GiNaC::lst get_symbol_lst(const std::string &basename,
-                          const unsigned int number_of_symbols)
+std::vector<SymbolicAlgebra::Symbol<>>
+get_symbol_vector(const std::string &basename,
+                  const unsigned int number_of_symbols)
 {
-  using namespace GiNaC;
+  using namespace SymbolicAlgebra;
 
-  GiNaC::lst symbol_lst;
+  std::vector<Symbol<>> symbol_vector;
   for (unsigned int i = 0; i < number_of_symbols; ++i) {
     std::ostringstream oss;
     oss << basename << i;
 
-    symbol_lst.append(symbol(oss.str()));
+    symbol_vector.push_back(Symbol<>(oss.str()));
   }
 
-  return symbol_lst;
+  return symbol_vector;
 }

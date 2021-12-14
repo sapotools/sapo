@@ -2,8 +2,9 @@
 
 #include "../include/AbsSynIO.h"
 
+#include "../../include/SymbolicAlgebra.h"
+
 using namespace std;
-using namespace GiNaC;
 
 namespace std
 {
@@ -174,17 +175,22 @@ double Expr::evaluate(const InputData &im) const
   }
 }
 
-ex Expr::toEx(const InputData &m, const lst &vars, const lst &params) const
+SymbolicAlgebra::Expression<>
+Expr::toEx(const InputData &m,
+           const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+           const std::vector<SymbolicAlgebra::Symbol<>> &params) const
 {
+  using namespace SymbolicAlgebra;
+
   switch (type) {
   case exprType::NUM_ATOM:
-    return numeric(std::to_string(val).c_str());
+    return Expression<>(val);
   case exprType::ID_ATOM:
     if (m.isVarDefined(name))
       return vars[m.getVarPos(name)];
-    else if (m.isParamDefined(name))
+    if (m.isParamDefined(name))
       return params[m.getParamPos(name)];
-    else if (m.isDefDefined(name))
+    if (m.isDefDefined(name))
       return m.getDef(name)->getValue()->toEx(m, vars, params);
     throw std::logic_error("Unknown ID");
   case exprType::SUM:
@@ -359,12 +365,16 @@ int Formula::simplifyRec()
 }
 
 // no negations, were eliminated in simplify
-std::shared_ptr<STL> Formula::toSTL(const InputData &m, const lst &vars,
-                                    const lst &params) const
+std::shared_ptr<STL>
+Formula::toSTL(const InputData &m,
+               const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+               const std::vector<SymbolicAlgebra::Symbol<>> &params) const
 {
+  using namespace SymbolicAlgebra;
   switch (type) {
-  case formulaType::ATOM:
+  case formulaType::ATOM: {
     return std::make_shared<Atom>(ex->toEx(m, vars, params));
+  }
   case formulaType::CONJ:
     return std::make_shared<Conjunction>(f1->toSTL(m, vars, params),
                                          f2->toSTL(m, vars, params));
@@ -401,6 +411,7 @@ InputData::InputData()
   iter_set = false;
 
   max_param_splits = 0;
+  presplits = false;
 
   spec = NULL;
 

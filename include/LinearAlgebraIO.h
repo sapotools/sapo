@@ -13,7 +13,8 @@
 
 #include "LinearAlgebra.h"
 
-namespace std {
+namespace std
+{
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
 {

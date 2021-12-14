@@ -16,7 +16,7 @@ int Atom::num_of_atoms = 0;
  * @param[in] predicate a symbolic expression
  * @param[in] id an identifier for the atomic formula
  */
-Atom::Atom(const GiNaC::ex &predicate):
+Atom::Atom(const SymbolicAlgebra::Expression<> &predicate):
     STL(ATOM), predicate(predicate), id(this->num_of_atoms++)
 {
 }
