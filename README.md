@@ -38,16 +38,15 @@ The parameter synthesis produces a refined set of parameters represented by:
 
 In order to compile the source code, the following packages are required:
 
-- a C++11-compatible compiler
+- a C++14-compatible compiler
 - <a href="https://cmake.org/">cmake</a> (version>=3.6)
 - <a href="https://www.gnu.org/software/make/">make</a>
-- <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</a>
 - <a href="https://github.com/westes/flex">Flex</a> (version >=2.6.3)
 - <a href="https://www.gnu.org/software/bison/manual">Bison</a>
 - <a href="https://gmplib.org">GNU Multi-Precision Library</a>
 - <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >=5.0)
 
-### Downloading and Compiling Sapo
+### Downloading and Compiling Sapo<a id="compile-multithreading"></a>
 
 Once all the required packages have been installed, download and build Sapo by using the following commands:
 
@@ -58,7 +57,16 @@ cmake .
 make
 ```
 
-This generates the executable `./bin/sapo`.
+This generates the executable `./bin/sapo` which supports multi-threading even though 
+[it only runs one thread by default](#multithreading).
+
+If you prefer to compile plain sequential code, then replace the last two lines of
+above instructions by
+
+```sh
+cmake -DTHREADED_VERSION:BOOL=FALSE .
+make
+```
 
 ## Testing Sapo
 
@@ -89,3 +97,21 @@ cat path/to/file.sil | ./bin/sapo
 The outputs are always written on standard output.
 
 Some examples of SIL files are provided for your convenience in the directory [examples](examples) in this repository.
+
+A complete list of `sapo` command line options can be obtained by using the `-h` option.
+
+
+### Multi-threading<a id="multithreading"></a>
+
+Even if `sapo` was [compiled with multi-threading support](#compile-multithreading), it only runs one thread 
+by default. In order to increase the number of threads, use the `sapo` command line option `-t`. 
+
+This option can take as parameter either nothing or one natural number greater than 0. By issuing the command
+```sh
+./bin/sapo -t path/to/file.sil
+```
+`sapo` uses the maximum number of concurrent threads for the executing achitecture, while the line
+```sh
+./bin/sapo -t 5 path/to/file.sil
+```
+makes `sapo` running 5 threads. 
