@@ -116,14 +116,11 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
 }
 
 template<typename OSTREAM>
-void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
+void output_synthesis(OSTREAM &os, const Model *model,
+                      const std::list<PolytopesUnion> &synth_params,
+                      const std::vector<Flowpipe> &flowpipes)
 {
   using OF = OutputFormatter<OSTREAM>;
-
-  // Synthesize parameters
-  std::list<PolytopesUnion> synth_params = sapo.synthesize(
-      *(model->getReachSet()), *(model->getParaSet()), model->getSpec(),
-      sapo.max_param_splits, sapo.num_of_presplits);
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
@@ -134,6 +131,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
   } else {
     os << OF::list_begin();
     bool not_first = false;
+    unsigned int params_idx = 0;
     for (auto p_it = std::cbegin(synth_params);
          p_it != std::cend(synth_params); ++p_it) {
       if (p_it->size() != 0) {
@@ -143,14 +141,71 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
         not_first = true;
         os << OF::object_header() << OF::field_header("parameter set") << *p_it
            << OF::field_footer() << OF::field_separator()
-           << OF::field_header("flowpipe")
-           << sapo.reach(*(model->getReachSet()), *p_it, sapo.time_horizon)
+           << OF::field_header("flowpipe") << flowpipes[params_idx++]
            << OF::field_footer() << OF::object_footer();
+      } else {
+        ++params_idx;
       }
     }
     os << OF::list_end();
   }
   os << OF::field_footer() << OF::object_footer();
+}
+
+template<typename OSTREAM>
+void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
+{
+  // Synthesize parameters
+  std::list<PolytopesUnion> synth_params = sapo.synthesize(
+      *(model->getReachSet()), *(model->getParaSet()), model->getSpec(),
+      sapo.max_param_splits, sapo.num_of_presplits);
+
+  std::vector<Flowpipe> flowpipes(synth_params.size());
+
+  auto compute_reachability
+      = [&flowpipes, &sapo, &model](const PolytopesUnion &pSet,
+                                    unsigned int params_idx) {
+          extern Semaphore thread_slots;
+
+          thread_slots.reserve();
+
+          flowpipes[params_idx]
+              = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
+
+          thread_slots.release();
+        };
+
+  if (!every_set_is_empty(synth_params)) {
+#ifdef WITH_THREADS
+    std::vector<std::thread> threads;
+    for (auto p_it = std::cbegin(synth_params);
+         p_it != std::cend(synth_params); ++p_it) {
+      threads.push_back(
+          std::thread(compute_reachability, std::ref(*p_it), threads.size()));
+    }
+
+    // release the current thread slot while waiting
+    // for the other threads
+    thread_slots.release();
+
+    for (std::thread &th: threads) {
+      if (th.joinable())
+        th.join();
+    }
+
+    // reserve thread slot after all the other threads end
+    thread_slots.reserve();
+#else
+    unsigned int params_idx = 0;
+    for (auto p_it = std::cbegin(synth_params);
+         p_it != std::cend(synth_params); ++p_it) {
+      flowpipes[params_idx++]
+          = sapo.reach(*(model->getReachSet()), *p_it, sapo.time_horizon);
+    }
+#endif
+  }
+
+  output_synthesis(os, model, synth_params, flowpipes);
 }
 
 template<typename OSTREAM>
