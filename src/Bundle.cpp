@@ -742,11 +742,11 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
   // reserve thread slot after all the other threads end
   thread_slots.reserve();
-#else // WITH_THREADS
+#else  // WITH_THREADS
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
     minimizeCoeffs(this, i);
   }
-#endif
+#endif // WITH_THREADS
 
   std::vector<double> p_coeffs, m_coeffs;
   for (auto it = std::begin(tp_coeffs); it != std::end(tp_coeffs); ++it) {

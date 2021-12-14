@@ -255,14 +255,11 @@ public:
  * @returns the list of refined parameter sets
  */
 std::list<PolytopesUnion>
-synthesize_list(const Sapo &sapo, Bundle reachSet,
+synthesize_list(const Sapo &sapo, const Bundle &reachSet,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL> &formula)
 {
 
-// TODO: The following multi-thread code is disable because
-// contains a unidentified bug.
-#ifdef DEBUG
 #ifdef WITH_THREADS
   std::vector<PolytopesUnion> vect_res(pSetList.size());
 
@@ -309,16 +306,6 @@ synthesize_list(const Sapo &sapo, Bundle reachSet,
 
   return results;
 #endif // WITH_THREADS
-#else  // DEBUG
-  std::list<PolytopesUnion> results;
-
-  for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
-       ++ps_it) {
-    results.push_back(sapo.synthesize(reachSet, *ps_it, formula));
-  }
-
-  return results;
-#endif // DEBUG
 }
 
 /**
