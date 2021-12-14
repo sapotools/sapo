@@ -81,11 +81,11 @@
 	COLON				":"
 	SEMICOLON		";"
 	COMMA				","
-	ON 				"on"
-	OFF				"off"
 ;
 
 %token <std::string> IDENT
+%token <std::string> ON
+%token <std::string> OFF
 %token <int> INTEGER
 %token <double> DOUBLE
 

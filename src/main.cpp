@@ -38,7 +38,11 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();
   sapo.max_param_splits = data.getMaxParameterSplits();
-  sapo.num_of_presplits = num_of_presplits;
+  if (data.isPreSplitsSet()) {
+    sapo.num_of_presplits = num_of_presplits;
+  } else {
+    sapo.num_of_presplits = 0;
+  }
   sapo.verbose = verbose;
 
   return sapo;
@@ -119,7 +123,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
   // Synthesize parameters
   std::list<PolytopesUnion> synth_params = sapo.synthesize(
       *(model->getReachSet()), *(model->getParaSet()), model->getSpec(),
-      sapo.max_param_splits, sapo.max_param_splits);
+      sapo.max_param_splits, sapo.num_of_presplits);
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);

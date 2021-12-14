@@ -20,6 +20,8 @@ natural			{digit}+
 double			(({natural})\.{natural})
 
 letter			[a-zA-Z]
+on          "on"
+off         "off"
 ident				{letter}({letter}|{digit}|\_-)*
 
 l_comment		"//"[^\n]*\n
@@ -102,6 +104,9 @@ U			return yy::parser::make_UNTIL(loc);
 {natural}		return yy::parser::make_INTEGER(std::stoi(yytext), loc);
 
 {double}		return yy::parser::make_DOUBLE(std::stof(yytext), loc);
+
+{on}        return yy::parser::make_ON(yytext, loc);
+{off}       return yy::parser::make_OFF(yytext, loc);
 
 {ident}			return yy::parser::make_IDENT(yytext, loc);
 
