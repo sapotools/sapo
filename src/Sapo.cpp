@@ -328,7 +328,7 @@ Sapo::synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
 {
   std::list<PolytopesUnion> pSetList{pSet};
 
-  if (num_of_presplits > 0) {
+  if (num_of_presplits > 1) {
     pSetList = get_a_finer_covering(pSetList, num_of_presplits);
   }
 
