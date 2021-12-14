@@ -619,7 +619,9 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
     if (P.lengths()[i] != 0) {
       std::vector<double> vector = P.lengths()[i] * versors[i];
       for (unsigned int j = 0; j < vector.size(); j++) {
-        gen_functs[j] += alpha[i] * vector[j];
+        if (vector[j] != 0) {
+          gen_functs[j] += alpha[i] * vector[j];
+        }
       }
     }
   }
