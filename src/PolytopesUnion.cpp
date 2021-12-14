@@ -120,7 +120,7 @@ bool PolytopesUnion::contains(const Polytope &P)
 
   ThreadResult result;
 
-  auto check_and_update = [&result, &P](const Polytope P1) {
+  auto check_and_update = [&result, &P](const Polytope &P1) {
     // reserve a slot for this thread
     thread_slots.reserve();
 
@@ -134,7 +134,7 @@ bool PolytopesUnion::contains(const Polytope &P)
 
   std::vector<std::thread> threads;
   for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-    threads.push_back(std::thread(check_and_update, *it));
+    threads.push_back(std::thread(check_and_update, std::ref(*it)));
   }
 
   // release the slot of this thread while waiting
