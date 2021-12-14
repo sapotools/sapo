@@ -26,8 +26,6 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
   Matrix Theta;                           //!< matrix of orthogonal proximity
-  std::map<std::vector<int>, std::vector<SymbolicAlgebra::Expression<>>>
-      bernCoeffs; //!< Bernstein coefficients map
 
   /**
    * Compute the distances between the half-spaced of the parallelotopes
