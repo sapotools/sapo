@@ -215,7 +215,7 @@ bool LinearSystem::is_in(std::vector<double> Ai, const double bi) const
     line.push_back(this->b[i]);
     bool is_in = true;
     for (unsigned int j = 0; j < Ai.size(); j++) {
-      is_in = is_in && (abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
+      is_in = is_in && (std::abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
     }
     if (is_in)
       return true;
