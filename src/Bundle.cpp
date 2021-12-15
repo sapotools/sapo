@@ -556,7 +556,7 @@ double Bundle::ParamMaxCoeffFinder::coeff_eval_m(
     const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
   return paraSet.maximize(params, -bernCoeff);
-};
+}
 
 Bundle::MaxCoeffFinder::MaxCoeffType Bundle::MaxCoeffFinder::find_max_coeffs(
     const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const

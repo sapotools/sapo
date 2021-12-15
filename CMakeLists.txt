@@ -35,7 +35,11 @@ find_package(Threads)
 if(Threads_FOUND)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 
+if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
+add_definitions(-DWITH_THREADS)
+else()
 add_compile_definitions(WITH_THREADS)
+endif()
 
 set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} Threads::Threads)
 endif()
