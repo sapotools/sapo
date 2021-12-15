@@ -639,7 +639,7 @@ void InputData::defaultDirections()
 
 void InputData::defaultTemplate()
 {
-  templateMatrix.resize(1, vector<int>(vars.size()));
+  templateMatrix.resize(1, vector<int>(min(vars.size(), directions.size())));
   iota(templateMatrix[0].begin(), templateMatrix[0].end(), 0);
   //	templateMatrix.resize(1, vector<int>(vars.size(), 1));
 }
