@@ -162,21 +162,21 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
 
   std::vector<Flowpipe> flowpipes(synth_params.size());
 
-  auto compute_reachability
-      = [&flowpipes, &sapo, &model](const PolytopesUnion &pSet,
-                                    unsigned int params_idx) {
-          extern Semaphore thread_slots;
-
-          thread_slots.reserve();
-
-          flowpipes[params_idx]
-              = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
-
-          thread_slots.release();
-        };
-
   if (!every_set_is_empty(synth_params)) {
 #ifdef WITH_THREADS
+    auto compute_reachability
+        = [&flowpipes, &sapo, &model](const PolytopesUnion &pSet,
+                                      unsigned int params_idx) {
+            extern Semaphore thread_slots;
+
+            thread_slots.reserve();
+
+            flowpipes[params_idx]
+                = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
+
+            thread_slots.release();
+          };
+
     std::vector<std::thread> threads;
     for (auto p_it = std::cbegin(synth_params);
          p_it != std::cend(synth_params); ++p_it) {
