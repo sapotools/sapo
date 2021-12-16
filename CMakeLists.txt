@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include_directories(include include/STL parser/include)
 
 find_package(FLEX 2.6.3 REQUIRED)
-find_package(BISON 3.5.1 REQUIRED)
+find_package(BISON 3.4.0 REQUIRED)
 
 flex_target(input_scanner parser/scanner.l
             ${CMAKE_SOURCE_DIR}/parser/src/scanner.cpp)
@@ -57,7 +57,7 @@ execute_process(
         OUTPUT_STRIP_TRAILING_WHITESPACE
    )
 
-string(REGEX MATCH "^v[0-9]+\.[0-9]+.*$" SAPO_MINOR "${GIT_BRANCH}")
+string(REGEX MATCH "^v[0-9]+[.][0-9]+.*$" SAPO_MINOR "${GIT_BRANCH}")
 
 set(SAPO_VERSION "")
 
@@ -69,7 +69,7 @@ if(NOT SAPO_MINOR STREQUAL "")
          OUTPUT_STRIP_TRAILING_WHITESPACE
       )
    
-   string(REGEX MATCH "^v[0-9]+\.[0-9]+\.[0-9]+$" SAPO_VERSION "${GIT_TAG}")
+   string(REGEX MATCH "^v[0-9]+[.][0-9]+[.][0-9]+$" SAPO_VERSION "${GIT_TAG}")
 endif()
 
 if(SAPO_VERSION STREQUAL "")
