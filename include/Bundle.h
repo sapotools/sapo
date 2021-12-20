@@ -25,7 +25,6 @@ private:
   Vector offp;                            //!< superior offset
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
-  Matrix Theta;                           //!< matrix of orthogonal proximity
 
   /**
    * Compute the distances between the half-spaced of the parallelotopes

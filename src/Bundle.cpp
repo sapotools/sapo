@@ -35,7 +35,7 @@ extern ThreadPool thread_pool;
  */
 Bundle::Bundle(const Bundle &orig):
     dir_matrix(orig.dir_matrix), offp(orig.offp), offm(orig.offm),
-    t_matrix(orig.t_matrix), Theta(orig.Theta)
+    t_matrix(orig.t_matrix)
 {
 }
 
@@ -55,7 +55,6 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.offp, B.offp);
   std::swap(A.offm, B.offm);
   std::swap(A.t_matrix, B.t_matrix);
-  std::swap(A.Theta, B.Theta);
 }
 
 /**
@@ -113,19 +112,6 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
   } else {
     std::cerr << "Bundle::Bundle : t_matrix must be non empty" << std::endl;
     exit(EXIT_FAILURE);
-  }
-
-  // initialize orthogonal proximity
-  this->Theta
-      = vector<vector<double>>(this->size(), vector<double>(this->size(), 0));
-
-  for (unsigned int i = 0; i < this->size(); i++) {
-    this->Theta[i][i] = 0;
-    for (unsigned int j = i + 1; j < this->size(); j++) {
-      double prox = orthProx(this->dir_matrix[i], this->dir_matrix[j]);
-      this->Theta[i][j] = prox;
-      this->Theta[j][i] = prox;
-    }
   }
 }
 
