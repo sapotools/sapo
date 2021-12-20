@@ -91,7 +91,7 @@ PolytopesUnion &PolytopesUnion::operator=(PolytopesUnion &&orig)
 bool PolytopesUnion::contains(const Polytope &P)
 {
 
-#ifndef WITH_THREADS
+#ifdef WITH_THREADS
   class ThreadResult
   {
     mutable std::shared_timed_mutex mutex;
