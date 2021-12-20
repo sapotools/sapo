@@ -10,14 +10,12 @@
 #include "Bundle.h"
 
 #ifdef WITH_THREADS
-
-#include <thread>
 #include <mutex>
 #include <shared_mutex>
 
-#include "Semaphore.h"
+#include "ThreadPool.h"
 
-extern Semaphore thread_slots;
+extern ThreadPool thread_pool;
 #endif // WITH_THREADS
 
 #include <limits>
@@ -685,12 +683,6 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
   auto minimizeCoeffs = [&tp_coeffs, &tm_coeffs, &vars, &alpha, &f,
                          &max_finder, &mode](const Bundle *bundle,
                                              const unsigned int template_num) {
-#ifdef WITH_THREADS
-    extern Semaphore thread_slots;
-
-    thread_slots.reserve();
-#endif
-
     Parallelotope P = bundle->getParallelotope(template_num);
 
     const std::vector<SymbolicAlgebra::Expression<>> &genFun
@@ -720,30 +712,21 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
       tp_coeffs[dir_b].update(maxCoeff.p);
       tm_coeffs[dir_b].update(maxCoeff.m);
     }
-
-#ifdef WITH_THREADS
-    thread_slots.release();
-#endif
   };
 
 #ifdef WITH_THREADS
-  // for each parallelotope
-  std::vector<std::thread> threads;
+  ThreadPool::BatchId batch_id = thread_pool.create_batch();
+
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
-    threads.push_back(std::thread(minimizeCoeffs, this, i));
+    // submit the task to the thread pool
+    thread_pool.submit_to_batch(batch_id, minimizeCoeffs, this, i);
   }
 
-  // release the current thread slot while waiting
-  // for the other threads
-  thread_slots.release();
+  // join to the pool threads
+  thread_pool.join_threads(batch_id);
 
-  for (std::thread &th: threads) {
-    if (th.joinable())
-      th.join();
-  }
-
-  // reserve thread slot after all the other threads end
-  thread_slots.reserve();
+  // close the batch
+  thread_pool.close_batch(batch_id);
 #else  // WITH_THREADS
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
     minimizeCoeffs(this, i);

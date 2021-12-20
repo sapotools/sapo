@@ -10,12 +10,11 @@
 #include "Sapo.h"
 
 #ifdef WITH_THREADS
-#include <thread>
 #include <shared_mutex>
 
-#include "Semaphore.h"
+#include "ThreadPool.h"
 
-extern Semaphore thread_slots;
+extern ThreadPool thread_pool;
 #endif // WITH_THREADS
 
 /**
@@ -266,32 +265,23 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
   auto synthesize_funct
       = [&vect_res, &sapo, &reachSet, &formula](const PolytopesUnion pSet,
                                                 const unsigned int idx) {
-          // reserve a slot for this thread
-          thread_slots.reserve();
-
           vect_res[idx] = sapo.synthesize(reachSet, pSet, formula);
-
-          // release the slot of this thread
-          thread_slots.release();
         };
 
-  std::vector<std::thread> threads;
+  ThreadPool::BatchId batch_id = thread_pool.create_batch();
+
+  unsigned int res_idx = 0;
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
        ++ps_it) {
-    threads.push_back(std::thread(synthesize_funct, *ps_it, threads.size()));
+    // submit the task to the thread pool
+    thread_pool.submit_to_batch(batch_id, synthesize_funct, *ps_it, res_idx++);
   }
 
-  // release the slot of this thread while waiting
-  // for other threads
-  thread_slots.release();
+  // join to the pool threads
+  thread_pool.join_threads(batch_id);
 
-  for (std::thread &th: threads) {
-    if (th.joinable())
-      th.join();
-  }
-
-  // reserve a slot for this thread
-  thread_slots.reserve();
+  // close the batch
+  thread_pool.close_batch(batch_id);
 
   return std::list<PolytopesUnion>(std::make_move_iterator(vect_res.begin()),
                                    std::make_move_iterator(vect_res.end()));

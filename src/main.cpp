@@ -12,11 +12,9 @@
 #include <sstream>
 
 #ifdef WITH_THREADS
-#include <thread>
+#include "ThreadPool.h"
 
-#include "Semaphore.h"
-
-Semaphore thread_slots;
+ThreadPool thread_pool(0);
 
 #endif // WITH_THREADS
 
@@ -167,34 +165,26 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
     auto compute_reachability
         = [&flowpipes, &sapo, &model](const PolytopesUnion &pSet,
                                       unsigned int params_idx) {
-            extern Semaphore thread_slots;
-
-            thread_slots.reserve();
-
             flowpipes[params_idx]
                 = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
-
-            thread_slots.release();
           };
 
-    std::vector<std::thread> threads;
+    ThreadPool::BatchId batch_id = thread_pool.create_batch();
+
+    unsigned int res_idx = 0;
     for (auto p_it = std::cbegin(synth_params);
          p_it != std::cend(synth_params); ++p_it) {
-      threads.push_back(
-          std::thread(compute_reachability, std::ref(*p_it), threads.size()));
+      // submit the task to the thread pool
+      thread_pool.submit_to_batch(
+          batch_id,
+          std::bind(compute_reachability, std::ref(*p_it), res_idx++));
     }
 
-    // release the current thread slot while waiting
-    // for the other threads
-    thread_slots.release();
+    // join to the pool threads
+    thread_pool.join_threads(batch_id);
 
-    for (std::thread &th: threads) {
-      if (th.joinable())
-        th.join();
-    }
-
-    // reserve thread slot after all the other threads end
-    thread_slots.reserve();
+    // close the batch
+    thread_pool.close_batch(batch_id);
 #else
     unsigned int params_idx = 0;
     for (auto p_it = std::cbegin(synth_params);
@@ -316,10 +306,9 @@ int main(int argc, char **argv)
   prog_opts opts = parse_opts(argc, argv);
 
 #ifdef WITH_THREADS
-  thread_slots.reset(opts.num_of_threads);
-
-  // reserve slot for current thread
-  thread_slots.reserve();
+  // add all the aimed threads, but the current
+  // one to the thread pool
+  thread_pool.reset(opts.num_of_threads - 1);
 #endif
 
   if (opts.get_help) {
