@@ -1,5 +1,7 @@
 #include "../include/AbsSyn.h"
 
+#include <limits>
+
 #include "../include/AbsSynIO.h"
 
 #include "../../include/SymbolicAlgebra.h"
@@ -401,39 +403,42 @@ Formula::toSTL(const InputData &m,
  ***********************
  */
 
-InputData::InputData()
+unsigned int max_param_splits;
+bool presplits;
+
+double max_versor_magnitude;
+
+std::vector<Variable *> vars;
+std::vector<Parameter *> params;
+std::vector<Constant *> consts;
+std::vector<Definition *> defs;
+
+Formula *spec;
+
+std::vector<std::vector<double>> directions;
+std::vector<double> LBoffsets;
+std::vector<double> UBoffsets;
+
+std::vector<std::vector<int>> templateMatrix;
+
+std::vector<std::vector<double>> paramDirections;
+std::vector<double> paramLBoffsets;
+std::vector<double> paramUBoffsets;
+
+// SAPO options
+transType trans;
+bool decomp, decomp_defined;
+double alpha;
+
+InputData::InputData():
+    problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
+    paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
+    max_param_splits(0), presplits(false),
+    max_versor_magnitude(std::numeric_limits<double>::max()), vars(), params(),
+    consts(), defs(), spec(NULL), directions(), LBoffsets(), UBoffsets(),
+    templateMatrix(), paramDirections(), paramLBoffsets(), paramUBoffsets(),
+    trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(-1)
 {
-  problem = problemType::P_UNDEF;
-  varMode = modeType::M_UNDEF;
-  paramMode = modeType::M_UNDEF;
-
-  iterations = 0;
-  iter_set = false;
-
-  max_param_splits = 0;
-  presplits = false;
-
-  spec = NULL;
-
-  vars.resize(0);
-  params.resize(0);
-  consts.resize(0);
-  defs.resize(0);
-
-  directions.resize(0);
-  LBoffsets.resize(0);
-  UBoffsets.resize(0);
-
-  templateMatrix.resize(0);
-
-  paramDirections.resize(0);
-  paramLBoffsets.resize(0);
-  paramUBoffsets.resize(0);
-
-  trans = transType::T_UNDEF;
-  decomp = false;
-  decomp_defined = false;
-  alpha = -1;
 }
 
 InputData::~InputData()

@@ -36,7 +36,8 @@ public:
   unsigned int time_horizon;     //!< the computation time horizon
   unsigned int max_param_splits; //!< maximum number of splits in synthesis
   unsigned int num_of_presplits; //!< number of presplits in synthesis
-  bool verbose;                  //!< display info
+  double max_versor_magnitude; //!< maximum versor magnitude for single bundle
+  bool verbose;                //!< display info
 
 private:
   const std::vector<SymbolicAlgebra::Expression<>>

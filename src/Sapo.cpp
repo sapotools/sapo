@@ -9,6 +9,8 @@
 
 #include "Sapo.h"
 
+#include <limits>
+
 #ifdef WITH_THREADS
 #include <shared_mutex>
 
@@ -24,6 +26,8 @@ extern ThreadPool thread_pool;
  * @param[in] sapo_opt options to tune sapo
  */
 Sapo::Sapo(Model *model):
+    trans(0), decomp(0), max_param_splits(0), num_of_presplits(0),
+    max_versor_magnitude(std::numeric_limits<double>::max()), verbose(false),
     dyns(model->getDyns()), vars(model->getVars()), params(model->getParams())
 {
 }
@@ -142,8 +146,9 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
         // TODO: check whether there is any chance for a transformed bundle to
         // be empty
         if (!bls.is_empty()) {
-          // add to the new reached bundle
-          nbundles.push_back(bundle);
+          // split if necessary the new reached bundle and add the resulting
+          // bundles to the nbundles list
+          nbundles.splice(nbundles.end(), bundle.split(max_versor_magnitude));
 
           last_step.add(bls);
         }

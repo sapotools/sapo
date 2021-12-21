@@ -15,6 +15,9 @@
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
 
+// define the default versor magnitude multiplier for bundle splits
+#define SPLIT_MAGNITUDE_RATIO 0.75
+
 class Bundle
 {
   using Vector = std::vector<double>;
@@ -141,8 +144,18 @@ private:
                    const MaxCoeffFinder *max_finder, int mode) const;
 
 public:
-  // constructors
+  /**
+   * @brief Copy constructor.
+   *
+   * @param orig is the model for the new object.
+   */
   Bundle(const Bundle &orig);
+
+  /**
+   * @brief Swap constructor.
+   *
+   * @param orig is the model for the new object.
+   */
   Bundle(Bundle &&orig);
 
   /**
@@ -169,6 +182,11 @@ public:
   unsigned int size() const
   {
     return this->dir_matrix.size();
+  }
+
+  const std::vector<std::vector<int>> &get_templates() const
+  {
+    return this->t_matrix;
   }
 
   const std::vector<int> &get_templates(long unsigned int i) const
@@ -234,6 +252,21 @@ public:
    * @returns canonized bundle
    */
   Bundle get_canonical() const;
+
+  /**
+   * @brief Split a bundle in a list of smaller bundles.
+   *
+   * @param max_versor_magnitude is the maximal versor magnitude of the
+   * resulting bundles.
+   * @param split_magnitude_ratio is the ratio of the `max_versor_magnitude`
+   * that is used a maximal magnitude of the bundles in output.
+   * @return A list of bundles whose maximal versor magnitude is
+   * `split_magnitude_ratio`*`max_versor_magnitude` and whose union is
+   * the current bundle.
+   */
+  std::list<Bundle> split(const double max_versor_magnitude,
+                          const double split_magnitude_ratio
+                          = SPLIT_MAGNITUDE_RATIO) const;
 
   /**
    * Decompose the current symbolic polytope

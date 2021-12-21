@@ -48,6 +48,7 @@
 	ITER
 	PSPLITS
 	PRESPLITS
+	MAX_MAGNITUDE
 	DIR
 	TEMPL
 	PDIR
@@ -216,6 +217,11 @@ header			: PROB ":" problemType ";"
 						{
 							drv.data.setPreSplits(false);
 						}
+						| MAX_MAGNITUDE ":" DOUBLE ";"
+						{
+							drv.data.setMaxVersorMagnitude($3);
+						}
+
 symbolList	: symbol {}
 						| symbolList symbol {}
 
