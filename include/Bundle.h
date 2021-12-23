@@ -256,15 +256,15 @@ public:
   /**
    * @brief Split a bundle in a list of smaller bundles.
    *
-   * @param max_versor_magnitude is the maximal versor magnitude of the
+   * @param max_bundle_magnitude is the maximal versor magnitude of the
    * resulting bundles.
-   * @param split_magnitude_ratio is the ratio of the `max_versor_magnitude`
+   * @param split_magnitude_ratio is the ratio of the `max_bundle_magnitude`
    * that is used a maximal magnitude of the bundles in output.
    * @return A list of bundles whose maximal versor magnitude is
-   * `split_magnitude_ratio`*`max_versor_magnitude` and whose union is
+   * `split_magnitude_ratio`*`max_bundle_magnitude` and whose union is
    * the current bundle.
    */
-  std::list<Bundle> split(const double max_versor_magnitude,
+  std::list<Bundle> split(const double max_bundle_magnitude,
                           const double split_magnitude_ratio
                           = SPLIT_MAGNITUDE_RATIO) const;
 

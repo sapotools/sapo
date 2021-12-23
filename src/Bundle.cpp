@@ -387,7 +387,7 @@ double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
 std::list<Bundle> &
 split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_offp,
              std::vector<double> &tmp_offm, const unsigned int idx,
-             const Bundle &splitting, const double &max_versor_magnitude,
+             const Bundle &splitting, const double &max_bundle_magnitude,
              const double &split_magnitude_ratio)
 {
   if (idx == splitting.get_directions().size()) {
@@ -397,19 +397,19 @@ split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_offp,
     return res;
   }
 
-  if (std::abs(splitting.get_offsetp(idx) - splitting.get_offsetm(idx))
-      > max_versor_magnitude) {
+  if (std::abs(splitting.get_offsetp(idx) + splitting.get_offsetm(idx))
+      > max_bundle_magnitude) {
     double lower_bound = -splitting.get_offsetm(idx);
 
     do {
       const double upper_bound = std::min(
-          lower_bound + split_magnitude_ratio * max_versor_magnitude,
+          lower_bound + split_magnitude_ratio * max_bundle_magnitude,
           splitting.get_offsetp(idx));
 
       tmp_offm[idx] = -lower_bound;
       tmp_offp[idx] = upper_bound;
       split_bundle(res, tmp_offp, tmp_offm, idx + 1, splitting,
-                   max_versor_magnitude, split_magnitude_ratio);
+                   max_bundle_magnitude, split_magnitude_ratio);
 
       lower_bound = upper_bound;
     } while (splitting.get_offsetp(idx) != lower_bound);
@@ -417,12 +417,12 @@ split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_offp,
     tmp_offm[idx] = splitting.get_offsetm(idx);
     tmp_offp[idx] = splitting.get_offsetp(idx);
     split_bundle(res, tmp_offp, tmp_offm, idx + 1, splitting,
-                 max_versor_magnitude, split_magnitude_ratio);
+                 max_bundle_magnitude, split_magnitude_ratio);
   }
   return res;
 }
 
-std::list<Bundle> Bundle::split(const double max_versor_magnitude,
+std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
                                 const double split_magnitude_ratio) const
 {
   std::list<Bundle> split_list;
@@ -430,7 +430,7 @@ std::list<Bundle> Bundle::split(const double max_versor_magnitude,
   std::vector<double> tmp_offp(offp.size());
   std::vector<double> tmp_offm(offm.size());
 
-  split_bundle(split_list, tmp_offp, tmp_offm, 0, *this, max_versor_magnitude,
+  split_bundle(split_list, tmp_offp, tmp_offm, 0, *this, max_bundle_magnitude,
                split_magnitude_ratio);
 
   return split_list;

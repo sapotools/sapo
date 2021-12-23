@@ -27,7 +27,7 @@ extern ThreadPool thread_pool;
  */
 Sapo::Sapo(Model *model):
     trans(0), decomp(0), max_param_splits(0), num_of_presplits(0),
-    max_versor_magnitude(std::numeric_limits<double>::max()), verbose(false),
+    max_bundle_magnitude(std::numeric_limits<double>::max()), verbose(false),
     dyns(model->getDyns()), vars(model->getVars()), params(model->getParams())
 {
 }
@@ -148,7 +148,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
         if (!bls.is_empty()) {
           // split if necessary the new reached bundle and add the resulting
           // bundles to the nbundles list
-          nbundles.splice(nbundles.end(), bundle.split(max_versor_magnitude));
+          nbundles.splice(nbundles.end(), bundle.split(max_bundle_magnitude));
 
           last_step.add(bls);
         }

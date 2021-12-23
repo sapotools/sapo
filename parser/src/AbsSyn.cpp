@@ -406,7 +406,7 @@ Formula::toSTL(const InputData &m,
 unsigned int max_param_splits;
 bool presplits;
 
-double max_versor_magnitude;
+double max_bundle_magnitude;
 
 std::vector<Variable *> vars;
 std::vector<Parameter *> params;
@@ -434,7 +434,7 @@ InputData::InputData():
     problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
     paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
     max_param_splits(0), presplits(false),
-    max_versor_magnitude(std::numeric_limits<double>::max()), vars(), params(),
+    max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), spec(NULL), directions(), LBoffsets(), UBoffsets(),
     templateMatrix(), paramDirections(), paramLBoffsets(), paramUBoffsets(),
     trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(-1)

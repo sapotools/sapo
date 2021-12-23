@@ -1,7 +1,7 @@
 problem: synthesis;
 variable_mode: parallelotopes;
 
-max_versor_magnitude: 0.3;
+max_bundle_magnitude: 0.3;
 
 iterations: 150;
 
