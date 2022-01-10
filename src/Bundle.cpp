@@ -56,8 +56,8 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.offp, B.offp);
   std::swap(A.offm, B.offm);
   std::swap(A.t_matrix, B.t_matrix);
-	std::swap(A.constraintDirections, B.constraintDirections);
-	std::swap(A.constraintOffsets, B.constraintOffsets);
+  std::swap(A.constraintDirections, B.constraintDirections);
+  std::swap(A.constraintOffsets, B.constraintOffsets);
 }
 
 /**
@@ -81,9 +81,10 @@ double orthProx(std::vector<double> v1, std::vector<double> v2)
  * @param[in] offm lower offsets
  * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
-         const std::vector<std::vector<int>> &t_matrix):
-		Bundle(dir_matrix, offp, offm, t_matrix, {}, {})
+Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
+               const Vector &offm,
+               const std::vector<std::vector<int>> &t_matrix):
+    Bundle(dir_matrix, offp, offm, t_matrix, {}, {})
 {
 }
 
@@ -100,8 +101,8 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
 Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
                const Vector &offm,
                const std::vector<std::vector<int>> &t_matrix,
-							 const std::vector<std::vector<double>> constrDirs,
-							 const std::vector<double> constrOffsets):
+               const std::vector<std::vector<double>> constrDirs,
+               const std::vector<double> constrOffsets):
     dir_matrix(dir_matrix),
     offp(offp), offm(offm), t_matrix(t_matrix),
     constraintDirections(constrDirs), constraintOffsets(constrOffsets)
@@ -715,21 +716,23 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
       std::vector<SymbolicAlgebra::Expression<>> bernCoeffs
           = compute_Bern_coeffs(alpha, genFun_f, bundle->dir_matrix[dir_b]);
 
-			auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
-			
-			tp_coeffs[dir_b].update(maxCoeff.p);
+      auto maxCoeff = max_finder->find_max_coeffs(bernCoeffs);
+
+      tp_coeffs[dir_b].update(maxCoeff.p);
       tm_coeffs[dir_b].update(maxCoeff.m);
-			
-			// for each asserted direction, check that the new offset
-			// does not violate the constraint
-			for (unsigned assertIndex = 0; assertIndex < bundle->constraintDirections.size();
-					 assertIndex++) {
-				if (bundle->dir_matrix[dir_b] == bundle->constraintDirections[assertIndex]) {
-					tp_coeffs[dir_b].update(bundle->constraintOffsets[assertIndex]);
-				} else if (bundle->dir_matrix[dir_b] == -bundle->constraintDirections[assertIndex]) {
-					tm_coeffs[dir_b].update(bundle->constraintOffsets[assertIndex]);
-				}
-			}
+
+      // for each asserted direction, check that the new offset
+      // does not violate the constraint
+      for (unsigned assertIndex = 0;
+           assertIndex < bundle->constraintDirections.size(); assertIndex++) {
+        if (bundle->dir_matrix[dir_b]
+            == bundle->constraintDirections[assertIndex]) {
+          tp_coeffs[dir_b].update(bundle->constraintOffsets[assertIndex]);
+        } else if (bundle->dir_matrix[dir_b]
+                   == -bundle->constraintDirections[assertIndex]) {
+          tm_coeffs[dir_b].update(bundle->constraintOffsets[assertIndex]);
+        }
+      }
     }
   };
 
@@ -760,9 +763,10 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
     m_coeffs.push_back(*it);
   }
 
-  Bundle res = Bundle(this->dir_matrix, p_coeffs, m_coeffs, this->t_matrix, this->constraintDirections, this->constraintOffsets);
-	
-	if (mode == 0) {
+  Bundle res = Bundle(this->dir_matrix, p_coeffs, m_coeffs, this->t_matrix,
+                      this->constraintDirections, this->constraintOffsets);
+
+  if (mode == 0) {
     return res.get_canonical();
   }
 

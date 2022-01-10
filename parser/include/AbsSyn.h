@@ -55,20 +55,20 @@ enum transType {
 class Expr
 {
   friend std::ostream &operator<<(std::ostream &os, const Expr &e)
-	{
-		return e.prettyPrint(os, 10);
-	}
+  {
+    return e.prettyPrint(os, 10);
+  }
 
 public:
-	// order of types follows order of priority (needed by Expr::prettyPrint)
+  // order of types follows order of priority (needed by Expr::prettyPrint)
   enum exprType {
     NUM_ATOM = 0, // atomic expression (single number)
-    ID_ATOM,  // atomic expression (single identifier)
-    NEG,       // unary minus (-x)
-    DIV,      // division (x / y)
-    MUL,      // multiplication (x * y)
-    SUB,      // subtraction (x - y)
-    SUM      // sum (x + y)
+    ID_ATOM,      // atomic expression (single identifier)
+    NEG,          // unary minus (-x)
+    DIV,          // division (x / y)
+    MUL,          // multiplication (x * y)
+    SUB,          // subtraction (x - y)
+    SUM           // sum (x + y)
   };
 
   Expr(std::string n)
@@ -126,9 +126,10 @@ public:
   {
     return right;
   }
-  
-  int getDegree(const InputData &id)
-			const; // return the degree of the polynomial expression considering only vars
+
+  int getDegree(
+      const InputData &id) const; // return the degree of the polynomial
+                                  // expression considering only vars
 
   Expr *copy() const; // deep copy of expression
 
@@ -136,25 +137,25 @@ public:
       const; // checks if the expression contains only numbers
   double evaluate(const InputData &im)
       const; // evaluates the value of a numeric expression
-	
-	bool hasParams(const InputData &im)
-			const; // checks if the expression contains parameter names
-      
-	double getCoefficient(const InputData &id, const std::string name)
-			const;	 /*
-								* returns the coefficient of the variable "name"
-								* in the simplified expression (in which each variable
-								* apperas only one time)
-								* Applies only to linear expressions without parameters
-								*/
-	
-	double getOffset(const InputData &id)
-			const;	 /*
-								* returns the numerical term
-								* in the simplified expression (in which each variable
-								* apperas only one time)
-								* Applies only to linear expressions without parameters
-								*/
+
+  bool hasParams(const InputData &im)
+      const; // checks if the expression contains parameter names
+
+  double getCoefficient(const InputData &id, const std::string name)
+      const; /*
+              * returns the coefficient of the variable "name"
+              * in the simplified expression (in which each variable
+              * apperas only one time)
+              * Applies only to linear expressions without parameters
+              */
+
+  double getOffset(const InputData &id)
+      const; /*
+              * returns the numerical term
+              * in the simplified expression (in which each variable
+              * apperas only one time)
+              * Applies only to linear expressions without parameters
+              */
 
   SymbolicAlgebra::Expression<>
   toEx(const InputData &m, const std::vector<SymbolicAlgebra::Symbol<>> &vars,
@@ -172,7 +173,7 @@ protected:
   double val;       // value of number (if ATOM)
   Expr *left;       // left operand (if not ATOM)
   Expr *right;      // right operand (if not ATOM)
-  
+
   // utility for printing expressions without too many parenthesis
   std::ostream &prettyPrint(std::ostream &os, const int level) const;
 };
@@ -244,15 +245,15 @@ public:
   {
     return i;
   }
-  
+
   formulaType getType() const
-	{
-		return type;
-	}
-  
-  bool isLinear(const InputData &id)
-			const; // checks if the formula is a boolean combination
-						 // of linear inequalities
+  {
+    return type;
+  }
+
+  bool
+  isLinear(const InputData &id) const; // checks if the formula is a boolean
+                                       // combination of linear inequalities
 
   /*
    * simplification, removes negations
@@ -400,7 +401,6 @@ protected:
   double val;       // value
 };
 
-
 /*
  ************************
  *      DEFINITION      *
@@ -449,34 +449,34 @@ private:
 class Assumption
 {
   friend std::ostream &operator<<(std::ostream &os, const Assumption &a)
-	{
-		return os << *(a.ex);
-	}
+  {
+    return os << *(a.ex);
+  }
 
 public:
-	
-	Assumption(Expr *e): ex(e) {}
-	
-	~Assumption()
-	{
-		delete ex;
-	}
-	
-	Expr *getExpr() const
-	{
-		return ex;
-	}
-	
-	std::vector<double> getDirection(const InputData &id)
-				const;		// return the direction corresponding to the linear constraint
-	
-	double getOffset(const InputData &id) const		// return the offset of the constraint*/
-	{
-		return -ex->getOffset(id);
-	}
-	
+  Assumption(Expr *e): ex(e) {}
+
+  ~Assumption()
+  {
+    delete ex;
+  }
+
+  Expr *getExpr() const
+  {
+    return ex;
+  }
+
+  std::vector<double> getDirection(const InputData &id)
+      const; // return the direction corresponding to the linear constraint
+
+  double
+  getOffset(const InputData &id) const // return the offset of the constraint*/
+  {
+    return -ex->getOffset(id);
+  }
+
 protected:
-	Expr *ex;		// constraint of the form ex <= 0
+  Expr *ex; // constraint of the form ex <= 0
 };
 
 /*
@@ -587,8 +587,8 @@ public:
   }
   unsigned getAssumptionsNumber() const
   {
-		return assumptions.size();
-	}
+    return assumptions.size();
+  }
 
   bool isVarDefined(const std::string &name)
       const; // checks if a variable named 'name' already exists
@@ -637,11 +637,12 @@ public:
       const; // return the definition named 'name', which must exist
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
-	
-	const Assumption *getAssumption(int i) const // return the assumption in position i
-	{
-		return assumptions[i];
-	}
+
+  const Assumption *
+  getAssumption(int i) const // return the assumption in position i
+  {
+    return assumptions[i];
+  }
 
   void addVariable(Variable *v)
   {
@@ -660,9 +661,9 @@ public:
     defs.push_back(d);
   } // adds a new definition, which name is not already used
   void addAssumption(Assumption *a)
-	{
-		assumptions.push_back(a);
-	} // adds a new assumption
+  {
+    assumptions.push_back(a);
+  } // adds a new assumption
 
   bool isSpecDefined() const
   {
@@ -831,8 +832,8 @@ protected:
   std::vector<Parameter *> params;
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
-	
-	std::vector<Assumption *> assumptions;
+
+  std::vector<Assumption *> assumptions;
 
   Formula *spec;
 

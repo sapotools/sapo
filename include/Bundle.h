@@ -26,10 +26,10 @@ private:
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
 
-	// constraints over directions (assertions)
-	// constrainedDirection[i] * vars <= constraintOffset
-	std::vector<std::vector<double>> constraintDirections;
-	std::vector<double> constraintOffsets;
+  // constraints over directions (assertions)
+  // constrainedDirection[i] * vars <= constraintOffset
+  std::vector<std::vector<double>> constraintDirections;
+  std::vector<double> constraintOffsets;
 
   /**
    * Compute the distances between the half-spaced of the parallelotopes
@@ -161,20 +161,20 @@ public:
   Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &t_matrix);
 
-	/**
+  /**
    * Constructor that instantiates the bundle with auto-generated variables
    *
    * @param[in] dir_matrix matrix of directions
    * @param[in] offp upper offsets
    * @param[in] offm lower offsets
    * @param[in] t_matrix t_matrixs matrix
-	 * @param[in] constrDirs directions that are constrained by assumptions
-	 * @param[in] constrOffsets offsets of assumptions
+   * @param[in] constrDirs directions that are constrained by assumptions
+   * @param[in] constrOffsets offsets of assumptions
    */
   Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
          const std::vector<std::vector<int>> &t_matrix,
-				 const std::vector<std::vector<double>> constrDirs,
-				 const std::vector<double> constrOffsets);
+         const std::vector<std::vector<double>> constrDirs,
+         const std::vector<double> constrOffsets);
 
   unsigned int dim() const
   {

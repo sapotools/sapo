@@ -584,7 +584,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
   // Inside Always interval
   if (t_itvl.end() > time) {
-//		std::cout << "Inside interval (a = 0)" << std::endl;
+    //		std::cout << "Inside interval (a = 0)" << std::endl;
 
     // Refine wrt phi
     PolytopesUnion P

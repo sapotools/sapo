@@ -35,49 +35,49 @@ namespace AbsSyn
 
 std::ostream &Expr::prettyPrint(std::ostream &os, const int level) const
 {
-	if (level < type)
-		os << "(";
-	
-	switch (type) {
-		case exprType::NUM_ATOM:
-			os << val;
-			break;
-		case exprType::ID_ATOM:
-			os << name;
-			break;
-		case exprType::SUM:
-			left->prettyPrint(os, type);
-			os << " + ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::SUB:
-			left->prettyPrint(os, type);
-			os << " - ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::MUL:
-			left->prettyPrint(os, type);
-			os << " * ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::DIV:
-			left->prettyPrint(os, type);
-			os << " / ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::NEG:
-			os << " - ";
-			left->prettyPrint(os, type);
-			break;
-		default:
-			std::logic_error("Unsupported expression");
-			break;
-	}
-	
-	if (level < type)
-		os << ")";
-	
-	return os;
+  if (level < type)
+    os << "(";
+
+  switch (type) {
+  case exprType::NUM_ATOM:
+    os << val;
+    break;
+  case exprType::ID_ATOM:
+    os << name;
+    break;
+  case exprType::SUM:
+    left->prettyPrint(os, type);
+    os << " + ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::SUB:
+    left->prettyPrint(os, type);
+    os << " - ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::MUL:
+    left->prettyPrint(os, type);
+    os << " * ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::DIV:
+    left->prettyPrint(os, type);
+    os << " / ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::NEG:
+    os << " - ";
+    left->prettyPrint(os, type);
+    break;
+  default:
+    std::logic_error("Unsupported expression");
+    break;
+  }
+
+  if (level < type)
+    os << ")";
+
+  return os;
 }
 
 Expr *Expr::mul(Expr *e)
@@ -126,96 +126,98 @@ Expr *Expr::neg()
 
 int Expr::getDegree(const InputData &id) const
 {
-	switch (type) {
-		case Expr::NUM_ATOM:
-			return 0;
-		case Expr::ID_ATOM:
-			if (id.isVarDefined(name)) {
-				return 1;
-			} else if (id.isDefDefined(name)) {
-				return id.getDef(name)->getValue()->getDegree(id);
-			} else {
-				return 0;
-			}
-		case Expr::NEG:
-		case Expr::DIV:			// division is allowed only if denominator is numeric
-			return left->getDegree(id);
-		case Expr::SUM:
-		case Expr::SUB:
-			return std::max(left->getDegree(id), right->getDegree(id));
-		case Expr::MUL:
-			return left->getDegree(id) + right->getDegree(id);
-		default:
-			std::logic_error("Unsupported expression");
-	}
-	// should not get here
-	return -1;
+  switch (type) {
+  case Expr::NUM_ATOM:
+    return 0;
+  case Expr::ID_ATOM:
+    if (id.isVarDefined(name)) {
+      return 1;
+    } else if (id.isDefDefined(name)) {
+      return id.getDef(name)->getValue()->getDegree(id);
+    } else {
+      return 0;
+    }
+  case Expr::NEG:
+  case Expr::DIV: // division is allowed only if denominator is numeric
+    return left->getDegree(id);
+  case Expr::SUM:
+  case Expr::SUB:
+    return std::max(left->getDegree(id), right->getDegree(id));
+  case Expr::MUL:
+    return left->getDegree(id) + right->getDegree(id);
+  default:
+    std::logic_error("Unsupported expression");
+  }
+  // should not get here
+  return -1;
 }
 
 double Expr::getCoefficient(const InputData &id, std::string varName) const
 {
-	switch (type) {
-		case Expr::NUM_ATOM:
-			return 0;
-		case Expr::ID_ATOM:
-			if (id.isVarDefined(name) && name == varName) {
-				return 1;
-			} else if (id.isDefDefined(name)) {
-				return id.getDef(name)->getValue()->getCoefficient(id, varName);
-			} else {
-				return 0;
-			}
-		case Expr::NEG:
-			return -left->getCoefficient(id, varName);
-		case Expr::DIV:			// division is allowed only if denominator is numeric
-			return left->getCoefficient(id, varName) / right->evaluate(id);
-		case Expr::SUM:
-			return left->getCoefficient(id, varName) + right->getCoefficient(id, varName);
-		case Expr::SUB:
-			return left->getCoefficient(id, varName) - right->getCoefficient(id, varName);
-		case Expr::MUL: {
-			// one of the two has no variables in it
-			double l = left->getCoefficient(id, varName);
-			double r = right->getCoefficient(id, varName);
-			
-			if (l == 0 && r == 0) {
-				return 0;
-			} else if (l == 0) {
-				return r * left->evaluate(id);
-			} else {
-				return l * right->evaluate(id);
-			}
-		}
-		default:
-			std::logic_error("Unsupported expression");
-	}
-	// should not get here
-	return -1;
+  switch (type) {
+  case Expr::NUM_ATOM:
+    return 0;
+  case Expr::ID_ATOM:
+    if (id.isVarDefined(name) && name == varName) {
+      return 1;
+    } else if (id.isDefDefined(name)) {
+      return id.getDef(name)->getValue()->getCoefficient(id, varName);
+    } else {
+      return 0;
+    }
+  case Expr::NEG:
+    return -left->getCoefficient(id, varName);
+  case Expr::DIV: // division is allowed only if denominator is numeric
+    return left->getCoefficient(id, varName) / right->evaluate(id);
+  case Expr::SUM:
+    return left->getCoefficient(id, varName)
+           + right->getCoefficient(id, varName);
+  case Expr::SUB:
+    return left->getCoefficient(id, varName)
+           - right->getCoefficient(id, varName);
+  case Expr::MUL: {
+    // one of the two has no variables in it
+    double l = left->getCoefficient(id, varName);
+    double r = right->getCoefficient(id, varName);
+
+    if (l == 0 && r == 0) {
+      return 0;
+    } else if (l == 0) {
+      return r * left->evaluate(id);
+    } else {
+      return l * right->evaluate(id);
+    }
+  }
+  default:
+    std::logic_error("Unsupported expression");
+  }
+  // should not get here
+  return -1;
 }
 
 double Expr::getOffset(const InputData &id) const
 {
-	switch (type) {
-		case Expr::NUM_ATOM:
-			return val;
-		case Expr::ID_ATOM:
-			return 0;
-		case Expr::NEG:
-			return -left->getOffset(id);
-		case Expr::DIV:			// division is allowed only if denominator is numeric
-			return left->getOffset(id) / right->evaluate(id);
-		case Expr::SUM:
-			return left->getOffset(id) + right->getOffset(id);
-		case Expr::SUB:
-			return left->getOffset(id) - right->getOffset(id);
-		case Expr::MUL: {
-			return left->getOffset(id) * right->getOffset(id);
-		}
-		default:
-			std::logic_error("Unsupported expression");
-	}
-	// should not get here
-	return -1;
+  switch (type) {
+  case Expr::NUM_ATOM:
+    return val;
+  case Expr::ID_ATOM:
+    return 0;
+  case Expr::NEG:
+    return -left->getOffset(id);
+  case Expr::DIV: // division is allowed only if denominator is numeric
+    return left->getOffset(id) / right->evaluate(id);
+  case Expr::SUM:
+    return left->getOffset(id) + right->getOffset(id);
+  case Expr::SUB:
+    return left->getOffset(id) - right->getOffset(id);
+  case Expr::MUL: {
+    return left->getOffset(id) * right->getOffset(id);
+  }
+  default:
+    std::logic_error("Unsupported expression");
+  }
+  // should not get here
+  return -1;
 }
 
 Expr *Expr::copy() const
@@ -420,27 +422,26 @@ Formula *Formula::until(pair<int, int> in, Formula *f)
 
 bool Formula::isLinear(const InputData &id) const
 {
-	switch (type)
-	{
-		case formulaType::ATOM:
-			return ex->getDegree(id) <= 1;
-			
-		// boolean combination
-		case formulaType::CONJ:
-		case formulaType::DISJ:
-			return f1->isLinear(id) && f2->isLinear(id);
-			
-		// temporal operators, not boolean combinations
-		case formulaType::ALW:
-    case formulaType::EVENT:
-    case formulaType::UNTIL:
-			return false;
-			
-		default:
-			std::logic_error("Unsupported formula");
-	}
-	// should not get here
-	return false;
+  switch (type) {
+  case formulaType::ATOM:
+    return ex->getDegree(id) <= 1;
+
+  // boolean combination
+  case formulaType::CONJ:
+  case formulaType::DISJ:
+    return f1->isLinear(id) && f2->isLinear(id);
+
+  // temporal operators, not boolean combinations
+  case formulaType::ALW:
+  case formulaType::EVENT:
+  case formulaType::UNTIL:
+    return false;
+
+  default:
+    std::logic_error("Unsupported formula");
+  }
+  // should not get here
+  return false;
 }
 
 bool Formula::simplify()
@@ -555,13 +556,13 @@ Formula::toSTL(const InputData &m,
 
 std::vector<double> Assumption::getDirection(const InputData &id) const
 {
-	std::vector<double> res{};
-	
-	for (unsigned i = 0; i < id.getVarNum(); i++) {
-		res.push_back(ex->getCoefficient(id, id.getVar(i)->getName()));
-	}
-	
-	return res;
+  std::vector<double> res{};
+
+  for (unsigned i = 0; i < id.getVarNum(); i++) {
+    res.push_back(ex->getCoefficient(id, id.getVar(i)->getName()));
+  }
+
+  return res;
 }
 
 /*
@@ -588,8 +589,8 @@ InputData::InputData()
   params.resize(0);
   consts.resize(0);
   defs.resize(0);
-	
-	assumptions.resize(0);
+
+  assumptions.resize(0);
 
   directions.resize(0);
   LBoffsets.resize(0);
@@ -620,7 +621,7 @@ InputData::~InputData()
 
   for (auto it = std::begin(defs); it != std::end(defs); ++it)
     delete *it;
-	
+
   for (auto it = std::begin(assumptions); it != std::end(assumptions); ++it)
     delete *it;
 
@@ -638,40 +639,40 @@ ostream &operator<<(ostream &os, const InputData &m)
   for (unsigned i = 0; i < m.vars.size(); i++) {
     os << "\t" << m.vars[i]->getName() << ": " << *(m.vars[i]->getDynamic())
        << endl;
-	}
+  }
   os << endl;
 
   os << "Parameters: " << endl;
   for (unsigned i = 0; i < m.params.size(); i++) {
     os << "\t" << m.params[i]->getName() << endl;
-	}
+  }
   os << endl;
 
   os << "Constants: " << endl;
   for (unsigned i = 0; i < m.consts.size(); i++) {
     os << "\t" << m.consts[i]->getName() << " = " << m.consts[i]->getValue()
        << endl;
-	}
+  }
   os << endl;
-	
-	os << "Defines: " << endl;
-	for (unsigned i = 0; i < m.defs.size(); i++) {
-		os << "\t" << m.defs[i]->getName() << " = " << *(m.defs[i]->getValue())
-				<< endl;
-	}
-	os << endl;
+
+  os << "Defines: " << endl;
+  for (unsigned i = 0; i < m.defs.size(); i++) {
+    os << "\t" << m.defs[i]->getName() << " = " << *(m.defs[i]->getValue())
+       << endl;
+  }
+  os << endl;
 
   os << "spec: ";
   if (m.spec == NULL)
     os << "NULL" << endl;
   else
     os << *(m.spec) << endl;
-	os << endl;
-	
-	os << "assumptions: ";
-	for (unsigned i = 0; i < m.assumptions.size(); i++)
-		os << *(m.assumptions[i]) << endl;
-	os << endl;
+  os << endl;
+
+  os << "assumptions: ";
+  for (unsigned i = 0; i < m.assumptions.size(); i++)
+    os << *(m.assumptions[i]) << endl;
+  os << endl;
 
   os << endl;
   os << "Directions:" << endl << "{" << endl;
