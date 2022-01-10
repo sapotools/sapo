@@ -284,6 +284,22 @@ public:
   }
 
   /**
+   * @brief Get the set of the expression symbols
+   *
+   * @return the set of the expression symbols
+   */
+  std::set<Symbol<C>> get_symbols() const
+  {
+    std::set<Symbol<C>> result;
+
+    for (typename Symbol<C>::SymbolIdType sid: _ex->get_symbol_ids()) {
+      result.emplace(Symbol<C>::get_symbol_name(sid));
+    }
+
+    return result;
+  }
+
+  /**
    * @brief Destroy the Expression object.
    */
   ~Expression();
