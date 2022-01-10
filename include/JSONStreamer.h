@@ -3,13 +3,14 @@
 
 #include <ostream>
 #include <string>
+#include <algorithm>
 
 namespace JSON
 {
 
 enum Command { debug, production };
 
-class ostream : private std::ostream
+class ostream : public std::ostream
 {
   bool filter_unnecessary;
 

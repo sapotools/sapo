@@ -9,8 +9,16 @@
 
 #include "PolytopesUnion.h"
 
+#ifdef WITH_THREADS
+#include <mutex>
+#include <shared_mutex>
+
+#include "ThreadPool.h"
+
+extern ThreadPool thread_pool;
+#endif // WITH_THREADS
+
 using namespace std;
-using namespace GiNaC;
 
 /**
  * Constructor that instantiates an empty set
@@ -82,6 +90,54 @@ PolytopesUnion &PolytopesUnion::operator=(PolytopesUnion &&orig)
 
 bool PolytopesUnion::contains(const Polytope &P)
 {
+
+#ifdef WITH_THREADS
+  class ThreadResult
+  {
+    mutable std::shared_timed_mutex mutex;
+    bool value;
+
+  public:
+    ThreadResult(): value(false) {}
+
+    bool get() const
+    {
+      std::shared_lock<std::shared_timed_mutex> rlock(mutex);
+
+      return value;
+    }
+
+    void set(const bool &value)
+    {
+      std::unique_lock<std::shared_timed_mutex> wlock(mutex);
+
+      this->value = value;
+    }
+  };
+
+  ThreadResult result;
+
+  auto check_and_update = [&result, &P](const Polytope &P1) {
+    if (!result.get() && P1.contains(P)) {
+      result.set(true);
+    }
+  };
+
+  ThreadPool::BatchId batch_id = thread_pool.create_batch();
+
+  for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
+    // submit the task to the thread pool
+    thread_pool.submit_to_batch(batch_id, check_and_update, std::ref(*it));
+  }
+
+  // join to the pool threads
+  thread_pool.join_threads(batch_id);
+
+  // close the batch
+  thread_pool.close_batch(batch_id);
+
+  return result.get();
+#else  // WITH_THREADS
   for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
     if (it->contains(P)) {
       return true;
@@ -89,6 +145,7 @@ bool PolytopesUnion::contains(const Polytope &P)
   }
 
   return false;
+#endif // WITH_THREADS
 }
 
 /**
@@ -131,9 +188,82 @@ PolytopesUnion &PolytopesUnion::add(Polytope &&P)
 
 PolytopesUnion &PolytopesUnion::simplify()
 {
+#ifdef WITH_THREADS
+  class ThreadResult
+  {
+    mutable std::shared_timed_mutex mutex;
+    unsigned int non_empty;
+    std::map<unsigned int, unsigned int> new_position;
+
+  public:
+    ThreadResult(): non_empty(0) {}
+
+    unsigned int get_non_empty() const
+    {
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex);
+
+      return non_empty;
+    }
+
+    void set_non_empty(const unsigned int &index)
+    {
+      std::unique_lock<std::shared_timed_mutex> write_lock(mutex);
+
+      this->new_position[non_empty++] = index;
+    }
+
+    unsigned int old_pos(const unsigned int &new_index) const
+    {
+      std::shared_lock<std::shared_timed_mutex> read_lock(mutex);
+
+      return this->new_position.at(new_index);
+    }
+  };
+
+  if (size() < 2) { // if the union consists in less than 2 polytopes, use the
+                    // non-threaded version to avoid the overhead.
+    for (auto it = std::begin(*this); it != std::end(*this); ++it) {
+      it->simplify();
+    }
+
+    return *this;
+  }
+
+  ThreadResult result;
+  auto test_emptiness_and_simplify
+      = [&result](Polytope &P, const unsigned int i) {
+          if (!P.is_empty()) {
+            P.simplify();
+            result.set_non_empty(i);
+          }
+        };
+
+  ThreadPool::BatchId batch_id = thread_pool.create_batch();
+
+  for (unsigned int i = 0; i < size(); ++i) {
+    // submit the task to the thread pool
+    thread_pool.submit_to_batch(batch_id, test_emptiness_and_simplify,
+                                std::ref((*this)[i]), i);
+  }
+
+  // join to the pool threads
+  thread_pool.join_threads(batch_id);
+
+  // close the batch
+  thread_pool.close_batch(batch_id);
+
+  PolytopesUnion Pu;
+  for (unsigned int i = 0; i < result.get_non_empty(); ++i) {
+    Pu.push_back((*this)[result.old_pos(i)]);
+  }
+
+  std::swap(Pu, *this);
+
+#else  // WITH_THREADS
   for (auto it = std::begin(*this); it != std::end(*this); ++it) {
     it->simplify();
   }
+#endif // WITH_THREADS
 
   return *this;
 }

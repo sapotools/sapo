@@ -12,41 +12,6 @@
 
 #include <cmath>
 
-std::list<std::vector<double>> get_parallelotope_vertices(
-    const std::vector<std::vector<double>> &template_matrix,
-    const std::vector<double> &lower_bound,
-    const std::vector<double> &upper_bound)
-{
-  const unsigned int dim = upper_bound.size();
-
-  std::list<std::vector<double>> vertices;
-
-  std::vector<double> offset = upper_bound;
-
-  SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix);
-  SparseLinearAlgebra::PLU_Factorization<double> factorization(tmatrix);
-
-  try {
-    // store the base vertex
-    vertices.push_back(factorization.solve(offset));
-
-  } catch (std::domain_error &) { // if a domain_error is raised, then the
-                                  // template is singular
-    std::cerr << "singular parallelotope" << std::endl << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // Compute the vertices v
-  for (unsigned int k = 0; k < dim; k++) {
-    double tmp = offset[k];
-    offset[k] = -lower_bound[k];
-    vertices.push_back(factorization.solve(offset));
-    offset[k] = tmp;
-  }
-
-  return vertices;
-}
-
 /**
  * Constructor
  *
@@ -58,36 +23,46 @@ Parallelotope::Parallelotope(const Matrix &template_matrix,
                              const Vector &lower_bound,
                              const Vector &upper_bound)
 {
-  using namespace std;
+  SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix);
+  SparseLinearAlgebra::PLU_Factorization<double> factorization(tmatrix);
 
-  // convert the linear system to vectors
-  std::list<Vector> vertices
-      = get_parallelotope_vertices(template_matrix, lower_bound, upper_bound);
+  try {
+    // store the base vertex
+    _base_vertex = factorization.solve(upper_bound);
 
-  this->_base_vertex = vertices.front();
+  } catch (std::domain_error &) { // if a domain_error is raised, then the
+                                  // template is singular
+    std::cerr << "singular parallelotope" << std::endl << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-  // Compute the generators, their lengths, and the versors
-  for (auto v_it = ++std::begin(vertices); v_it != std::end(vertices);
-       ++v_it) {
+  // Compute the versors
+  std::vector<double> offset(upper_bound.size(), 0);
+  for (unsigned int k = 0; k < upper_bound.size(); k++) {
+    const double delta_k = -(upper_bound[k] + lower_bound[k]);
+    if (delta_k != 0) {
+      offset[k] = delta_k;
+    } else {
+      offset[k] = -1;
+    }
 
-    // add a new generator
-    const Vector gen = *v_it - _base_vertex;
+    const std::vector<double> tensor = factorization.solve(offset);
+    offset[k] = 0;
 
     // compute its length and store it
-    const double length = norm_2(gen);
-    _lengths.push_back(length);
+    const double length = norm_2(tensor);
+    if (delta_k != 0) {
+      _lengths.push_back(length);
+    } else {
+      _lengths.push_back(0);
+    }
 
     // compute and store the corresponding versor
 
     // The approximation below improves performances
     // TODO: set the approximation dynamically, possibly
     //       by using SIL input.
-    if (length == 0) {
-      // TODO: check when a versor can be null
-      _versors.push_back(approx(gen, 11));
-    } else {
-      _versors.push_back(approx(gen / length, 11));
-    }
+    _versors.push_back(approx(tensor / length, 11));
   }
 }
 
@@ -154,6 +129,7 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
   return lambda;
 }
 
+// TODO: Fix the method below
 /**
  * Build a polytope representing the parallelotope.
  *
@@ -175,7 +151,14 @@ Parallelotope::operator Polytope() const
 
     for (unsigned int j = 0; j < dim; j++) { // for all the generators u
       if (i != j) {
-        pts.push_back(pts.front() + _lengths[j] * this->_versors[j]);
+        if (_lengths[j] != 0) {
+          pts.push_back(pts.front() + _lengths[j] * this->_versors[j]);
+        } else {
+          // these are fake points to define one hypeplane in
+          // degenerous parallelotypes, for instance, when one
+          // of the variables admits one single value.
+          pts.push_back(pts.front() + this->_versors[j]);
+        }
       }
     }
     hps.push_back(hyperplane_through_points(pts));
@@ -192,7 +175,14 @@ Parallelotope::operator Polytope() const
     for (unsigned int j = 0; j < dim; j++) {
       // for all the generators u
       if (i != j) {
-        pts.push_back(pts.front() + _lengths[j] * _versors[j]);
+        if (_lengths[j] != 0) {
+          pts.push_back(pts.front() + _lengths[j] * this->_versors[j]);
+        } else {
+          // these are fake points to define one hypeplane in
+          // degenerous parallelotypes, for instance, when one
+          // of the variables admits one single value.
+          pts.push_back(pts.front() + this->_versors[j]);
+        }
       }
     }
 

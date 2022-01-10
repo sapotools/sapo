@@ -14,36 +14,22 @@
 #include "Polytope.h"
 #include "Parallelotope.h"
 #include "VarsGenerator.h"
-#include "ControlPointStorage.h"
 
 class Bundle
 {
   using Vector = std::vector<double>;
   using Matrix = std::vector<Vector>;
-  using CtrlPointType
-      = std::map<std::vector<int>, std::pair<GiNaC::lst, GiNaC::lst>>;
 
 private:
-  unsigned int dim;                       //!< dimension
   Matrix dir_matrix;                      //!< direction matrix
   Vector offp;                            //!< superior offset
   Vector offm;                            //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
-  Matrix Theta;                           //!< matrix of orthogonal proximity
-
-  // TODO: unravel this member into three properly named members
-  std::vector<GiNaC::lst> vars; //!< variables appearing in generato function
-                                // vars[0] q: base vertex
-                                // vars[1] alpha : free variables \in [0,1]
-                                // vars[2] beta : generator amplitudes
 
 	// constraints over directions (assertions)
 	// constrainedDirection[i] * vars <= constraintOffset
 	std::vector<std::vector<double>> constraintDirections;
 	std::vector<double> constraintOffsets;
-	
-  std::map<std::vector<int>, GiNaC::lst>
-      bernCoeffs; //!< Bernstein coefficients map
 
   /**
    * Compute the distances between the half-spaced of the parallelotopes
@@ -64,7 +50,8 @@ private:
      * coefficient.
      * @return The numerical evaluation of Bernstein coefficient upper-bound.
      */
-    virtual double coeff_eval_p(const GiNaC::ex &bernCoeff) const;
+    virtual double
+    coeff_eval_p(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
     /**
      * @brief Evaluate the Bernstein coefficient lower-bound complementary.
@@ -74,7 +61,8 @@ private:
      * @return The numerical evaluation of Bernstein coefficient
      *         lower-bound complementary.
      */
-    virtual double coeff_eval_m(const GiNaC::ex &bernCoeff) const;
+    virtual double
+    coeff_eval_m(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
   public:
     typedef struct MaxCoeffType {
@@ -92,13 +80,12 @@ private:
      *        upper-bound for Bernstein coefficients.
      *
      * @param b_coeffs is a list of symbolical Bernstein coefficients.
-     * @param subs is a list of variable assignaments
      * @return The maximum of both lower-bound complementary and
      *         upper-bound for all the Bernstein coefficients in
      *         `b_coeffs`.
      */
-    MaxCoeffType find_max_coeffs(const GiNaC::lst &b_coeffs,
-                                 const GiNaC::lst &subs) const;
+    MaxCoeffType find_max_coeffs(
+        const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const;
   };
 
   /**
@@ -107,7 +94,7 @@ private:
    */
   class ParamMaxCoeffFinder : public MaxCoeffFinder
   {
-    const GiNaC::lst &params;
+    const std::vector<SymbolicAlgebra::Symbol<>> &params;
     const Polytope &paraSet;
     /**
      * @brief Evaluate the parametric Bernstein coefficient upper-bound.
@@ -117,7 +104,7 @@ private:
      * @return The numerical evaluation of parametric Bernstein
      *         coefficient upper-bound.
      */
-    double coeff_eval_p(const GiNaC::ex &bernCoeff) const;
+    double coeff_eval_p(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
     /**
      * @brief Evaluate the parametric Bernstein coefficient lower-bound
@@ -128,7 +115,7 @@ private:
      * @return The numerical evaluation of parametric Bernstein coefficient
      *         lower-bound complementary.
      */
-    double coeff_eval_m(const GiNaC::ex &bernCoeff) const;
+    double coeff_eval_m(const SymbolicAlgebra::Expression<> &bernCoeff) const;
 
   public:
     /**
@@ -137,8 +124,10 @@ private:
      * @param params is the list of parameters.
      * @param paraSet is the set of admissible values for parameters.
      */
-    ParamMaxCoeffFinder(const GiNaC::lst &params, const Polytope &paraSet):
-        MaxCoeffFinder(), params(params), paraSet(paraSet)
+    ParamMaxCoeffFinder(const std::vector<SymbolicAlgebra::Symbol<>> &params,
+                        const Polytope &paraSet):
+        MaxCoeffFinder(),
+        params(params), paraSet(paraSet)
     {
     }
   };
@@ -148,14 +137,12 @@ private:
    *
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
-   * @param[in,out] controlPts control points computed so far that might be
-   * updated
    * @param[in] max_finder is a pointer to a MaxCoeffFinder object.
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                   ControlPointStorage &controlPts,
+  Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                   const std::vector<SymbolicAlgebra::Expression<>> &f,
                    const MaxCoeffFinder *max_finder, int mode) const;
 
 public:
@@ -189,102 +176,37 @@ public:
 				 const std::vector<std::vector<double>> constrDirs,
 				 const std::vector<double> constrOffsets);
 
-  /**
-   * Constructor that instantiates the bundle
-   *
-   * @param[in] vars list of variables for parallelotope generator functions
-   * @param[in] dir_matrix matrix of directions
-   * @param[in] offp upper offsets
-   * @param[in] offm lower offsets
-   * @param[in] t_matrix t_matrixs matrix
-   */
-  Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
-         const Vector &offp, const Vector &offm,
-         const std::vector<std::vector<int>> &t_matrix);
-
-  /**
-   * Constructor that instantiates the bundle
-   *
-   * @param[in] vars list of variables for parallelotope generator functions
-   * @param[in] dir_matrix matrix of directions
-   * @param[in] offp upper offsets
-   * @param[in] offm lower offsets
-   * @param[in] t_matrix t_matrixs matrix
-	 * @param[in] constrDirs directions that are constrained by assumptions
-	 * @param[in] constrOffsets offsets of assumptions
-   */
-  Bundle(const std::vector<GiNaC::lst> &vars, const Matrix &dir_matrix,
-         const Vector &offp, const Vector &offm,
-         const std::vector<std::vector<int>> &t_matrix,
-				 const std::vector<std::vector<double>> constrDirs,
-				 const std::vector<double> constrOffsets);
-
-  unsigned int getDim() const
+  unsigned int dim() const
   {
-    return this->dim;
+    return (dir_matrix.size() == 0 ? 0 : dir_matrix.front().size());
   }
 
-  unsigned int getSize() const
-  {
-    return dir_matrix.size();
-  }
-
-  unsigned int getCard() const
+  unsigned int num_of_templates() const
   {
     return t_matrix.size();
   }
 
-  unsigned int getNumDirs() const
+  unsigned int size() const
   {
     return this->dir_matrix.size();
   }
 
-  const std::vector<int> &getTemplate(long unsigned int i) const
+  const std::vector<int> &get_templates(long unsigned int i) const
   {
     return this->t_matrix[i];
   }
 
-  const std::vector<std::vector<double>> &getDirectionMatrix() const
+  const std::vector<std::vector<double>> &get_directions() const
   {
     return this->dir_matrix;
   }
 
-  /**
-   * Get variables of base vertex
-   *
-   * @returns base vertex variables
-   */
-  const GiNaC::lst &getQ() const
-  {
-    return this->vars[0];
-  }
-
-  /**
-   * Get free variables
-   *
-   * @returns free variables
-   */
-  const GiNaC::lst &getAlpha() const
-  {
-    return this->vars[1];
-  }
-
-  /**
-   * Get variables of generator lengths
-   *
-   * @returns generator lengths variables
-   */
-  const GiNaC::lst &getBeta() const
-  {
-    return this->vars[2];
-  }
-
-  const double &getOffp(long unsigned int i) const
+  const double &get_offsetp(long unsigned int i) const
   {
     return this->offp[i];
   }
 
-  const double &getOffm(long unsigned int i) const
+  const double &get_offsetm(long unsigned int i) const
   {
     return this->offm[i];
   }
@@ -348,17 +270,16 @@ public:
    *
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
-   * @param[in,out] controlPts control points computed so far that might be
-   * updated
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &f,
-                          ControlPointStorage &controlPts, int mode) const
+  inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                          const std::vector<SymbolicAlgebra::Expression<>> &f,
+                          int mode) const
   {
     MaxCoeffFinder max_finder;
 
-    return transform(vars, f, controlPts, &max_finder, mode);
+    return transform(vars, f, &max_finder, mode);
   }
 
   /**
@@ -368,18 +289,17 @@ public:
    * @param[in] params parameters appearing in the transforming function
    * @param[in] f transforming function
    * @param[in] paraSet set of parameters
-   * @param[in,out] controlPts control points computed so far that might be
-   * updated
    * @param[in] mode transformation mode (0=OFO,1=AFO)
    * @returns transformed bundle
    */
-  inline Bundle transform(const GiNaC::lst &vars, const GiNaC::lst &params,
-                          const GiNaC::lst &f, const Polytope &paraSet,
-                          ControlPointStorage &controlPts, int mode) const
+  inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                          const std::vector<SymbolicAlgebra::Symbol<>> &params,
+                          const std::vector<SymbolicAlgebra::Expression<>> &f,
+                          const Polytope &paraSet, int mode) const
   {
     ParamMaxCoeffFinder max_finder(params, paraSet);
 
-    return transform(vars, f, controlPts, &max_finder, mode);
+    return transform(vars, f, &max_finder, mode);
   }
 
   Bundle &operator=(Bundle &&);
@@ -388,11 +308,15 @@ public:
 
   friend void swap(Bundle &A, Bundle &B);
 };
-
 void swap(Bundle &A, Bundle &B);
 
-GiNaC::lst build_generator_functs(
-    const GiNaC::lst &q, const GiNaC::lst &alpha, const GiNaC::lst &beta,
-    const std::vector<std::vector<double>> &generator_matrix);
+std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
+    const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
+    const Parallelotope &P);
+
+std::vector<SymbolicAlgebra::Expression<>>
+sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
+         const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+         const std::vector<SymbolicAlgebra::Expression<>> &expressions);
 
 #endif /* BUNDLE_H_ */

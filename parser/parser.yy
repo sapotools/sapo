@@ -48,6 +48,7 @@
 	ASSUME
 	ITER
 	PSPLITS
+	PRESPLITS
 	DIR
 	TEMPL
 	PDIR
@@ -84,6 +85,8 @@
 ;
 
 %token <std::string> IDENT
+%token <std::string> ON
+%token <std::string> OFF
 %token <int> INTEGER
 %token <double> DOUBLE
 
@@ -205,6 +208,14 @@ header			: PROB ":" problemType ";"
 							}
 
 							drv.data.setMaxParameterSplits($3);
+						}
+						| PRESPLITS ":" ON ";"
+						{
+							drv.data.setPreSplits(true);
+						}
+						| PRESPLITS ":" OFF ";"
+						{
+							drv.data.setPreSplits(false);
 						}
 symbolList	: symbol {}
 						| symbolList symbol {}

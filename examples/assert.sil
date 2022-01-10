@@ -1,5 +1,5 @@
-//problem: reachability;
-problem: synthesis;
+problem: reachability;
+//problem: synthesis;
 
 iterations: 3;
 
@@ -9,12 +9,5 @@ param p in [0, 1];
 dynamic(x) = x + p;
 dynamic(y) = y + p;
 
-//assert 1/3*x <= 1;
-//assert x + y < 1.5;
-//assert x + y > 0.1;
-//assert x < 10;
 
-assert x + y >= 0;
-assert x + y < 5;
-
-spec: G[1,2] x >= 0.5;
+//spec: G[1,2] x >= 0.5;
