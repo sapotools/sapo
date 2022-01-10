@@ -61,7 +61,7 @@ inline std::vector<double> approx<double>(std::vector<double> &&orig,
                                           const unsigned short decimal)
 {
   if (decimal == std::numeric_limits<double>::digits10) {
-    return orig;
+    return std::move(orig);
   }
 
   const double mult = std::pow(10, decimal);
@@ -69,7 +69,7 @@ inline std::vector<double> approx<double>(std::vector<double> &&orig,
     *it = floor(*it * mult) / mult;
   }
 
-  return orig;
+  return std::move(orig);
 }
 
 /**
@@ -370,6 +370,35 @@ T operator*(const std::vector<T> &v1, const std::vector<T> &v2)
 }
 
 /**
+ * @brief Compute the Hadamard product of two vectors.
+ *
+ * This method computes the Hadamard product of two vectors
+ * $v_1 \circ v_2$, i.e., it returns a vector whose elements
+ * are obtained by element-wise multiplying of the
+ * parameters.
+ * $$(v_1 \circ v_2)[i] = v_1[i]*v_2[i]$$
+ *
+ * @tparam T any numeric type.
+ * @param v1 is a vector.
+ * @param v2 is a vector.
+ * @return the vector product $v1 \circ v2$.
+ */
+template<typename T>
+std::vector<T> H_prod(const std::vector<T> &v1, const std::vector<T> &v2)
+{
+  if (v1.size() != v2.size()) {
+    throw std::domain_error("The two vectors have not the same dimensions.");
+  }
+
+  std::vector<T> res(v1.size());
+  for (unsigned int i = 0; i < v1.size(); ++i) {
+    res[i] = v1[i] * v2[i];
+  }
+
+  return res;
+}
+
+/**
  * @brief Compute the element-wise scalar product.
  *
  * @tparam T any numeric type.
@@ -575,7 +604,7 @@ public:
     std::swap(P1._swaps, P2._swaps);
   }
 
-  friend std::ostream &operator<<(std::ostream &os, Permutation &P)
+  friend std::ostream &operator<<(std::ostream &os, const Permutation &P)
   {
     os << "Permutation[";
     for (auto it = std::begin(P._swaps); it != std::end(P._swaps); ++it) {
@@ -1177,11 +1206,13 @@ public:
 
     auto greatest = std::rbegin(row);
 
-    if (_num_of_cols < greatest->first + 1) {
-      _num_of_cols = greatest->first + 1;
-    }
+    if (greatest != std::rend(row)) {
+      if (_num_of_cols < greatest->first + 1) {
+        _num_of_cols = greatest->first + 1;
+      }
 
-    _matrix[row_idx] = row;
+      _matrix[row_idx] = row;
+    }
 
     return *this;
   }
@@ -1603,7 +1634,9 @@ public:
             // if it does not exist, initialize it to the opportune value
             if (nz_elem_it == std::end(nz_row)) {
               nz_row[elem_it->first] = ratio * elem_it->second;
-              non_zero_below_diag[elem_it->first].insert(*nz_row_it);
+              if (elem_it->first < *nz_row_it) {
+                non_zero_below_diag[elem_it->first].insert(*nz_row_it);
+              }
             } else { // otherwise, it exists
               // increase it by the the opportune value
               nz_elem_it->second += ratio * elem_it->second;
@@ -1722,95 +1755,4 @@ public:
 }
 /*! @} End of SparseLinearAlgebra group */
 
-namespace std
-{
-template<typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
-{
-  out << "[";
-  for (auto el_it = std::begin(v); el_it != std::end(v); ++el_it) {
-    if (el_it != std::begin(v)) {
-      out << ",";
-    }
-    out << *el_it;
-  }
-  out << "]";
-
-  return out;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &out, const std::set<T> &v)
-{
-  out << "{";
-  for (auto el_it = std::begin(v); el_it != std::end(v); ++el_it) {
-    if (el_it != std::begin(v)) {
-      out << ",";
-    }
-    out << *el_it;
-  }
-  out << "}";
-
-  return out;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &out,
-                         const std::vector<std::vector<T>> &A)
-{
-  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
-    if (row_it != std::begin(A)) {
-      out << std::endl;
-    }
-
-    out << *row_it;
-  }
-
-  return out;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &os,
-                         const SparseLinearAlgebra::Matrix<T> &M)
-{
-  os << "[ #rows: " << M.num_of_rows() << " #cols: " << M.num_of_cols() << " ";
-  for (auto row_it = std::begin(M._matrix); row_it != std::end(M._matrix);
-       ++row_it) {
-    os << std::endl << " row " << row_it->first << ": [";
-    for (auto elem_it = std::begin(row_it->second);
-         elem_it != std::end(row_it->second); ++elem_it) {
-      if (elem_it != std::begin(row_it->second)) {
-        os << ", ";
-      }
-      os << "col " << elem_it->first << ": " << elem_it->second;
-    }
-    os << "]";
-  }
-  os << "]";
-
-  return os;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &os,
-                         const SparseLinearAlgebra::PLU_Factorization<T> &D)
-{
-  using namespace std;
-  os << "{P=" << D.P() << "," << std::endl
-     << " L=" << D.L() << "," << std::endl
-     << " U=" << D.U() << "}";
-
-  return os;
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &os,
-                         const DenseLinearAlgebra::PLU_Factorization<T> &D)
-{
-  using namespace std;
-  os << "{P=" << D._P << "," << std::endl << " LU=" << D._LU << "}";
-
-  return os;
-}
-}
 #endif // LINEAR_ALGEBRA_H

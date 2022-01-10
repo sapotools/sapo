@@ -1,0 +1,23 @@
+problem: reachability;
+variable_mode: polytopes;
+
+iterations: 10;
+
+var x, y, z;	// in [0,1];
+param p in [0, 1];
+
+dynamic(x) = x + p;
+dynamic(y) = y + p;
+dynamic(z) = z + 1;
+
+assume x + y < 6;
+
+direction <1, 0, 0> in [0, 1];
+direction <0, 1, 0> in [0, 1];
+direction <0, 0, 1> in [0, 1];
+direction <1, 1, 1> in [0, 3];
+
+template = {
+	{0, 1, 2},
+	{1, 2, 3}
+}

@@ -11,13 +11,12 @@
 
 #include <glpk.h>
 #include <limits>
+#include <cmath>
 
 #include "LinearSystem.h"
+#include "SymbolicAlgebra.h"
 
 #define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
-
-using namespace std;
-using namespace GiNaC;
 
 std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
 {
@@ -52,8 +51,9 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
  * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
  * @return optimum
  */
-double optimize(const vector<vector<double>> &A, const vector<double> &b,
-                const vector<double> &obj_fun, const int min_max)
+double optimize(const std::vector<std::vector<double>> &A,
+                const std::vector<double> &b,
+                const std::vector<double> &obj_fun, const int min_max)
 {
   unsigned int num_rows = A.size();
   unsigned int num_cols = obj_fun.size();
@@ -128,7 +128,7 @@ double optimize(const vector<vector<double>> &A, const vector<double> &b,
  * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
  * @return optimum
  */
-double LinearSystem::optimize(const vector<double> &obj_fun,
+double LinearSystem::optimize(const std::vector<double> &obj_fun,
                               const int min_max) const
 {
   return ::optimize(this->A, this->b, obj_fun, min_max);
@@ -141,12 +141,12 @@ double LinearSystem::optimize(const vector<double> &obj_fun,
  * @param[in] line vector to test
  * @return true is the vector is nulle
  */
-bool zeroLine(const vector<double> &line)
+bool zeroLine(const std::vector<double> &line)
 {
   bool zeros = true;
   unsigned int i = 0;
   while (zeros && i < line.size()) {
-    zeros = zeros && (abs(line[i]) < MAX_APPROX_ERROR);
+    zeros = zeros && (std::abs(line[i]) < MAX_APPROX_ERROR);
     i++;
   }
   return zeros;
@@ -158,8 +158,8 @@ bool zeroLine(const vector<double> &line)
  * @param[in] A template matrix
  * @param[in] b offset vector
  */
-LinearSystem::LinearSystem(const vector<vector<double>> &A,
-                           const vector<double> &b)
+LinearSystem::LinearSystem(const std::vector<std::vector<double>> &A,
+                           const std::vector<double> &b)
 {
 
   bool smart_insert = false;
@@ -206,16 +206,16 @@ LinearSystem::LinearSystem(LinearSystem &&orig)
  * @param[in] bi offset
  * @returns true is Ai x <= b is in the linear system
  */
-bool LinearSystem::is_in(vector<double> Ai, const double bi) const
+bool LinearSystem::is_in(std::vector<double> Ai, const double bi) const
 {
   Ai.push_back(bi);
 
   for (unsigned int i = 0; i < this->A.size(); i++) {
-    vector<double> line = this->A[i];
+    std::vector<double> line = this->A[i];
     line.push_back(this->b[i]);
     bool is_in = true;
     for (unsigned int j = 0; j < Ai.size(); j++) {
-      is_in = is_in && (abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
+      is_in = is_in && (std::abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
     }
     if (is_in)
       return true;
@@ -223,6 +223,7 @@ bool LinearSystem::is_in(vector<double> Ai, const double bi) const
   return false;
 }
 
+// TODO: remove this method as it uses non-necessary symbolic expressions.
 /**
  * Constructor that instantiates a linear system from a set of symbolic
  * expressions
@@ -230,26 +231,28 @@ bool LinearSystem::is_in(vector<double> Ai, const double bi) const
  * @param[in] vars list of variables appearing in the constraints
  * @param[in] constraints symbolic constraints
  */
-LinearSystem::LinearSystem(const lst &vars, const lst &constraints)
+LinearSystem::LinearSystem(
+    const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+    const std::vector<SymbolicAlgebra::Expression<>> &constraints)
 {
-  lst lconstraints = constraints;
-  lconstraints.unique();
+  using namespace SymbolicAlgebra;
+  std::vector<Expression<>> lconstraints = constraints;
+  // lconstraints.unique();  // remove multiple copies of the same expression
 
-  for (lst::const_iterator c_it = begin(lconstraints);
-       c_it != end(lconstraints); ++c_it) {
-    vector<double> Ai;
-    ex const_term(*c_it);
+  for (auto c_it = begin(lconstraints); c_it != end(lconstraints); ++c_it) {
+    std::vector<double> Ai;
+    Expression<> const_term(*c_it);
 
-    for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
+    for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
       // Extract the coefficient of the i-th variable (grade 1)
-      double coeff = ex_to<numeric>(evalf(c_it->coeff(*v_it, 1))).to_double();
+      double coeff = (c_it->get_coeff(*v_it, 1)).evaluate<double>();
       Ai.push_back(coeff);
 
       // Project to obtain the constant term
-      const_term = const_term.coeff(*v_it, 0);
+      const_term = const_term.get_coeff(*v_it, 0);
     }
 
-    double bi = ex_to<numeric>(evalf(const_term)).to_double();
+    double bi = const_term.evaluate<double>();
 
     if (!this->is_in(Ai, -bi)) {
       this->A.push_back(Ai);
@@ -309,12 +312,12 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
     return true;
   }
 
-  vector<vector<double>> extA(this->A);
-  vector<double> obj_fun(this->A[0].size(), 0);
+  std::vector<std::vector<double>> extA(this->A);
+  std::vector<double> obj_fun(this->A[0].size(), 0);
   obj_fun.push_back(1);
 
   // Add an extra variable to the linear system
-  for (vector<vector<double>>::iterator row_it = begin(extA);
+  for (std::vector<std::vector<double>>::iterator row_it = begin(extA);
        row_it != end(extA); ++row_it) {
     row_it->push_back(-1);
   }
@@ -332,21 +335,24 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double LinearSystem::minimize(const lst &vars, const ex &obj_fun) const
+double
+LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                       const SymbolicAlgebra::Expression<> &obj_fun) const
 {
+  using namespace SymbolicAlgebra;
 
-  vector<double> obj_fun_coeffs;
-  ex const_term(obj_fun);
+  std::vector<double> obj_fun_coeffs;
+  Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
-  for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
-    double coeff = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
+  for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
+    double coeff = (obj_fun.get_coeff(*v_it, 1)).evaluate<double>();
 
     obj_fun_coeffs.push_back(coeff);
-    const_term = const_term.coeff(*v_it, 0);
+    const_term = const_term.get_coeff(*v_it, 0);
   }
 
-  const double c = ex_to<numeric>(evalf(const_term)).to_double();
+  const double c = const_term.evaluate<double>();
   const double min = optimize(obj_fun_coeffs, GLP_MIN);
 
   return (min + c);
@@ -358,7 +364,7 @@ double LinearSystem::minimize(const lst &vars, const ex &obj_fun) const
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double LinearSystem::minimize(const vector<double> &obj_fun_coeffs) const
+double LinearSystem::minimize(const std::vector<double> &obj_fun_coeffs) const
 {
   return optimize(obj_fun_coeffs, GLP_MIN);
 }
@@ -369,7 +375,7 @@ double LinearSystem::minimize(const vector<double> &obj_fun_coeffs) const
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maximize(const vector<double> &obj_fun_coeffs) const
+double LinearSystem::maximize(const std::vector<double> &obj_fun_coeffs) const
 {
   return optimize(obj_fun_coeffs, GLP_MAX);
 }
@@ -381,20 +387,23 @@ double LinearSystem::maximize(const vector<double> &obj_fun_coeffs) const
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maximize(const lst &vars, const ex &obj_fun) const
+double
+LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+                       const SymbolicAlgebra::Expression<> &obj_fun) const
 {
+  using namespace SymbolicAlgebra;
 
-  vector<double> obj_fun_coeffs;
-  ex const_term(obj_fun);
+  std::vector<double> obj_fun_coeffs;
+  Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
-  for (lst::const_iterator v_it = begin(vars); v_it != end(vars); ++v_it) {
-    double coeff = ex_to<numeric>(evalf(obj_fun.coeff(*v_it, 1))).to_double();
+  for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
+    const double coeff = obj_fun.get_coeff(*v_it, 1).evaluate<double>();
     obj_fun_coeffs.push_back(coeff);
-    const_term = const_term.coeff(*v_it, 0);
+    const_term = const_term.get_coeff(*v_it, 0);
   }
 
-  const double c = ex_to<numeric>(evalf(const_term)).to_double();
+  const double c = const_term.evaluate<double>();
 
   return maximize(obj_fun_coeffs) + c;
 }
@@ -495,8 +504,8 @@ LinearSystem &LinearSystem::simplify()
     // if it is redundant
     if (constraint_is_redundant(i)) {
       // swap it with the last non-reduntant constraint
-      swap(A[i], A[last_non_redundant]);
-      swap(b[i], b[last_non_redundant]);
+      std::swap(A[i], A[last_non_redundant]);
+      std::swap(b[i], b[last_non_redundant]);
 
       // decrease the number of the non-reduntant constraints
       last_non_redundant--;

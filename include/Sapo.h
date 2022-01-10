@@ -25,27 +25,26 @@
 #include "Model.h"
 #include "STL.h"
 #include "Until.h"
-#include "ControlPointStorage.h"
 
 class Sapo
 {
 public:
-  unsigned char trans;       // transformation (0: static, 1: dynamic)
-  double alpha;              // decomposition weight
-  unsigned int decomp;       // number of decompositions (0: none, >0: yes)
-  std::string plot;          // the name of the file were to plot the reach set
-  unsigned int time_horizon; // the computation time horizon
-  unsigned int max_param_splits; // maximum number of splits in synthesis
-  bool verbose;                  // display info
+  unsigned char trans;  //!< transformation (0: static, 1: dynamic)
+  double decomp_weight; //!< decomposition weight
+  unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
+  std::string plot;     //!< the name of the file were to plot the reach set
+  unsigned int time_horizon;     //!< the computation time horizon
+  unsigned int max_param_splits; //!< maximum number of splits in synthesis
+  unsigned int num_of_presplits; //!< number of presplits in synthesis
+  bool verbose;                  //!< display info
 
 private:
-  const GiNaC::lst &dyns;   // dynamics of the system
-  const GiNaC::lst &vars;   // variables of the system
-  const GiNaC::lst &params; // parameters of the system
-
-  // TODO: check whether the following two members are really Sapo properties
-  ControlPointStorage reachControlPts; // symbolic control points
-  ControlPointStorage synthControlPts; // symbolic control points
+  const std::vector<SymbolicAlgebra::Expression<>>
+      &dyns; //!< dynamics of the system
+  const std::vector<SymbolicAlgebra::Symbol<>>
+      &vars; //!< variables of the system
+  const std::vector<SymbolicAlgebra::Symbol<>>
+      &params; //!< parameters of the system
 
   // TODO: check whether the following method is really needed/usable.
   std::vector<Bundle *>
@@ -61,17 +60,17 @@ private:
    * @returns refined sets of parameters
    */
   template<typename T>
-  PolytopesUnion
-  transition_and_synthesis(const Bundle &reachSet, const PolytopesUnion &pSet,
-                           const std::shared_ptr<T> formula, const int time)
+  PolytopesUnion transition_and_synthesis(const Bundle &reachSet,
+                                          const PolytopesUnion &pSet,
+                                          const std::shared_ptr<T> formula,
+                                          const int time) const
   {
     PolytopesUnion result;
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle newReachSet
-          = reachSet.transform(this->vars, this->params, this->dyns, *p_it,
-                               this->reachControlPts, this->trans);
+      Bundle newReachSet = reachSet.transform(this->vars, this->params,
+                                              this->dyns, *p_it, this->trans);
 
       // TODO: Check whether the object tmpLSset can be removed
       result.add(synthesize(newReachSet, pSet, formula, time + 1));
@@ -89,7 +88,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Atom> formula);
+                            const std::shared_ptr<Atom> formula) const;
 
   /**
    * Parmeter synthesis for conjunctions
@@ -100,7 +99,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Conjunction> formula);
+                            const std::shared_ptr<Conjunction> formula) const;
 
   /**
    * Parmeter synthesis for disjunctions
@@ -111,7 +110,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Disjunction> formula);
+                            const std::shared_ptr<Disjunction> formula) const;
 
   /**
    * Parameter synthesis for until formulas
@@ -124,7 +123,7 @@ private:
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
                             const std::shared_ptr<Until> formula,
-                            const int time);
+                            const int time) const;
 
   /**
    * Parameter synthesis for always formulas
@@ -137,7 +136,7 @@ private:
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
                             const std::shared_ptr<Always> formula,
-                            const int time);
+                            const int time) const;
   /**
    * Parmeter synthesis for the eventually fomulas
    *
@@ -148,7 +147,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Eventually> ev);
+                            const std::shared_ptr<Eventually> ev) const;
 
 public:
   /**
@@ -166,7 +165,7 @@ public:
    * @param[in] k time horizon
    * @returns the reached flowpipe
    */
-  Flowpipe reach(const Bundle &initSet, unsigned int k);
+  Flowpipe reach(const Bundle &initSet, unsigned int k) const;
 
   /**
    * Reachable set computation for parameteric dynamical systems
@@ -177,7 +176,7 @@ public:
    * @returns the reached flowpipe
    */
   Flowpipe reach(const Bundle &initSet, const PolytopesUnion &pSet,
-                 unsigned int k);
+                 unsigned int k) const;
 
   /**
    * Parameter synthesis method
@@ -188,7 +187,7 @@ public:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL> formula);
+                            const std::shared_ptr<STL> formula) const;
 
   /**
    * Parameter synthesis with splits
@@ -198,13 +197,14 @@ public:
    * @param[in] formula is an STL formula providing the specification
    * @param[in] max_splits maximum number of splits of the original
    *                       parameter set to identify a non-null solution
+   * @param[in] num_of_presplits is number of splits to be performed before
+   *                             the computation
    * @returns the list of refined parameter sets
    */
   std::list<PolytopesUnion>
   synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-             const std::shared_ptr<STL> formula,
-             const unsigned int max_splits); // parameter synthesis
-  virtual ~Sapo();
+             const std::shared_ptr<STL> formula, const unsigned int max_splits,
+             const unsigned int num_of_presplits = 0) const;
 };
 
 #endif /* SAPO_H_ */
