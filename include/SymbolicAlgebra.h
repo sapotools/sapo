@@ -2744,7 +2744,15 @@ public:
   _base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
                                       const int &degree) const
   {
-    return new _constant_type<C>((degree == 1 && symbol_id == _id) ? 1 : 0);
+    if (symbol_id == _id) {
+      return new _constant_type<C>(degree == 1 ? 1 : 0);
+    } else {
+      if (degree == 0) {
+        return this->clone();
+      } else {
+        return new _constant_type<C>(0);
+      }
+    }
   }
 
   /**
