@@ -1576,11 +1576,6 @@ public:
     std::vector<std::set<unsigned int>> non_zero_below_diag
         = get_non_zero_below_diag(M);
 
-    for (unsigned int row_idx = 0; row_idx < _L.num_of_rows(); ++row_idx) {
-      // set the L diagonal to 1
-      _L._matrix[row_idx][row_idx] = 1;
-    }
-
     for (auto row_it = std::begin(_U._matrix); row_it != std::end(_U._matrix);
          ++row_it) {
       const unsigned int &row_idx = row_it->first;
@@ -1661,6 +1656,11 @@ public:
         }
         non_zero_below_diag[row_idx].clear();
       }
+    }
+
+    for (unsigned int row_idx = 0; row_idx < _L.num_of_rows(); ++row_idx) {
+      // set the L diagonal to 1
+      _L._matrix[row_idx][row_idx] = 1;
     }
   }
 
