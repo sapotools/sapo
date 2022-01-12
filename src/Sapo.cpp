@@ -43,32 +43,107 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k) const
 {
   using namespace std;
 
-  Flowpipe flowpipe(initSet.get_directions());
-
-  Polytope Xls = initSet;
-
   if (this->verbose) {
     cout << "Initial Set" << endl
-         << Xls << endl
+         << initSet << endl
          << endl
          << "Computing reach set..." << flush;
   }
 
-  Bundle X = initSet;
-  flowpipe.append(Xls);
+  // create current bundles list
+  std::list<Bundle> cbundles{initSet};
 
-  unsigned int i = 0;
-  while (i < k && !Xls.is_empty()) {
-    i++;
+  // create next bundles list
+  std::list<Bundle> nbundles;
 
-    X = X.transform(this->vars, this->dyns,
-                    this->trans); // transform it
+  // last polytope union in flowpipe
+  PolytopesUnion last_step;
+  last_step.add(initSet);
 
-    if (this->decomp > 0) { // if requested, decompose it
-      X = X.decompose(this->decomp_weight, this->decomp);
+  // create flowpipe
+  Flowpipe flowpipe(initSet.get_directions());
+  flowpipe.append(initSet);
+
+#ifdef WITH_THREADS
+  std::mutex mutex;
+
+  auto compute_next_bundles_and_add_to_last
+      = [&nbundles, &last_step, &mutex](const Sapo *sapo, const Bundle &bundle)
+#else
+  auto compute_next_bundles_and_add_to_last
+      = [&nbundles, &last_step](const Sapo *sapo, const Bundle &bundle)
+#endif
+
+  {
+    // get the transformed bundle
+    Bundle nbundle = bundle.transform(sapo->vars, sapo->dyns,
+                                      sapo->trans); // transform it
+
+    if (sapo->decomp > 0) { // if requested, decompose it
+      nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
     }
 
-    flowpipe.append(X); // store result
+    Polytope bls = nbundle;
+
+    // TODO: check whether there is any chance for a transformed bundle to
+    // be empty
+    if (!bls.is_empty()) {
+      // split if necessary the new reached bundle and add the resulting
+      // bundles to the nbundles list
+      nbundles.splice(nbundles.end(),
+                      nbundle.split(sapo->max_bundle_magnitude));
+
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        last_step.add(bls);
+      }
+    }
+  };
+
+  unsigned int i = 0;
+
+  // while time horizon has not been reached and last step reached is not empty
+  // TODO: check whether there exists any chance for the last_step to be empty
+  while (i < k && last_step.size() != 0) {
+
+    // create a new last step reach set
+    last_step = PolytopesUnion();
+    i++;
+
+#ifdef WITH_THREADS
+    ThreadPool::BatchId batch_id = thread_pool.create_batch();
+
+    // for all the old bundles
+    for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
+         ++b_it) {
+      // submit the task to the thread pool
+      thread_pool.submit_to_batch(batch_id,
+                                  compute_next_bundles_and_add_to_last, this,
+                                  std::ref(*b_it));
+    }
+
+    // join to the pool threads
+    thread_pool.join_threads(batch_id);
+
+    // close the batch
+    thread_pool.close_batch(batch_id);
+#else  // WITH_THREADS
+
+    // for all the old bundles
+    for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
+         ++b_it) {
+
+      compute_next_bundles_and_add_to_last(this, std::ref(*b_it));
+    }
+#endif // WITH_THREADS
+
+    // swap current bundles and new bundles
+    std::swap(cbundles, nbundles);
+
+    nbundles = std::list<Bundle>();
+
+    // add the last step to the flow pipe
+    flowpipe.append(last_step); // store result
 
     if (this->verbose) {
       cout << flowpipe.get(i) << endl << endl;
@@ -105,13 +180,61 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
          << "Computing parametric reach set...";
   }
 
+  // create current bundles list
   std::list<Bundle> cbundles{initSet};
-  PolytopesUnion last_step;
 
+  // create next bundles list
+  std::list<Bundle> nbundles;
+
+  // last polytope union in flowpipe
+  PolytopesUnion last_step;
   last_step.add(initSet);
 
+  // create flowpipe
   Flowpipe flowpipe(initSet.get_directions());
   flowpipe.append(initSet);
+
+#ifdef WITH_THREADS
+  std::mutex mutex;
+
+  auto compute_next_bundles_and_add_to_last
+      = [&nbundles, &last_step, &pSet, &mutex](const Sapo *sapo,
+                                               const Bundle &bundle)
+#else
+  auto compute_next_bundles_and_add_to_last
+      = [&nbundles, &last_step, &pSet](const Sapo *sapo, const Bundle &bundle)
+#endif
+
+  {
+    // for all the parameter sets
+    for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
+
+      // get the transformed bundle
+      Bundle nbundle
+          = bundle.transform(sapo->vars, sapo->params, sapo->dyns, *p_it,
+                             sapo->trans); // transform it
+
+      if (sapo->decomp > 0) { // if requested, decompose it
+        nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
+      }
+
+      Polytope bls = nbundle;
+
+      // TODO: check whether there is any chance for a transformed bundle to
+      // be empty
+      if (!bls.is_empty()) {
+        // split if necessary the new reached bundle and add the resulting
+        // bundles to the nbundles list
+        nbundles.splice(nbundles.end(),
+                        nbundle.split(sapo->max_bundle_magnitude));
+
+        {
+          std::unique_lock<std::mutex> lock(mutex);
+          last_step.add(bls);
+        }
+      }
+    }
+  };
 
   unsigned int i = 0;
 
@@ -123,40 +246,37 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
     last_step = PolytopesUnion();
     i++;
 
-    // create a list for the new reached bundles
-    std::list<Bundle> nbundles;
+#ifdef WITH_THREADS
+    ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
     // for all the old bundles
     for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
          ++b_it) {
-      // for all the parameter sets
-      for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
-
-        // get the transformed bundle
-        Bundle bundle
-            = b_it->transform(this->vars, this->params, this->dyns, *p_it,
-                              this->trans); // transform it
-
-        if (this->decomp > 0) { // if requested, decompose it
-          bundle = bundle.decompose(this->decomp_weight, this->decomp);
-        }
-
-        Polytope bls = bundle;
-
-        // TODO: check whether there is any chance for a transformed bundle to
-        // be empty
-        if (!bls.is_empty()) {
-          // split if necessary the new reached bundle and add the resulting
-          // bundles to the nbundles list
-          nbundles.splice(nbundles.end(), bundle.split(max_bundle_magnitude));
-
-          last_step.add(bls);
-        }
-      }
+      // submit the task to the thread pool
+      thread_pool.submit_to_batch(batch_id,
+                                  compute_next_bundles_and_add_to_last, this,
+                                  std::ref(*b_it));
     }
 
+    // join to the pool threads
+    thread_pool.join_threads(batch_id);
+
+    // close the batch
+    thread_pool.close_batch(batch_id);
+#else  // WITH_THREADS
+
+    // for all the old bundles
+    for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
+         ++b_it) {
+
+      compute_next_bundles_and_add_to_last(this, std::ref(*b_it));
+    }
+#endif // WITH_THREADS
+
     // swap current bundles and new bundles
-    swap(cbundles, nbundles);
+    std::swap(cbundles, nbundles);
+
+    nbundles = std::list<Bundle>();
 
     // add the last step to the flow pipe
     flowpipe.append(last_step); // store result
