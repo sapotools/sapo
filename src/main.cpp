@@ -41,6 +41,7 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
   } else {
     sapo.num_of_presplits = 0;
   }
+  sapo.max_bundle_magnitude = data.getMaxVersorMagnitude();
   sapo.verbose = verbose;
 
   return sapo;

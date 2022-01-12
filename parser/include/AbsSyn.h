@@ -549,6 +549,11 @@ public:
     iterations = n;
   }
 
+  const double &getMaxVersorMagnitude() const
+  {
+    return max_bundle_magnitude;
+  }
+
   const unsigned int &getMaxParameterSplits() const
   {
     return max_param_splits;
@@ -557,6 +562,11 @@ public:
   void setMaxParameterSplits(unsigned int n)
   {
     max_param_splits = n;
+  }
+
+  void setMaxVersorMagnitude(const double magnitude)
+  {
+    max_bundle_magnitude = magnitude;
   }
 
   const bool &isPreSplitsSet() const
@@ -827,6 +837,8 @@ protected:
 
   unsigned int max_param_splits;
   bool presplits;
+
+  double max_bundle_magnitude;
 
   std::vector<Variable *> vars;
   std::vector<Parameter *> params;

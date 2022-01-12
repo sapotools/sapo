@@ -65,6 +65,7 @@ assume			return yy::parser::make_ASSUME(loc);
 iterations		return yy::parser::make_ITER(loc);
 max_parameter_splits	return yy::parser::make_PSPLITS(loc);
 presplit_parameters return yy::parser::make_PRESPLITS(loc);
+max_bundle_magnitude return yy::parser::make_MAX_MAGNITUDE(loc);
 direction		return yy::parser::make_DIR(loc);
 template		return yy::parser::make_TEMPL(loc);
 parameter_direction	return yy::parser::make_PDIR(loc);

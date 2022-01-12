@@ -1,5 +1,7 @@
 #include "../include/AbsSyn.h"
 
+#include <limits>
+
 #include "../include/AbsSynIO.h"
 
 #include "../../include/SymbolicAlgebra.h"
@@ -571,41 +573,16 @@ std::vector<double> Assumption::getDirection(const InputData &id) const
  ***********************
  */
 
-InputData::InputData()
+InputData::InputData():
+    problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
+    paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
+    max_param_splits(0), presplits(false),
+    max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
+    consts(), defs(), assumptions(), spec(NULL), directions(), LBoffsets(), 
+    UBoffsets(),
+    templateMatrix(), paramDirections(), paramLBoffsets(), paramUBoffsets(),
+    trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(-1)
 {
-  problem = problemType::P_UNDEF;
-  varMode = modeType::M_UNDEF;
-  paramMode = modeType::M_UNDEF;
-
-  iterations = 0;
-  iter_set = false;
-
-  max_param_splits = 0;
-  presplits = false;
-
-  spec = NULL;
-
-  vars.resize(0);
-  params.resize(0);
-  consts.resize(0);
-  defs.resize(0);
-
-  assumptions.resize(0);
-
-  directions.resize(0);
-  LBoffsets.resize(0);
-  UBoffsets.resize(0);
-
-  templateMatrix.resize(0);
-
-  paramDirections.resize(0);
-  paramLBoffsets.resize(0);
-  paramUBoffsets.resize(0);
-
-  trans = transType::T_UNDEF;
-  decomp = false;
-  decomp_defined = false;
-  alpha = -1;
 }
 
 InputData::~InputData()

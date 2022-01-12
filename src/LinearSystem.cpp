@@ -497,6 +497,10 @@ bool LinearSystem::constraint_is_redundant(const unsigned int i) const
  */
 LinearSystem &LinearSystem::simplify()
 {
+  if (size() == 0) {
+    return *this;
+  }
+
   unsigned int i = 0, last_non_redundant = size() - 1;
 
   while (i < last_non_redundant) { // for every unchecked constraint
