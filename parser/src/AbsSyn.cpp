@@ -946,10 +946,20 @@ bool InputData::isDefDefined(const string &name) const
   return false;
 }
 
+bool InputData::isDirectionDefined(const std::string &name) const
+{
+	for (unsigned i = 0; i < directions.size(); i++) {
+		if (directions[i]->getName() == name) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool InputData::isSymbolDefined(const string &name) const
 {
   return isVarDefined(name) || isParamDefined(name) || isConstDefined(name)
-         || isDefDefined(name);
+         || isDefDefined(name) || isDirectionDefined(name);
 }
 
 const Variable *InputData::getVar(const string &name) const
@@ -1124,6 +1134,17 @@ void InputData::addDirectionConstraint(Direction *d)
   for (unsigned i = 0; i < vars.size(); i++)
     directions[i][i] = 1;
 }*/
+
+int InputData::findDirectionPos(const std::string &name) const
+{
+	for (unsigned i = 0; i < directions.size(); i++) {
+		if (directions[i]->getName() == name) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 
 void InputData::defaultTemplate()
 {

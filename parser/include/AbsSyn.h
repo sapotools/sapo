@@ -702,6 +702,8 @@ public:
       const; // checks if a constant named 'name' already exists
   bool isDefDefined(const std::string &name)
       const; // checks if a definition named 'name' already exists
+	bool isDirectionDefined(const std::string &name)
+			const; // checks if a direction named "name" already exists
   bool isSymbolDefined(
       const std::string &name) const; // checks if a symbol (var, param, const
                                       // or def) named 'name' already exists
@@ -802,6 +804,7 @@ public:
 	{
 		return directions[d]->hasLB() && directions[d]->hasUB();
 	}
+	int findDirectionPos(const std::string &name) const;
 
   unsigned templateRows() const
   {

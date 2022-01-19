@@ -109,8 +109,8 @@
 %nterm <double> number
 %nterm <std::vector<std::string>> identList
 %nterm <AbsSyn::Expr *> expr
-%nterm <std::vector<int>> matrixRow intList
-%nterm <std::vector<std::vector<int>>> _matrix rowList
+%nterm <std::vector<int>> matrixRow
+%nterm <std::vector<std::vector<int>>> rowList
 %nterm <AbsSyn::Formula *> formula
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> direction
@@ -486,9 +486,9 @@ var_direction	: DIR direction ";"
 								drv.data.addDirectionConstraint($4);
 						}
 
-template		: TEMPL "=" _matrix
+template		: TEMPL "=" "{" rowList "}"
 						{
-							if ($3[0].size() != drv.data.getVarNum())
+							if ($4[0].size() != drv.data.getVarNum())
 							{
 								yy::parser::error(@3, "template matrix must have as many columns as the number of variables");
 								YYERROR;
@@ -500,20 +500,52 @@ template		: TEMPL "=" _matrix
 								YYERROR;
 							}
 							
-							for (unsigned i = 0; i < $3.size(); i++)
-							{
-								for (unsigned j = 0; j < $3[i].size(); j++)
-								{
-									if ($3[i][j] < 0 || (unsigned int)$3[i][j] >= drv.data.getDirectionsNum())
-									{
-										yy::parser::error(@3, "Unknown direction");
-										YYERROR;
-									}
-								}
-							}
-							
-							drv.data.setTemplate($3);
+							drv.data.setTemplate($4);
 						}
+
+rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
+						| rowList "," "{" matrixRow "}" { $1.push_back($4); $$ = $1; }
+
+matrixRow	: matrixRow "," IDENT
+					{
+						if (!drv.data.isDirectionDefined($3)) {
+							yy::parser::error(@3, "Direction " + $3 + " is not defined");
+							YYERROR;
+						}
+						
+						$1.push_back(drv.data.findDirectionPos($3));
+						$$ = $1;
+					}
+					| IDENT
+					{
+						if (!drv.data.isDirectionDefined($1)) {
+							yy::parser::error(@1, "Direction " + $1 + " is not defined");
+							YYERROR;
+						}
+						
+						$$ = {drv.data.findDirectionPos($1)};
+					}
+					| matrixRow "," INTEGER
+					{
+						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum())
+						{
+							yy::parser::error(@3, "Unknown direction " + std::to_string($3));
+							YYERROR;
+						}
+						
+						$1.push_back($3);
+						$$ = $1;
+					}
+					| INTEGER
+					{
+						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum())
+						{
+							yy::parser::error(@1, "Unknown direction " + std::to_string($1));
+							YYERROR;
+						}
+						
+						$$ = {$1};
+					}
 
 paramDir		: PDIR direction ";"
 						{
@@ -615,7 +647,7 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 				{
 					if (!drv.data.isSymbolDefined($1))
 					{
-						yy::parser::error(@1, "unknown symbol name");
+						yy::parser::error(@1, "Symbol " + $1 + " is undefined");
 						YYERROR;
 					}
 				
@@ -640,35 +672,6 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 				| expr "-" expr { $$ = $1->sub($3); }
 				| "-" expr %prec UMINUS { $$ = $2->neg(); }
 				| "(" expr ")" { $$ = $2;}
-
-matrixRow	: "{" intList "}" { $$ = $2; }
-					| "{" "}" { yy::parser::error(@$, "Matrix row cannot be empty"); YYERROR; }
-
-intList		: INTEGER
-					{
-						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum())
-						{
-							yy::parser::error(@1, "Unknown direction");
-							YYERROR;
-						}
-						$$ = std::vector<int>{$1};
-					}
-					| intList "," INTEGER
-					{
-						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum())
-						{
-							yy::parser::error(@3, "Unknown direction");
-							YYERROR;
-						}
-						$1.push_back($3);
-						$$ = $1;
-					}
-
-_matrix			: "{" rowList "}" { $$ = $2; }
-						| "{" "}" { yy::parser::error(@$, "Matrix cannot be empty"); YYERROR; }
-
-rowList			: matrixRow { $$ = std::vector<std::vector<int>>{$1}; }
-						| rowList "," matrixRow { $1.push_back($3); $$ = $1; }
 
 formula	: expr ">" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
 				| expr ">=" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
