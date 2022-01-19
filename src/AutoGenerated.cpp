@@ -2,7 +2,6 @@
 
 #include "SymbolicAlgebra.h"
 #include "LinearAlgebra.h"
-#include "LinearAlgebraIO.h"
 
 using namespace AbsSyn;
 
