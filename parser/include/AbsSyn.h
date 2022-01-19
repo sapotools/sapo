@@ -1,7 +1,6 @@
 #ifndef __ABSSYN_H__
 #define __ABSSYN_H__
 
-#include <ginac/ginac.h>
 #include <iostream>
 #include <numeric> // iota
 #include <string>
@@ -18,6 +17,9 @@
 #include "STL.h"
 #include "Until.h"
 #include "LinearSystem.h"
+#include "LinearAlgebra.h"
+
+#include "SymbolicAlgebra.h"
 
 namespace AbsSyn
 {
@@ -56,20 +58,20 @@ enum transType {
 class Expr
 {
   friend std::ostream &operator<<(std::ostream &os, const Expr &e)
-	{
-		return e.prettyPrint(os, 10);
-	}
+  {
+    return e.prettyPrint(os, 10);
+  }
 
 public:
-	// order of types follows order of priority (needed by Expr::prettyPrint)
+  // order of types follows order of priority (needed by Expr::prettyPrint)
   enum exprType {
     NUM_ATOM = 0, // atomic expression (single number)
-    ID_ATOM,  // atomic expression (single identifier)
-    NEG,       // unary minus (-x)
-    DIV,      // division (x / y)
-    MUL,      // multiplication (x * y)
-    SUB,      // subtraction (x - y)
-    SUM      // sum (x + y)
+    ID_ATOM,      // atomic expression (single identifier)
+    NEG,          // unary minus (-x)
+    DIV,          // division (x / y)
+    MUL,          // multiplication (x * y)
+    SUB,          // subtraction (x - y)
+    SUM           // sum (x + y)
   };
 
   Expr(std::string n)
@@ -127,7 +129,6 @@ public:
   {
     return right;
   }
-  
   int getDegree(const InputData &id, bool variable = true)
 			const; // return the degree of the polynomial expression
 
@@ -162,9 +163,9 @@ public:
 								* apperas only one time)
 								*/
 
-  GiNaC::ex
-  toEx(const InputData &m, const GiNaC::lst &vars,
-       const GiNaC::lst &params) const; // converts an Expr to a GiNaC ex
+  SymbolicAlgebra::Expression<>
+  toEx(const InputData &m, const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+       const std::vector<SymbolicAlgebra::Symbol<>> &params) const; // converts an Expr to a symbolic expression
 
 protected:
   Expr()
@@ -178,7 +179,7 @@ protected:
   double val;       // value of number (if ATOM)
   Expr *left;       // left operand (if not ATOM)
   Expr *right;      // right operand (if not ATOM)
-  
+
   // utility for printing expressions without too many parenthesis
   std::ostream &prettyPrint(std::ostream &os, const int level) const;
 };
@@ -250,24 +251,32 @@ public:
   {
     return i;
   }
-  
+
   formulaType getType() const
-	{
-		return type;
-	}
-  
-  bool isLinear(const InputData &id)
-			const; // checks if the formula is a boolean combination
-						 // of linear inequalities
+  {
+    return type;
+  }
+
+  bool
+  isLinear(const InputData &id) const; // checks if the formula is a boolean
+                                       // combination of linear inequalities
 
   /*
    * simplification, removes negations
    */
   bool simplify();
 
-  std::shared_ptr<STL> toSTL(const InputData &m, const GiNaC::lst &vars,
-                             const GiNaC::lst &params)
-      const; // transforms a Formula into a SAPO STL formula
+  /**
+   * @brief Transforms a Formula into a SAPO STL formula.
+   *
+   * @param m is the input data object.
+   * @param vars is the vector of variable symbols.
+   * @param params is the vector of parameter symbols.
+   * @return a pointer to the STL formula.
+   */
+  std::shared_ptr<STL>
+  toSTL(const InputData &m, const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+        const std::vector<SymbolicAlgebra::Symbol<>> &params) const;
 
 protected:
   Formula()
@@ -419,7 +428,6 @@ protected:
   std::string name; // name of the constant
   double val;       // value
 };
-
 
 /*
  ************************
@@ -635,6 +643,11 @@ public:
     iterations = n;
   }
 
+  const double &getMaxVersorMagnitude() const
+  {
+    return max_bundle_magnitude;
+  }
+
   const unsigned int &getMaxParameterSplits() const
   {
     return max_param_splits;
@@ -643,6 +656,21 @@ public:
   void setMaxParameterSplits(unsigned int n)
   {
     max_param_splits = n;
+  }
+
+  void setMaxVersorMagnitude(const double magnitude)
+  {
+    max_bundle_magnitude = magnitude;
+  }
+
+  const bool &isPreSplitsSet() const
+  {
+    return presplits;
+  }
+
+  void setPreSplits(const bool presplits)
+  {
+    this->presplits = presplits;
   }
 
   unsigned getVarNum() const
@@ -663,8 +691,8 @@ public:
   }
   unsigned getAssumptionsNumber() const
   {
-		return assumptions.size();
-	}
+    return assumptions.size();
+  }
 
   bool isVarDefined(const std::string &name)
       const; // checks if a variable named 'name' already exists
@@ -770,25 +798,6 @@ public:
   {
 		return directions[i];
 	}
-/*  void addDirection(std::vector<double> d, double LB, double UB);
-  void addDirection(std::vector<double> d)
-  {
-    directions.push_back(d);
-  }
-  void addBounds(double LB, double UB)
-  {
-    LBoffsets.push_back(LB);
-    UBoffsets.push_back(UB);
-  }
-  void defaultDirections();
-  const std::vector<double> &getLB() const
-  {
-    return LBoffsets;
-  }
-  const std::vector<double> &getUB() const
-  {
-    return UBoffsets;
-  }*/
   bool isBounded(int d) const
 	{
 		return directions[d]->hasLB() && directions[d]->hasUB();
@@ -817,18 +826,6 @@ public:
   {
     return paramDirections.size();
   }
-/*  void addParamDirection(std::vector<double> d, double LB, double UB);
-  void addParamDirection(std::vector<double> d)
-  {
-    paramDirections.push_back(d);
-  }
-  void addParamBounds(double LB, double UB)
-  {
-    paramLBoffsets.push_back(LB);
-    paramUBoffsets.push_back(UB);
-  }*/
-
-//  void defaultParamDirections();
 
   const std::vector<Direction *> &getParameterDirections() const
   {
@@ -839,16 +836,6 @@ public:
   {
     return paramDirections[i];
   }
-
-  /*const std::vector<double> &getParamLB() const
-  {
-    return paramLBoffsets;
-  }
-
-  const std::vector<double> &getParamUB() const
-  {
-    return paramUBoffsets;
-  }*/
 
   bool isTransModeDefined() const
   {
@@ -912,6 +899,9 @@ protected:
   bool iter_set;
 
   unsigned int max_param_splits;
+  bool presplits;
+
+  double max_bundle_magnitude;
 
   std::vector<Variable *> vars;
   std::vector<Parameter *> params;
@@ -923,12 +913,6 @@ protected:
   Formula *spec;
 
 	std::vector<Direction *> directions;
-	/*
-  std::vector<std::vector<double>> directions;
-	std::vector<std::string> directionNames;
-  std::vector<double> LBoffsets;
-  std::vector<double> UBoffsets;
-	std::vector<bool> hasLB;*/
 
   std::vector<std::vector<int>> templateMatrix;
 
@@ -944,22 +928,5 @@ protected:
   double alpha;
 };
 
-}
-
-namespace std
-{
-std::ostream &operator<<(std::ostream &os, const AbsSyn::problemType t);
-std::ostream &operator<<(std::ostream &os, const AbsSyn::modeType t);
-
-std::ostream &operator<<(std::ostream &os, const pair<int, int> p);
-std::ostream &operator<<(std::ostream &os, const pair<double, double> p);
-
-std::ostream &operator<<(std::ostream &os, const std::vector<double> v);
-std::ostream &operator<<(std::ostream &os, const std::vector<string> v);
-std::ostream &operator<<(std::ostream &os, const std::vector<int> v);
-std::ostream &operator<<(std::ostream &os,
-                         const std::vector<std::vector<double>> v);
-std::ostream &operator<<(std::ostream &os,
-                         const std::vector<std::vector<int>> v);
 }
 #endif

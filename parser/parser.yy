@@ -9,6 +9,8 @@
 %code requires {
 	# include <string>
 	#include "AbsSyn.h"
+	#include "AbsSynIO.h"
+
 	class driver;
 }
 
@@ -46,6 +48,8 @@
 	ASSUME
 	ITER
 	PSPLITS
+	PRESPLITS
+	MAX_MAGNITUDE
 	DIR
 	TEMPL
 	PDIR
@@ -82,6 +86,8 @@
 ;
 
 %token <std::string> IDENT
+%token <std::string> ON
+%token <std::string> OFF
 %token <int> INTEGER
 %token <double> DOUBLE
 
@@ -192,6 +198,19 @@ header			: PROB ":" problemType ";"
 
 							drv.data.setMaxParameterSplits($3);
 						}
+						| PRESPLITS ":" ON ";"
+						{
+							drv.data.setPreSplits(true);
+						}
+						| PRESPLITS ":" OFF ";"
+						{
+							drv.data.setPreSplits(false);
+						}
+						| MAX_MAGNITUDE ":" DOUBLE ";"
+						{
+							drv.data.setMaxVersorMagnitude($3);
+						}
+
 symbolList	: symbol {}
 						| symbolList symbol {}
 

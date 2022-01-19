@@ -115,7 +115,7 @@ public:
    * @return true if and only if the time interval is empty, i.e.,
    *     the begin of this time interval comes before the end of it.
    */
-  bool isEmpty() const
+  bool is_empty() const
   {
     return this->begin() > this->end();
   }

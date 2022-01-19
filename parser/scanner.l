@@ -7,6 +7,8 @@
 #include "driver.h"
 #include "AbsSyn.h"
 #include "parser.h"
+
+#pragma GCC diagnostic ignored "-Wsign-compare"
 %}
 
 %option noyywrap nounput noinput batch debug
@@ -18,7 +20,10 @@ natural			{digit}+
 double			(({natural})\.{natural})
 
 letter			[a-zA-Z]
-ident				{letter}({letter}|{digit}|[_])*
+
+on          "on"
+off         "off"
+ident				{letter}({letter}|{digit}|\_-)*
 
 l_comment		"//"[^\n]*\n
 ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"
@@ -27,7 +32,7 @@ ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"
   // Code run each time a pattern is matched.
   #define YY_USER_ACTION \
 		loc.step();\
-		for (int i = 0; i < yyleng; i++) {\
+		for (unsigned int i = 0; i < yyleng; i++) {\
 			if (yytext[i] == '\n') { loc.lines(); loc.step(); }\
 			else { loc.columns(); }\
 		}
@@ -60,6 +65,8 @@ spec			return yy::parser::make_SPEC(loc);
 assume			return yy::parser::make_ASSUME(loc);
 iterations		return yy::parser::make_ITER(loc);
 max_parameter_splits	return yy::parser::make_PSPLITS(loc);
+presplit_parameters return yy::parser::make_PRESPLITS(loc);
+max_bundle_magnitude return yy::parser::make_MAX_MAGNITUDE(loc);
 direction		return yy::parser::make_DIR(loc);
 template		return yy::parser::make_TEMPL(loc);
 parameter_direction	return yy::parser::make_PDIR(loc);
@@ -100,6 +107,9 @@ U			return yy::parser::make_UNTIL(loc);
 {natural}		return yy::parser::make_INTEGER(std::stoi(yytext), loc);
 
 {double}		return yy::parser::make_DOUBLE(std::stof(yytext), loc);
+
+{on}        return yy::parser::make_ON(yytext, loc);
+{off}       return yy::parser::make_OFF(yytext, loc);
 
 {ident}			return yy::parser::make_IDENT(yytext, loc);
 

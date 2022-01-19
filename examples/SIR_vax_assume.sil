@@ -1,5 +1,5 @@
-problem: synthesis;
-//problem: reachability;
+//problem: synthesis;
+problem: reachability;
 
 iterations: 10;
 max_parameter_splits: 0;
@@ -20,13 +20,14 @@ dynamic(r) = r + mu*s - gamma*r + alpha*i;
 //spec: G[0,10] r > 0.4;
 spec: r > 0.4;
 
-/*assume(s >= 0);
-assume(i >= 0);
-assume(r >= 0);*/
-
-/*assume(s <= 1);
+assume(s <= 1);
 assume(i <= 1);
-assume(r <= 1);*/
+assume(r <= 1);
 
-//assume(s + i + r <= 1);
-assume(s + i + r >= -10);
+assume(s >= 0);
+assume(i >= 0);
+assume(r >= 0);
+
+
+assume(s + i + r <= 1);
+assume(s + i + r >= 0);

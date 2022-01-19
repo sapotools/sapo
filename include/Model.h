@@ -9,44 +9,70 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
-#include <ginac/ginac.h>
-
+#include "SymbolicAlgebra.h"
 #include "Bundle.h"
-#include "LinearSystemSet.h"
+#include "PolytopesUnion.h"
 #include "STL.h"
 
 class Model
 {
 
 protected:
-  GiNaC::lst vars;   // variables
-  GiNaC::lst params; // parameters
-  GiNaC::lst dyns;   // dynamics
+  std::vector<SymbolicAlgebra::Symbol<>> vars;     //!< variables
+  std::vector<SymbolicAlgebra::Symbol<>> params;   //!< parameters
+  std::vector<SymbolicAlgebra::Expression<>> dyns; //!< dynamics
 
   Bundle *reachSet; // Initial reach set
-  LinearSystemSet *paraSet;
+  PolytopesUnion *paraSet;
 
   std::shared_ptr<STL> spec;
 
   std::string name;
 
 public:
+  Model():
+      vars(), params(), dyns(), reachSet(NULL), paraSet(NULL), spec(NULL),
+      name("Unknown")
+  {
+  }
+
+  Model(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+        const std::vector<SymbolicAlgebra::Expression<>> &dyns,
+        const Bundle &reachSet, const std::string name = "Unknown"):
+      vars(vars),
+      params(), dyns(dyns), reachSet(new Bundle(reachSet)), paraSet(NULL),
+      spec(NULL), name(name)
+  {
+  }
+
+  Model(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+        const std::vector<SymbolicAlgebra::Symbol<>> &params,
+        const std::vector<SymbolicAlgebra::Expression<>> &dyns,
+        const Bundle &reachSet, const PolytopesUnion &paraSet,
+        const std::shared_ptr<STL> specification,
+        const std::string name = "Unknown"):
+      vars(vars),
+      params(params), dyns(dyns), reachSet(new Bundle(reachSet)),
+      paraSet(new PolytopesUnion(paraSet)), spec(specification), name(name)
+  {
+  }
+
   const std::string &getName() const
   {
     return this->name;
   }
 
-  const GiNaC::lst &getVars() const
+  const std::vector<SymbolicAlgebra::Symbol<>> &getVars() const
   {
     return this->vars;
   }
 
-  const GiNaC::lst &getParams() const
+  const std::vector<SymbolicAlgebra::Symbol<>> &getParams() const
   {
     return this->params;
   }
 
-  const GiNaC::lst &getDyns() const
+  const std::vector<SymbolicAlgebra::Expression<>> &getDyns() const
   {
     return this->dyns;
   }
@@ -55,7 +81,7 @@ public:
   {
     return this->reachSet;
   }
-  const LinearSystemSet *getParaSet() const
+  const PolytopesUnion *getParaSet() const
   {
     return this->paraSet;
   }

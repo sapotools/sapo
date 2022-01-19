@@ -1,0 +1,44 @@
+problem: synthesis;
+variable_mode: parallelotopes;
+
+max_bundle_magnitude: 0.3;
+
+iterations: 150;
+
+// definition of variables
+/*var s in [0.79, 0.8];
+var e in [0, 0];
+var q in [0, 0];
+var i in [0.19, 0.2];
+var r in [0, 0];
+*/
+
+var s, e, q, i, r;
+
+// definition of parameters
+param kappa1 in [0.2, 0.3];
+param gamma1 in [0.2, 0.5];
+
+// constants
+const beta = 0.9;
+const kappa2 = 0.5;
+const gamma2 = 0.5;
+const sigma = 0.28;
+const Delta = 0.1;
+
+// dynamics
+dynamic(s) = s - ((s*beta*i) + gamma1*q)*Delta;
+dynamic(e) = e + ((s*beta*i) - (kappa1+kappa2)*e)*Delta;
+dynamic(q) = q + (kappa1*e - (gamma1+gamma2)*q)*Delta;
+dynamic(i) = i + (gamma2*q + kappa2*e - sigma*i)*Delta;
+dynamic(r) = r + (sigma*i)*Delta;
+
+// specification
+spec: q <= 0.045 U[10,15] i <= 0.23;
+
+
+direction <1, 0, 0, 0, 0> in [0.79, 0.8];
+direction <0, 1, 0, 0, 0> in [0, 0];
+direction <0, 0, 1, 0, 0> in [0, 0];
+direction <0, 0, 0, 1, 0> in [0.19, 0.2];
+direction <0, 0, 0, 0, 1> in [0, 0];

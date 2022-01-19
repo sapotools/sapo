@@ -1,56 +1,85 @@
 #include "../include/AbsSyn.h"
 
-using namespace std;
-using namespace GiNaC;
+#include <limits>
 
+#include "../include/AbsSynIO.h"
+
+#include "../../include/SymbolicAlgebra.h"
+
+using namespace std;
+
+namespace std
+{
+ostream &operator<<(ostream &os, const AbsSyn::problemType t)
+{
+  if (t == AbsSyn::problemType::P_UNDEF)
+    return os << "UNDEF";
+  else if (t == AbsSyn::problemType::REACH)
+    return os << "reachability";
+  else
+    return os << "synthesis";
+}
+
+ostream &operator<<(ostream &os, const AbsSyn::modeType t)
+{
+  if (t == AbsSyn::modeType::M_UNDEF)
+    return os << "UNDEF";
+  else if (t == AbsSyn::modeType::BOX)
+    return os << "boxes";
+  else if (t == AbsSyn::modeType::PARAL)
+    return os << "parallelotopes";
+  else
+    return os << "polytopes";
+}
+}
 namespace AbsSyn
 {
 
 std::ostream &Expr::prettyPrint(std::ostream &os, const int level) const
 {
-	if (level < type)
-		os << "(";
-	
-	switch (type) {
-		case exprType::NUM_ATOM:
-			os << val;
-			break;
-		case exprType::ID_ATOM:
-			os << name;
-			break;
-		case exprType::SUM:
-			left->prettyPrint(os, type);
-			os << " + ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::SUB:
-			left->prettyPrint(os, type);
-			os << " - ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::MUL:
-			left->prettyPrint(os, type);
-			os << " * ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::DIV:
-			left->prettyPrint(os, type);
-			os << " / ";
-			right->prettyPrint(os, type);
-			break;
-		case exprType::NEG:
-			os << " - ";
-			left->prettyPrint(os, type);
-			break;
-		default:
-			std::logic_error("Unsupported expression");
-			break;
-	}
-	
-	if (level < type)
-		os << ")";
-	
-	return os;
+  if (level < type)
+    os << "(";
+
+  switch (type) {
+  case exprType::NUM_ATOM:
+    os << val;
+    break;
+  case exprType::ID_ATOM:
+    os << name;
+    break;
+  case exprType::SUM:
+    left->prettyPrint(os, type);
+    os << " + ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::SUB:
+    left->prettyPrint(os, type);
+    os << " - ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::MUL:
+    left->prettyPrint(os, type);
+    os << " * ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::DIV:
+    left->prettyPrint(os, type);
+    os << " / ";
+    right->prettyPrint(os, type);
+    break;
+  case exprType::NEG:
+    os << " - ";
+    left->prettyPrint(os, type);
+    break;
+  default:
+    std::logic_error("Unsupported expression");
+    break;
+  }
+
+  if (level < type)
+    os << ")";
+
+  return os;
 }
 
 Expr *Expr::mul(Expr *e)
@@ -168,27 +197,27 @@ double Expr::getCoefficient(const InputData &id, std::string symbolName) const
 
 double Expr::getOffset(const InputData &id) const
 {
-	switch (type) {
-		case Expr::NUM_ATOM:
-			return val;
-		case Expr::ID_ATOM:
-			return 0;
-		case Expr::NEG:
-			return -left->getOffset(id);
-		case Expr::DIV:			// division is allowed only if denominator is numeric
-			return left->getOffset(id) / right->evaluate(id);
-		case Expr::SUM:
-			return left->getOffset(id) + right->getOffset(id);
-		case Expr::SUB:
-			return left->getOffset(id) - right->getOffset(id);
-		case Expr::MUL: {
-			return left->getOffset(id) * right->getOffset(id);
-		}
-		default:
-			std::logic_error("Unsupported expression");
-	}
-	// should not get here
-	return -1;
+  switch (type) {
+  case Expr::NUM_ATOM:
+    return val;
+  case Expr::ID_ATOM:
+    return 0;
+  case Expr::NEG:
+    return -left->getOffset(id);
+  case Expr::DIV: // division is allowed only if denominator is numeric
+    return left->getOffset(id) / right->evaluate(id);
+  case Expr::SUM:
+    return left->getOffset(id) + right->getOffset(id);
+  case Expr::SUB:
+    return left->getOffset(id) - right->getOffset(id);
+  case Expr::MUL: {
+    return left->getOffset(id) * right->getOffset(id);
+  }
+  default:
+    std::logic_error("Unsupported expression");
+  }
+  // should not get here
+  return -1;
 }
 
 Expr *Expr::copy() const
@@ -309,17 +338,22 @@ double Expr::evaluate(const InputData &im) const
   }
 }
 
-ex Expr::toEx(const InputData &m, const lst &vars, const lst &params) const
+SymbolicAlgebra::Expression<>
+Expr::toEx(const InputData &m,
+           const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+           const std::vector<SymbolicAlgebra::Symbol<>> &params) const
 {
+  using namespace SymbolicAlgebra;
+
   switch (type) {
   case exprType::NUM_ATOM:
-    return numeric(std::to_string(val).c_str());
+    return Expression<>(val);
   case exprType::ID_ATOM:
     if (m.isVarDefined(name))
       return vars[m.getVarPos(name)];
-    else if (m.isParamDefined(name))
+    if (m.isParamDefined(name))
       return params[m.getParamPos(name)];
-    else if (m.isDefDefined(name))
+    if (m.isDefDefined(name))
       return m.getDef(name)->getValue()->toEx(m, vars, params);
     throw std::logic_error("Unknown ID");
   case exprType::SUM:
@@ -422,27 +456,26 @@ Formula *Formula::until(pair<int, int> in, Formula *f)
 
 bool Formula::isLinear(const InputData &id) const
 {
-	switch (type)
-	{
-		case formulaType::ATOM:
-			return ex->getDegree(id) <= 1;
-			
-		// boolean combination
-		case formulaType::CONJ:
-		case formulaType::DISJ:
-			return f1->isLinear(id) && f2->isLinear(id);
-			
-		// temporal operators, not boolean combinations
-		case formulaType::ALW:
-    case formulaType::EVENT:
-    case formulaType::UNTIL:
-			return false;
-			
-		default:
-			std::logic_error("Unsupported formula");
-	}
-	// should not get here
-	return false;
+  switch (type) {
+  case formulaType::ATOM:
+    return ex->getDegree(id) <= 1;
+
+  // boolean combination
+  case formulaType::CONJ:
+  case formulaType::DISJ:
+    return f1->isLinear(id) && f2->isLinear(id);
+
+  // temporal operators, not boolean combinations
+  case formulaType::ALW:
+  case formulaType::EVENT:
+  case formulaType::UNTIL:
+    return false;
+
+  default:
+    std::logic_error("Unsupported formula");
+  }
+  // should not get here
+  return false;
 }
 
 bool Formula::simplify()
@@ -519,12 +552,16 @@ int Formula::simplifyRec()
 }
 
 // no negations, were eliminated in simplify
-std::shared_ptr<STL> Formula::toSTL(const InputData &m, const lst &vars,
-                                    const lst &params) const
+std::shared_ptr<STL>
+Formula::toSTL(const InputData &m,
+               const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+               const std::vector<SymbolicAlgebra::Symbol<>> &params) const
 {
+  using namespace SymbolicAlgebra;
   switch (type) {
-  case formulaType::ATOM:
+  case formulaType::ATOM: {
     return std::make_shared<Atom>(ex->toEx(m, vars, params));
+  }
   case formulaType::CONJ:
     return std::make_shared<Conjunction>(f1->toSTL(m, vars, params),
                                          f2->toSTL(m, vars, params));
@@ -667,14 +704,14 @@ Direction *Direction::getComplementary() const
 
 bool Direction::compare(Direction *d, const InputData &id, bool variable) const
 {
-	GiNaC::lst vars{}, params{};
+	std::vector<SymbolicAlgebra::Symbol<>> vars{}, params{};
 	for (unsigned i = 0; i < id.getVarNum(); i++) {
-		GiNaC::symbol s(id.getVar(i)->getName());
-		vars.append(s);
+		SymbolicAlgebra::Symbol<> s(id.getVar(i)->getName());
+		vars.push_back(s);
 	}
 	for (unsigned i = 0; i < id.getParamNum(); i++) {
-		GiNaC::symbol s(id.getParam(i)->getName());
-		params.append(s);
+		SymbolicAlgebra::Symbol<> s(id.getParam(i)->getName());
+		params.push_back(s);
 	}
 	
 	std::vector<double> d1{}, d2{};
@@ -767,35 +804,15 @@ bool Direction::covers(const InputData &id, const std::string name) const
  ***********************
  */
 
-InputData::InputData()
+InputData::InputData():
+    problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
+    paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
+    max_param_splits(0), presplits(false),
+    max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
+    consts(), defs(), assumptions(), spec(NULL), directions(),
+    templateMatrix(), paramDirections(),
+    trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(-1)
 {
-  problem = problemType::P_UNDEF;
-  varMode = modeType::M_UNDEF;
-  paramMode = modeType::M_UNDEF;
-
-  iterations = 0;
-  iter_set = false;
-
-  max_param_splits = 0;
-
-  spec = NULL;
-
-  vars.resize(0);
-  params.resize(0);
-  consts.resize(0);
-  defs.resize(0);
-	
-	assumptions.resize(0);
-
-  directions.resize(0);
-  templateMatrix.resize(0);
-	
-  paramDirections.resize(0);
-
-  trans = transType::T_UNDEF;
-  decomp = false;
-  decomp_defined = false;
-  alpha = -1;
 }
 
 InputData::~InputData()
@@ -811,7 +828,7 @@ InputData::~InputData()
 
   for (auto it = std::begin(defs); it != std::end(defs); ++it)
     delete *it;
-	
+
   for (auto it = std::begin(assumptions); it != std::end(assumptions); ++it)
     delete *it;
 	
@@ -833,40 +850,40 @@ ostream &operator<<(ostream &os, const InputData &m)
   for (unsigned i = 0; i < m.vars.size(); i++) {
     os << "\t" << m.vars[i]->getName() << ": " << *(m.vars[i]->getDynamic())
        << endl;
-	}
+  }
   os << endl;
 
   os << "Parameters: " << endl;
   for (unsigned i = 0; i < m.params.size(); i++) {
     os << "\t" << m.params[i]->getName() << endl;
-	}
+  }
   os << endl;
 
   os << "Constants: " << endl;
   for (unsigned i = 0; i < m.consts.size(); i++) {
     os << "\t" << m.consts[i]->getName() << " = " << m.consts[i]->getValue()
        << endl;
-	}
+  }
   os << endl;
-	
-	os << "Defines: " << endl;
-	for (unsigned i = 0; i < m.defs.size(); i++) {
-		os << "\t" << m.defs[i]->getName() << " = " << *(m.defs[i]->getValue())
-				<< endl;
-	}
-	os << endl;
+
+  os << "Defines: " << endl;
+  for (unsigned i = 0; i < m.defs.size(); i++) {
+    os << "\t" << m.defs[i]->getName() << " = " << *(m.defs[i]->getValue())
+       << endl;
+  }
+  os << endl;
 
   os << "spec: ";
   if (m.spec == NULL)
     os << "NULL" << endl;
   else
     os << *(m.spec) << endl;
-	os << endl;
-	
-	os << "assumptions: ";
-	for (unsigned i = 0; i < m.assumptions.size(); i++)
-		os << *(m.assumptions[i]) << endl;
-	os << endl;
+  os << endl;
+
+  os << "assumptions: ";
+  for (unsigned i = 0; i < m.assumptions.size(); i++)
+    os << *(m.assumptions[i]) << endl;
+  os << endl;
 
   os << endl;
   os << "Directions:" << endl << "{" << endl;
@@ -1110,7 +1127,7 @@ void InputData::addDirectionConstraint(Direction *d)
 
 void InputData::defaultTemplate()
 {
-  templateMatrix.resize(1, vector<int>(vars.size()));
+  templateMatrix.resize(1, vector<int>(min(vars.size(), directions.size())));
   iota(templateMatrix[0].begin(), templateMatrix[0].end(), 0);
   //	templateMatrix.resize(1, vector<int>(vars.size(), 1));
 }
@@ -1254,38 +1271,38 @@ bool InputData::check()
 		}
 		for (unsigned i = 0; i < directions.size(); i++) {
 			if (directions[i]->hasLB()) {
-				A.push_back(get_complementary(directions[i]->getDirectionVector(*this, true)));
+				A.push_back(-directions[i]->getDirectionVector(*this, true));
 				b.push_back(-directions[i]->getLB(*this));
 			}
 		}
 		LinearSystem LS(A, b);
 		
-		GiNaC::lst symbols{};
+		std::vector<SymbolicAlgebra::Symbol<>> symbols{};
 		for (unsigned i = 0; i < vars.size(); i++) {
-			GiNaC::symbol s(vars[i]->getName());
-			symbols.append(s);
+			SymbolicAlgebra::Symbol<> s(vars[i]->getName());
+			symbols.push_back(s);
 		}
 		
 		for (unsigned i = 0; i < directions.size(); i++) {
 			if (!directions[i]->hasLB()) {
 				std::vector<double> dirVector = directions[i]->getDirectionVector(*this, true);
-				GiNaC::ex obj_function = 0;
+				SymbolicAlgebra::Expression<> obj_function = 0;
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
-				double minVal = LS.minLinearSystem(symbols, obj_function);
+				double minVal = LS.minimize(symbols, obj_function);
 				directions[i]->setLB(*this, minVal);
 			}
 			
 			if (!directions[i]->hasUB()) {
 				std::vector<double> dirVector = directions[i]->getDirectionVector(*this, true);
-				GiNaC::ex obj_function = 0;
+				SymbolicAlgebra::Expression<> obj_function = 0;
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
-				double maxVal = LS.maxLinearSystem(symbols, obj_function);
+				double maxVal = LS.maximize(symbols, obj_function);
 				directions[i]->setUB(*this, maxVal);
 			}
 		}
@@ -1349,32 +1366,32 @@ bool InputData::check()
 		}
 		LinearSystem LS(A, b);
 		
-		GiNaC::lst symbols{};
+		std::vector<SymbolicAlgebra::Symbol<>> symbols{};
 		for (unsigned i = 0; i < params.size(); i++) {
-			GiNaC::symbol s(params[i]->getName());
-			symbols.append(s);
+			SymbolicAlgebra::Symbol<> s(params[i]->getName());
+			symbols.push_back(s);
 		}
 		
 		for (unsigned i = 0; i < paramDirections.size(); i++) {
 			if (!paramDirections[i]->hasLB()) {
-				GiNaC::ex obj_function = 0;
+				SymbolicAlgebra::Expression<> obj_function = 0;
 				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(*this, false);
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
-				double minVal = LS.minLinearSystem(symbols, obj_function);
+				double minVal = LS.minimize(symbols, obj_function);
 				paramDirections[i]->setLB(*this, minVal);
 			}
 			
 			if (!paramDirections[i]->hasUB()) {
-				GiNaC::ex obj_function = 0;
+				SymbolicAlgebra::Expression<> obj_function = 0;
 				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(*this, false);
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
-				double maxVal = LS.maxLinearSystem(symbols, obj_function);
+				double maxVal = LS.maximize(symbols, obj_function);
 				paramDirections[i]->setUB(*this, maxVal);
 			}
 		}
@@ -1446,84 +1463,5 @@ bool InputData::check()
   }
 
   return res;
-}
-}
-
-namespace std
-{
-ostream &operator<<(ostream &os, const pair<int, int> p)
-{
-  return os << "[" << p.first << "," << p.second << "]";
-}
-
-ostream &operator<<(ostream &os, const pair<double, double> p)
-{
-  return os << "[" << p.first << "," << p.second << "]";
-}
-
-ostream &operator<<(ostream &os, const vector<double> v)
-{
-  for (unsigned i = 0; i < v.size(); i++)
-    os << v[i] << (i == v.size() - 1 ? "" : ",");
-
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<string> v)
-{
-  for (unsigned i = 0; i < v.size(); i++)
-    os << v[i] << (i == v.size() - 1 ? "" : ",");
-
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<int> v)
-{
-  for (unsigned i = 0; i < v.size(); i++)
-    os << v[i] << (i == v.size() - 1 ? "" : ",");
-
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<vector<double>> v)
-{
-  for (unsigned i = 0; i < v.size(); i++) {
-    os << "{" << v[i] << "}";
-    if (i == v.size() - 1)
-      os << endl;
-  }
-  return os;
-}
-
-ostream &operator<<(ostream &os, const vector<vector<int>> v)
-{
-  for (unsigned i = 0; i < v.size(); i++) {
-    os << "{" << v[i] << "}";
-    if (i == v.size() - 1)
-      os << endl;
-  }
-  return os;
-}
-
-ostream &operator<<(ostream &os, const AbsSyn::problemType t)
-{
-  if (t == AbsSyn::problemType::P_UNDEF)
-    return os << "UNDEF";
-  else if (t == AbsSyn::problemType::REACH)
-    return os << "reachability";
-  else
-    return os << "synthesis";
-}
-
-ostream &operator<<(ostream &os, const AbsSyn::modeType t)
-{
-  if (t == AbsSyn::modeType::M_UNDEF)
-    return os << "UNDEF";
-  else if (t == AbsSyn::modeType::BOX)
-    return os << "boxes";
-  else if (t == AbsSyn::modeType::PARAL)
-    return os << "parallelotopes";
-  else
-    return os << "polytopes";
 }
 }
