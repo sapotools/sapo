@@ -545,41 +545,6 @@ std::shared_ptr<STL> Formula::toSTL(const InputData &m, const lst &vars,
   }
 }
 
-/*
- ****************************
- *        INEQUALITY        *
- ****************************
- */
-
-/*std::ostream &operator<<(std::ostream &os, AbsSyn::Inequality &i)
-{
-	os << *(i.lhs);
-	
-	switch (i.type)
-	{
-		case Inequality::Type::LT:
-			os << " < ";
-			break;
-		case Inequality::Type::LE:
-			os << " <= ";
-			break;
-		case Inequality::Type::GT:
-			os << " > ";
-			break;
-		case Inequality::Type::GE:
-			os << " >= ";
-			break;
-		case Inequality::Type::EQ:
-			os << " = ";
-			break;
-		case Inequality::Type::INT:
-			return os << " in [" << i.lb << ", " << i.ub << "]";
-		default:
-			throw std::logic_error("Unsupported inequality type");
-			break;
-	}
-	return os << *(i.rhs);
-}*/
 
 /*
  ***************************
