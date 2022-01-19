@@ -519,11 +519,11 @@ public:
 	
 	bool hasLB() const
 	{
-		return type == Type::INT || LB != -std::numeric_limits<double>::infinity();
+		return type == Type::INT || type == Type::EQ || LB != -std::numeric_limits<double>::infinity();
 	}
 	bool hasUB() const
 	{
-		return type == Type::INT || UB != std::numeric_limits<double>::infinity();
+		return type == Type::INT || type == Type::EQ || UB != std::numeric_limits<double>::infinity();
 	}
 	
 	void setLB(const InputData &id, double val);

@@ -627,7 +627,7 @@ double Direction::getLB(const InputData &id) const
 {
 	if (type == Type::INT) {
 		return LB;
-	} else if (type == Type::GT || type == Type::GE) {
+	} else if (type == Type::GT || type == Type::GE || type == Type::EQ) {
 		return -this->getOffset(id);
 	} else {
 		return -std::numeric_limits<double>::infinity();
@@ -637,7 +637,7 @@ double Direction::getUB(const InputData &id) const
 {
 	if (type == Type::INT) {
 		return UB;
-	} else if (type == Type::LT || type == Type::LE) {
+	} else if (type == Type::LT || type == Type::LE || type == Type::EQ) {
 		return this->getOffset(id);
 	} else {
 		return std::numeric_limits<double>::infinity();
@@ -765,6 +765,8 @@ std::vector<double> Direction::getDirectionVector(const InputData &id, bool vari
 		coeff = -1;
 	} else if (type == Type::INT) {
 		coeff = 1;
+	} else if (type == Type::EQ) {
+		coeff = 1;
 	} else {
 		throw logic_error("Unsupported inequality type");
 	}
@@ -788,6 +790,8 @@ double Direction::getOffset(const InputData &id) const
 		return rhs->sub(lhs)->getOffset(id);
 	} else if (type == Type::GE || type == Type::GT) {
 		return lhs->sub(rhs)->getOffset(id);
+	} else if (type == Type::EQ) {
+		return rhs->sub(lhs)->getOffset(id);
 	} else {
 		throw logic_error("unsupported inequality type");
 	}
@@ -1060,7 +1064,7 @@ void InputData::addDirectionConstraint(Direction *d)
 {
 //	std::cout << "Direction " << *d << std::endl;
 	
-	if (d->getType() == Direction::Type::INT) {		// constraint is an interval specification
+	if (d->getType() == Direction::Type::INT || d->getType() == Direction::Type::EQ) {		// constraint is an interval specification
 		this->addDirectionConstraint(new Direction(d->getLHS()->copy(), new Expr(d->getUB(*this)), Direction::Type::LE, 0, 0, d->getName()));
 		this->addDirectionConstraint(new Direction(d->getLHS()->copy(), new Expr(d->getLB(*this)), Direction::Type::GE, 0, 0, d->getName()));
 		delete(d);
