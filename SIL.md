@@ -17,18 +17,6 @@ It consists in
 problem: reachability | synthesis;
 ```
 
-### variable modality (optional)
-
-```C++
-variable_mode: boxes (default) | parallelotopes | polytopes;
-```
-
-### parameter modality (optional)
-
-```C++
-parameter_mode: boxes (default) | parallelotopes;
-```
-
 ### number of iterations (required)
 
 ```C++
@@ -53,10 +41,11 @@ In this section, we define variables with dynamics, parameters, constants and th
 Each symbol must be defined before it is used.
 
 ### Variables
-If the variable modality is `boxes`, they are defined with the initial values
+Variables can be defined with their initial value bounds. Multiple variables can be defined in the same statement. In this case, all variables get the same bounds.
 
 ```C++
-var v in [a,b];
+var v1 in [a,b];
+var v2, v3 in [c,d];
 ```
 Otherwise, just the name is provided. Multiple variables can be defined in the same command.
 
@@ -67,14 +56,11 @@ Variable names follow the C++ rule for identifiers.
 
 ### Parameters
 
-They follow the syntax of variable definition. If parameter modality is `boxes`, they require the initial interval.
+They follow the syntax of variable definition.
 
 ```C++
 param p1, p2 in [0.01, 0.02];
 ```
-
-Otherwise, no interval must be provided
-
 ```C++
 param p1;
 ```
@@ -86,6 +72,14 @@ The usual rules hold for constant names, and the corresponding expression must b
 ```C++
 const c1 = 1.2;
 const c2 = 34 * 0.78;
+const c3 = c1 + 2*c2;
+```
+
+### Definitions
+They are used to name subexpressions wich occur in different places. They can contain variables, parameters, constants and other definitions.
+
+```C++
+define ex = v + c*p/2;
 ```
 
 ### Dynamics
@@ -104,7 +98,7 @@ where
 Each variable must have a corresponding dynamic defined.
 
 ### Specification
-If problem is `synthesis`, a STL specification must be provided.
+If problem is `synthesis`, a STL specification must be provided. If the problem is `reachability`, this statement is ignored.
 
 + An atomic formula is of the form
 	
@@ -164,57 +158,95 @@ Finally, the specification is provided as
 spec: STLformula;
 ```
 
+### Assumption
+An assumption is a way to restrict valid states to those satisfying a given formula.
+That is, during reachability steps, the states violating the assumptions are discarded.
+
+```C++
+assume x + y >= 0;
+```
+
+This must be an atomic formula which expression is linear in the variables and contains no parameters.
+Multiple assumptions are treated like conjunctions.
+
+Assumptions are currently supported only for `reachability`, not for `synthesis`.
+
 ## <a name="matdef">Matrices definition
 In this section, we provide the definition of the polytopes used to approximate reachable sets and parameters.
 
-### Variables
-If variable modality is `boxes`, no matrix must be defined.
-If variable modality is `parallelotopes`, then we must define the direction matrix.
-That is, for each direction we write
+### Directions of initial set
+A valid direction is any expression which is linear w.r.t. variables and does not contain parameters.
 
 ```C++
-direction <num_1, ..., num_n> in [a, b];
+direction v1 + 2*v2 - v3/2 in [a, b];
 ```
-We have as many elements in a direction as the number of variables.
-The meaning is
+It is possible to define named directions
 
 ```C++
-a <= num_1*v_1 + ... + num_n * v_n <= b
+direction sum: v1 + v2 + v3 in [0,10];
 ```
-We must provide as many directions as the number ov variables, paying attention to defined a bounded set.
 
-If variable modality is `polytopes`, then we must define a set of directions as described above.
-This time we can provide a number of directions which is higher than the number of variables.
-Then, we define the *template matrix* in which each row represents a parallelotope.
+It is also possible to define fixed directions
+
+```C++
+direction x + y - z = 0;
+// this is equivalent to 
+// direction x + y - z in [0, 0];
+```
+
+To the directions defined in this way we must add the implicit directions defined while declaing variables with bound. For example, the definition
+`var x in [a, b];`
+is equivalent to 
+
+```C++
+var x;
+...
+direction default_x: x in [a, b];
+```
+
+Notice that the implicit direction defined during variable declaration is always named `direction_<var_name>`.
+
+### Template for parallelotpe bundle
+In order to represent polytopes, Sapo uses parallelotope bundles. It is possible to define this bundle by explicitly giving a template matrix.
 
 ```C++
 template = {
 	{num_1, ..., num_n},
+	{id_1, num_2, ..., id_n},
 	.
 	.
 	.
 	{num_1, ..., num_n}
 }
 ```
-where each row has as many elements as the number of variables, and each value corresponds to a direction.
-For example, number `0` is the first direction (in order of definition), `1` is the second and so on.
-The template matrix can have any number of rows (at least one).
+Each row represent a parallelotope by referencing its directions.
+This can be done giving the name, if provided in the definition, or by their number. In fact, each direction has an associated number depending on the order of definition ('0' the first, `1` the second and so on).
 
-### Parameters
-They work similarly to the variables.
-If parameter modality is `boxes`, no matrix is required.
-Otherwise, we must provide the directions for parameter parallelotope.
+The user must pay attention in decribing bounded parallelotopes.
 
-```C++
-parameter_direction <num_1, ..., num_m> in [a, b];
-```
-where there is a number for each parameter, and the meaning is
+If the template is not provided, then it is automatically generated.
+If the template is partial, in that it does not contain all defined directions, a new template is computed that contains all parallelotopes explicitly defined.
+
+### Directions for parameter set
+The directions for parameter work in the same way as those for variables
 
 ```C++
-a <= num_1 * p_1 + ... + num_n * p_m <= b
+parameter_direction p1 - p2 in [a, b];
+
+parameter_direction d1: p1 + 4*p3 in [0,1];
 ```
 
-We recall that parameter modality cannot be `polytopes`.
+Again, parameter directions can be implicitly defined in parameter declaration.
+For example, `param p in [-1, 1];` is equivalent to
+
+```C++
+param p;
+...
+parameter_direction default_p: p in [-1, 1];
+```
+
+Polytopes are not supported for parameter sets, so there can be at most as many directions as the number of parameters (also counting the implicitly defined ones)
+
 
 ## <a name="footer">Footer
 In this section, we can provide some options to tune the behavior of Sapo.
@@ -247,3 +279,72 @@ comment
 */
 ...
 ``` 
+
+# Examples
+
+### SIR
+Here is a SIL input file for a SIR epidemic model
+
+```C++
+problem: reachability;
+
+iterations: 10;
+max_parameter_splits: 0;
+
+var s in [0.2, 0.3];
+var i in [0.001, 0.1];
+var r in [0.7, 0.8];
+
+param beta in [0.055, 0.1];
+param mu in [0.00001, 0.001];
+param gamma in [0.0027, 0.0055];
+param alpha in [0.05, 0.07];
+
+dynamic(s) = s - beta*s*i - mu*s + gamma*r;
+dynamic(i) = i + beta*s*i - alpha*i;
+dynamic(r) = r + mu*s - gamma*r + alpha*i;
+
+spec: r > 0.4;
+
+assume(s <= 1);
+assume(i <= 1);
+assume(r <= 1);
+
+assume(s >= 0);
+assume(i >= 0);
+assume(r >= 0);
+
+
+assume(s + i + r <= 1);
+assume(s + i + r >= 0);
+
+option transformation OFO;
+```
+
+### Van der Pol oscillator
+
+```C++
+problem: reachability;
+
+iterations: 30;
+
+
+var x in [0, 0.01];
+var y in [1.99, 2];
+
+dynamic(x) = x + (y)*0.02;
+dynamic(y) = y + (0.5*(1-x*x)*y - x)*0.02;
+
+direction diff: y - x in [-10, 10];
+direction sum: x + y in [-10, 10];
+
+template = {
+	{default_x, default_y},
+	{default_x, diff},
+	{default_x, sum},
+	{default_y, diff},
+	{default_y, sum},
+	{diff, sum}
+}
+
+```
