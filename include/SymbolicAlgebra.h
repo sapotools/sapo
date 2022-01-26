@@ -1240,7 +1240,9 @@ public:
     if (this->evaluate() == 0) {
       delete this;
 
-      return op;
+      _constant_type<C> *minus1 = new _constant_type<C>(-1);
+
+      return minus1->multiply(op);
     }
     switch (op->type()) {
     case CONSTANT:
