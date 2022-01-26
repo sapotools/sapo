@@ -109,11 +109,12 @@
 %nterm <double> number
 %nterm <std::vector<std::string>> identList
 %nterm <AbsSyn::Expr *> expr
-%nterm <std::vector<double>> numList
-%nterm <std::vector<int>> matrixRow intList
-%nterm <std::vector<std::vector<int>>> _matrix rowList
-%nterm <AbsSyn::Formula *> path_formula state_formula
+%nterm <std::vector<int>> matrixRow
+%nterm <std::vector<std::vector<int>>> rowList
+%nterm <AbsSyn::Formula *> formula
 %nterm <AbsSyn::transType> transType
+%nterm <AbsSyn::Direction *> direction
+%nterm <AbsSyn::Direction::Type> directionType
 
 %printer { yyo << $$; } <*>;
 
@@ -129,11 +130,11 @@ s		: headerList
 						YYERROR;
 					}
 					
-					if (!drv.data.isVarModeDefined())
-						drv.data.setVarMode(AbsSyn::modeType::BOX);
+					//if (!drv.data.isVarModeDefined())
+						//drv.data.setVarMode(AbsSyn::modeType::BOX);
 					
-					if (!drv.data.isParamModeDefined())
-						drv.data.setParamMode(AbsSyn::modeType::BOX);
+					/*if (!drv.data.isParamModeDefined())
+						drv.data.setParamMode(AbsSyn::modeType::BOX);*/
 					
 					if (!drv.data.isIterationSet())
 					{
@@ -143,14 +144,11 @@ s		: headerList
 				}
 			symbolList matricesList footerList END
 		{
-			if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
-						drv.data.defaultDirections();
-					
-			if (drv.data.getParamMode() == AbsSyn::modeType::BOX)
-				drv.data.defaultParamDirections();
+			/*if (drv.data.getParamMode() == AbsSyn::modeType::BOX)
+				drv.data.defaultParamDirections();*/
 			
-			if (drv.data.getVarMode() != AbsSyn::modeType::POLY)
-							drv.data.defaultTemplate();
+			/*if (drv.data.getVarMode() != AbsSyn::modeType::POLY)
+							drv.data.defaultTemplate();*/
 			
 			if (!drv.data.isTransModeDefined())
 				drv.data.setTransMode(AbsSyn::transType::AFO);
@@ -172,23 +170,13 @@ header			: PROB ":" problemType ";"
 							}
 							drv.data.setProblem($3);
 						}
-						| VARMODE ":" modeType ";"
-						{
-							if (drv.data.isVarModeDefined())
-							{
-								yy::parser::error(@4, "Variable modality has already been defined");
-								YYERROR;
-							}
-							drv.data.setVarMode($3);
-						}
 						| PARAMMODE ":" modeType ";"
 						{
-							if (drv.data.isParamModeDefined())
-							{
-								yy::parser::error(@4, "Parameter modality has already been defined");
-								YYERROR;
-							}
-							drv.data.setParamMode($3);
+							yy::parser::error(@$, "Parameter modality is deprecated and will be ignored");
+						}
+						| VARMODE ":" modeType ";"
+						{
+							yy::parser::error(@$, "Variable modality is deprecated and will be ignored");
 						}
 						| ITER ":" INTEGER ";"
 						{
@@ -228,11 +216,11 @@ symbolList	: symbol {}
 
 symbol			: VAR identList IN doubleInterval ";"
 						{
-							if (drv.data.getVarMode() != AbsSyn::modeType::BOX)
+							/*if (drv.data.getVarMode() != AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "Cannot define variable bounds if modality is not 'boxes'");
 								YYERROR;
-							}
+							}*/
 							
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -241,17 +229,22 @@ symbol			: VAR identList IN doubleInterval ";"
 									yy::parser::error(@2, "Symbol '" + $2[i] + "' already defined");
 									YYERROR;
 								}
+								
 								drv.data.addVariable(new AbsSyn::Variable($2[i]));
-								drv.data.addBounds($4.first, $4.second);
+								
+								AbsSyn::Expr *lhs = new AbsSyn::Expr($2[i]);
+								AbsSyn::Expr *rhs = new AbsSyn::Expr(0);
+								AbsSyn::Direction *d = new AbsSyn::Direction(lhs, rhs, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+								drv.data.addDirectionConstraint(d);
 							}
 						}
 						| VAR identList ";"
 						{
-							if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
+							/*if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "If variable modality is 'boxes', bounds must be provided");
 								YYERROR;
-							}
+							}*/
 							
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -265,11 +258,11 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| PARAM identList IN doubleInterval ";"
 						{
-							if (drv.data.getParamMode() != AbsSyn::modeType::BOX)
+							/*if (drv.data.getParamMode() != AbsSyn::modeType::BOX)
 							{
 								yy::parser::error(@$, "Cannot define parameter bounds if modality is not 'boxes'");
 								YYERROR;
-							}
+							}*/
 							
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -279,7 +272,11 @@ symbol			: VAR identList IN doubleInterval ";"
 									YYERROR;
 								}
 								drv.data.addParameter(new AbsSyn::Parameter($2[i]));
-								drv.data.addParamBounds($4.first, $4.second);
+								AbsSyn::Expr *lhs = new AbsSyn::Expr($2[i]);
+								AbsSyn::Expr *rhs = new AbsSyn::Expr(0);
+								AbsSyn::Direction *d = new AbsSyn::Direction(lhs, rhs, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+								drv.data.addParamDirectionConstraint(d);
+								//drv.data.addParamBounds($4.first, $4.second);
 							}
 						}
 						| PARAM identList ";"
@@ -341,7 +338,7 @@ symbol			: VAR identList IN doubleInterval ";"
 							}
 							v->setDynamic($6);
 						}
-						| SPEC ":" path_formula ";"
+						| SPEC ":" formula ";"
 						{
 							/*if (drv.data.getProblem() != AbsSyn::problemType::SYNTH)
 							{
@@ -357,50 +354,37 @@ symbol			: VAR identList IN doubleInterval ";"
 							
 							drv.data.addSpec($3);
 						}
-						| SPEC ":" state_formula ";"
-						{
-							/*if (drv.data.getProblem() != AbsSyn::problemType::SYNTH)
-							{
-								yy::parser::error(@$, "Specification not required when problem is 'reachability'");
-								YYERROR;
-							}*/
-							
-							if (!$3->simplify())
-							{
-								yy::parser::error(@3, "Negations of UNTIL are not allowed");
-								YYERROR;
-							}
-							
-							drv.data.addSpec($3);
-						}
-						| ASSUME state_formula ";"
+						| ASSUME direction ";"
 						{
 							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
 								yy::parser::error(@1, "Assumptions are not supported for synthesis yet");
 								YYERROR;
 							}
 							
-							if ($2->getType() != AbsSyn::Formula::formulaType::ATOM) {
-								yy::parser::error(@2, "Only atomic formulas are supported");
+							if ($2->getLHS()->hasParams(drv.data) || $2->getRHS()->hasParams(drv.data)) {
+								yy::parser::error(@2, "Expressions in assumptions cannot contain parameters");
 								YYERROR;
 							}
-							if ($2->getEx()->hasParams(drv.data)) {
-								yy::parser::error(@2, "Expressions in assertions cannot contain parameters");
-								YYERROR;
-							}
-							if (!$2->isLinear(drv.data)) {
+							if ($2->getLHS()->getDegree(drv.data) > 1 || $2->getRHS()->getDegree(drv.data) > 1) {
 								yy::parser::error(@2, "Assumption must be linear");
 								YYERROR;
 							}
+							if ($2->getType() == AbsSyn::Direction::Type::EQ) {
+								yy::parser::error(@2, "Directions with \"=\" are not supported yet in assumptions");
+								YYERROR;
+							}
+							if ($2->getType() == AbsSyn::Direction::Type::INT) {
+								yy::parser::error(@2, "Directions with intervals are not supported yet in assumptions");
+								YYERROR;
+							}
 							
-							AbsSyn::Assumption *a = new AbsSyn::Assumption($2->getEx());
-							drv.data.addAssumption(a);
+							drv.data.addAssumption($2);
 						}
 
 matricesList	: %empty {}
 							| matricesList matrices {}
 
-matrices		: direction
+matrices		: var_direction
 						{
 							/*if (drv.data.getVarMode() == AbsSyn::modeType::BOX)
 							{
@@ -422,7 +406,7 @@ matrices		: direction
 								YYERROR;
 							}*/
 							
-							if (drv.data.directionsNum() == 0)
+							if (drv.data.getDirectionsNum() == 0)
 							{
 								yy::parser::error(@$, "Template matrix cannot be provided before directions");
 								YYERROR;
@@ -437,20 +421,74 @@ matrices		: direction
 							}*/
 						}
 
-direction		: DIR "<" numList ">" IN doubleInterval ";" 
+direction	: expr directionType expr
 						{
-							if (drv.data.getVarNum() != $3.size())
-							{
-								yy::parser::error(@3, "A direction must have as many components as the number of variables");
+							if ($1->getDegree(drv.data) > 1) {
+								yy::parser::error(@1, "Expression in directions must be at most linear");
 								YYERROR;
 							}
-							
-							drv.data.addDirection($3, $6.first, $6.second);
+							if ($3->getDegree(drv.data) > 1) {
+								yy::parser::error(@3, "Expression in directions must be at most linear");
+								YYERROR;
+							}
+							$$ = new AbsSyn::Direction($1, $3, $2);
+						}
+						| expr IN doubleInterval
+						{
+							if ($1->getDegree(drv.data) > 1) {
+								yy::parser::error(@1, "Expression in directions must be at most linear");
+								YYERROR;
+							}
+							$$ = new AbsSyn::Direction($1, new AbsSyn::Expr(0), AbsSyn::Direction::Type::INT, $3.first, $3.second);
 						}
 
-template		: TEMPL "=" _matrix
+directionType		: "<"
+							{
+								$$ = AbsSyn::Direction::Type::LT;
+							}
+							| "<="
+							{
+								$$ = AbsSyn::Direction::Type::LE;
+							}
+							| ">"
+							{
+								$$ = AbsSyn::Direction::Type::GT;
+							}
+							| ">="
+							{
+								$$ = AbsSyn::Direction::Type::GE;
+							}
+							| "="
+							{
+								$$ = AbsSyn::Direction::Type::EQ;
+							}
+
+var_direction	: DIR direction ";"
+							{
+								if ($2->hasParams(drv.data)) {
+									yy::parser::error(@2, "Variable directions cannot contain parameters");
+									YYERROR;
+								}
+								drv.data.addDirectionConstraint($2);
+							}
+							| DIR IDENT ":" direction ";"
+							{
+								if ($4->hasParams(drv.data)) {
+									yy::parser::error(@2, "Variable directions cannot contain parameters");
+									YYERROR;
+								}
+								if (drv.data.isSymbolDefined($2))
+								{
+									yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
+									YYERROR;
+								}
+								$4->setName($2);
+								drv.data.addDirectionConstraint($4);
+						}
+
+template		: TEMPL "=" "{" rowList "}"
 						{
-							if ($3[0].size() != drv.data.getVarNum())
+							if ($4[0].size() != drv.data.getVarNum())
 							{
 								yy::parser::error(@3, "template matrix must have as many columns as the number of variables");
 								YYERROR;
@@ -462,30 +500,75 @@ template		: TEMPL "=" _matrix
 								YYERROR;
 							}
 							
-							for (unsigned i = 0; i < $3.size(); i++)
-							{
-								for (unsigned j = 0; j < $3[i].size(); j++)
-								{
-									if ($3[i][j] < 0 || (unsigned int)$3[i][j] >= drv.data.directionsNum())
-									{
-										yy::parser::error(@3, "Unknown direction");
-										YYERROR;
-									}
-								}
-							}
-							
-							drv.data.setTemplate($3);
+							drv.data.setTemplate($4);
 						}
 
-paramDir		: PDIR "<" numList ">" IN doubleInterval ";"
+rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
+						| rowList "," "{" matrixRow "}" { $1.push_back($4); $$ = $1; }
+
+matrixRow	: matrixRow "," IDENT
+					{
+						if (!drv.data.isDirectionDefined($3)) {
+							yy::parser::error(@3, "Direction " + $3 + " is not defined");
+							YYERROR;
+						}
+						
+						$1.push_back(drv.data.findDirectionPos($3));
+						$$ = $1;
+					}
+					| IDENT
+					{
+						if (!drv.data.isDirectionDefined($1)) {
+							yy::parser::error(@1, "Direction " + $1 + " is not defined");
+							YYERROR;
+						}
+						
+						$$ = {drv.data.findDirectionPos($1)};
+					}
+					| matrixRow "," INTEGER
+					{
+						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum())
 						{
-							if (drv.data.getParamNum() != $3.size())
-							{
-								yy::parser::error(@3, "A paramter direction must have as many components as the number of parameters");
+							yy::parser::error(@3, "Unknown direction " + std::to_string($3));
+							YYERROR;
+						}
+						
+						$1.push_back($3);
+						$$ = $1;
+					}
+					| INTEGER
+					{
+						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum())
+						{
+							yy::parser::error(@1, "Unknown direction " + std::to_string($1));
+							YYERROR;
+						}
+						
+						$$ = {$1};
+					}
+
+paramDir		: PDIR direction ";"
+						{
+							if ($2->hasVars(drv.data)) {
+								yy::parser::error(@2, "Parameter directions cannot contain variables");
 								YYERROR;
 							}
 							
-							drv.data.addParamDirection($3, $6.first, $6.second);
+							drv.data.addParamDirectionConstraint($2);
+						}
+						| PDIR IDENT ":" direction ";"
+						{
+							if ($4->hasVars(drv.data)) {
+								yy::parser::error(@2, "Parameter directions cannot contain variables");
+								YYERROR;
+							}
+							if (drv.data.isSymbolDefined($2))
+							{
+								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
+								YYERROR;
+							}
+							$4->setName($2);
+							drv.data.addParamDirectionConstraint($4);
 						}
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }
@@ -564,7 +647,7 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 				{
 					if (!drv.data.isSymbolDefined($1))
 					{
-						yy::parser::error(@1, "unknown symbol name");
+						yy::parser::error(@1, "Symbol " + $1 + " is undefined");
 						YYERROR;
 					}
 				
@@ -590,79 +673,23 @@ expr		: number	{ $$ = new AbsSyn::Expr($1); }
 				| "-" expr %prec UMINUS { $$ = $2->neg(); }
 				| "(" expr ")" { $$ = $2;}
 
-matrixRow	: "{" intList "}" { $$ = $2; }
-					| "{" "}" { yy::parser::error(@$, "Matrix row cannot be empty"); YYERROR; }
-
-numList		: expr
-					{
-						if (!$1->isNumeric(drv.data))
-						{
-							yy::parser::error(@1, "Expression must be numeric only");
-							YYERROR;
-						}
-						$$ = std::vector<double>{$1->evaluate(drv.data)};
-						delete $1;
-					}
-					| numList "," expr
-					{
-						if (!$3->isNumeric(drv.data))
-						{
-							yy::parser::error(@3, "Expression must be numeric only");
-							YYERROR;
-						}
-						$1.push_back($3->evaluate(drv.data));
-						$$ = $1;
-						delete $3;
-					}
-
-intList		: INTEGER
-					{
-						if ($1 < 0 || (unsigned int)$1 >= drv.data.directionsNum())
-						{
-							yy::parser::error(@1, "Unknown direction");
-							YYERROR;
-						}
-						$$ = std::vector<int>{$1};
-					}
-					| intList "," INTEGER
-					{
-						if ($3 < 0 || (unsigned int)$3 >= drv.data.directionsNum())
-						{
-							yy::parser::error(@3, "Unknown direction");
-							YYERROR;
-						}
-						$1.push_back($3);
-						$$ = $1;
-					}
-
-_matrix			: "{" rowList "}" { $$ = $2; }
-						| "{" "}" { yy::parser::error(@$, "Matrix cannot be empty"); YYERROR; }
-
-rowList			: matrixRow { $$ = std::vector<std::vector<int>>{$1}; }
-						| rowList "," matrixRow { $1.push_back($3); $$ = $1; }
-
-state_formula	: expr ">" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
-							| expr ">=" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
-							| expr "<" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
-							| expr "<=" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
-							| expr "=" expr
-							{
-								AbsSyn::Formula *f1 = new AbsSyn::Formula($1->sub($3));
-								AbsSyn::Formula *f2 = new AbsSyn::Formula($3->sub($1));
-								$$ = f1->conj(f2);
-							}
-							| state_formula AND state_formula		{ $$ = $1->conj($3); }
-							| state_formula OR state_formula		{ $$ = $1->disj($3); }
-							| "!" state_formula									{ $$ = $2->neg(); }
-							| "(" state_formula ")" { $$ = $2; }
-
-path_formula	: "G" intInterval state_formula %prec "G"	{ $$ = $3->always($2); }
-							| "F" intInterval state_formula %prec "F"	{ $$ = $3->eventually($2); }
-							| state_formula "U" intInterval state_formula %prec "U"	{ $$ = $1->until($3, $4); }
-							| path_formula "&&" path_formula					{ $$ = $1->conj($3); }
-							| path_formula "||" path_formula					{ $$ = $1->disj($3); }
-							| "!" path_formula												{ $$ = $2->neg(); }
-							| "(" path_formula ")" { $$ = $2; }
+formula	: expr ">" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
+				| expr ">=" expr { $$ = new AbsSyn::Formula($3->sub($1)); }
+				| expr "<" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
+				| expr "<=" expr { $$ = new AbsSyn::Formula($1->sub($3)); }
+				| expr "=" expr
+				{
+					AbsSyn::Formula *f1 = new AbsSyn::Formula($1->sub($3));
+					AbsSyn::Formula *f2 = new AbsSyn::Formula($3->sub($1));
+					$$ = f1->conj(f2);
+				}
+				| formula AND formula		{ $$ = $1->conj($3); }
+				| formula OR formula		{ $$ = $1->disj($3); }
+				| NOT formula									{ $$ = $2->neg(); }
+				| "(" formula ")" { $$ = $2; }
+				| "G" intInterval formula %prec "G"	{ $$ = $3->always($2); }
+				| "F" intInterval formula %prec "F"	{ $$ = $3->eventually($2); }
+				| formula "U" intInterval formula %prec "U"	{ $$ = $1->until($3, $4); }
 
 footerList	: %empty {}
 						| footerList footer {}

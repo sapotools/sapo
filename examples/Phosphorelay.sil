@@ -1,10 +1,8 @@
 problem: reachability;
-variable_mode: polytopes;
 
 iterations: 200;
 
-
-var x1, x2, x3, x4, x5, x6, x7;
+var x1, x2, x3, x4, x5, x6, x7 in [1, 1.01];
 
 const delta = 0.01;
 
@@ -16,17 +14,9 @@ dynamic(x5) = x5 + ( -5*x5*x6 + 5*x3*x4 )*delta;
 dynamic(x6) = x6 + ( 0.5*x7 - 5*x5*x6 )*delta;
 dynamic(x7) = x7 + ( -0.5*x7 + 5*x5*x6 )*delta;
 
-
-direction <1, 0, 0, 0, 0, 0, 0> in [1, 1.01];
-direction <0, 1, 0, 0, 0, 0, 0> in [1, 1.01];
-direction <0, 0, 1, 0, 0, 0, 0> in [1, 1.01];
-direction <0, 0, 0, 1, 0, 0, 0> in [1, 1.01];
-direction <0, 0, 0, 0, 1, 0, 0> in [1, 1.01];
-direction <0, 0, 0, 0, 0, 1, 0> in [1, 1.01];
-direction <0, 0, 0, 0, 0, 0, 1> in [1, 1.01];
-direction <0, 0, 1, 1, 0, 0, 0> in [-100, 100];
-direction <0, 0, 0, 0, 1, 1, 0> in [-100, 100];
-direction <0, 0, 1, 1, 1, 1, 0> in [-100, 100];
+direction x3 + x4 in [-100, 100];
+direction x5 + x6 in [-100, 100];
+direction x3 + x4 + x5 + x6 in [-100, 100];
 
 template = {
 	{0, 1, 2, 3, 4, 5, 6},

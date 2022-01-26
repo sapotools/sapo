@@ -1,20 +1,17 @@
 problem: reachability;
-variable_mode: polytopes;
 
 iterations: 30;
 
-
-var x, y, z;
+var x in [0.09, 0.1];
+var y in [4.99, 5];
+var z in [0.09, 0.1];
 
 dynamic(x) = x + (-y-z)*0.025;
 dynamic(y) = y + (x + 0.1*y)*0.025;
 dynamic(z) = z + (0.1 + z*(x-14))*0.025;
 
-direction <1, 0, 0> in [0.09, 0.1];
-direction <0, 1, 0> in [4.99, 5];
-direction <0, 0, 1> in [0.09, 0.1];
-direction <1, 0.5, 0> in [0, 10];
-direction <0.5, 0, 0.5> in [0, 10];
+direction x + 0.5*y in [0, 10];
+direction 0.5*x + 0.5*z in [0, 10];
 
 template = {
 	{0, 1, 2},

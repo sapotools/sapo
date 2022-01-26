@@ -6,6 +6,7 @@
 #include <string>
 #include <utility> // pair
 #include <vector>
+#include <math.h>
 
 // STL formulas
 #include "Always.h"
@@ -15,6 +16,8 @@
 #include "Eventually.h"
 #include "STL.h"
 #include "Until.h"
+#include "LinearSystem.h"
+#include "LinearAlgebra.h"
 
 #include "SymbolicAlgebra.h"
 
@@ -126,10 +129,8 @@ public:
   {
     return right;
   }
-
-  int getDegree(
-      const InputData &id) const; // return the degree of the polynomial
-                                  // expression considering only vars
+  int getDegree(const InputData &id, bool variable = true)
+			const; // return the degree of the polynomial expression
 
   Expr *copy() const; // deep copy of expression
 
@@ -137,29 +138,34 @@ public:
       const; // checks if the expression contains only numbers
   double evaluate(const InputData &im)
       const; // evaluates the value of a numeric expression
-
-  bool hasParams(const InputData &im)
-      const; // checks if the expression contains parameter names
-
-  double getCoefficient(const InputData &id, const std::string name)
-      const; /*
-              * returns the coefficient of the variable "name"
-              * in the simplified expression (in which each variable
-              * apperas only one time)
-              * Applies only to linear expressions without parameters
-              */
-
-  double getOffset(const InputData &id)
-      const; /*
-              * returns the numerical term
-              * in the simplified expression (in which each variable
-              * apperas only one time)
-              * Applies only to linear expressions without parameters
-              */
+	
+	bool hasVars(const InputData &id)
+			const;	// checks if the expression contains variable names
+	
+	bool contains(const std::string name)
+			const;	// checks if the symbol named "name" is contained
+	
+	bool hasParams(const InputData &im)
+			const; // checks if the expression contains parameter names
+      
+	double getCoefficient(const InputData &id, const std::string name)
+			const;	 /*
+								* returns the coefficient of the symbol "name"
+								* in the simplified expression (in which each symbol
+								* apperas only one time)
+								* Applies only to linear expressions w.r.t the symbol specified
+								*/
+	
+	double getOffset(const InputData &id)
+			const;	 /*
+								* returns the numerical term
+								* in the simplified expression (in which each symbol
+								* apperas only one time)
+								*/
 
   SymbolicAlgebra::Expression<>
   toEx(const InputData &m, const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-       const std::vector<SymbolicAlgebra::Symbol<>> &params) const;
+       const std::vector<SymbolicAlgebra::Symbol<>> &params) const; // converts an Expr to a symbolic expression
 
 protected:
   Expr()
@@ -309,7 +315,7 @@ class Variable
   }
 
 public:
-  Variable(const std::string &n): name(n), dynamic(NULL) {}
+  Variable(const std::string &n): name(n), dynamic(NULL), covered(false) {}
 
   ~Variable()
   {
@@ -336,10 +342,21 @@ public:
   {
     return dynamic != NULL;
   }
+  
+  bool isCovered()
+	{
+		return covered;
+	}
+	
+	void setCovered()
+	{
+		this->covered = true;
+	}
 
 protected:
   std::string name; // name of the variable
   Expr *dynamic;    // dynamic associated with variable
+  bool covered;			// if there's a direction containing this variable
 };
 
 /*
@@ -364,9 +381,20 @@ public:
   {
     return name;
   }
+  
+  bool isCovered()
+	{
+		return covered;
+	}
+	
+	void setCovered()
+	{
+		this->covered = true;
+	}
 
 protected:
   std::string name; // name of the parameter
+  bool covered;
 };
 
 /*
@@ -441,43 +469,109 @@ private:
 };
 
 /*
- *************************
- *       ASSERTION       *
- *************************
+ ***************************
+ *        DIRECTION        *
+ ***************************
  */
 
-class Assumption
+class Direction
 {
-  friend std::ostream &operator<<(std::ostream &os, const Assumption &a)
-  {
-    return os << *(a.ex);
-  }
+  friend std::ostream &operator<<(std::ostream &os, const Direction &d);
 
 public:
-  Assumption(Expr *e): ex(e) {}
-
-  ~Assumption()
-  {
-    delete ex;
-  }
-
-  Expr *getExpr() const
-  {
-    return ex;
-  }
-
-  std::vector<double> getDirection(const InputData &id)
-      const; // return the direction corresponding to the linear constraint
-
-  double
-  getOffset(const InputData &id) const // return the offset of the constraint*/
-  {
-    return -ex->getOffset(id);
-  }
-
+	enum Type
+	{
+		LT,		// <
+		LE,		// <=
+		GT,		// >
+		GE,		// >=
+		EQ,		// =
+		INT		// lhs in [a,b]
+	};
+	
+	Direction(Expr *e1, Expr *e2, Type t, double lb = -std::numeric_limits<double>::infinity(),
+						double ub = std::numeric_limits<double>::infinity(), std::string dirName = ""):
+				lhs(e1), rhs(e2), type(t), LB(lb), UB(ub), name(dirName) {}
+	
+	~Direction()
+	{
+		delete(lhs);
+		delete(rhs);
+	}
+	
+	std::vector<double> getDirectionVector(const InputData &id, bool variables)
+				const;	// returns the vector representing the direction
+	
+	double getOffset(const InputData &id)
+				const;		// return the offset of the direction, if type is not INT
+	
+	std::string getName() const
+	{
+		return name;
+	}
+	void setName(std::string n)
+	{
+		name = n;
+	}
+	
+	double getLB(const InputData &id) const;
+	double getUB(const InputData &id) const;
+	
+	bool hasLB() const
+	{
+		return type == Type::INT || type == Type::EQ || LB != -std::numeric_limits<double>::infinity();
+	}
+	bool hasUB() const
+	{
+		return type == Type::INT || type == Type::EQ || UB != std::numeric_limits<double>::infinity();
+	}
+	
+	void setLB(const InputData &id, double val);
+	void setUB(const InputData &id, double val);
+	
+	Expr *getLHS()
+	{
+		return lhs;
+	}
+	Expr *getRHS()
+	{
+		return rhs;
+	}
+	
+	Type getType() const
+	{
+		return type;
+	}
+	
+	// checks if the direction contains variable names
+	bool hasVars(const InputData &id) const
+	{
+		return lhs->hasVars(id) || (rhs != nullptr ? rhs->hasVars(id) : false);
+	}
+	
+	// checks if the direction contains parameter names
+	bool hasParams(const InputData &id) const
+	{
+		return lhs->hasParams(id) || (rhs != nullptr ? rhs->hasParams(id) : false);
+	}
+	
+	Direction *copy() const;		// deep copy of direction
+	
+	Direction *getComplementary() const;	// returns the negated direction
+	
+	bool compare(Direction *d, const InputData &id, bool variable = true) const;			// comparison between directions
+	
+	bool covers(const InputData &id, const std::string name)
+				const;	// checks if the symbol named "name" is present in the direction
+	
 protected:
-  Expr *ex; // constraint of the form ex <= 0
+	Expr *lhs, *rhs;
+	Type type;
+	double LB, UB;		// used only if type is INT
+	std::string name;
 };
+
+
 
 /*
  ***********************
@@ -487,7 +581,7 @@ protected:
 
 class InputData
 {
-  friend std::ostream &operator<<(std::ostream &os, const InputData &m);
+  friend std::ostream &operator<<(std::ostream &os, const InputData &id);
 
 public:
   InputData();
@@ -608,6 +702,8 @@ public:
       const; // checks if a constant named 'name' already exists
   bool isDefDefined(const std::string &name)
       const; // checks if a definition named 'name' already exists
+	bool isDirectionDefined(const std::string &name)
+			const; // checks if a direction named "name" already exists
   bool isSymbolDefined(
       const std::string &name) const; // checks if a symbol (var, param, const
                                       // or def) named 'name' already exists
@@ -647,21 +743,20 @@ public:
       const; // return the definition named 'name', which must exist
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
+	
+	const Direction *getAssumption(int i) const // return the assumption in position i
+	{
+		return assumptions[i];
+	}
 
-  const Assumption *
-  getAssumption(int i) const // return the assumption in position i
-  {
-    return assumptions[i];
-  }
-
-  void addVariable(Variable *v)
-  {
-    vars.push_back(v);
-  } // adds a new variable, which name is not already used
-  void addParameter(Parameter *p)
-  {
-    params.push_back(p);
-  } // adds a new parameter, which name is not already used
+  void addVariable(Variable *v) // adds a new variable, which name is not already used
+	{
+		vars.push_back(v);
+	}
+  void addParameter(Parameter *p) // adds a new parameter, which name is not already used
+	{
+		params.push_back(p);
+	}
   void addConstant(Constant *c)
   {
     consts.push_back(c);
@@ -670,10 +765,10 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
-  void addAssumption(Assumption *a)
-  {
-    assumptions.push_back(a);
-  } // adds a new assumption
+  void addAssumption(Direction *d)
+	{
+		assumptions.push_back(d);
+	} // adds a new assumption
 
   bool isSpecDefined() const
   {
@@ -691,33 +786,25 @@ public:
     return spec;
   }
 
-  unsigned int directionsNum() const
+	// add direction with specified name
+  void addDirectionConstraint(Direction *d);
+  unsigned int getDirectionsNum() const
   {
     return directions.size();
   }
-  const std::vector<std::vector<double>> &getDirections() const
+  const std::vector<Direction *> &getDirections() const
   {
     return directions;
   }
-  void addDirection(std::vector<double> d, double LB, double UB);
-  void addDirection(std::vector<double> d)
+  const Direction *getDirection(unsigned i) const
   {
-    directions.push_back(d);
-  }
-  void addBounds(double LB, double UB)
-  {
-    LBoffsets.push_back(LB);
-    UBoffsets.push_back(UB);
-  }
-  void defaultDirections();
-  const std::vector<double> &getLB() const
-  {
-    return LBoffsets;
-  }
-  const std::vector<double> &getUB() const
-  {
-    return UBoffsets;
-  }
+		return directions[i];
+	}
+  bool isBounded(int d) const
+	{
+		return directions[d]->hasLB() && directions[d]->hasUB();
+	}
+	int findDirectionPos(const std::string &name) const;
 
   unsigned templateRows() const
   {
@@ -737,41 +824,20 @@ public:
     return templateMatrix;
   }
 
+  void addParamDirectionConstraint(Direction *d);
   unsigned paramDirectionsNum() const
   {
     return paramDirections.size();
   }
-  void addParamDirection(std::vector<double> d, double LB, double UB);
-  void addParamDirection(std::vector<double> d)
-  {
-    paramDirections.push_back(d);
-  }
-  void addParamBounds(double LB, double UB)
-  {
-    paramLBoffsets.push_back(LB);
-    paramUBoffsets.push_back(UB);
-  }
 
-  void defaultParamDirections();
-
-  const std::vector<std::vector<double>> &getParameterDirections() const
+  const std::vector<Direction *> &getParameterDirections() const
   {
     return paramDirections;
   }
 
-  const std::vector<double> &getParamDirection(int i) const
+  Direction *getParamDirection(int i) const
   {
     return paramDirections[i];
-  }
-
-  const std::vector<double> &getParamLB() const
-  {
-    return paramLBoffsets;
-  }
-
-  const std::vector<double> &getParamUB() const
-  {
-    return paramUBoffsets;
   }
 
   bool isTransModeDefined() const
@@ -844,20 +910,20 @@ protected:
   std::vector<Parameter *> params;
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
-
-  std::vector<Assumption *> assumptions;
+	
+	std::vector<Direction *> assumptions;
 
   Formula *spec;
 
-  std::vector<std::vector<double>> directions;
-  std::vector<double> LBoffsets;
-  std::vector<double> UBoffsets;
+	std::vector<Direction *> directions;
 
   std::vector<std::vector<int>> templateMatrix;
 
-  std::vector<std::vector<double>> paramDirections;
+	std::vector<Direction *> paramDirections;
+	/*std::vector<std::vector<double>> paramDirections;
   std::vector<double> paramLBoffsets;
   std::vector<double> paramUBoffsets;
+	std::vector<bool> paramHasLB;*/
 
   // SAPO options
   transType trans;

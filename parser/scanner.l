@@ -20,9 +20,10 @@ natural			{digit}+
 double			(({natural})\.{natural})
 
 letter			[a-zA-Z]
+
 on          "on"
 off         "off"
-ident				{letter}({letter}|{digit}|\_-)*
+ident				{letter}({letter}|{digit}|[\_])*
 
 l_comment		"//"[^\n]*\n
 ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"

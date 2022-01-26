@@ -1,11 +1,10 @@
 problem: synthesis;
-variable_mode: parallelotopes;
 parameter_mode: boxes;
 iterations: 100;
 
-var s;
-var i;
-var r;
+var s in [0.2, 0.3];
+var i in [0.001, 0.01];
+var r in [0.7, 0.8];
 
 param beta in [0.055, 0.1];
 param mu in [0.00001, 0.001];
@@ -17,8 +16,3 @@ dynamic(i) = i + beta*s*i - alpha*i;
 dynamic(r) = r + mu*s - gamma*r + alpha*i;
 
 spec: G[0,100](r>=0.404);
-
-direction <1, 0, 0> in [0.2, 0.3];
-direction <0, 1, 0> in [0.001, 0.01];
-direction <0, 0, 1> in [0.7, 0.8];
-
