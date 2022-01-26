@@ -174,7 +174,7 @@ std::vector<T> operator-(std::vector<T> &&v)
 {
   transform(v.begin(), v.end(), v.begin(), std::negate<T>());
 
-  return v;
+  return std::move(v);
 }
 
 /**
