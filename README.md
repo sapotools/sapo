@@ -39,12 +39,12 @@ The parameter synthesis produces a refined set of parameters represented by:
 In order to compile the source code, the following packages are required:
 
 - a C++14-compatible compiler
-- <a href="https://cmake.org/">cmake</a> (version>=3.6)
+- <a href="https://cmake.org/">cmake</a> (version >= 3.6)
 - <a href="https://www.gnu.org/software/make/">make</a>
-- <a href="https://github.com/westes/flex">Flex</a> (version >=2.6.3)
-- <a href="https://www.gnu.org/software/bison/manual">Bison</a>
+- <a href="https://github.com/westes/flex">Flex</a> (version >= 2.6.3)
+- <a href="https://www.gnu.org/software/bison/manual">Bison</a> (version >= 3.4)
 - <a href="https://gmplib.org">GNU Multi-Precision Library</a>
-- <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >=5.0)
+- <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >= 5.0)
 
 ### Downloading and Compiling Sapo<a id="compile-multithreading"></a>
 
