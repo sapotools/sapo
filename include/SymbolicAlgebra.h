@@ -873,11 +873,6 @@ public:
    */
   virtual _base_expression_type<C> *divided_by(_base_expression_type<C> *op)
   {
-    if (!(this->has_symbols()) && this->evaluate() == 1) {
-      delete this;
-
-      return op;
-    }
     if (!(this->has_symbols()) && this->evaluate() == 0) {
       delete op;
 
@@ -1315,11 +1310,6 @@ public:
       delete op;
 
       return this;
-    }
-    if (this->evaluate() == 1) {
-      delete this;
-
-      return op;
     }
     switch (op->type()) {
     case CONSTANT:
