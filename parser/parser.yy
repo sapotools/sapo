@@ -643,6 +643,7 @@ number		: DOUBLE { $$ = $1; }
 					| INTEGER { $$ = (double) $1; }
 
 expr		: number	{ $$ = new AbsSyn::Expr($1); }
+				| "+" expr { $$ = $2; }
 				| IDENT	
 				{
 					if (!drv.data.isSymbolDefined($1))
