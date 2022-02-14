@@ -5,7 +5,6 @@
 #include <cstring> // strerror
 #include <string>
 #include "driver.h"
-#include "AbsSyn.h"
 #include "parser.h"
 
 #pragma GCC diagnostic ignored "-Wsign-compare"

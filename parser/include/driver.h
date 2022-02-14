@@ -1,5 +1,5 @@
-#ifndef DRIVER_H
-#define DRIVER_H
+#ifndef __DRIVER_H__
+#define __DRIVER_H__
 #include "parser.h"
 #include <map>
 #include <string>
@@ -17,6 +17,7 @@ public:
   ~driver();
 
   AbsSyn::InputData data;
+	AbsSyn::Context ctx;
 
   // Run the parser on file F.  Return 0 on success.
   int parse(const std::string &f);

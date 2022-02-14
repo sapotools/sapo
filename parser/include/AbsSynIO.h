@@ -5,7 +5,9 @@
 #include <utility> // pair
 #include <vector>
 
-#include "AbsSyn.h"
+//#include "AbsSyn.h"
+
+#include "types.h"
 
 namespace std
 {
