@@ -1,12 +1,14 @@
 # SIL
 
 Sapo Input Language (SIL) is a language designed to provide an input model for Sapo.
-It is divided in
+It consists in a list of statements, each belonging to one of the following categories:
 
 - [Header](#header)
 - [Symbol definitions](#symdef)
-- [Matrices defnition](#matdef)
-- [Footer](#footer)
+- [Directions and template](#matdef)
+- [SAPO Options](#footer)
+
+
 
 ## <a name="header">Header
 It consists in
@@ -17,16 +19,21 @@ It consists in
 problem: reachability | synthesis;
 ```
 
+This statement determines if sapo will compute the reachable sets or perform parameter synthesis.
+
+
 ### number of iterations (required)
 
 ```C++
-iterations: num;
+iterations: <num>;
 ```
+
+Determines how many reachable steps are performed.
 
 ### maximum number of parameter splits (optional)
 
 ```C++
-max_parameter_splits: num;
+max_parameter_splits: <num>;
 ```
 
 When parameter synthesis returns an empty set, the result may be due to over-approximation. 
@@ -35,10 +42,24 @@ the initial parameter set can be split in subsets and the computation can be rep
 The `max_parameter_splits` option declares the maximum number of splits that Sapo can perform 
 searching for a non-empty set satisfying the specification.
 
+### presplits for parameters (optional)
+
+```C++
+presplit_parameters: ON | OFF;
+```
+
+### bundle magnitude (optional)
+
+```C++
+max_bundle_magnitude: <num>;
+```
+
+
+
 ## <a name="symdef">Symbol definitions
 
-In this section, we define variables with dynamics, parameters, constants and the specification (if required).
-Each symbol must be defined before it is used.
+Statements of this kind are used to define the symbols of the model, like variables and parameters.
+They can appear in any order, as long as each symbol is defined before is used.
 
 ### Variables
 Variables can be defined with their initial value bounds. Multiple variables can be defined in the same statement. In this case, all variables get the same bounds.
@@ -171,8 +192,32 @@ Multiple assumptions are treated like conjunctions.
 
 Assumptions are currently supported only for `reachability`, not for `synthesis`.
 
-## <a name="matdef">Matrices definition
-In this section, we provide the definition of the polytopes used to approximate reachable sets and parameters.
+### Expressions
+Expressions are used to define constants, definitions and dynamics.
+Legal operations are:
+
++ sum: ```v + 5```.
++ difference: ```3 - c1```.
++ product: ```alpha * x```.
++ division: ```x / 3```. Notice that the divisor must be a number or a numeric expression.
++ unary minus: ```-c```.
++ exponentiation: ```x^2```. Notice that the exponent must be an integer, or a numeric expression with integer value.
+
+We have that `+`, `-`, `*` and `/` are left associative, while `^` is right associative.
+`^` has precedence w.r.t. unary minus, which has precedence w.r.t `*` and `/`, which have precedence w.r.t. `+` and `-`.
+Thus, the expression
+
+```
+-x^2 + y^3 * 4
+```
+is evaluated as
+
+```
+(-(x^2)) + ((y^3) * 4)
+```
+
+## <a name="matdef">Directions and template
+These statements provide the definition of the polytopes used to approximate reachable sets and parameters.
 
 ### Directions of initial set
 A valid direction is any expression which is linear w.r.t. variables and does not contain parameters.
@@ -194,19 +239,21 @@ direction x + y - z = 0;
 // direction x + y - z in [0, 0];
 ```
 
-To the directions defined in this way we must add the implicit directions defined while declaing variables with bound. For example, the definition
+To the directions defined in this way we must add the implicit directions defined while declaring variables with bound. For example, the definition
 `var x in [a, b];`
 is equivalent to 
 
 ```C++
 var x;
-...
+.
+.
+.
 direction default_x: x in [a, b];
 ```
 
-Notice that the implicit direction defined during variable declaration is always named `direction_<var_name>`.
+Notice that the implicit direction defined during variable declaration is always named `default_<var_name>`.
 
-### Template for parallelotpe bundle
+### Template for parallelotope bundle
 In order to represent polytopes, Sapo uses parallelotope bundles. It is possible to define this bundle by explicitly giving a template matrix.
 
 ```C++
@@ -220,9 +267,9 @@ template = {
 }
 ```
 Each row represent a parallelotope by referencing its directions.
-This can be done giving the name, if provided in the definition, or by their number. In fact, each direction has an associated number depending on the order of definition ('0' the first, `1` the second and so on).
+This can be done giving the name, if provided in the definition, or by their number. In fact, each direction has an associated number depending on the order of definition (`0` the first, `1` the second and so on).
 
-The user must pay attention in decribing bounded parallelotopes.
+The user must pay attention in describing bounded parallelotopes.
 
 If the template is not provided, then it is automatically generated.
 If the template is partial, in that it does not contain all defined directions, a new template is computed that contains all parallelotopes explicitly defined.
@@ -248,23 +295,26 @@ parameter_direction default_p: p in [-1, 1];
 Polytopes are not supported for parameter sets, so there can be at most as many directions as the number of parameters (also counting the implicitly defined ones)
 
 
-## <a name="footer">Footer
-In this section, we can provide some options to tune the behavior of Sapo.
-All them are optional, so this section can be empty.
+## <a name="footer">Options
+These statements provide some options to tune the behavior of Sapo.
+All of them are optional.
 
 We can define
 - how we compute the image of a polytope (optional)
 	
-	```option transformation AFO (default) | OFO;```
+	```option transformation AFO | OFO;```
 	In general, `AFO` gives more accurate results but `OFO` is faster.
+	The default value is ```AFO```.
 
 - whether or not to perform an optional decomposition phase after computing set images.
 	
 	```option decomposition;```
 
-- set a weigth `alpha` in `[0,1]` used in decomposition, to define the importance given to polytope volume over maximum side length in the cost function
+- set a weigth `alpha` in `[0,1]` used in decomposition, to define the importance given to polytope volume over maximum side length in the cost function.
 	
 	``` option sapo_alpha num;```
+	
+	The default value is `0.5`.
 
 ## Comments
 SIL understands C/C++ like comments, both sigle and multi-line
@@ -274,7 +324,8 @@ SIL understands C/C++ like comments, both sigle and multi-line
 // single line comment
 ...
 /*
-multi-line
+multi
+line
 comment
 */
 ...
@@ -333,7 +384,7 @@ var x in [0, 0.01];
 var y in [1.99, 2];
 
 dynamic(x) = x + (y)*0.02;
-dynamic(y) = y + (0.5*(1-x*x)*y - x)*0.02;
+dynamic(y) = y + (0.5*(1-x^2)*y - x)*0.02;
 
 direction diff: y - x in [-10, 10];
 direction sum: x + y in [-10, 10];

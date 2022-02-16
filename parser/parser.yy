@@ -119,8 +119,8 @@
 
 %left "+" "-"
 %left "*" "/"
-%right "^"
 %left UMINUS
+%right "^"
 
 %nterm <AbsSyn::problemType> problemType
 %nterm <AbsSyn::modeType> modeType
