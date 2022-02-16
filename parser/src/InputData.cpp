@@ -404,13 +404,13 @@ bool InputData::check(Context ctx)
 	}
 	
 	// each var must be covered
-	for (unsigned i = 0; i < vars.size(); i++) {
+	/*for (unsigned i = 0; i < vars.size(); i++) {
     if (!vars[i]->isCovered()) {
       cerr << "Variable " << vars[i]->getName() << " is not covered by any direction"
            << endl;
       res = false;
     }
-	}
+	}*/
 	
 	// for each variable, check if it appears  positively (or negatively) in any constraint.
 	// If so, we conclude that it is upper (or lower) bounded
@@ -432,7 +432,8 @@ bool InputData::check(Context ctx)
 			if (!hasLB[v]) {
 				cerr << "Variable " << vars[v]->getName() << " has no finite lower bound" << endl;
 				res = false;
-			} else if (!hasUB[v]) {
+			}
+			if (!hasUB[v]) {
 				cerr << "Variable " << vars[v]->getName() << " has no finite upper bound" << endl;
 				res = false;
 			}
@@ -440,7 +441,7 @@ bool InputData::check(Context ctx)
 	}
 	
 	
-	// set directions LB where needed
+	// set variable directions LB where needed
 	if (res) {
 		vector<vector<double>> A{};
 		vector<double> b{};
@@ -490,14 +491,35 @@ bool InputData::check(Context ctx)
 		}
 	}
 	
+	// each template row must be bounded
+	{
+		for (unsigned i = 0; i < templateMatrix.size(); i++) {
+			vector<vector<double>> M{};
+			for (unsigned j = 0; j < templateMatrix[i].size(); j++) {
+				M.push_back(directions[templateMatrix[i][j]]->getDirectionVector(ctx, true));
+			}
+			
+			vector<double> zeroes(templateMatrix[i].size(), 0);
+			
+			DenseLinearAlgebra::PLU_Factorization<double> PLU(M);
+			try {
+				vector<double> res = PLU.solve(zeroes);
+			} catch (domain_error &e) {
+				// directions are dependent, parallelotope is not bounded
+				cerr << "Template row " << templateMatrix[i] << " defines an unbounded parallelotope" << endl;
+				res = false;
+			}
+		}
+	}
+	
 	// each param must be covered
-	for (unsigned i = 0; i < params.size(); i++) {
+	/*for (unsigned i = 0; i < params.size(); i++) {
     if (!params[i]->isCovered()) {
       cerr << "Parameter " << params[i]->getName() << " is not covered by any direction"
            << endl;
       res = false;
     }
-	}
+	}*/
 	
 	// for each parameter, check if it appears  positively (or negatively) in any constraint.
 	// If so, we conclude that it is upper (or lower) bounded
@@ -522,7 +544,8 @@ bool InputData::check(Context ctx)
 			if (!hasLB[p]) {
 				cerr << "Parameter " << params[p]->getName() << " has no finite lower bound" << endl;
 				res = false;
-			} else if (!hasUB[p]) {
+			}
+			if (!hasUB[p]) {
 				cerr << "Parameter " << params[p]->getName() << " has no finite upper bound" << endl;
 				res = false;
 			}

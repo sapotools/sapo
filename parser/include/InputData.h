@@ -362,10 +362,6 @@ protected:
   std::vector<std::vector<int>> templateMatrix;
 
 	std::vector<Direction *> paramDirections;
-	/*std::vector<std::vector<double>> paramDirections;
-  std::vector<double> paramLBoffsets;
-  std::vector<double> paramUBoffsets;
-	std::vector<bool> paramHasLB;*/
 
   // SAPO options
   transType trans;
