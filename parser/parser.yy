@@ -1,5 +1,6 @@
 %skeleton "lalr1.cc" // -*- C++ -*-
-%require "3.5.1"
+%require "3.8.1"
+%language "c++"
 %defines
 
 %define api.token.constructor
@@ -36,74 +37,16 @@
 
 	class driver;
 	
-	inline void warning(const yy::location &l, const std::string &m)
-	{
-		std::cerr << "Warning at line " << l.end.line << ", column " << l.end.column << ": " << m << '\n';
-	}
-	
-	inline void print(const yy::location &l, const std::string filename)
-	{
-		using namespace std;
-		
-		// open file
-		ifstream file;
-		if (filename.empty() || filename == "-") {
-			// TODO: check if we can read from stdin
-			return;
-		} else {
-			file.open(filename);
-		}
-		
-		// skip to correct line
-		string line;
-		for (int i = 0; i < l.begin.line - 1; i++) {
-			getline(file, line);
-		}
-		
-		// print useful lines
-		int digits = floor(log10(l.begin.line)) + 2;
-		for (int i = l.begin.line+1; i <= l.end.line + 1; i++) {
-			getline(file, line);
-			int current_digits = floor(log10(i)) + 1;
-			
-			cerr << "  ";
-			for (int j = 0; j < digits - current_digits; j++) {
-				cerr << " ";
-			}
-			cerr << i << " | " << line << endl;
-		}
-		
-		if (l.begin.line == l.end.line) {
-			cerr << "  ";
-			for (int i = 0; i < digits; i++) {
-				cerr << " ";
-			}
-			cerr << " |";
-			for (int i = 0; i < l.begin.column; i++) {
-				cerr << " ";
-			}
-			for (int i = l.begin.column; i < l.end.column; i++) {
-				cerr << "^";
-			}
-			cerr << endl;
-		}
-		
-		// close file
-		file.close();
-		
-		return;
-	}
-	
 	// macro for errors
 	#define ERROR(loc, msg)\
-		yy::parser::error(loc, msg);\
-		print(loc, drv.file);\
+		drv.error(loc, msg);\
+		drv.printError(loc, drv.file);\
 		drv.errors = true;
 	
 	// macro for warnings
 	#define WARNING(loc, msg)\
-		warning(loc, msg);\
-		print(loc, drv.file);
+		drv.warning(loc, msg);\
+		drv.printError(loc, drv.file);
 }
 
 // The parsing context.
@@ -113,7 +56,7 @@
 %define api.location.file "../include/locations.h"
 
 %define parse.trace
-%define parse.error verbose
+%define parse.error custom
 
 %code {
 #include "driver.h"
@@ -216,8 +159,28 @@
 
 %%
 
-s		: statement
-		| s statement
+s		: statement ";" {}
+		| statement error
+		{
+			ERROR(@1, "Missing \";\"");
+			yyerrok;
+		}
+		| error ";"
+		{
+			ERROR(@1, "Syntax error");
+			yyerrok;
+		}
+		| s statement ";" {}
+		| s statement error
+		{
+			ERROR(@2, "Missing \";\"");
+			yyerrok;
+		}
+		| s error ";"
+		{
+			ERROR(@2, "Syntax error");
+			yyerrok;
+		}
 		| END
 		{
 			ERROR(@1, "Empty file");
@@ -229,52 +192,52 @@ statement		: header {}
 						| matrices {}
 						| option {}
 
-header			: PROB ":" problemType ";"
+header			: PROB ":" problemType
 						{
 							if (drv.data.isProblemDefined()) {
-								ERROR(@4, "Problem has already been defined");
+								ERROR(@$, "Problem has already been defined");
 							} else {
 								drv.data.setProblem($3);
 							}
 						}
-						| PARAMMODE ":" modeType ";"
+						| PARAMMODE ":" modeType
 						{
 							WARNING(@$, "Parameter modality is deprecated and will be ignored");
 						}
-						| VARMODE ":" modeType ";"
+						| VARMODE ":" modeType
 						{
 							WARNING(@$, "Variable modality is deprecated and will be ignored");
 						}
-						| ITER ":" INTEGER ";"
+						| ITER ":" INTEGER
 						{
 							if (drv.data.isIterationSet()) {
-								WARNING(@4, "Iteration number already defined");
+								WARNING(@$, "Iteration number already defined");
 							} else {
 								drv.data.setIterations($3);
 							}
 						}
-						| PSPLITS ":" INTEGER ";"
+						| PSPLITS ":" INTEGER
 						{
 							if (drv.data.getMaxParameterSplits() > 0) {
-								WARNING(@4, "The maximum number of parameter splits has been already defined");
+								WARNING(@$, "The maximum number of parameter splits has been already defined");
 							} else {
 								drv.data.setMaxParameterSplits($3);
 							}
 						}
-						| PRESPLITS ":" ON ";"
+						| PRESPLITS ":" ON
 						{
 							drv.data.setPreSplits(true);
 						}
-						| PRESPLITS ":" OFF ";"
+						| PRESPLITS ":" OFF
 						{
 							drv.data.setPreSplits(false);
 						}
-						| MAX_MAGNITUDE ":" DOUBLE ";"
+						| MAX_MAGNITUDE ":" DOUBLE
 						{
 							drv.data.setMaxVersorMagnitude($3);
 						}
 
-symbol			: VAR identList IN doubleInterval ";"
+symbol			: VAR identList IN doubleInterval
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -290,7 +253,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								}
 							}
 						}
-						| VAR identList ";"
+						| VAR identList
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -303,7 +266,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								}
 							}
 						}
-						| PARAM identList IN doubleInterval ";"
+						| PARAM identList IN doubleInterval
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -319,7 +282,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								}
 							}
 						}
-						| PARAM identList ";"
+						| PARAM identList
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -332,7 +295,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								}
 							}
 						}
-						| CONST IDENT "=" expr ";"
+						| CONST IDENT "=" expr
 						{
 							if (!isNumeric($4, drv.ctx)) {
 								ERROR(@3, "Expression defining constant must be numeric");
@@ -347,7 +310,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								drv.ctx.addConstant(s, evaluate($4, drv.ctx));
 							}
 						}
-						| DEFINE IDENT "=" expr ";"
+						| DEFINE IDENT "=" expr
 						{
 							if (drv.data.isSymbolDefined($2)) {
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
@@ -357,7 +320,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								drv.ctx.addDefinition(s, $4);
 							}
 						}
-						| DYN "(" IDENT ")" "=" expr ";"
+						| DYN "(" IDENT ")" "=" expr
 						{
 							if (getParamDegree($6, drv.ctx) > 1) {
 								ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
@@ -375,7 +338,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								}
 							}
 						}
-						| SPEC ":" formula ";"
+						| SPEC ":" formula
 						{
 							std::shared_ptr<STL> f;
 							try {
@@ -388,7 +351,7 @@ symbol			: VAR identList IN doubleInterval ";"
 							$3.reset();
 							drv.data.addSpec(f);
 						}
-						| ASSUME direction ";"
+						| ASSUME direction
 						{
 							if (hasParams($2->getLHS(), drv.ctx) || hasParams($2->getRHS(), drv.ctx)) {
 								ERROR(@2, "Expressions in assumptions cannot contain parameters");
@@ -469,14 +432,14 @@ directionType		: "<"
 								$$ = AbsSyn::Direction::Type::EQ;
 							}
 
-var_direction	: DIR direction ";"
+var_direction	: DIR direction
 							{
 								if ($2->hasParams(drv.ctx)) {
 									ERROR(@2, "Variable directions cannot contain parameters");
 								}
 								drv.data.addDirectionConstraint($2, drv.ctx);
 							}
-							| DIR IDENT ":" direction ";"
+							| DIR IDENT ":" direction
 							{
 								if ($4->hasParams(drv.ctx)) {
 									ERROR(@2, "Variable directions cannot contain parameters");
@@ -542,7 +505,7 @@ matrixRow	: matrixRow "," IDENT
 						$$ = {$1};
 					}
 
-param_direction	: PDIR direction ";"
+param_direction	: PDIR direction
 								{
 									if ($2->hasVars(drv.ctx)) {
 										ERROR(@2, "Parameter directions cannot contain variables");
@@ -550,7 +513,7 @@ param_direction	: PDIR direction ";"
 									
 									drv.data.addParamDirectionConstraint($2, drv.ctx);
 								}
-								| PDIR IDENT ":" direction ";"
+								| PDIR IDENT ":" direction
 								{
 									if ($4->hasVars(drv.ctx)) {
 										ERROR(@2, "Parameter directions cannot contain variables");
@@ -713,7 +676,7 @@ formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
 				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<Eventually>($2.first, $2.second, $3); }
 				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<Until>($1, $3.first, $3.second, $4); }
 
-option	: OPT TRANS transType ";"
+option	: OPT TRANS transType
 				{
 					if (drv.data.isTransModeDefined()) {
 						WARNING(@$, "Transformation type already defined");
@@ -729,7 +692,7 @@ option	: OPT TRANS transType ";"
 						drv.data.setDecomposition();
 					}
 				}
-				| OPT ALPHA DOUBLE ";"
+				| OPT ALPHA DOUBLE
 				{
 					if (drv.data.isAlphaDefined()) {
 						WARNING(@$, "Alpha already defined");
@@ -747,8 +710,13 @@ transType : AFO { $$ = AbsSyn::transType::AFO; }
 
 %%
 
-void
-yy::parser::error (const location_type& l, const std::string& m)
+void yy::parser::error (const location_type& l, const std::string& m)
 {
-	std::cerr << "Error at line " << l.end.line << ", column " << l.end.column << ": " << m << '\n';
+	//std::cerr << "\033[1;31mError\033[0m at line " << l.end.line << ", column " << l.end.column << ": " << m << '\n';
+	drv.error(l, m);
+}
+
+void yy::parser::report_syntax_error (const yy::parser::context &ctx) const
+{
+	(void) ctx;
 }

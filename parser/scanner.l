@@ -120,6 +120,15 @@ U			return yy::parser::make_UNTIL(loc);
 {ml_comment}	; /* ignore multiline comments */
 
 <<EOF>>			return yy::parser::make_END(loc);
+
+.			{
+				std::string s = "Illegal character \"";
+				s += yytext;
+				s += "\"";
+				drv.error(loc, s);
+				drv.printError(loc, drv.file);
+				drv.errors = true;
+			}
 %%
 
 void driver::scan_begin()

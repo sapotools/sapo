@@ -35,5 +35,13 @@ public:
   bool trace_scanning;
   // The token's location used by the scanner.
   yy::location location;
+	
+	void warning(const yy::location &l, const std::string &m);
+	void error(const yy::location &l, const std::string &m);
+	
+	void printError(const yy::location &l, const std::string filename);
+
 };
+
+	
 #endif // ! DRIVER_H

@@ -253,9 +253,14 @@ int find(std::vector<Direction *> M, Direction *v, const Context &ctx, bool vari
 
 void InputData::addDirectionConstraint(Direction *d, Context ctx)
 {
-	if (d->getType() == Direction::Type::INT || d->getType() == Direction::Type::EQ) {		// constraint is an interval specification
+	if (d->getType() == Direction::Type::INT) {		// constraint is an interval specification
 		this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(ctx), Direction::Type::LE, 0, 0, d->getName()), ctx);
 		this->addDirectionConstraint(new Direction(d->getLHS(), d->getLB(ctx), Direction::Type::GE, 0, 0, d->getName()), ctx);
+		delete(d);
+		return;
+	} else if (d->getType() == Direction::Type::EQ) {
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(ctx), Direction::Type::LE, 0, 0, d->getName()), ctx);
+		this->addDirectionConstraint(new Direction(d->getLHS(), -d->getLB(ctx), Direction::Type::GE, 0, 0, d->getName()), ctx);
 		delete(d);
 		return;
 	}
