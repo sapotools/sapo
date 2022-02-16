@@ -10,7 +10,6 @@
 	#include <string>
 	#include "AbsSynIO.h"
 	
-	
 	#include "Expr.h"
 	
 	#include "STL.h"
@@ -90,6 +89,7 @@
 	MINUS				"-"
 	PLUS				"+"
 	STAR				"*"
+	POW					"^"
 	DIV					"/"
 	LPAREN			"("
 	RPAREN			")"
@@ -119,6 +119,7 @@
 
 %left "+" "-"
 %left "*" "/"
+%right "^"
 %left UMINUS
 
 %nterm <AbsSyn::problemType> problemType
@@ -141,32 +142,14 @@
 
 %%
 
-s		: headerList
-				{
-					if (!drv.data.isProblemDefined())
-					{
-						yy::parser::error(@1, "Problem type must be defined");
-						YYERROR;
-					}
-					
-					if (!drv.data.isIterationSet())
-					{
-						yy::parser::error(@1, "Iteration number must be defined");
-						YYERROR;
-					}
-				}
-			symbolList matricesList footerList END
-		{
-			if (!drv.data.isTransModeDefined())
-				drv.data.setTransMode(AbsSyn::transType::AFO);
-			
-			if (!drv.data.isAlphaDefined())
-				drv.data.setAlpha(0.5);
-		}
+s		: statement
+		| s statement
 		| END { yy::parser::error(@1, "Empty file"); YYERROR; }
 
-headerList	: header {}
-						| headerList header {}
+statement		: header {}
+						| symbol {}
+						| matrices {}
+						| option {}
 
 header			: PROB ":" problemType ";"
 						{
@@ -217,9 +200,6 @@ header			: PROB ":" problemType ";"
 						{
 							drv.data.setMaxVersorMagnitude($3);
 						}
-
-symbolList	: symbol {}
-						| symbolList symbol {}
 
 symbol			: VAR identList IN doubleInterval ";"
 						{
@@ -371,28 +351,9 @@ symbol			: VAR identList IN doubleInterval ";"
 							drv.data.addAssumption($2);
 						}
 
-matricesList	: %empty {}
-							| matricesList matrices {}
-
-matrices		: var_direction
-						{
-							if (drv.data.templateRows() != 0)
-							{
-								yy::parser::error(@$, "Cannot define directions after defining template matrix");
-								YYERROR;
-							}
-						}
-						| template
-						{
-							if (drv.data.getDirectionsNum() == 0)
-							{
-								yy::parser::error(@$, "Template matrix cannot be provided before directions");
-								YYERROR;
-							}
-						}
-						| paramDir
-						{
-						}
+matrices		: var_direction {}
+						| template {}
+						| param_direction {}
 
 direction	: expr directionType expr
 						{
@@ -530,29 +491,29 @@ matrixRow	: matrixRow "," IDENT
 						$$ = {$1};
 					}
 
-paramDir		: PDIR direction ";"
-						{
-							if ($2->hasVars(drv.ctx)) {
-								yy::parser::error(@2, "Parameter directions cannot contain variables");
-								YYERROR;
-							}
-							
-							drv.data.addParamDirectionConstraint($2, drv.ctx);
-						}
-						| PDIR IDENT ":" direction ";"
-						{
-							if ($4->hasVars(drv.ctx)) {
-								yy::parser::error(@2, "Parameter directions cannot contain variables");
-								YYERROR;
-							}
-							if (drv.data.isSymbolDefined($2))
-							{
-								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
-								YYERROR;
-							}
-							$4->setName($2);
-							drv.data.addParamDirectionConstraint($4, drv.ctx);
-						}
+param_direction	: PDIR direction ";"
+								{
+									if ($2->hasVars(drv.ctx)) {
+										yy::parser::error(@2, "Parameter directions cannot contain variables");
+										YYERROR;
+									}
+									
+									drv.data.addParamDirectionConstraint($2, drv.ctx);
+								}
+								| PDIR IDENT ":" direction ";"
+								{
+									if ($4->hasVars(drv.ctx)) {
+										yy::parser::error(@2, "Parameter directions cannot contain variables");
+										YYERROR;
+									}
+									if (drv.data.isSymbolDefined($2))
+									{
+										yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
+										YYERROR;
+									}
+									$4->setName($2);
+									drv.data.addParamDirectionConstraint($4, drv.ctx);
+								}
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }
 						| SYNTH { $$ = AbsSyn::problemType::SYNTH; }
@@ -633,6 +594,36 @@ expr		: number	{ $$ = $1; }
 					$$ = drv.ctx.getSymbol($1);
 				}
 				| expr "*" expr { $$ = $1 * $3; }
+				| expr "^" expr
+				{
+					if (!isNumeric($3, drv.ctx))
+					{
+						yy::parser::error(@3, "Exponent must be numeric");
+						YYERROR;
+					}
+					
+					double val = $3.evaluate<double>();
+					if (val != (int) val) {
+						yy::parser::error(@3, "Exponent must be integer");
+						YYERROR;
+					}
+					
+					int exp = (int) val;
+					if (exp < 0) {
+						yy::parser::error(@3, "Exponent must be non-negative");
+						YYERROR;
+					}
+					
+					if (exp == 0) {
+						$$ = 1;
+					} else {
+						SymbolicAlgebra::Expression<> res = $1;
+						for (int i = 1; i < exp; i++) {
+							res *= $1;
+						}
+						$$ = res;
+					}
+				}
 				| expr "/" expr
 				{
 					if (!isNumeric($3, drv.ctx))
@@ -665,10 +656,7 @@ formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
 				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<Eventually>($2.first, $2.second, $3); }
 				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<Until>($1, $3.first, $3.second, $4); }
 
-footerList	: %empty {}
-						| footerList footer {}
-
-footer	: OPT TRANS transType ";"
+option	: OPT TRANS transType ";"
 				{
 					if (drv.data.isTransModeDefined())
 					{

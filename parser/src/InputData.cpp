@@ -12,7 +12,7 @@ InputData::InputData():
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), assumptions(), spec(NULL), directions(),
     templateMatrix(), paramDirections(),
-    trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(-1)
+    trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(0.5)
 {
 }
 
@@ -384,6 +384,11 @@ bool InputData::check(Context ctx)
 {
   bool res = true;
 
+	if (!isProblemDefined()) {
+		cerr << "Problem type must be defined" << endl;
+		res = false;
+	}
+	
   if (!isIterationSet()) {
     cerr << "Number of iterations is mandatory" << endl;
     res = false;
@@ -597,27 +602,6 @@ bool InputData::check(Context ctx)
 		res = false;
 	}
 
-  // directions
-  /*if (varMode != modeType::BOX && directions.size() == 0) {
-    if (directions.size() == 0) {
-      cerr << "Directions must be provided if variable modality is " << varMode
-           << endl;
-      res = false;
-    } else if (directions.size() < vars.size()) {
-      cerr << "Number of directions must be at least equal to the number of "
-              "variables"
-           << endl;
-      res = false;
-    }
-  }*/
-
-  // template
-  /*if (varMode == modeType::POLY && templateMatrix.size() == 0) {
-    cerr << "Template matrix must be provided if variable modality is "
-         << varMode << endl;
-    res = false;
-  }*/
-
   // param directions
   if (paramMode == modeType::PARAL && paramDirections.size() == 0) {
     if (paramDirections.size() == 0) {
@@ -638,6 +622,11 @@ bool InputData::check(Context ctx)
          << endl;
     res = false;
   }
+  
+  // trans type (AFO or OFO), if undefined set to AFO
+  if (trans == transType::T_UNDEF) {
+		trans = transType::AFO;
+	}
 
   return res;
 }

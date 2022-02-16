@@ -89,6 +89,7 @@ U			return yy::parser::make_UNTIL(loc);
 "-"			return yy::parser::make_MINUS(loc);
 "+"			return yy::parser::make_PLUS(loc);
 "*"			return yy::parser::make_STAR(loc);
+"^"			return yy::parser::make_POW(loc);
 "/"			return yy::parser::make_DIV(loc);
 "("			return yy::parser::make_LPAREN(loc);
 ")"			return yy::parser::make_RPAREN(loc);
