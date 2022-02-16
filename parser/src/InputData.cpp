@@ -12,7 +12,8 @@ InputData::InputData():
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), assumptions(), spec(NULL), directions(),
     templateMatrix(), paramDirections(),
-    trans(transType::T_UNDEF), decomp(false), decomp_defined(false), alpha(0.5)
+    trans(transType::T_UNDEF), decomp(false), decomp_defined(false),
+    alpha(0.5), alphaDefined(false)
 {
 }
 

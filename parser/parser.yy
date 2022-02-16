@@ -8,6 +8,11 @@
 
 %code requires {
 	#include <string>
+	#include <fstream>
+	#include <cmath>
+	
+	#include "locations.h"
+	
 	#include "AbsSynIO.h"
 	
 	#include "Expr.h"
@@ -30,6 +35,75 @@
 	#include "InputData.h"
 
 	class driver;
+	
+	inline void warning(const yy::location &l, const std::string &m)
+	{
+		std::cerr << "Warning at line " << l.end.line << ", column " << l.end.column << ": " << m << '\n';
+	}
+	
+	inline void print(const yy::location &l, const std::string filename)
+	{
+		using namespace std;
+		
+		// open file
+		ifstream file;
+		if (filename.empty() || filename == "-") {
+			// TODO: check if we can read from stdin
+			return;
+		} else {
+			file.open(filename);
+		}
+		
+		// skip to correct line
+		string line;
+		for (int i = 0; i < l.begin.line - 1; i++) {
+			getline(file, line);
+		}
+		
+		// print useful lines
+		int digits = floor(log10(l.begin.line)) + 2;
+		for (int i = l.begin.line+1; i <= l.end.line + 1; i++) {
+			getline(file, line);
+			int current_digits = floor(log10(i)) + 1;
+			
+			cerr << "  ";
+			for (int j = 0; j < digits - current_digits; j++) {
+				cerr << " ";
+			}
+			cerr << i << " | " << line << endl;
+		}
+		
+		if (l.begin.line == l.end.line) {
+			cerr << "  ";
+			for (int i = 0; i < digits; i++) {
+				cerr << " ";
+			}
+			cerr << " |";
+			for (int i = 0; i < l.begin.column; i++) {
+				cerr << " ";
+			}
+			for (int i = l.begin.column; i < l.end.column; i++) {
+				cerr << "^";
+			}
+			cerr << endl;
+		}
+		
+		// close file
+		file.close();
+		
+		return;
+	}
+	
+	// macro for errors
+	#define ERROR(loc, msg)\
+		yy::parser::error(loc, msg);\
+		print(loc, drv.file);\
+		drv.errors = true;
+	
+	// macro for warnings
+	#define WARNING(loc, msg)\
+		warning(loc, msg);\
+		print(loc, drv.file);
 }
 
 // The parsing context.
@@ -144,7 +218,11 @@
 
 s		: statement
 		| s statement
-		| END { yy::parser::error(@1, "Empty file"); YYERROR; }
+		| END
+		{
+			ERROR(@1, "Empty file");
+			YYERROR;
+		}
 
 statement		: header {}
 						| symbol {}
@@ -153,40 +231,35 @@ statement		: header {}
 
 header			: PROB ":" problemType ";"
 						{
-							if (drv.data.isProblemDefined())
-							{
-								yy::parser::error(@4, "Problem has already been defined");
-								YYERROR;
+							if (drv.data.isProblemDefined()) {
+								ERROR(@4, "Problem has already been defined");
+							} else {
+								drv.data.setProblem($3);
 							}
-							drv.data.setProblem($3);
 						}
 						| PARAMMODE ":" modeType ";"
 						{
-							yy::parser::error(@$, "Parameter modality is deprecated and will be ignored");
+							WARNING(@$, "Parameter modality is deprecated and will be ignored");
 						}
 						| VARMODE ":" modeType ";"
 						{
-							yy::parser::error(@$, "Variable modality is deprecated and will be ignored");
+							WARNING(@$, "Variable modality is deprecated and will be ignored");
 						}
 						| ITER ":" INTEGER ";"
 						{
-							if (drv.data.isIterationSet())
-							{
-								yy::parser::error(@4, "Iteration number already defined");
-								YYERROR;
+							if (drv.data.isIterationSet()) {
+								WARNING(@4, "Iteration number already defined");
+							} else {
+								drv.data.setIterations($3);
 							}
-							
-							drv.data.setIterations($3);
 						}
 						| PSPLITS ":" INTEGER ";"
 						{
-							if (drv.data.getMaxParameterSplits() > 0)
-							{
-								yy::parser::error(@4, "The maximum number of parameter splits has been already defined");
-								YYERROR;
+							if (drv.data.getMaxParameterSplits() > 0) {
+								WARNING(@4, "The maximum number of parameter splits has been already defined");
+							} else {
+								drv.data.setMaxParameterSplits($3);
 							}
-
-							drv.data.setMaxParameterSplits($3);
 						}
 						| PRESPLITS ":" ON ";"
 						{
@@ -205,150 +278,137 @@ symbol			: VAR identList IN doubleInterval ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
-								if (drv.data.isSymbolDefined($2[i]))
-								{
-									yy::parser::error(@2, "Symbol '" + $2[i] + "' already defined");
-									YYERROR;
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addVariable(new AbsSyn::Variable(s));
+									drv.ctx.addVariable(s);
+									
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+									drv.data.addDirectionConstraint(d, drv.ctx);
 								}
-								
-								SymbolicAlgebra::Symbol<> s($2[i]);
-								drv.data.addVariable(new AbsSyn::Variable(s));
-								drv.ctx.addVariable(s);
-								
-								AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
-								drv.data.addDirectionConstraint(d, drv.ctx);
 							}
 						}
 						| VAR identList ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
-								if (drv.data.isSymbolDefined($2[i]))
-								{
-									yy::parser::error(@2, "Symbol '" + $2[i] + "' already defined");
-									YYERROR;
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addVariable(new AbsSyn::Variable(s));
+									drv.ctx.addVariable(s);
 								}
-								SymbolicAlgebra::Symbol<> s($2[i]);
-								drv.data.addVariable(new AbsSyn::Variable(s));
-								drv.ctx.addVariable(s);
 							}
 						}
 						| PARAM identList IN doubleInterval ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
-								if (drv.data.isSymbolDefined($2[i]))
-								{
-									yy::parser::error(@2, "Symbol '" + $2[i] + "' already defined");
-									YYERROR;
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addParameter(new AbsSyn::Parameter(s));
+									drv.ctx.addParameter(s);
+									
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+									drv.data.addParamDirectionConstraint(d, drv.ctx);
 								}
-								SymbolicAlgebra::Symbol<> s($2[i]);
-								drv.data.addParameter(new AbsSyn::Parameter(s));
-								drv.ctx.addParameter(s);
-								
-								AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
-								drv.data.addParamDirectionConstraint(d, drv.ctx);
 							}
 						}
 						| PARAM identList ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
-								if (drv.data.isSymbolDefined($2[i]))
-								{
-									yy::parser::error(@2, "Symbol '" + $2[i] + "' already defined");
-									YYERROR;
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addParameter(new AbsSyn::Parameter(s));
+									drv.ctx.addParameter(s);
 								}
-								SymbolicAlgebra::Symbol<> s($2[i]);
-								drv.data.addParameter(new AbsSyn::Parameter(s));
-								drv.ctx.addParameter(s);
 							}
 						}
 						| CONST IDENT "=" expr ";"
 						{
-							if (!isNumeric($4, drv.ctx))
-							{
-								yy::parser::error(@3, "Expression defining constant must be numeric");
-								YYERROR;
+							if (!isNumeric($4, drv.ctx)) {
+								ERROR(@3, "Expression defining constant must be numeric");
+								$4 = 0;
 							}
-							if (drv.data.isSymbolDefined($2))
-							{
-								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
-								YYERROR;
+							
+							if (drv.data.isSymbolDefined($2)) {
+								ERROR(@2, "Symbol '" + $2 + "' already defined");
+							} else {
+								SymbolicAlgebra::Symbol<> s($2);
+								drv.data.addConstant(new AbsSyn::Constant(s, evaluate($4, drv.ctx)));
+								drv.ctx.addConstant(s, evaluate($4, drv.ctx));
 							}
-							SymbolicAlgebra::Symbol<> s($2);
-							drv.data.addConstant(new AbsSyn::Constant(s, evaluate($4, drv.ctx)));
-							drv.ctx.addConstant(s, evaluate($4, drv.ctx));
 						}
 						| DEFINE IDENT "=" expr ";"
 						{
-							if (drv.data.isSymbolDefined($2))
-							{
-								yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
-								YYERROR;
+							if (drv.data.isSymbolDefined($2)) {
+								ERROR(@2, "Symbol '" + $2 + "' already defined");
+							} else {
+								SymbolicAlgebra::Symbol<> s($2);
+								drv.data.addDefinition(new AbsSyn::Definition(s, $4));
+								drv.ctx.addDefinition(s, $4);
 							}
-							
-							SymbolicAlgebra::Symbol<> s($2);
-							drv.data.addDefinition(new AbsSyn::Definition(s, $4));
-							drv.ctx.addDefinition(s, $4);
 						}
 						| DYN "(" IDENT ")" "=" expr ";"
 						{
-							if (!drv.data.isSymbolDefined($3))
-							{
-								yy::parser::error(@3, "Unknown symbol name '" + $3 + "'");
-								YYERROR;
+							if (getParamDegree($6, drv.ctx) > 1) {
+								ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
+								$6 = 0;
 							}
 							
-							if (!drv.data.isVarDefined($3))
-							{
-								yy::parser::error(@3, "'" + $3 + "' is not a variable");
-								YYERROR;
+							if (!drv.data.isVarDefined($3)) {
+								ERROR(@3, "Symbol '" + $3 + "' is not a variable");
+							} else {
+								AbsSyn::Variable *v = drv.data.getVar($3);
+								if (v->isDynamicDefined()) {
+									WARNING(@$, "Redefinition of dynamic for variable '" + $3 + "'");
+								} else {
+									v->setDynamic($6);
+								}
 							}
-							
-							AbsSyn::Variable *v = drv.data.getVar($3);
-							if (v->isDynamicDefined())
-							{
-								yy::parser::error(@$, "Redefinition of dynamic for variable '" + $3 + "'");
-								YYERROR;
-							}
-							v->setDynamic($6);
 						}
 						| SPEC ":" formula ";"
 						{
-							if (!$3->simplify())
-							{
-								yy::parser::error(@3, "Negations of UNTIL are not allowed");
-								YYERROR;
+							std::shared_ptr<STL> f;
+							try {
+								f = $3->simplify();
+							} catch (std::logic_error &e) {
+								ERROR(@3, "Negations of UNTIL are not allowed");
+								f = std::make_shared<Atom>(0);
 							}
 							
-							drv.data.addSpec($3);
+							$3.reset();
+							drv.data.addSpec(f);
 						}
 						| ASSUME direction ";"
 						{
-							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
-								yy::parser::error(@1, "Assumptions are not supported for synthesis yet");
-								YYERROR;
-							}
-							
 							if (hasParams($2->getLHS(), drv.ctx) || hasParams($2->getRHS(), drv.ctx)) {
-								yy::parser::error(@2, "Expressions in assumptions cannot contain parameters");
-								YYERROR;
-							}
-							if (getVarDegree($2->getLHS(), drv.ctx) > 1 || getVarDegree($2->getRHS(), drv.ctx) > 1) {
-								yy::parser::error(@2, "Assumption must be linear");
-								YYERROR;
-							}
-							if ($2->getType() == AbsSyn::Direction::Type::EQ) {
-								yy::parser::error(@2, "Directions with \"=\" are not supported yet in assumptions");
-								YYERROR;
-							}
-							if ($2->getType() == AbsSyn::Direction::Type::INT) {
-								yy::parser::error(@2, "Directions with intervals are not supported yet in assumptions");
-								YYERROR;
+								ERROR(@2, "Expressions in assumptions cannot contain parameters");
+								$2 = 0;
 							}
 							
-							drv.data.addAssumption($2);
+							if (getVarDegree($2->getLHS(), drv.ctx) > 1 || getVarDegree($2->getRHS(), drv.ctx) > 1) {
+								ERROR(@2, "Assumption must be linear");
+								$2 = 0;
+							}
+							
+							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
+								ERROR(@1, "Assumptions are not supported for synthesis yet");
+							} else if ($2->getType() == AbsSyn::Direction::Type::EQ) {
+								ERROR(@2, "Directions with \"=\" are not supported yet in assumptions");
+							} else if ($2->getType() == AbsSyn::Direction::Type::INT) {
+								ERROR(@2, "Directions with intervals are not supported yet in assumptions");
+							} else {
+								drv.data.addAssumption($2);
+							}
 						}
 
 matrices		: var_direction {}
@@ -358,32 +418,34 @@ matrices		: var_direction {}
 direction	: expr directionType expr
 						{
 							if (getVarDegree($1, drv.ctx) > 1) {
-								yy::parser::error(@1, "Expression in directions must be at most linear");
-								YYERROR;
+								ERROR(@1, "Expression in directions must be at most linear");
+								$1 = 0;
 							}
 							if (getVarDegree($3, drv.ctx) > 1) {
-								yy::parser::error(@3, "Expression in directions must be at most linear");
-								YYERROR;
+								ERROR(@3, "Expression in directions must be at most linear");
+								$3 = 0;
 							}
 							if (getParamDegree($1, drv.ctx) > 0) {
-								yy::parser::error(@1, "Expression in directions cannot contain parameters");
+								ERROR(@1, "Expression in directions cannot contain parameters");
+								$1 = 0;
 							}
 							if (getParamDegree($3, drv.ctx) > 0) {
-								yy::parser::error(@3, "Expression in directions cannot contain parameters");
+								ERROR(@3, "Expression in directions cannot contain parameters");
+								$3 = 0;
 							}
 							$$ = new AbsSyn::Direction($1, $3, $2);
 						}
 						| expr IN doubleInterval
 						{
 							if (getVarDegree($1, drv.ctx) > 1) {
-								yy::parser::error(@1, "Expression in directions must be at most linear");
-								YYERROR;
+								ERROR(@1, "Expression in directions must be at most linear");
 							}
 							if (getParamDegree($1, drv.ctx) > 0) {
-								yy::parser::error(@1, "Expression in directions cannot contain parameters");
-								YYERROR;
+								ERROR(@1, "Expression in directions cannot contain parameters");
+								$$ = new AbsSyn::Direction(0, 0, AbsSyn::Direction::Type::INT, $3.first, $3.second);
+							} else {
+								$$ = new AbsSyn::Direction($1, 0, AbsSyn::Direction::Type::INT, $3.first, $3.second);
 							}
-							$$ = new AbsSyn::Direction($1, 0, AbsSyn::Direction::Type::INT, $3.first, $3.second);
 						}
 
 directionType		: "<"
@@ -410,21 +472,17 @@ directionType		: "<"
 var_direction	: DIR direction ";"
 							{
 								if ($2->hasParams(drv.ctx)) {
-									yy::parser::error(@2, "Variable directions cannot contain parameters");
-									YYERROR;
+									ERROR(@2, "Variable directions cannot contain parameters");
 								}
 								drv.data.addDirectionConstraint($2, drv.ctx);
 							}
 							| DIR IDENT ":" direction ";"
 							{
 								if ($4->hasParams(drv.ctx)) {
-									yy::parser::error(@2, "Variable directions cannot contain parameters");
-									YYERROR;
+									ERROR(@2, "Variable directions cannot contain parameters");
 								}
-								if (drv.data.isSymbolDefined($2))
-								{
-									yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
-									YYERROR;
+								if (drv.data.isSymbolDefined($2)) {
+									ERROR(@2, "Symbol '" + $2 + "' already defined");
 								}
 								$4->setName($2);
 								drv.data.addDirectionConstraint($4, drv.ctx);
@@ -432,19 +490,15 @@ var_direction	: DIR direction ";"
 
 template		: TEMPL "=" "{" rowList "}"
 						{
-							if ($4[0].size() != drv.data.getVarNum())
-							{
-								yy::parser::error(@3, "template matrix must have as many columns as the number of variables");
-								YYERROR;
+							if ($4[0].size() != drv.data.getVarNum()) {
+								ERROR(@3, "template matrix must have as many columns as the number of variables");
 							}
 							
-							if (drv.data.templateRows() != 0)
-							{
-								yy::parser::error(@$, "Redefinition of template matrix");
-								YYERROR;
+							if (drv.data.templateRows() != 0) {
+								ERROR(@$, "Redefinition of template matrix");
+							} else {
+								drv.data.setTemplate($4);
 							}
-							
-							drv.data.setTemplate($4);
 						}
 
 rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
@@ -453,28 +507,27 @@ rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
 matrixRow	: matrixRow "," IDENT
 					{
 						if (!drv.data.isDirectionDefined($3)) {
-							yy::parser::error(@3, "Direction " + $3 + " is not defined");
-							YYERROR;
+							ERROR(@3, "Direction " + $3 + " is not defined");
+							$1.push_back(0);
+							$$ = $1;
+						} else {
+							$1.push_back(drv.data.findDirectionPos($3));
+							$$ = $1;
 						}
-						
-						$1.push_back(drv.data.findDirectionPos($3));
-						$$ = $1;
 					}
 					| IDENT
 					{
 						if (!drv.data.isDirectionDefined($1)) {
-							yy::parser::error(@1, "Direction " + $1 + " is not defined");
-							YYERROR;
+							ERROR(@1, "Direction " + $1 + " is not defined");
+							$$ = {0};
+						} else {
+							$$ = {drv.data.findDirectionPos($1)};
 						}
-						
-						$$ = {drv.data.findDirectionPos($1)};
 					}
 					| matrixRow "," INTEGER
 					{
-						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum())
-						{
-							yy::parser::error(@3, "Unknown direction " + std::to_string($3));
-							YYERROR;
+						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum()) {
+							ERROR(@3, "Unknown direction " + std::to_string($3));
 						}
 						
 						$1.push_back($3);
@@ -482,10 +535,8 @@ matrixRow	: matrixRow "," IDENT
 					}
 					| INTEGER
 					{
-						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum())
-						{
-							yy::parser::error(@1, "Unknown direction " + std::to_string($1));
-							YYERROR;
+						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum()) {
+							ERROR(@1, "Unknown direction " + std::to_string($1));
 						}
 						
 						$$ = {$1};
@@ -494,8 +545,7 @@ matrixRow	: matrixRow "," IDENT
 param_direction	: PDIR direction ";"
 								{
 									if ($2->hasVars(drv.ctx)) {
-										yy::parser::error(@2, "Parameter directions cannot contain variables");
-										YYERROR;
+										ERROR(@2, "Parameter directions cannot contain variables");
 									}
 									
 									drv.data.addParamDirectionConstraint($2, drv.ctx);
@@ -503,13 +553,12 @@ param_direction	: PDIR direction ";"
 								| PDIR IDENT ":" direction ";"
 								{
 									if ($4->hasVars(drv.ctx)) {
-										yy::parser::error(@2, "Parameter directions cannot contain variables");
-										YYERROR;
+										ERROR(@2, "Parameter directions cannot contain variables");
+										
 									}
-									if (drv.data.isSymbolDefined($2))
-									{
-										yy::parser::error(@2, "Symbol '" + $2 + "' already defined");
-										YYERROR;
+									
+									if (drv.data.isSymbolDefined($2)) {
+										ERROR(@2, "Symbol '" + $2 + "' already defined");
 									}
 									$4->setName($2);
 									drv.data.addParamDirectionConstraint($4, drv.ctx);
@@ -527,51 +576,61 @@ identList	: IDENT { $$ = std::vector<std::string>{$1}; }
 
 intInterval			: "[" expr "," expr "]"
 								{
-									if (!isNumeric($2, drv.ctx))
-									{
-										yy::parser::error(@2, "Intervals require numeric expressions");
-										YYERROR;
+									double x1, x2;
+									
+									if (!isNumeric($2, drv.ctx)) {
+										ERROR(@2, "Intervals require numeric expressions");
+										x1 = 0;
+									} else {
+										x1 = evaluate($2, drv.ctx);
 									}
 									
-									if (!isNumeric($4, drv.ctx))
-									{
-										yy::parser::error(@4, "Intervals require numeric expressions");
-										YYERROR;
+									if (!isNumeric($4, drv.ctx)) {
+										ERROR(@4, "Intervals require numeric expressions");
+										x2 = 1;
+									} else {
+										x2 = evaluate($4, drv.ctx);
 									}
 									
-									int x1 = (int) evaluate($2, drv.ctx);
-									int x2 = (int) evaluate($4, drv.ctx);
-									
-									if (x2 < x1)
-									{
-										yy::parser::error(@$, "Right endpoint must be greater than or equal to the left one");
-										YYERROR;
+									if ((int) x1 != x1) {
+										WARNING(@2, "Left endopoint in interval is not integer and will be truncated");
 									}
 									
-									$$ = std::pair<int, int>(x1, x2);
+									if ((int) x2 != x2) {
+										WARNING(@4, "Left endopoint in interval is not integer and will be truncated");
+									}
+									
+									if ((int) x2 < (int) x1) {
+										ERROR(@$, "Right endpoint must be greater than or equal to the left one");
+										x1 = 0;
+										x2 = 1;
+									}
+									
+									$$ = std::pair<int, int>((int) x1, (int) x2);
 								}
 
 doubleInterval	: "[" expr "," expr "]"
 								{
-									if (!isNumeric($2, drv.ctx))
-									{
-										yy::parser::error(@2, "Intervals require numeric expressions");
-										YYERROR;
+									double x1, x2;
+									
+									if (!isNumeric($2, drv.ctx)) {
+										ERROR(@2, "Intervals require numeric expressions");
+										x1 = 0;
+									} else {
+										x1 = evaluate($2, drv.ctx);
 									}
 									
-									if (!isNumeric($4, drv.ctx))
-									{
-										yy::parser::error(@4, "Intervals require numeric expressions");
-										YYERROR;
+									if (!isNumeric($4, drv.ctx)) {
+										ERROR(@4, "Intervals require numeric expressions");
+										x2 = 1;
+									} else {
+										x2 = evaluate($4, drv.ctx);
 									}
-
-									double x1 = evaluate($2, drv.ctx);
-									double x2 = evaluate($4, drv.ctx);
 									
-									if (x2 < x1)
-									{
-										yy::parser::error(@$, "Right endpoint must be greater than or equal to the left one");
-										YYERROR;
+									if (x2 < x1) {
+										ERROR(@$, "Right endpoint must be greater than or equal to the left one");
+										x1 = 0;
+										x2 = 1;
 									}
 									
 									$$ = std::pair<double, double>(x1, x2);
@@ -584,34 +643,32 @@ expr		: number	{ $$ = $1; }
 				| "+" expr { $$ = $2; }
 				| IDENT	
 				{
-					if (!drv.data.isSymbolDefined($1))
-					{
-						yy::parser::error(@1, "Symbol " + $1 + " is undefined");
-						std::cout << drv.data << std::endl;
-						YYERROR;
+					if (!drv.data.isSymbolDefined($1)) {
+						ERROR(@1, "Symbol " + $1 + " is undefined");
+						$$ = 0;
+					} else {
+						$$ = drv.ctx.getSymbol($1);
 					}
-					
-					$$ = drv.ctx.getSymbol($1);
 				}
 				| expr "*" expr { $$ = $1 * $3; }
 				| expr "^" expr
 				{
-					if (!isNumeric($3, drv.ctx))
-					{
-						yy::parser::error(@3, "Exponent must be numeric");
-						YYERROR;
+					double val;
+					
+					if (!isNumeric($3, drv.ctx)) {
+						ERROR(@3, "Exponent must be numeric");
+						val = 1;
+					} else {
+						val = $3.evaluate<double>();
 					}
 					
-					double val = $3.evaluate<double>();
 					if (val != (int) val) {
-						yy::parser::error(@3, "Exponent must be integer");
-						YYERROR;
+						ERROR(@3, "Exponent must be integer");
 					}
 					
 					int exp = (int) val;
 					if (exp < 0) {
-						yy::parser::error(@3, "Exponent must be non-negative");
-						YYERROR;
+						ERROR(@3, "Exponent must be non-negative");
 					}
 					
 					if (exp == 0) {
@@ -626,12 +683,12 @@ expr		: number	{ $$ = $1; }
 				}
 				| expr "/" expr
 				{
-					if (!isNumeric($3, drv.ctx))
-					{
-						yy::parser::error(@3, "cannot divide by non--numeric expression");
-						YYERROR;
+					if (!isNumeric($3, drv.ctx)) {
+						ERROR(@3, "cannot divide by non--numeric expression");
+						$$ = $1 / 1;
+					} else {
+						$$ = $1 / $3;
 					}
-					$$ = $1 / $3;
 				}
 				| expr "+" expr { $$ = $1 + $3; }
 				| expr "-" expr { $$ = $1 - $3; }
@@ -658,35 +715,28 @@ formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
 
 option	: OPT TRANS transType ";"
 				{
-					if (drv.data.isTransModeDefined())
-					{
-						yy::parser::error(@$, "Transformation type already defined");
-						YYERROR;
+					if (drv.data.isTransModeDefined()) {
+						WARNING(@$, "Transformation type already defined");
+					} else {
+						drv.data.setTransMode($3);
 					}
-					drv.data.setTransMode($3);
 				}
 				| OPT DECOMP
 				{
-					if (drv.data.isDecompositionDefined())
-					{
-						yy::parser::error(@$, "Decomposition option already defined");
-						YYERROR;
+					if (drv.data.isDecompositionDefined()) {
+						WARNING(@$, "Decomposition option already defined");
+					} else {
+						drv.data.setDecomposition();
 					}
-					
-					drv.data.setDecomposition();
 				}
 				| OPT ALPHA DOUBLE ";"
 				{
-					if (drv.data.isAlphaDefined())
-					{
-						yy::parser::error(@$, "Alpha already defined");
-						YYERROR;
+					if (drv.data.isAlphaDefined()) {
+						WARNING(@$, "Alpha already defined");
 					}
 					
-					if ($3 > 1)
-					{
-						yy::parser::error(@3, "Alpha must be between 0 and 1");
-						YYERROR;
+					if ($3 > 1) {
+						ERROR(@3, "Alpha must be between 0 and 1");
 					}
 					
 					drv.data.setAlpha($3);

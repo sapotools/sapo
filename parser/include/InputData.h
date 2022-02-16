@@ -321,7 +321,7 @@ public:
 
   bool isAlphaDefined() const
   {
-    return alpha >= 0;
+    return alphaDefined;
   }
   void setAlpha(double a)
   {
@@ -367,6 +367,7 @@ protected:
   transType trans;
   bool decomp, decomp_defined;
   double alpha;
+	bool alphaDefined;
 };
 
 }

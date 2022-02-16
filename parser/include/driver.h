@@ -18,6 +18,8 @@ public:
 
   AbsSyn::InputData data;
 	AbsSyn::Context ctx;
+	
+	bool errors;
 
   // Run the parser on file F.  Return 0 on success.
   int parse(const std::string &f);
