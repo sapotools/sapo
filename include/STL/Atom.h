@@ -14,13 +14,13 @@
 #include "STL.h"
 
 class Atom : public STL
-{
+{	
 private:
   static int num_of_atoms;
 
   SymbolicAlgebra::Expression<> predicate; //!< predicate
   int id;                                  //!< atom identifier
-
+  
 public:
   Atom(const SymbolicAlgebra::Expression<> &predicate);
 
@@ -29,15 +29,20 @@ public:
     return predicate;
   };
 
-  void print() const
+  std::ostream &print(std::ostream &os) const
   {
-    std::cout << this->predicate << " <= 0";
+    return os << this->predicate << " <= 0";
   }
 
   int getID() const
   {
     return this->id;
   }
+
+  const std::shared_ptr<STL> simplify() const
+	{
+		return std::make_shared<Atom>(predicate);
+	}
 
   ~Atom();
 };

@@ -39,7 +39,7 @@ InputData::~InputData()
   for (auto it = std::begin(paramDirections); it != std::end(paramDirections); ++it)
     delete *it;
 
-  delete spec;
+  spec.reset();
 }
 ostream &operator<<(ostream &os, const InputData &m)
 {

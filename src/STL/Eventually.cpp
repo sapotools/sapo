@@ -27,13 +27,9 @@ Eventually::Eventually(const int begin, const int end,
 /**
  * Print the formula
  */
-void Eventually::print() const
+std::ostream &Eventually::print(std::ostream &os) const
 {
-  using namespace std;
-
-  cout << "Eventually_" << this->t_itvl << " (";
-  this->f->print();
-  cout << ")";
+	return os << "F " << this->t_itvl << " (" << f << ")";
 }
 
 Eventually::~Eventually() {}

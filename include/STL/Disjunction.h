@@ -31,7 +31,12 @@ public:
     return f2;
   }
 
-  void print() const;
+  const std::shared_ptr<STL> simplify() const
+	{
+		return std::make_shared<Disjunction>(f1->simplify(), f2->simplify());
+	}
+  
+  std::ostream &print(std::ostream &os) const;
 
   ~Disjunction();
 };

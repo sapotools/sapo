@@ -72,10 +72,3 @@ const TimeInterval &TimeInterval::set_end(const int end)
 
   return *this;
 }
-
-std::ostream &operator<<(std::ostream &os, const TimeInterval &itvl)
-{
-  os << "[" << itvl.begin() << "," << itvl.end() << "]";
-
-  return os;
-}

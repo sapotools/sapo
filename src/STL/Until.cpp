@@ -8,8 +8,6 @@
 
 #include "Until.h"
 
-#include <iostream>
-
 /**
  * Constructor that instantiates an Until formula (f1 U_[a,b] f2)
  *
@@ -28,15 +26,9 @@ Until::Until(const std::shared_ptr<STL> f1, const int begin, const int end,
 /**
  * Print the formula
  */
-void Until::print() const
+std::ostream &Until::print(std::ostream &os) const
 {
-  using namespace std;
-
-  cout << "(";
-  this->f1->print();
-  cout << ") until_" << this->t_itvl << " (";
-  this->f2->print();
-  cout << ")";
+  return os << "(" << f1 << ") U " << t_itvl << " (" << f2 << ")";
 }
 
 Until::~Until() {}

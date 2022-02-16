@@ -16,9 +16,8 @@
 
 class Eventually : public STL
 {
-
 private:
-  const std::shared_ptr<STL> f; // subformula
+  std::shared_ptr<STL> f; // subformula
   TimeInterval t_itvl;          // temporal formula bounds
 
 public:
@@ -34,7 +33,12 @@ public:
     return t_itvl;
   }
 
-  void print() const;
+  const std::shared_ptr<STL> simplify() const
+	{
+		return std::make_shared<Eventually>(t_itvl.begin(), t_itvl.end(), f->simplify());
+	}
+
+  std::ostream &print(std::ostream &os) const;
 
   ~Eventually();
 };

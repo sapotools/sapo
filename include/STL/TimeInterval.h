@@ -13,6 +13,11 @@
 
 class TimeInterval
 {
+	friend std::ostream &operator<<(std::ostream &os, const TimeInterval &ti)
+	{
+		return os << "[" << ti._begin << ", " << ti._end << "]";
+	}
+	
   int _begin;
   int _end;
 

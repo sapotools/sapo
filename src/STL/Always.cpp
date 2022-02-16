@@ -25,13 +25,11 @@ Always::Always(const int begin, const int end, const std::shared_ptr<STL> f):
 /**
  * Print the formula
  */
-void Always::print() const
+std::ostream &Always::print(std::ostream &os) const
 {
-  using namespace std;
-
-  cout << "always_" << this->t_itvl << " (";
-  this->f->print();
-  cout << ")";
+  os << "G " << this->t_itvl << " (" << this->f << ")";
+	
+	return os;
 }
 
 Always::~Always() {}

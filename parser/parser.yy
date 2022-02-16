@@ -13,7 +13,15 @@
 	
 	#include "Expr.h"
 	
-	#include "Formula.h"
+	#include "STL.h"
+	#include "Atom.h"
+	#include "Conjunction.h"
+	#include "Disjunction.h"
+	#include "Negation.h"
+	#include "Always.h"
+	#include "Eventually.h"
+	#include "Until.h"
+	
 	#include "types.h"
 	#include "Variable.h"
 	#include "Parameter.h"
@@ -122,7 +130,7 @@
 %nterm <SymbolicAlgebra::Expression<>> expr
 %nterm <std::vector<int>> matrixRow
 %nterm <std::vector<std::vector<int>>> rowList
-%nterm <AbsSyn::Formula *> formula
+%nterm <std::shared_ptr<STL> > formula
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> direction
 %nterm <AbsSyn::Direction::Type> directionType
@@ -639,23 +647,23 @@ expr		: number	{ $$ = $1; }
 				| "-" expr %prec UMINUS { $$ = -$2; }
 				| "(" expr ")" { $$ = $2;}
 
-formula	: expr ">" expr { $$ = new AbsSyn::Formula($3 - $1); }
-				| expr ">=" expr { $$ = new AbsSyn::Formula($3 - $1); }
-				| expr "<" expr { $$ = new AbsSyn::Formula($1 - $3); }
-				| expr "<=" expr { $$ = new AbsSyn::Formula($1 - $3); }
+formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
+				| expr ">=" expr { $$ = std::make_shared<Atom>($3 - $1); }
+				| expr "<" expr { $$ = std::make_shared<Atom>($1 - $3); }
+				| expr "<=" expr { $$ = std::make_shared<Atom>($1 - $3); }
 				| expr "=" expr
 				{
-					AbsSyn::Formula *f1 = new AbsSyn::Formula($1 - $3);
-					AbsSyn::Formula *f2 = new AbsSyn::Formula($3 - $1);
-					$$ = f1->conj(f2);
+					std::shared_ptr<STL> f1 = std::make_shared<Atom>($1 - $3);
+					std::shared_ptr<STL> f2 = std::make_shared<Atom>($3 - $1);
+					$$ = std::make_shared<Conjunction>(f1, f2);
 				}
-				| formula AND formula		{ $$ = $1->conj($3); }
-				| formula OR formula		{ $$ = $1->disj($3); }
-				| NOT formula									{ $$ = $2->neg(); }
+				| formula AND formula		{ $$ = std::make_shared<Conjunction>($1, $3); }
+				| formula OR formula		{ $$ = std::make_shared<Disjunction>($1, $3); }
+				| NOT formula									{ $$ = std::make_shared<Negation>($2); }
 				| "(" formula ")" { $$ = $2; }
-				| "G" intInterval formula %prec "G"	{ $$ = $3->always($2); }
-				| "F" intInterval formula %prec "F"	{ $$ = $3->eventually($2); }
-				| formula "U" intInterval formula %prec "U"	{ $$ = $1->until($3, $4); }
+				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<Always>($2.first, $2.second, $3); }
+				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<Eventually>($2.first, $2.second, $3); }
+				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<Until>($1, $3.first, $3.second, $4); }
 
 footerList	: %empty {}
 						| footerList footer {}

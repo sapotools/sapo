@@ -4,13 +4,17 @@
 #include <vector>
 #include <algorithm>
 
+#include "AbsSynIO.h"
+
 #include "types.h"
-#include "Formula.h"
 #include "Variable.h"
 #include "Parameter.h"
 #include "Constant.h"
 #include "Definition.h"
 #include "Direction.h"
+
+#include "STL.h"
+#include "Conjunction.h"
 
 #include "LinearSystem.h"
 #include "LinearAlgebra.h"
@@ -213,14 +217,14 @@ public:
   {
     return spec != NULL;
   }
-  void addSpec(Formula *f)
+  void addSpec(std::shared_ptr<STL> f)
   {
     if (spec == NULL)
       spec = f;
     else
-      spec = spec->conj(f);
+      spec = std::make_shared<Conjunction>(spec, f);
   }
-  const Formula *getSpec() const
+  const std::shared_ptr<STL> getSpec() const
   {
     return spec;
   }
@@ -351,7 +355,7 @@ protected:
 	
 	std::vector<Direction *> assumptions;
 
-  Formula *spec;
+  std::shared_ptr<STL> spec;
 
 	std::vector<Direction *> directions;
 

@@ -8,8 +8,6 @@
 
 #include "Conjunction.h"
 
-#include <iostream>
-
 /**
  * Constructor that instantiates a Conjunction STL formula (f1 /\ f2)
  *
@@ -26,15 +24,9 @@ Conjunction::Conjunction(const std::shared_ptr<STL> f1,
 /**
  * Print the formula
  */
-void Conjunction::print() const
+std::ostream &Conjunction::print(std::ostream &os) const
 {
-  using namespace std;
-
-  cout << "(";
-  this->f1->print();
-  cout << ") and (";
-  this->f2->print();
-  cout << ")";
+  return os << "(" << f1 << ") && (" << f2 << ")";
 }
 
 Conjunction::~Conjunction() {}

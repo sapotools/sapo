@@ -26,15 +26,9 @@ Disjunction::Disjunction(const std::shared_ptr<STL> f1,
 /**
  * Print the formula
  */
-void Disjunction::print() const
+std::ostream &Disjunction::print(std::ostream &os) const
 {
-  using namespace std;
-
-  cout << "(";
-  this->f1->print();
-  cout << ") or (";
-  this->f2->print();
-  cout << ")";
+  return os << "(" << f1 << ") || (" << f2 << ")";
 }
 
 Disjunction::~Disjunction() {}

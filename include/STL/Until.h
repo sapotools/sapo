@@ -9,6 +9,7 @@
 #ifndef UNTIL_H_
 #define UNTIL_H_
 
+#include <iostream>
 #include <memory>
 
 #include "STL.h"
@@ -39,7 +40,12 @@ public:
     return t_itvl;
   }
 
-  void print() const;
+  const std::shared_ptr<STL> simplify() const
+	{
+		return std::make_shared<Until>(f1->simplify(), t_itvl.begin(), t_itvl.end(), f2->simplify());
+	}
+
+  std::ostream &print(std::ostream &os) const;
 
   ~Until();
 };

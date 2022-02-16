@@ -9,7 +9,9 @@
 #ifndef STL_H_
 #define STL_H_
 
+#include <iostream>
 #include <string>
+#include <memory>
 
 enum formula_type {
   ATOM,
@@ -17,17 +19,23 @@ enum formula_type {
   DISJUNCTION,
   UNTIL,
   ALWAYS,
-  EVENTUALLY
+  EVENTUALLY,
+	NEGATION
 };
 
 class STL
 {
-  const formula_type type;
+	friend std::ostream &operator<<(std::ostream &os, const STL &f)
+	{
+		return f.print(os);
+	}
+	
+  formula_type type;
 
 protected:
   int options;
 
-  STL(const formula_type type);
+  STL(formula_type type);
 
 public:
   const STL &set_options(const int options);
@@ -36,8 +44,15 @@ public:
   {
     return type;
   }
+  
+  void setType(formula_type t)
+	{
+		type = t;
+	}
 
-  virtual void print() const = 0;
+  const virtual std::shared_ptr<STL> simplify() const = 0;
+	
+  virtual std::ostream &print(std::ostream &os) const = 0;
   virtual ~STL();
 };
 
