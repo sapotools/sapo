@@ -14,9 +14,7 @@
 #ifdef WITH_THREADS
 #include <shared_mutex>
 
-#include "ThreadPool.h"
-
-extern ThreadPool thread_pool;
+#include "SapoThreads.h"
 #endif // WITH_THREADS
 
 /**
