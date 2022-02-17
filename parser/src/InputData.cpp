@@ -259,8 +259,8 @@ void InputData::addDirectionConstraint(Direction *d, Context ctx)
 		delete(d);
 		return;
 	} else if (d->getType() == Direction::Type::EQ) {
-		this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(ctx), Direction::Type::LE, 0, 0, d->getName()), ctx);
-		this->addDirectionConstraint(new Direction(d->getLHS(), -d->getLB(ctx), Direction::Type::GE, 0, 0, d->getName()), ctx);
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(), Direction::Type::LE, 0, 0, d->getName()), ctx);
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(), Direction::Type::GE, 0, 0, d->getName()), ctx);
 		delete(d);
 		return;
 	}
