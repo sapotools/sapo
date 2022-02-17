@@ -37,4 +37,13 @@ void Disjunction::print() const
   cout << ")";
 }
 
+TimeInterval Disjunction::time_bounds() const
+{
+  const TimeInterval ti1 = f1->time_bounds();
+  const TimeInterval ti2 = f2->time_bounds();
+
+  return TimeInterval(std::min(ti1.begin(),ti2.begin()),
+                      std::max(ti1.end(),ti2.end()));
+}
+
 Disjunction::~Disjunction() {}

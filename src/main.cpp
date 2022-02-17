@@ -24,10 +24,14 @@ ThreadPool thread_pool(0);
 #include "Version.h"
 #include "driver.h"
 
+#include "ProgressAccounter.h"
+
 using namespace std;
 
+#define BAR_LENGTH 50
+
 Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
-               const unsigned int num_of_presplits, const bool verbose = false)
+               const unsigned int num_of_presplits)
 {
   Sapo sapo(model);
 
@@ -42,7 +46,6 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
     sapo.num_of_presplits = 0;
   }
   sapo.max_bundle_magnitude = data.getMaxVersorMagnitude();
-  sapo.verbose = verbose;
 
   return sapo;
 }
@@ -87,7 +90,7 @@ void print_variables_and_parameters(OSTREAM &os, const Model *model)
 }
 
 template<typename OSTREAM>
-void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
+void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_progress)
 {
   using OF = OutputFormatter<OSTREAM>;
 
@@ -98,20 +101,29 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model)
   os << OF::list_begin() << OF::object_header()
      << OF::field_header("flowpipe");
 
+  ProgressAccounter *accounter = NULL;
+  if (display_progress) {
+    accounter = (ProgressAccounter *) new ProgressBar(sapo.time_horizon, BAR_LENGTH, std::ref(std::cerr));
+  }
+
   // if the model does not specify any parameter set
   if (model->getParams().size() == 0) {
 
     // perform the reachability analysis
-    os << sapo.reach(*(model->getReachSet()), sapo.time_horizon);
+    os << sapo.reach(*(model->getReachSet()), sapo.time_horizon, accounter);
   } else {
 
     // perform the parametric reachability analysis
     os << sapo.reach(*(model->getReachSet()), *(model->getParaSet()),
-                     sapo.time_horizon);
+                     sapo.time_horizon, accounter);
   }
 
   os << OF::field_footer() << OF::object_footer() << OF::list_end()
      << OF::field_footer() << OF::object_footer();
+
+  if (display_progress) {
+    delete accounter;
+  }
 }
 
 template<typename OSTREAM>
@@ -151,23 +163,48 @@ void output_synthesis(OSTREAM &os, const Model *model,
   os << OF::field_footer() << OF::object_footer();
 }
 
-template<typename OSTREAM>
-void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
+unsigned int get_max_steps(const Sapo &sapo, const Model *model)
+//const unsigned int &max_param_splits, const unsigned int &num_of_params, const unsigned int &time_horizon)
 {
+  unsigned int max_steps = 0;
+  const unsigned int num_of_params = model->getParams().size();
+
+  for (unsigned int splits=0; splits<sapo.max_param_splits; ++splits) {
+    max_steps += std::pow(1<<splits, num_of_params);
+  }
+
+  return max_steps * model->getSpec()->time_bounds().end() + sapo.time_horizon;
+}
+
+template<typename OSTREAM>
+void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_progress)
+{
+  ProgressAccounter *accounter = NULL;
+  unsigned int max_steps = 0;
+  if (display_progress) {
+    max_steps = get_max_steps(sapo, model);
+
+    accounter = (ProgressAccounter *) new ProgressBar(max_steps, BAR_LENGTH, std::ref(std::cerr));
+  }
+
   // Synthesize parameters
   std::list<PolytopesUnion> synth_params = sapo.synthesize(
       *(model->getReachSet()), *(model->getParaSet()), model->getSpec(),
-      sapo.max_param_splits, sapo.num_of_presplits);
+      sapo.max_param_splits, sapo.num_of_presplits, accounter);
+
+  if (display_progress) {
+    accounter->increase_performed_to(max_steps-sapo.time_horizon);
+  }
 
   std::vector<Flowpipe> flowpipes(synth_params.size());
 
   if (!every_set_is_empty(synth_params)) {
 #ifdef WITH_THREADS
     auto compute_reachability
-        = [&flowpipes, &sapo, &model](const PolytopesUnion &pSet,
+        = [&flowpipes, &sapo, &model, &accounter](const PolytopesUnion &pSet,
                                       unsigned int params_idx) {
             flowpipes[params_idx]
-                = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon);
+                = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon, accounter);
           };
 
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
@@ -191,9 +228,13 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
     for (auto p_it = std::cbegin(synth_params);
          p_it != std::cend(synth_params); ++p_it) {
       flowpipes[params_idx++]
-          = sapo.reach(*(model->getReachSet()), *p_it, sapo.time_horizon);
+          = sapo.reach(*(model->getReachSet()), *p_it, sapo.time_horizon, accounter);
     }
 #endif
+  }
+
+  if (display_progress) {
+    delete accounter;
   }
 
   output_synthesis(os, model, synth_params, flowpipes);
@@ -201,14 +242,15 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model)
 
 template<typename OSTREAM>
 void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo, Model *model,
-                                        const AbsSyn::problemType &type)
+                                        const AbsSyn::problemType &type,
+                                        const bool display_progress)
 {
   switch (type) {
   case AbsSyn::problemType::REACH:
-    reach_analysis(os, sapo, model);
+    reach_analysis(os, sapo, model, display_progress);
     break;
   case AbsSyn::problemType::SYNTH:
-    synthesis(os, sapo, model);
+    synthesis(os, sapo, model, display_progress);
     break;
   default:
     std::cerr << "Unsupported problem type" << std::endl;
@@ -220,6 +262,7 @@ struct prog_opts {
   std::string input_filename;
   bool JSON_output;
   bool get_help;
+  bool progress;
   unsigned int num_of_threads;
 };
 
@@ -235,6 +278,7 @@ void print_help(std::ostream &os, const std::string exec_name)
      << "\t\t\t\t  active threads (default: "
      << std::thread::hardware_concurrency() << ")" << std::endl
 #endif
+     << "  -b\t\t\t\tDisplay a progress bar" << std::endl
      << "  -h\t\t\t\tPrint this help" << std::endl
      << std::endl
      << "If either the filename is \"-\" or no filename is provided, "
@@ -256,9 +300,38 @@ bool is_number(const char *str)
   return true;
 }
 
+void parser_option(prog_opts& opts, const int argc, char **argv, int& arg_pos)
+{
+  std::string argv_str = std::string(argv[arg_pos]);
+  if (std::string("-h") == argv_str) {
+    opts.get_help = true;
+    return;
+  }
+  if (std::string("-j") == argv_str) {
+    opts.JSON_output = true;
+    return;
+  }
+  if (std::string("-b") == argv_str) {
+    opts.progress = true;
+    return;
+  }
+#ifdef WITH_THREADS
+  if (std::string("-t") == argv_str) {
+    if (arg_pos + 1 < argc && is_number(argv[arg_pos + 1])) {
+      opts.num_of_threads = atoi(argv[++arg_pos]);
+    } else {
+      opts.num_of_threads = std::thread::hardware_concurrency();
+    }
+    return;
+  }
+#endif
+
+  opts.input_filename = argv_str;
+}
+
 prog_opts parse_opts(const int argc, char **argv)
 {
-  prog_opts opts = {"-", false, false, 1};
+  prog_opts opts = {"-", false, false, false, 1};
 
 #ifdef WITH_THREADS
   if (argc > 5) {
@@ -272,28 +345,7 @@ prog_opts parse_opts(const int argc, char **argv)
   }
 
   for (int i = 1; i < argc; i++) {
-    std::string argv_str = std::string(argv[i]);
-    if (std::string("-h") == argv_str) {
-      opts.get_help = true;
-    } else {
-      if (std::string("-j") == argv_str) {
-        opts.JSON_output = true;
-      } else {
-#ifdef WITH_THREADS
-        if (std::string("-t") == argv_str) {
-          if (i + 1 < argc && is_number(argv[i + 1])) {
-            opts.num_of_threads = atoi(argv[++i]);
-          } else {
-            opts.num_of_threads = std::thread::hardware_concurrency();
-          }
-        } else {
-          opts.input_filename = argv_str;
-        }
-#else
-        opts.input_filename = argv_str;
-#endif
-      }
-    }
+    parser_option(opts, argc, argv, i);
   }
 
   return opts;
@@ -305,7 +357,6 @@ int main(int argc, char **argv)
   string file;
 
   prog_opts opts = parse_opts(argc, argv);
-
 #ifdef WITH_THREADS
   // add all the aimed threads, but the current
   // one to the thread pool
@@ -333,10 +384,10 @@ int main(int argc, char **argv)
 
   if (opts.JSON_output) {
     JSON::ostream os(std::cout);
-    perform_computation_and_get_output(os, sapo, model, drv.data.getProblem());
+    perform_computation_and_get_output(os, sapo, model, drv.data.getProblem(), opts.progress);
   } else {
     perform_computation_and_get_output(std::cout, sapo, model,
-                                       drv.data.getProblem());
+                                       drv.data.getProblem(), opts.progress);
   }
 
   delete model;

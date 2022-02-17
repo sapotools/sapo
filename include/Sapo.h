@@ -26,6 +26,8 @@
 #include "STL.h"
 #include "Until.h"
 
+#include "ProgressAccounter.h"
+
 class Sapo
 {
 public:
@@ -37,7 +39,6 @@ public:
   unsigned int max_param_splits; //!< maximum number of splits in synthesis
   unsigned int num_of_presplits; //!< number of presplits in synthesis
   double max_bundle_magnitude; //!< maximum versor magnitude for single bundle
-  bool verbose;                //!< display info
 
 private:
   const std::vector<SymbolicAlgebra::Expression<>>
@@ -164,9 +165,10 @@ public:
    *
    * @param[in] initSet bundle representing the current reached set
    * @param[in] k time horizon
+   * @param[in,out] accounter acccounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(const Bundle &initSet, unsigned int k) const;
+  Flowpipe reach(const Bundle &initSet, unsigned int k, ProgressAccounter *accounter = NULL) const;
 
   /**
    * Reachable set computation for parameteric dynamical systems
@@ -174,10 +176,11 @@ public:
    * @param[in] initSet bundle representing the current reached set
    * @param[in] pSet the set of parameters
    * @param[in] k time horizon
+   * @param[in,out] accounter acccounts for the computation progress
    * @returns the reached flowpipe
    */
   Flowpipe reach(const Bundle &initSet, const PolytopesUnion &pSet,
-                 unsigned int k) const;
+                 unsigned int k, ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis method
@@ -185,10 +188,11 @@ public:
    * @param[in] reachSet bundle representing the current reached set
    * @param[in] pSet the current parameter set
    * @param[in] formula is an STL specification for the model
+   * @param[in,out] accounter acccounts for the computation progress
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL> formula) const;
+                            const std::shared_ptr<STL> formula, ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis with splits
@@ -200,12 +204,13 @@ public:
    *                       parameter set to identify a non-null solution
    * @param[in] num_of_presplits is number of splits to be performed before
    *                             the computation
+   * @param[in,out] accounter acccounts for the computation progress
    * @returns the list of refined parameter sets
    */
   std::list<PolytopesUnion>
   synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
              const std::shared_ptr<STL> formula, const unsigned int max_splits,
-             const unsigned int num_of_presplits = 0) const;
+             const unsigned int num_of_presplits = 0, ProgressAccounter *accounter = NULL) const;
 };
 
 #endif /* SAPO_H_ */

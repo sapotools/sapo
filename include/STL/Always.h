@@ -29,7 +29,7 @@ public:
     return this->f;
   }
 
-  const TimeInterval &time_bounds() const
+  TimeInterval time_bounds() const
   {
     return t_itvl;
   }

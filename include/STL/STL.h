@@ -11,6 +11,8 @@
 
 #include <string>
 
+#include "TimeInterval.h"
+
 enum formula_type {
   ATOM,
   CONJUNCTION,
@@ -35,6 +37,11 @@ public:
   const formula_type &getType() const
   {
     return type;
+  }
+
+  virtual TimeInterval time_bounds() const
+  {
+    return TimeInterval(1);
   }
 
   virtual void print() const = 0;

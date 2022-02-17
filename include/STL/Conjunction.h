@@ -32,6 +32,8 @@ public:
     return f2;
   }
 
+  TimeInterval time_bounds() const;
+
   void print() const;
 
   ~Conjunction();
