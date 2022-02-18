@@ -164,7 +164,7 @@ unsigned int get_max_steps(const Sapo &sapo, const Model *model)
   unsigned int max_steps = 0;
   const unsigned int num_of_params = model->getParams().size();
 
-  for (unsigned int splits=0; splits<sapo.max_param_splits; ++splits) {
+  for (unsigned int splits=0; splits<=sapo.max_param_splits; ++splits) {
     max_steps += std::pow(1<<splits, num_of_params);
   }
 
@@ -229,6 +229,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_p
   }
 
   if (display_progress) {
+    accounter->increase_performed_to(max_steps);
+
     delete accounter;
   }
 
