@@ -13,6 +13,8 @@
 #include <string>
 #include <memory>
 
+#include "TimeInterval.h"
+
 enum formula_type {
   ATOM,
   CONJUNCTION,
@@ -53,6 +55,12 @@ public:
   const virtual std::shared_ptr<STL> simplify() const = 0;
 	
   virtual std::ostream &print(std::ostream &os) const = 0;
+
+  virtual TimeInterval time_bounds() const
+  {
+    return TimeInterval(1);
+  }
+
   virtual ~STL();
 };
 

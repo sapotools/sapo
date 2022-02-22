@@ -38,6 +38,7 @@ public:
 	}
 
   std::ostream &print(std::ostream &os) const;
+  TimeInterval time_bounds() const;
 
   ~Conjunction();
 };

@@ -35,7 +35,7 @@ public:
     return f2;
   }
 
-  const TimeInterval &time_bounds() const
+  TimeInterval time_bounds() const
   {
     return t_itvl;
   }
