@@ -84,7 +84,9 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k, ProgressAccounter *a
                       nbundle.split(sapo->max_bundle_magnitude));
 
       {
+#ifdef WITH_THREADS
         std::unique_lock<std::mutex> lock(mutex);
+#endif //WITH_THREADS
         last_step.add(bls);
       }
     }
@@ -400,7 +402,7 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
        ++ps_it) {
     results.push_back(sapo.synthesize(reachSet, *ps_it, formula));
     if (accounter != NULL) {
-      accounter->increase_performed(formula->time_bounds.end());
+      accounter->increase_performed(formula->time_bounds().end());
     }
   }
 

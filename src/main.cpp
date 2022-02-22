@@ -321,6 +321,8 @@ void parser_option(prog_opts& opts, const int argc, char **argv, int& arg_pos)
     }
     return;
   }
+#else
+  (void)argc;
 #endif
 
   opts.input_filename = argv_str;
