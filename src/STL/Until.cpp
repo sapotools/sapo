@@ -28,7 +28,7 @@ Until::Until(const std::shared_ptr<STL> f1, const int begin, const int end,
  */
 std::ostream &Until::print(std::ostream &os) const
 {
-  return os << "(" << f1 << ") U " << t_itvl << " (" << f2 << ")";
+  return os << "(" << *f1 << ") U " << t_itvl << " (" << *f2 << ")";
 }
 
 Until::~Until() {}

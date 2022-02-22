@@ -28,7 +28,7 @@ Disjunction::Disjunction(const std::shared_ptr<STL> f1,
  */
 std::ostream &Disjunction::print(std::ostream &os) const
 {
-  return os << "(" << f1 << ") || (" << f2 << ")";
+  return os << "(" << *f1 << ") || (" << *f2 << ")";
 }
 
 Disjunction::~Disjunction() {}

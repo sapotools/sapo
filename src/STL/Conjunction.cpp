@@ -26,7 +26,7 @@ Conjunction::Conjunction(const std::shared_ptr<STL> f1,
  */
 std::ostream &Conjunction::print(std::ostream &os) const
 {
-  return os << "(" << f1 << ") && (" << f2 << ")";
+  return os << "(" << *f1 << ") && (" << *f2 << ")";
 }
 
 Conjunction::~Conjunction() {}

@@ -24,7 +24,7 @@ Negation::Negation(const std::shared_ptr<STL> f):
  */
 std::ostream &Negation::print(std::ostream &os) const
 {
-  return os << "! (" << f << ")";
+  return os << "! (" << *f << ")";
 }
 
 Negation::~Negation() {}
