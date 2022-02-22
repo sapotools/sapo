@@ -1,5 +1,6 @@
 %skeleton "lalr1.cc" // -*- C++ -*-
 //%require "3.8.1"
+%require "3.5.1"
 %language "c++"
 %defines
 
