@@ -17,7 +17,6 @@ public:
   ~driver();
 
   AbsSyn::InputData data;
-	AbsSyn::Context ctx;
 	
 	bool errors;
 

@@ -164,6 +164,47 @@ bool InputData::isSymbolDefined(const string &name) const
          || isDefDefined(name) || isDirectionDefined(name);
 }
 
+SymbolicAlgebra::Symbol<> InputData::getSymbol(std::string name) const
+{
+	for (unsigned i = 0; i < vars.size(); i++) {
+		if (vars[i]->getName() == name) {
+			return vars[i]->getSymbol();
+		}
+	}
+	
+	for (unsigned i = 0; i < params.size(); i++) {
+		if (params[i]->getName() == name) {
+			return params[i]->getSymbol();
+		}
+	}
+	
+	for (unsigned i = 0; i < consts.size(); i++) {
+		if (consts[i]->getName() == name) {
+			return consts[i]->getSymbol();
+		}
+	}
+	
+	for (unsigned i = 0; i < defs.size(); i++) {
+		if (defs[i]->getName() == name) {
+			return defs[i]->getSymbol();
+		}
+	}
+	
+	for (unsigned i = 0; i < directions.size(); i++) {
+		if (directions[i]->getName() == name) {
+			return *directions[i]->getSymbol();
+		}
+	}
+	
+	for (unsigned i = 0; i < paramDirections.size(); i++) {
+		if (paramDirections[i]->getName() == name) {
+			return *paramDirections[i]->getSymbol();
+		}
+	}
+	
+	throw std::runtime_error("No symbol named \"" + name + "\"");
+}
+
 const Variable *InputData::getVar(const string &name) const
 {
   for (unsigned i = 0; i < vars.size(); i++)
@@ -191,6 +232,18 @@ int InputData::getVarPos(const string &name) const
   return -1;
 }
 
+std::vector<SymbolicAlgebra::Symbol<>> InputData::getVarSymbols() const
+{
+	std::vector<SymbolicAlgebra::Symbol<>> res{};
+	
+	for (unsigned i = 0; i < vars.size(); i++) {
+		res.push_back(vars[i]->getSymbol());
+	}
+	
+	return res;
+}
+
+
 const Parameter *InputData::getParam(const string &name) const
 {
   for (unsigned i = 0; i < params.size(); i++)
@@ -207,6 +260,17 @@ int InputData::getParamPos(const string &name) const
       return i;
 
   return -1;
+}
+
+std::vector<SymbolicAlgebra::Symbol<>> InputData::getParamSymbols() const
+{
+	std::vector<SymbolicAlgebra::Symbol<>> res{};
+	
+	for (unsigned i = 0; i < params.size(); i++) {
+		res.push_back(params[i]->getSymbol());
+	}
+	
+	return res;
 }
 
 const Constant *InputData::getConst(const string &name) const
@@ -237,11 +301,11 @@ int InputData::getDefPos(const string &name) const
   return -1;
 }
 
-int find(std::vector<Direction *> M, Direction *v, const Context &ctx, bool variable = true)
+int find(std::vector<Direction *> M, Direction *v)
 {
 	unsigned pos = 0;
 	while (pos < M.size()) {
-		if (M[pos]->compare(v, ctx, variable)) {
+		if (M[pos]->compare(v)) {
 			return pos;
 		} else {
 			pos++;
@@ -251,16 +315,16 @@ int find(std::vector<Direction *> M, Direction *v, const Context &ctx, bool vari
 	return -1;
 }
 
-void InputData::addDirectionConstraint(Direction *d, Context ctx)
+void InputData::addDirectionConstraint(Direction *d, bool isVar)
 {
 	if (d->getType() == Direction::Type::INT) {		// constraint is an interval specification
-		this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(ctx), Direction::Type::LE, 0, 0, d->getName()), ctx);
-		this->addDirectionConstraint(new Direction(d->getLHS(), d->getLB(ctx), Direction::Type::GE, 0, 0, d->getName()), ctx);
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(), Direction::Type::LE, 0, 0, d->getSymbol()), isVar);
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getLB(), Direction::Type::GE, 0, 0, d->getSymbol()), isVar);
 		delete(d);
 		return;
 	} else if (d->getType() == Direction::Type::EQ) {
-		this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(), Direction::Type::LE, 0, 0, d->getName()), ctx);
-		this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(), Direction::Type::GE, 0, 0, d->getName()), ctx);
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(), Direction::Type::LE, 0, 0, d->getSymbol()), isVar);
+		this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(), Direction::Type::GE, 0, 0, d->getSymbol()), isVar);
 		delete(d);
 		return;
 	}
@@ -268,20 +332,27 @@ void InputData::addDirectionConstraint(Direction *d, Context ctx)
 	Direction *new_dir = d;
 	Direction *negated_dir = new_dir->getComplementary();
 	
+	std::vector<AbsSyn::Direction *> *dirs;
+	if (isVar) {
+		dirs = &directions;
+	} else {
+		dirs = &paramDirections;
+	}
+	
 	// check if new direction is already present
-	int pos = find(directions, new_dir, ctx);
-	int negated_pos = find(directions, negated_dir, ctx);
+	int pos = find(*dirs, new_dir);
+	int negated_pos = find(*dirs, negated_dir);
 	
 	if (pos != -1) {
 		
 		// direction already present
-		if (!directions[pos]->hasUB() || new_dir->getUB(ctx) < directions[pos]->getUB(ctx)) {
-			directions[pos]->setUB(ctx, new_dir->getUB(ctx));
-			directions[pos]->setName(new_dir->getName());
+		if (!(*dirs)[pos]->hasUB() || new_dir->getUB() < (*dirs)[pos]->getUB()) {
+			(*dirs)[pos]->setUB(new_dir->getUB());
+			(*dirs)[pos]->setSymbol(new_dir->getSymbol());
 		}
-		if (!directions[pos]->hasLB() || new_dir->getLB(ctx) > directions[pos]->getLB(ctx)) {
-			directions[pos]->setLB(ctx, new_dir->getLB(ctx));
-			directions[pos]->setName(new_dir->getName());
+		if (!(*dirs)[pos]->hasLB() || new_dir->getLB() > (*dirs)[pos]->getLB()) {
+			(*dirs)[pos]->setLB(new_dir->getLB());
+			(*dirs)[pos]->setSymbol(new_dir->getSymbol());
 		}
 		delete(new_dir);
 		delete(negated_dir);
@@ -289,13 +360,13 @@ void InputData::addDirectionConstraint(Direction *d, Context ctx)
 	} else if (negated_pos != -1) {
 		
 		// negation of direction already present
-		if (!directions[negated_pos]->hasUB() || negated_dir->getUB(ctx) < directions[negated_pos]->getUB(ctx)) {
-			directions[negated_pos]->setUB(ctx, negated_dir->getUB(ctx));
-			directions[negated_pos]->setName(negated_dir->getName());
+		if (!(*dirs)[negated_pos]->hasUB() || negated_dir->getUB() < (*dirs)[negated_pos]->getUB()) {
+			(*dirs)[negated_pos]->setUB(negated_dir->getUB());
+			(*dirs)[negated_pos]->setSymbol(negated_dir->getSymbol());
 		}
-		if (!directions[negated_pos]->hasLB() || negated_dir->getLB(ctx) > directions[negated_pos]->getLB(ctx)) {
-			directions[negated_pos]->setLB(ctx, negated_dir->getLB(ctx));
-			directions[negated_pos]->setName(negated_dir->getName());
+		if (!(*dirs)[negated_pos]->hasLB() || negated_dir->getLB() > (*dirs)[negated_pos]->getLB()) {
+			(*dirs)[negated_pos]->setLB(negated_dir->getLB());
+			(*dirs)[negated_pos]->setSymbol(negated_dir->getSymbol());
 		}
 		delete(new_dir);
 		delete(negated_dir);
@@ -303,17 +374,31 @@ void InputData::addDirectionConstraint(Direction *d, Context ctx)
 	} else {
 		
 		// new direction
-		directions.push_back(new_dir);
+		(*dirs).push_back(new_dir);
 		
-		// cover variables
-		for (unsigned i = 0; i < vars.size(); i++) {
-			if (new_dir->covers(ctx, vars[i]->getName())) {
-				vars[i]->setCovered();
+		if (isVar) {
+			// cover variables
+			for (unsigned i = 0; i < vars.size(); i++) {
+				if (new_dir->covers(vars[i]->getSymbol())) {
+					vars[i]->setCovered();
+				}
+			}
+		} else {
+			// cover parameter
+			for (unsigned i = 0; i < params.size(); i++) {
+				if (new_dir->covers(params[i]->getSymbol())) {
+					params[i]->setCovered();
+				}
 			}
 		}
 		
 		delete(negated_dir);
 	}
+}
+
+void InputData::addVarDirectionConstraint(Direction *d)
+{
+	return this->addDirectionConstraint(d, true);
 }
 
 
@@ -328,65 +413,13 @@ int InputData::findDirectionPos(const std::string &name) const
 }
 
 
-void InputData::addParamDirectionConstraint(Direction *d, Context ctx)
+void InputData::addParamDirectionConstraint(Direction *d)
 {
-//	std::cout << "Direction " << *d << std::endl;
-	
-	if (d->getType() == Direction::Type::INT) {		// constraint is an interval specification
-		this->addParamDirectionConstraint(new Direction(d->getLHS(), d->getUB(ctx), Direction::Type::LE, 0, 0, d->getName()), ctx);
-		this->addParamDirectionConstraint(new Direction(d->getLHS(), d->getLB(ctx), Direction::Type::GE, 0, 0, d->getName()), ctx);
-		delete(d);
-		return;
-	}
-	
-	Direction *new_dir = d;
-	Direction *negated_dir = new_dir->getComplementary();
-	
-	// check if new direction is already present
-	int pos = find(paramDirections, new_dir, ctx, false);
-	int negated_pos = find(paramDirections, negated_dir, ctx, false);
-	
-	if (pos != -1) {
-		// direction already present
-		if (!paramDirections[pos]->hasUB() || new_dir->getUB(ctx) < paramDirections[pos]->getUB(ctx)) {
-			paramDirections[pos]->setUB(ctx, new_dir->getUB(ctx));
-			paramDirections[pos]->setName(new_dir->getName());
-		}
-		if (!paramDirections[pos]->hasLB() || new_dir->getLB(ctx) > paramDirections[pos]->getLB(ctx)) {
-			paramDirections[pos]->setLB(ctx, new_dir->getLB(ctx));
-			paramDirections[pos]->setName(new_dir->getName());
-		}
-		delete(new_dir);
-		delete(negated_dir);
-		
-	} else if (negated_pos != -1) {
-		// negation of direction already present		
-		if (!paramDirections[negated_pos]->hasLB() || negated_dir->getLB(ctx) > paramDirections[negated_pos]->getLB(ctx)) {
-			paramDirections[negated_pos]->setLB(ctx, negated_dir->getLB(ctx));
-			paramDirections[negated_pos]->setName(negated_dir->getName());
-		}
-		if (!paramDirections[negated_pos]->hasUB() || negated_dir->getUB(ctx) < paramDirections[pos]->getUB(ctx)) {
-			paramDirections[negated_pos]->setUB(ctx, negated_dir->getUB(ctx));
-			paramDirections[negated_pos]->setName(negated_dir->getName());
-		}
-		delete(new_dir);
-		delete(negated_dir);
-		
-	} else {
-		// new direction
-		paramDirections.push_back(new_dir);
-		
-		// cover parameters
-		for (unsigned i = 0; i < params.size(); i++) {
-			if (new_dir->covers(ctx, params[i]->getName())) {
-				params[i]->setCovered();
-			}
-		}
-	}
+	return this->addDirectionConstraint(d, false);
 }
 
 
-bool InputData::check(Context ctx)
+bool InputData::check()
 {
   bool res = true;
 
@@ -423,7 +456,7 @@ bool InputData::check(Context ctx)
 	{	// put a block to avoid namespace pollution
 		std::vector<bool> hasLB(vars.size(), false), hasUB(vars.size(), false);
 		for (unsigned d = 0; d < directions.size(); d++) {
-			std::vector<double> dirVector = directions[d]->getDirectionVector(ctx, true);
+			std::vector<double> dirVector = directions[d]->getDirectionVector(this->getVarSymbols());
 			for (unsigned v = 0; v < vars.size(); v++) {
 				if ((dirVector[v] > 0 && directions[d]->hasUB()) || (dirVector[v] < 0 && directions[d]->hasLB())) {
 					hasUB[v] = true;
@@ -454,14 +487,14 @@ bool InputData::check(Context ctx)
 		for (unsigned i = 0; i < directions.size(); i++) {
 			// add only bounded directions
 			if (directions[i]->hasUB()) {
-				A.push_back(directions[i]->getDirectionVector(ctx, true));
-				b.push_back(directions[i]->getUB(ctx));
+				A.push_back(directions[i]->getDirectionVector(this->getVarSymbols()));
+				b.push_back(directions[i]->getUB());
 			}
 		}
 		for (unsigned i = 0; i < directions.size(); i++) {
 			if (directions[i]->hasLB()) {
-				A.push_back(-directions[i]->getDirectionVector(ctx, true));
-				b.push_back(-directions[i]->getLB(ctx));
+				A.push_back(-directions[i]->getDirectionVector(this->getVarSymbols()));
+				b.push_back(-directions[i]->getLB());
 			}
 		}
 		LinearSystem LS(A, b);
@@ -474,25 +507,25 @@ bool InputData::check(Context ctx)
 		
 		for (unsigned i = 0; i < directions.size(); i++) {
 			if (!directions[i]->hasLB()) {
-				std::vector<double> dirVector = directions[i]->getDirectionVector(ctx, true);
+				std::vector<double> dirVector = directions[i]->getDirectionVector(this->getVarSymbols());
 				SymbolicAlgebra::Expression<> obj_function = 0;
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
 				double minVal = LS.minimize(symbols, obj_function);
-				directions[i]->setLB(ctx, minVal);
+				directions[i]->setLB(minVal);
 			}
 			
 			if (!directions[i]->hasUB()) {
-				std::vector<double> dirVector = directions[i]->getDirectionVector(ctx, true);
+				std::vector<double> dirVector = directions[i]->getDirectionVector(this->getVarSymbols());
 				SymbolicAlgebra::Expression<> obj_function = 0;
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
 				double maxVal = LS.maximize(symbols, obj_function);
-				directions[i]->setUB(ctx, maxVal);
+				directions[i]->setUB(maxVal);
 			}
 		}
 	}
@@ -502,7 +535,7 @@ bool InputData::check(Context ctx)
 		for (unsigned i = 0; i < templateMatrix.size(); i++) {
 			vector<vector<double>> M{};
 			for (unsigned j = 0; j < templateMatrix[i].size(); j++) {
-				M.push_back(directions[templateMatrix[i][j]]->getDirectionVector(ctx, true));
+				M.push_back(directions[templateMatrix[i][j]]->getDirectionVector(this->getVarSymbols()));
 			}
 			
 			vector<double> zeroes(templateMatrix[i].size(), 0);
@@ -535,7 +568,7 @@ bool InputData::check(Context ctx)
 		
 		std::vector<bool> hasLB(params.size(), false), hasUB(params.size(), false);
 		for (unsigned d = 0; d < paramDirections.size(); d++) {
-			std::vector<double> dirVector = paramDirections[d]->getDirectionVector(ctx, false);
+			std::vector<double> dirVector = paramDirections[d]->getDirectionVector(this->getParamSymbols());
 			for (unsigned p = 0; p < params.size(); p++) {
 				if ((dirVector[p] < 0 && paramDirections[d]->hasLB()) || (dirVector[p] > 0 && paramDirections[d]->hasUB())) {
 					hasUB[p] = true;
@@ -567,12 +600,12 @@ bool InputData::check(Context ctx)
 		vector<double> b{};
 		for (unsigned i = 0; i < paramDirections.size(); i++) {
 			if (paramDirections[i]->hasUB()) {
-				A.push_back(paramDirections[i]->getDirectionVector(ctx, false));
-				b.push_back(paramDirections[i]->getUB(ctx));
+				A.push_back(paramDirections[i]->getDirectionVector(this->getParamSymbols()));
+				b.push_back(paramDirections[i]->getUB());
 			}
 			if (paramDirections[i]->hasLB()) {
-				A.push_back(paramDirections[i]->getComplementary()->getDirectionVector(ctx, false));
-				b.push_back(paramDirections[i]->getLB(ctx));
+				A.push_back(paramDirections[i]->getComplementary()->getDirectionVector(this->getParamSymbols()));
+				b.push_back(paramDirections[i]->getLB());
 			}
 		}
 		LinearSystem LS(A, b);
@@ -586,24 +619,24 @@ bool InputData::check(Context ctx)
 		for (unsigned i = 0; i < paramDirections.size(); i++) {
 			if (!paramDirections[i]->hasLB()) {
 				SymbolicAlgebra::Expression<> obj_function = 0;
-				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(ctx, false);
+				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(this->getParamSymbols());
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
 				double minVal = LS.minimize(symbols, obj_function);
-				paramDirections[i]->setLB(ctx, minVal);
+				paramDirections[i]->setLB(minVal);
 			}
 			
 			if (!paramDirections[i]->hasUB()) {
 				SymbolicAlgebra::Expression<> obj_function = 0;
-				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(ctx, false);
+				std::vector<double> dirVector = paramDirections[i]->getDirectionVector(this->getParamSymbols());
 				for (unsigned j = 0; j < dirVector.size(); j++) {
 					obj_function += dirVector[j] * symbols[j];
 				}
 				
 				double maxVal = LS.maximize(symbols, obj_function);
-				paramDirections[i]->setUB(ctx, maxVal);
+				paramDirections[i]->setUB(maxVal);
 			}
 		}
 	}

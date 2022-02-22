@@ -5,8 +5,8 @@ namespace AbsSyn
 
 std::ostream &operator<<(std::ostream &os, const Direction &d)
 {
-	if (d.name != "") {
-		os << d.name << ": ";
+	if (d.s != NULL) {
+		os << *d.s << ": ";
 	}
 	
 	os << d.lhs;
@@ -37,30 +37,30 @@ std::ostream &operator<<(std::ostream &os, const Direction &d)
 	return os;
 }
 
-double Direction::getLB(const Context &ctx) const
+double Direction::getLB() const
 {
 	if (type == Type::INT) {
 		return LB;
 	} else if (type == Type::GT || type == Type::GE || type == Type::EQ) {
-		return -this->getOffset(ctx);
+		return -this->getOffset();
 	} else {
 		return -std::numeric_limits<double>::infinity();
 	}
 }
-double Direction::getUB(const Context &ctx) const
+double Direction::getUB() const
 {
 	if (type == Type::INT) {
 		return UB;
 	} else if (type == Type::LT || type == Type::LE || type == Type::EQ) {
-		return this->getOffset(ctx);
+		return this->getOffset();
 	} else {
 		return std::numeric_limits<double>::infinity();
 	}
 }
 
-void Direction::setLB(const Context &ctx, double val)
+void Direction::setLB(double val)
 {
-	UB = this->getUB(ctx);
+	UB = this->getUB();
 	
 	if (this->hasUB()) {
 		type = Type::INT;
@@ -68,9 +68,9 @@ void Direction::setLB(const Context &ctx, double val)
 	
 	LB = (val == 0 ? 0 : val);
 }
-void Direction::setUB(const Context &ctx, double val)
+void Direction::setUB(double val)
 {
-	LB = this->getLB(ctx);
+	LB = this->getLB();
 	
 	if (this->hasLB()) {
 		type = Type::INT;
@@ -83,7 +83,7 @@ void Direction::setUB(const Context &ctx, double val)
 Direction *Direction::copy() const
 {
 	SymbolicAlgebra::Expression<> new_lhs(lhs), new_rhs(rhs);
-	return new Direction(new_lhs, new_rhs, type, LB, UB, name);
+	return new Direction(new_lhs, new_rhs, type, LB, UB, s);
 }
 
 Direction *Direction::getComplementary() const
@@ -115,38 +115,25 @@ Direction *Direction::getComplementary() const
 	}
 	
 	SymbolicAlgebra::Expression<> new_lhs(lhs), new_rhs(rhs);
-	return new Direction(-new_lhs, -new_rhs, newType, -UB, -LB, name);
+	return new Direction(-new_lhs, -new_rhs, newType, -UB, -LB, s);
 }
 
-bool Direction::compare(Direction *d, const Context &ctx, bool variable) const
+bool Direction::compare(Direction *d) const
 {
-	std::vector<SymbolicAlgebra::Symbol<>> vars{}, params{};
-	for (unsigned i = 0; i < ctx.getVarNum(); i++) {
-		SymbolicAlgebra::Symbol<> s(ctx.getVar(i));
-		vars.push_back(s);
-	}
-	for (unsigned i = 0; i < ctx.getParamNum(); i++) {
-		SymbolicAlgebra::Symbol<> s(ctx.getParam(i));
-		params.push_back(s);
+	std::vector<SymbolicAlgebra::Symbol<>> symbols{};
+	std::set<SymbolicAlgebra::Symbol<>> ids = (lhs + rhs + d->getLHS() + d->getRHS()).get_symbols();
+	
+	for (auto it = ids.begin(); it != ids.end(); it++) {
+		symbols.push_back(*it);
 	}
 	
 	std::vector<double> d1{}, d2{};
-	if (variable) {
-		SymbolicAlgebra::Expression<> e1 = lhs - rhs;
-		SymbolicAlgebra::Expression<> e2 = d->getLHS() - d->getRHS();
-		for (unsigned i = 0; i < ctx.getVarNum(); i++) {
-			d1.push_back(getCoefficient(e1, ctx, ctx.getVar(i)));
-			d2.push_back(getCoefficient(e2, ctx, ctx.getVar(i)));
-		}
-	} else {
-		SymbolicAlgebra::Expression<> e1 = lhs - rhs;
-		SymbolicAlgebra::Expression<> e2 = d->getLHS() - d->getRHS();
-		for (unsigned i = 0; i < ctx.getParamNum(); i++) {
-			d1.push_back(getCoefficient(e1, ctx, ctx.getParam(i)));
-			d2.push_back(getCoefficient(e2, ctx, ctx.getParam(i)));
-		}
-	}
 	
+	for (unsigned i = 0; i < symbols.size(); i++) {
+		d1.push_back(getCoefficient(lhs - rhs, symbols[i]));
+		d2.push_back(getCoefficient(d->getLHS() - d->getRHS(), symbols[i]));
+	}
+
 	double tol = 1E-8;
 	
 	// compute length of vectors
@@ -169,7 +156,7 @@ bool Direction::compare(Direction *d, const Context &ctx, bool variable) const
 
 
 
-std::vector<double> Direction::getDirectionVector(const Context &ctx, bool variables) const
+std::vector<double> Direction::getDirectionVector(std::vector<SymbolicAlgebra::Symbol<>> symbols) const
 {
 	std::vector<double> res{};
 	
@@ -187,41 +174,33 @@ std::vector<double> Direction::getDirectionVector(const Context &ctx, bool varia
 		throw std::logic_error("Unsupported inequality type");
 	}
 	
-	if (variables) {				// Inequality has only variables
-		for (unsigned i = 0; i < ctx.getVarNum(); i++) {
-			SymbolicAlgebra::Expression<> e = lhs - rhs;
-			res.push_back(coeff * getCoefficient(e, ctx, ctx.getVar(i)));
-		}
-	} else {								// Inequality has only parameters
-		for (unsigned i = 0; i < ctx.getParamNum(); i++) {
-			SymbolicAlgebra::Expression<> e = lhs - rhs;
-			res.push_back(coeff * getCoefficient(e, ctx, ctx.getParam(i)));
-		}
+	for (unsigned i = 0; i < symbols.size(); i++) {
+		res.push_back(coeff * getCoefficient(lhs - rhs, symbols[i]));
 	}
 	
 	return res;
 }
 
-double Direction::getOffset(const Context &ctx) const
+double Direction::getOffset() const
 {
 	if (type == Type::LE || type == Type::LT) {
 		SymbolicAlgebra::Expression<> e = rhs - lhs;
-		return AbsSyn::getOffset(e, ctx);
+		return AbsSyn::getOffset(e);
 	} else if (type == Type::GE || type == Type::GT) {
 		SymbolicAlgebra::Expression<> e = lhs - rhs;
-		return AbsSyn::getOffset(e, ctx);
+		return AbsSyn::getOffset(e);
 	} else if (type == Type::EQ) {
 		SymbolicAlgebra::Expression<> e = rhs - lhs;
-		return AbsSyn::getOffset(e, ctx);
+		return AbsSyn::getOffset(e);
 	} else {
 		throw std::logic_error("unsupported inequality type");
 	}
 }
 
-bool Direction::covers(const Context &ctx, const SymbolicAlgebra::Symbol<> &s) const
+bool Direction::covers(const SymbolicAlgebra::Symbol<> &s) const
 {
 	SymbolicAlgebra::Expression<> e = lhs - rhs;
-	return getCoefficient(e, ctx, s) != 0;
+	return getCoefficient(e, s) != 0;
 }
 
 }

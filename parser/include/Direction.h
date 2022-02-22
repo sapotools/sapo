@@ -3,9 +3,9 @@
 
 #include <cmath>
 
-#include "Context.h"
 #include "SymbolicAlgebra.h"
 #include "Expr.h"
+#include "AbsSynIO.h"
 
 namespace AbsSyn
 {
@@ -25,29 +25,41 @@ public:
 		INT		// lhs in [a,b]
 	};
 	
-	Direction(SymbolicAlgebra::Expression<> e1, SymbolicAlgebra::Expression<> e2, Type t, double lb = -std::numeric_limits<double>::infinity(),
-						double ub = std::numeric_limits<double>::infinity(), std::string dirName = ""):
-				lhs(e1), rhs(e2), type(t), LB(lb), UB(ub), name(dirName) {}
+	Direction(SymbolicAlgebra::Expression<> e1, SymbolicAlgebra::Expression<> e2, Type t,
+						double lb = -std::numeric_limits<double>::infinity(),
+						double ub = std::numeric_limits<double>::infinity(),
+						SymbolicAlgebra::Symbol<> *sym = NULL):
+				lhs(e1), rhs(e2), type(t), LB(lb), UB(ub), s(sym) {}
 	
 	~Direction() {}
 	
-	std::vector<double> getDirectionVector(const Context &ctx, bool variables)
+	std::vector<double> getDirectionVector(std::vector<SymbolicAlgebra::Symbol<>> symbols)
 				const;	// returns the vector representing the direction
 	
-	double getOffset(const Context &ctx)
+	double getOffset()
 				const;		// return the offset of the direction, if type is not INT
 	
 	std::string getName() const
 	{
-		return name;
-	}
-	void setName(std::string n)
-	{
-		name = n;
+		if (s != NULL) {
+			return SymbolicAlgebra::Symbol<>::get_symbol_name(s->get_id());
+		} else {
+			throw std::runtime_error("Direction has no name");
+		}
 	}
 	
-	double getLB(const Context &ctx) const;
-	double getUB(const Context &ctx) const;
+	SymbolicAlgebra::Symbol<> *getSymbol() const
+	{
+		return s;
+	}
+	
+	void setSymbol(SymbolicAlgebra::Symbol<> *sym)
+	{
+		s = sym;
+	}
+	
+	double getLB() const;
+	double getUB() const;
 	
 	bool hasLB() const
 	{
@@ -58,8 +70,8 @@ public:
 		return type == Type::INT || type == Type::EQ || UB != std::numeric_limits<double>::infinity();
 	}
 	
-	void setLB(const Context &ctx, double val);
-	void setUB(const Context &ctx, double val);
+	void setLB(double val);
+	void setUB(double val);
 	
 	SymbolicAlgebra::Expression<> getLHS()
 	{
@@ -75,32 +87,25 @@ public:
 		return type;
 	}
 	
-	// checks if the direction contains variable names
-	bool hasVars(const Context &ctx) const
+	bool contains(std::vector<SymbolicAlgebra::Symbol<>> symbols) const
 	{
-		return AbsSyn::hasVars(lhs, ctx) || (type != Type::INT && AbsSyn::hasVars(rhs, ctx));
-	}
-	
-	// checks if the direction contains parameter names
-	bool hasParams(const Context &ctx) const
-	{
-		return AbsSyn::hasParams(lhs, ctx) || (type != Type::INT && AbsSyn::hasParams(rhs, ctx));
+		return AbsSyn::contains(lhs, symbols) || (type != Type::INT && AbsSyn::contains(rhs, symbols));
 	}
 	
 	Direction *copy() const;		// deep copy of direction
 	
 	Direction *getComplementary() const;	// returns the negated direction
 	
-	bool compare(Direction *d, const Context &ctx, bool variable = true) const;			// comparison between directions
+	bool compare(Direction *d) const;			// comparison between directions
 	
-	bool covers(const Context &ctx, const Symbol<> &s)
+	bool covers(const Symbol<> &s)
 				const;	// checks if the symbol named "name" is present in the direction
 	
 protected:
 	SymbolicAlgebra::Expression<> lhs, rhs;
 	Type type;
 	double LB, UB;		// used only if type is INT
-	std::string name;
+	SymbolicAlgebra::Symbol<> *s;
 };
 
 }

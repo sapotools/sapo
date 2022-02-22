@@ -279,10 +279,11 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addVariable(new AbsSyn::Variable(s));
-									drv.ctx.addVariable(s);
 									
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
-									drv.data.addDirectionConstraint(d, drv.ctx);
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									drv.data.addVarDirectionConstraint(d);
 								}
 							}
 						}
@@ -296,10 +297,11 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addVariable(new AbsSyn::Variable(s));
-									drv.ctx.addVariable(s);
 									
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
-									drv.data.addDirectionConstraint(d, drv.ctx);
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									drv.data.addVarDirectionConstraint(d);
 								}
 							}
 						}
@@ -312,7 +314,6 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addVariable(new AbsSyn::Variable(s));
-									drv.ctx.addVariable(s);
 								}
 							}
 						}
@@ -326,7 +327,6 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addVariable(new AbsSyn::Variable(s));
-									drv.ctx.addVariable(s);
 								}
 							}
 						}
@@ -343,10 +343,11 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addParameter(new AbsSyn::Parameter(s));
-									drv.ctx.addParameter(s);
 									
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
-									drv.data.addParamDirectionConstraint(d, drv.ctx);
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									drv.data.addParamDirectionConstraint(d);
 								}
 							}
 						}
@@ -360,10 +361,11 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addParameter(new AbsSyn::Parameter(s));
-									drv.ctx.addParameter(s);
 									
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
-									drv.data.addParamDirectionConstraint(d, drv.ctx);
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									drv.data.addParamDirectionConstraint(d);
 								}
 							}
 						}
@@ -376,7 +378,6 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addParameter(new AbsSyn::Parameter(s));
-									drv.ctx.addParameter(s);
 								}
 							}
 						}
@@ -390,13 +391,12 @@ symbol			: VAR identList IN doubleInterval ";"
 								} else {
 									SymbolicAlgebra::Symbol<> s($2[i]);
 									drv.data.addParameter(new AbsSyn::Parameter(s));
-									drv.ctx.addParameter(s);
 								}
 							}
 						}
 						| CONST IDENT "=" expr ";"
 						{
-							if (!isNumeric($4, drv.ctx)) {
+							if (!AbsSyn::isNumeric($4)) {
 								ERROR(@3, "Expression defining constant must be numeric");
 								$4 = 0;
 							}
@@ -405,14 +405,13 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
-								drv.data.addConstant(new AbsSyn::Constant(s, evaluate($4, drv.ctx)));
-								drv.ctx.addConstant(s, evaluate($4, drv.ctx));
+								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate<double>()));
 							}
 						}
 						| CONST IDENT "=" expr error
 						{
 							MISSING_SC(@4);
-							if (!isNumeric($4, drv.ctx)) {
+							if (!AbsSyn::isNumeric($4)) {
 								ERROR(@3, "Expression defining constant must be numeric");
 								$4 = 0;
 							}
@@ -421,8 +420,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
-								drv.data.addConstant(new AbsSyn::Constant(s, evaluate($4, drv.ctx)));
-								drv.ctx.addConstant(s, evaluate($4, drv.ctx));
+								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate<double>()));
 							}
 						}
 						| DEFINE IDENT "=" expr ";"
@@ -432,7 +430,6 @@ symbol			: VAR identList IN doubleInterval ";"
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
 								drv.data.addDefinition(new AbsSyn::Definition(s, $4));
-								drv.ctx.addDefinition(s, $4);
 							}
 						}
 						| DEFINE IDENT "=" expr error
@@ -443,12 +440,11 @@ symbol			: VAR identList IN doubleInterval ";"
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
 								drv.data.addDefinition(new AbsSyn::Definition(s, $4));
-								drv.ctx.addDefinition(s, $4);
 							}
 						}
 						| DYN "(" IDENT ")" "=" expr ";"
 						{
-							if (getParamDegree($6, drv.ctx) > 1) {
+							if (AbsSyn::getDegree($6, drv.data.getParamSymbols()) > 1) {
 								ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
 								$6 = 0;
 							}
@@ -491,12 +487,12 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| ASSUME direction ";"
 						{
-							if (hasParams($2->getLHS(), drv.ctx) || hasParams($2->getRHS(), drv.ctx)) {
+							if ($2->contains(drv.data.getParamSymbols())) {
 								ERROR(@2, "Expressions in assumptions cannot contain parameters");
 								$2 = 0;
 							}
 							
-							if (getVarDegree($2->getLHS(), drv.ctx) > 1 || getVarDegree($2->getRHS(), drv.ctx) > 1) {
+							if (AbsSyn::getDegree($2->getLHS() - $2->getRHS(), drv.data.getVarSymbols()) > 1) {
 								ERROR(@2, "Assumption must be linear");
 								$2 = 0;
 							}
@@ -522,19 +518,19 @@ matrices		: var_direction {}
 
 direction	: expr directionType expr
 						{
-							if (getVarDegree($1, drv.ctx) > 1) {
+							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
 								ERROR(@1, "Expression in directions must be at most linear");
 								$1 = 0;
 							}
-							if (getVarDegree($3, drv.ctx) > 1) {
+							if (AbsSyn::getDegree($3, drv.data.getVarSymbols()) > 1) {
 								ERROR(@3, "Expression in directions must be at most linear");
 								$3 = 0;
 							}
-							if (getParamDegree($1, drv.ctx) > 0) {
+							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
 								ERROR(@1, "Expression in directions cannot contain parameters");
 								$1 = 0;
 							}
-							if (getParamDegree($3, drv.ctx) > 0) {
+							if (AbsSyn::getDegree($3, drv.data.getParamSymbols()) > 0) {
 								ERROR(@3, "Expression in directions cannot contain parameters");
 								$3 = 0;
 							}
@@ -542,10 +538,10 @@ direction	: expr directionType expr
 						}
 						| expr IN doubleInterval
 						{
-							if (getVarDegree($1, drv.ctx) > 1) {
+							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
 								ERROR(@1, "Expression in directions must be at most linear");
 							}
-							if (getParamDegree($1, drv.ctx) > 0) {
+							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
 								ERROR(@1, "Expression in directions cannot contain parameters");
 								$$ = new AbsSyn::Direction(0, 0, AbsSyn::Direction::Type::INT, $3.first, $3.second);
 							} else {
@@ -576,18 +572,18 @@ directionType		: "<"
 
 var_direction	: DIR direction ";"
 							{
-								if ($2->hasParams(drv.ctx)) {
+								if ($2->contains(drv.data.getParamSymbols())) {
 									ERROR(@2, "Variable directions cannot contain parameters");
 								}
-								drv.data.addDirectionConstraint($2, drv.ctx);
+								drv.data.addVarDirectionConstraint($2);
 							}
 							| DIR direction error
 							{
 								MISSING_SC(@2);
-								if ($2->hasParams(drv.ctx)) {
+								if ($2->contains(drv.data.getParamSymbols())) {
 									ERROR(@2, "Variable directions cannot contain parameters");
 								}
-								drv.data.addDirectionConstraint($2, drv.ctx);
+								drv.data.addVarDirectionConstraint($2);
 							}
 							| DIR error ";"
 							{
@@ -595,26 +591,28 @@ var_direction	: DIR direction ";"
 							}
 							| DIR IDENT ":" direction ";"
 							{
-								if ($4->hasParams(drv.ctx)) {
+								if ($4->contains(drv.data.getParamSymbols())) {
 									ERROR(@2, "Variable directions cannot contain parameters");
 								}
 								if (drv.data.isSymbolDefined($2)) {
 									ERROR(@2, "Symbol '" + $2 + "' already defined");
 								}
-								$4->setName($2);
-								drv.data.addDirectionConstraint($4, drv.ctx);
+								SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
+								$4->setSymbol(s);
+								drv.data.addVarDirectionConstraint($4);
 							}
 							| DIR IDENT ":" direction error
 							{
 								MISSING_SC(@3);
-								if ($4->hasParams(drv.ctx)) {
+								if ($4->contains(drv.data.getParamSymbols())) {
 									ERROR(@2, "Variable directions cannot contain parameters");
 								}
 								if (drv.data.isSymbolDefined($2)) {
 									ERROR(@2, "Symbol '" + $2 + "' already defined");
 								}
-								$4->setName($2);
-								drv.data.addDirectionConstraint($4, drv.ctx);
+								SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
+								$4->setSymbol(s);
+								drv.data.addVarDirectionConstraint($4);
 							}
 							| DIR IDENT error direction ";"
 							{
@@ -739,20 +737,20 @@ matrixRow	: matrixRow "," IDENT
 
 param_direction	: PDIR direction ";"
 								{
-									if ($2->hasVars(drv.ctx)) {
+									if ($2->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter directions cannot contain variables");
 									}
 									
-									drv.data.addParamDirectionConstraint($2, drv.ctx);
+									drv.data.addParamDirectionConstraint($2);
 								}
 								| PDIR direction error
 								{
 									MISSING_SC(@2);
-									if ($2->hasVars(drv.ctx)) {
+									if ($2->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter directions cannot contain variables");
 									}
 									
-									drv.data.addParamDirectionConstraint($2, drv.ctx);
+									drv.data.addParamDirectionConstraint($2);
 								}
 								| PDIR error ";"
 								{
@@ -760,7 +758,7 @@ param_direction	: PDIR direction ";"
 								}
 								| PDIR IDENT ":" direction ";"
 								{
-									if ($4->hasVars(drv.ctx)) {
+									if ($4->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter directions cannot contain variables");
 										
 									}
@@ -768,13 +766,14 @@ param_direction	: PDIR direction ";"
 									if (drv.data.isSymbolDefined($2)) {
 										ERROR(@2, "Symbol '" + $2 + "' already defined");
 									}
-									$4->setName($2);
-									drv.data.addParamDirectionConstraint($4, drv.ctx);
+									SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
+									$4->setSymbol(s);
+									drv.data.addParamDirectionConstraint($4);
 								}
 								| PDIR IDENT ":" direction error
 								{
 									MISSING_SC(@4);
-									if ($4->hasVars(drv.ctx)) {
+									if ($4->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter directions cannot contain variables");
 										
 									}
@@ -782,8 +781,9 @@ param_direction	: PDIR direction ";"
 									if (drv.data.isSymbolDefined($2)) {
 										ERROR(@2, "Symbol '" + $2 + "' already defined");
 									}
-									$4->setName($2);
-									drv.data.addParamDirectionConstraint($4, drv.ctx);
+									SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
+									$4->setSymbol(s);
+									drv.data.addParamDirectionConstraint($4);
 								}
 								| PDIR IDENT error direction ";"
 								{
@@ -808,18 +808,18 @@ intInterval			: "[" expr "," expr "]"
 								{
 									double x1, x2;
 									
-									if (!isNumeric($2, drv.ctx)) {
+									if (!AbsSyn::isNumeric($2)) {
 										ERROR(@2, "Intervals require numeric expressions");
 										x1 = 0;
 									} else {
-										x1 = evaluate($2, drv.ctx);
+										x1 = $2.evaluate<double>();
 									}
 									
-									if (!isNumeric($4, drv.ctx)) {
+									if (!AbsSyn::isNumeric($4)) {
 										ERROR(@4, "Intervals require numeric expressions");
 										x2 = 1;
 									} else {
-										x2 = evaluate($4, drv.ctx);
+										x2 = $4.evaluate<double>();
 									}
 									
 									if ((int) x1 != x1) {
@@ -848,18 +848,18 @@ doubleInterval	: "[" expr "," expr "]"
 								{
 									double x1, x2;
 									
-									if (!isNumeric($2, drv.ctx)) {
+									if (!AbsSyn::isNumeric($2)) {
 										ERROR(@2, "Intervals require numeric expressions");
 										x1 = 0;
 									} else {
-										x1 = evaluate($2, drv.ctx);
+										x1 = $2.evaluate<double>();
 									}
 									
-									if (!isNumeric($4, drv.ctx)) {
+									if (!AbsSyn::isNumeric($4)) {
 										ERROR(@4, "Intervals require numeric expressions");
 										x2 = 1;
 									} else {
-										x2 = evaluate($4, drv.ctx);
+										x2 = $4.evaluate<double>();
 									}
 									
 									if (x2 < x1) {
@@ -886,8 +886,12 @@ expr		: number	{ $$ = $1; }
 					if (!drv.data.isSymbolDefined($1)) {
 						ERROR(@1, "Symbol " + $1 + " is undefined");
 						$$ = 0;
+					} else if (drv.data.isConstDefined($1)) {
+						$$ = drv.data.getConst($1)->getValue();
+					} else if (drv.data.isDefDefined($1)) {
+						$$ = drv.data.getDef($1)->getValue();
 					} else {
-						$$ = drv.ctx.getSymbol($1);
+						$$ = drv.data.getSymbol($1);
 					}
 				}
 				| expr "*" expr { $$ = $1 * $3; }
@@ -895,7 +899,7 @@ expr		: number	{ $$ = $1; }
 				{
 					double val;
 					
-					if (!isNumeric($3, drv.ctx)) {
+					if (!AbsSyn::isNumeric($3)) {
 						ERROR(@3, "Exponent must be numeric");
 						val = 1;
 					} else {
@@ -923,7 +927,7 @@ expr		: number	{ $$ = $1; }
 				}
 				| expr "/" expr
 				{
-					if (!isNumeric($3, drv.ctx)) {
+					if (!AbsSyn::isNumeric($3)) {
 						ERROR(@3, "cannot divide by non--numeric expression");
 						$$ = $1 / 1;
 					} else {

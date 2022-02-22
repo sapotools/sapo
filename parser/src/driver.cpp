@@ -2,7 +2,7 @@
 #include "parser.h"
 
 driver::driver():
-    data(AbsSyn::InputData()), ctx(AbsSyn::Context()),
+    data(AbsSyn::InputData()),
     errors(false), trace_parsing(false), trace_scanning(false)
 {
 }
@@ -16,7 +16,7 @@ int driver::parse(const std::string &f)
   parse.set_debug_level(trace_parsing);
   int res = parse();
   scan_end();
-  if (res == 0 && !errors && data.check(ctx))
+  if (res == 0 && !errors && data.check())
     return 0;
   else
     return 1;

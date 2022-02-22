@@ -150,7 +150,10 @@ public:
   bool isSymbolDefined(
       const std::string &name) const; // checks if a symbol (var, param, const
                                       // or def) named 'name' already exists
-
+	
+	SymbolicAlgebra::Symbol<> getSymbol(std::string name)
+		const;		// returns the symbol named "name" (must exist)
+	
   const Variable *getVar(int i) const
   {
     return vars[i];
@@ -164,6 +167,8 @@ public:
   Variable *getVar(const std::string &name);
   int getVarPos(const std::string &name)
       const; // return an index such that vars[i] has name 'name'
+	std::vector<SymbolicAlgebra::Symbol<>> getVarSymbols() const;
+	
   const Parameter *getParam(int i) const
   {
     return params[i];
@@ -172,6 +177,8 @@ public:
       const; // return the parameter named 'name', which must exist
   int getParamPos(const std::string &name)
       const; // return an index i such that params[i] has name 'name'
+	std::vector<SymbolicAlgebra::Symbol<>> getParamSymbols() const;
+	
   const Constant *getConst(int i) const
   {
     return consts[i];
@@ -228,9 +235,9 @@ public:
   {
     return spec;
   }
-
+  
 	// add direction with specified name
-  void addDirectionConstraint(Direction *d, Context ctx);
+  void addVarDirectionConstraint(Direction *d);
   unsigned int getDirectionsNum() const
   {
     return directions.size();
@@ -266,7 +273,7 @@ public:
     return templateMatrix;
   }
 
-  void addParamDirectionConstraint(Direction *d, Context ctx);
+  void addParamDirectionConstraint(Direction *d);
   unsigned paramDirectionsNum() const
   {
     return paramDirections.size();
@@ -332,7 +339,7 @@ public:
     return alpha;
   }
 
-  bool check(Context ctx); // checks for errors in model
+  bool check(); // checks for errors in model
 
 protected:
   problemType problem;
@@ -368,6 +375,10 @@ protected:
   bool decomp, decomp_defined;
   double alpha;
 	bool alphaDefined;
+	
+	
+	// addition of direction to params or vars
+  void addDirectionConstraint(Direction *d, bool isVar);
 };
 
 }
