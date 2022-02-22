@@ -1,5 +1,5 @@
 %skeleton "lalr1.cc" // -*- C++ -*-
-%require "3.8.1"
+//%require "3.8.1"
 %language "c++"
 %defines
 
@@ -61,8 +61,8 @@
 %define api.location.file "../include/locations.h"
 
 %define parse.trace
-%define parse.error custom
-//%define parse.error detailed
+//%define parse.error custom
+%define parse.error detailed
 
 %code {
 #include "driver.h"
@@ -1047,7 +1047,7 @@ void yy::parser::error (const location_type& l, const std::string& m)
 	drv.error(l, m, drv.file);
 }
 
-void yy::parser::report_syntax_error (const yy::parser::context &ctx) const
+/*void yy::parser::report_syntax_error (const yy::parser::context &ctx) const
 {
 	(void) ctx;
 	
@@ -1064,7 +1064,7 @@ void yy::parser::report_syntax_error (const yy::parser::context &ctx) const
 		std::cerr << toks[i] << ", ";
 	}
 	std::cerr << std::endl;
-}
+}*/
 
 
 inline unsigned editDistance(std::string s1, std::string s2)
