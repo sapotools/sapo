@@ -36,9 +36,11 @@ public:
   // The token's location used by the scanner.
   yy::location location;
 	
-	void warning(const yy::location &l, const std::string &m);
-	void error(const yy::location &l, const std::string &m);
-	
+	void warning(const yy::location &l, const std::string &m, const std::string filename);
+	void error(const yy::location &l, const std::string &m, const std::string filename);
+	void missingSemicolon(const yy::location &l, const std::string filename);
+
+protected:
 	void printError(const yy::location &l, const std::string filename);
 
 };

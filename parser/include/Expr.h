@@ -55,38 +55,63 @@ inline bool hasParams(const Expression<> &e, Context ctx)
 	return contains(e, ctx, ctx.getParams());
 }
 
-// returns the degree of the polynomial expression, considering only variables
-inline unsigned getVarDegree(const Expression<> &e, Context ctx)
+inline unsigned getDegree(const Expression<> &e, Context ctx, bool var)
 {
 	Expression<> temp = expandDefinitions(e, ctx);
+
+	Expression<>::replacement_type rep {};
 	
-	unsigned degree = 0;
+	// search for a name of the form "a<num>" which is not present in params
+	string s = "a", name = s;
+	unsigned n = 0;
+	bool found = true;
 	
-	for (unsigned i = 0; i < ctx.getVarNum(); i++) {
-		unsigned d = temp.degree(ctx.getVar(i));
-		if (d > degree) {
-			degree = d;
+	while (found) {
+		n++;
+		name = s;
+		name += n;
+		found = false;
+		for (unsigned i = 0; i < ctx.getParamNum(); i++) {
+			if (Symbol<>::get_symbol_name(ctx.getParam(i).get_id()) == name) {
+				found = true;
+				break;
+			}
+		}
+		for (unsigned i = 0; i < ctx.getVarNum(); i++) {
+			if (Symbol<>::get_symbol_name(ctx.getVar(i).get_id()) == name) {
+				found = true;
+				break;
+			}
 		}
 	}
 	
-	return degree;
+	Symbol<> new_symbol(name);
+	
+	if (var) {
+		for (unsigned i = 0; i < ctx.getVarNum(); i++) {
+			rep[ctx.getVar(i)] = new_symbol;
+		}
+	} else {
+		for (unsigned i = 0; i < ctx.getParamNum(); i++) {
+			rep[ctx.getParam(i)] = new_symbol;
+		}
+	}
+	
+	temp.replace(rep);
+	
+	return temp.degree(new_symbol);
+}
+
+// returns the degree of the polynomial expression, considering only variables
+inline unsigned getVarDegree(const Expression<> &e, Context ctx)
+{
+	return getDegree(e, ctx, true);
 }
 
 // returns the degree of the polynomial expression, considering only parameters
 inline unsigned getParamDegree(const Expression<> &e, Context ctx)
 {
-	Expression<> temp = expandDefinitions(e, ctx);
-	
-	unsigned degree = 0;
-	
-	for (unsigned i = 0; i < ctx.getParamNum(); i++) {
-		unsigned d = temp.degree(ctx.getParam(i));
-		if (d > degree) {
-			degree = d;
-		}
-	}
-	
-	return degree;
+	return getDegree(e, ctx, false);
 }
 
 // checks if the expression is numeric (no vars or parameters)

@@ -20,8 +20,6 @@ double			(({natural})\.{natural})
 
 letter			[a-zA-Z]
 
-on          "on"
-off         "off"
 ident				{letter}({letter}|{digit}|[\_])*
 
 l_comment		"//"[^\n]*\n
@@ -32,8 +30,15 @@ ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"
   #define YY_USER_ACTION \
 		loc.step();\
 		for (unsigned int i = 0; i < yyleng; i++) {\
-			if (yytext[i] == '\n') { loc.lines(); loc.step(); }\
-			else { loc.columns(); }\
+			if (yytext[i] == '\n') {\
+				loc.lines(); loc.step();\
+			} else if (yytext[i] == '\t') {\
+				for (unsigned i = 0; i < 4; i++) {\
+					loc.columns();\
+				}\
+			} else {\
+				loc.columns();\
+			}\
 		}
 %}
 
@@ -65,6 +70,8 @@ assume			return yy::parser::make_ASSUME(loc);
 iterations		return yy::parser::make_ITER(loc);
 max_parameter_splits	return yy::parser::make_PSPLITS(loc);
 presplit_parameters return yy::parser::make_PRESPLITS(loc);
+on				return yy::parser::make_ON(loc);
+off				return yy::parser::make_OFF(loc);
 max_bundle_magnitude return yy::parser::make_MAX_MAGNITUDE(loc);
 direction		return yy::parser::make_DIR(loc);
 template		return yy::parser::make_TEMPL(loc);
@@ -108,9 +115,6 @@ U			return yy::parser::make_UNTIL(loc);
 
 {double}		return yy::parser::make_DOUBLE(std::stof(yytext), loc);
 
-{on}        return yy::parser::make_ON(yytext, loc);
-{off}       return yy::parser::make_OFF(yytext, loc);
-
 {ident}			return yy::parser::make_IDENT(yytext, loc);
 
 {whitespace}	; /* ignore whitespace */
@@ -125,9 +129,7 @@ U			return yy::parser::make_UNTIL(loc);
 				std::string s = "Illegal character \"";
 				s += yytext;
 				s += "\"";
-				drv.error(loc, s);
-				drv.printError(loc, drv.file);
-				drv.errors = true;
+				drv.error(loc, s, drv.file);
 			}
 %%
 

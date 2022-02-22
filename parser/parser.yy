@@ -34,19 +34,24 @@
 	#include "Definition.h"
 	#include "Direction.h"
 	#include "InputData.h"
-
+	
+	#define YYDEBUG 1
+	
 	class driver;
 	
 	// macro for errors
 	#define ERROR(loc, msg)\
-		drv.error(loc, msg);\
-		drv.printError(loc, drv.file);\
-		drv.errors = true;
+		drv.error(loc, msg, drv.file);
 	
 	// macro for warnings
 	#define WARNING(loc, msg)\
-		drv.warning(loc, msg);\
-		drv.printError(loc, drv.file);
+		drv.warning(loc, msg, drv.file);
+	
+	#define MISSING_SC(loc)\
+		drv.missingSemicolon(loc, drv.file);\
+		drv.errors = true;
+	
+	std::string possibleStatements(std::string s);
 }
 
 // The parsing context.
@@ -57,6 +62,7 @@
 
 %define parse.trace
 %define parse.error custom
+//%define parse.error detailed
 
 %code {
 #include "driver.h"
@@ -84,6 +90,8 @@
 	ITER
 	PSPLITS
 	PRESPLITS
+	ON
+	OFF
 	MAX_MAGNITUDE
 	DIR
 	TEMPL
@@ -122,8 +130,6 @@
 ;
 
 %token <std::string> IDENT
-%token <std::string> ON
-%token <std::string> OFF
 %token <int> INTEGER
 %token <double> DOUBLE
 
@@ -152,6 +158,7 @@
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> direction
 %nterm <AbsSyn::Direction::Type> directionType
+%nterm <bool> presplits_value
 
 %printer { yyo << $$; } <*>;
 
@@ -159,28 +166,8 @@
 
 %%
 
-s		: statement ";" {}
-		| statement error
-		{
-			ERROR(@1, "Missing \";\"");
-			yyerrok;
-		}
-		| error ";"
-		{
-			ERROR(@1, "Syntax error");
-			yyerrok;
-		}
-		| s statement ";" {}
-		| s statement error
-		{
-			ERROR(@2, "Missing \";\"");
-			yyerrok;
-		}
-		| s error ";"
-		{
-			ERROR(@2, "Syntax error");
-			yyerrok;
-		}
+s		: statement {}
+		| s statement {}
 		| END
 		{
 			ERROR(@1, "Empty file");
@@ -190,9 +177,18 @@ s		: statement ";" {}
 statement		: header {}
 						| symbol {}
 						| matrices {}
-						| option {}
+						| footer {}
+						| ";" { /* empty statement */ }
+						| IDENT error ";"
+						{
+							ERROR(@1, "\"" + $1 + "\" is not a valid statement." + possibleStatements($1));
+						}
+						| error ";"
+						{
+							ERROR(@1, "Syntax error in statement");
+						}
 
-header			: PROB ":" problemType
+header			: PROB ":" problemType ";"
 						{
 							if (drv.data.isProblemDefined()) {
 								ERROR(@$, "Problem has already been defined");
@@ -200,15 +196,32 @@ header			: PROB ":" problemType
 								drv.data.setProblem($3);
 							}
 						}
-						| PARAMMODE ":" modeType
+						| PROB ":" error ";"
+						{
+							ERROR(@4, "Problem type must be \"reachability\" or \"synthesis\"");
+							YYERROR;
+						}
+						| PROB ":" problemType error
+						{
+							MISSING_SC(@3);
+						}
+						| PARAMMODE ":" modeType ";"
 						{
 							WARNING(@$, "Parameter modality is deprecated and will be ignored");
 						}
-						| VARMODE ":" modeType
+						| PARAMMODE ":" modeType error
+						{
+							MISSING_SC(@3);
+						}
+						| VARMODE ":" modeType ";"
 						{
 							WARNING(@$, "Variable modality is deprecated and will be ignored");
 						}
-						| ITER ":" INTEGER
+						| VARMODE ":" modeType error
+						{
+							MISSING_SC(@3);
+						}
+						| ITER ":" INTEGER ";"
 						{
 							if (drv.data.isIterationSet()) {
 								WARNING(@$, "Iteration number already defined");
@@ -216,7 +229,11 @@ header			: PROB ":" problemType
 								drv.data.setIterations($3);
 							}
 						}
-						| PSPLITS ":" INTEGER
+						| ITER ":" INTEGER error
+						{
+							MISSING_SC(@3);
+						}
+						| PSPLITS ":" INTEGER ";"
 						{
 							if (drv.data.getMaxParameterSplits() > 0) {
 								WARNING(@$, "The maximum number of parameter splits has been already defined");
@@ -224,20 +241,36 @@ header			: PROB ":" problemType
 								drv.data.setMaxParameterSplits($3);
 							}
 						}
-						| PRESPLITS ":" ON
+						| PSPLITS ":" INTEGER error
 						{
-							drv.data.setPreSplits(true);
+							MISSING_SC(@3);
 						}
-						| PRESPLITS ":" OFF
+						| PRESPLITS ":" presplits_value ";"
 						{
-							drv.data.setPreSplits(false);
+							drv.data.setPreSplits($3);
 						}
-						| MAX_MAGNITUDE ":" DOUBLE
+						| PRESPLITS ":" presplits_value error
+						{
+							MISSING_SC(@3);
+						}
+						| PRESPLITS ":" error ";"
+						{
+							ERROR(@3, "Value for presplits is either \"on\" or \"off\"");
+							yyerrok;
+						}
+						| MAX_MAGNITUDE ":" DOUBLE ";"
 						{
 							drv.data.setMaxVersorMagnitude($3);
 						}
+						| MAX_MAGNITUDE ":" DOUBLE error
+						{
+							MISSING_SC(@3);
+						}
 
-symbol			: VAR identList IN doubleInterval
+presplits_value	: ON { $$ = true; }
+								| OFF { $$ = false; }
+
+symbol			: VAR identList IN doubleInterval ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -253,7 +286,24 @@ symbol			: VAR identList IN doubleInterval
 								}
 							}
 						}
-						| VAR identList
+						| VAR identList IN doubleInterval error
+						{
+							MISSING_SC(@4);
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addVariable(new AbsSyn::Variable(s));
+									drv.ctx.addVariable(s);
+									
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+									drv.data.addDirectionConstraint(d, drv.ctx);
+								}
+							}
+						}
+						| VAR identList ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -266,7 +316,25 @@ symbol			: VAR identList IN doubleInterval
 								}
 							}
 						}
-						| PARAM identList IN doubleInterval
+						| VAR identList error
+						{
+							MISSING_SC(@2);
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addVariable(new AbsSyn::Variable(s));
+									drv.ctx.addVariable(s);
+								}
+							}
+						}
+						| VAR error ";"
+						{
+							ERROR(@2, "Error in variable declaration");
+						}
+						| PARAM identList IN doubleInterval ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -282,7 +350,24 @@ symbol			: VAR identList IN doubleInterval
 								}
 							}
 						}
-						| PARAM identList
+						| PARAM identList IN doubleInterval error
+						{
+							MISSING_SC(@4);
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addParameter(new AbsSyn::Parameter(s));
+									drv.ctx.addParameter(s);
+									
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, "default_" + $2[i]);
+									drv.data.addParamDirectionConstraint(d, drv.ctx);
+								}
+							}
+						}
+						| PARAM identList ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -295,7 +380,21 @@ symbol			: VAR identList IN doubleInterval
 								}
 							}
 						}
-						| CONST IDENT "=" expr
+						| PARAM identList error
+						{
+							MISSING_SC(@2);
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addParameter(new AbsSyn::Parameter(s));
+									drv.ctx.addParameter(s);
+								}
+							}
+						}
+						| CONST IDENT "=" expr ";"
 						{
 							if (!isNumeric($4, drv.ctx)) {
 								ERROR(@3, "Expression defining constant must be numeric");
@@ -310,7 +409,23 @@ symbol			: VAR identList IN doubleInterval
 								drv.ctx.addConstant(s, evaluate($4, drv.ctx));
 							}
 						}
-						| DEFINE IDENT "=" expr
+						| CONST IDENT "=" expr error
+						{
+							MISSING_SC(@4);
+							if (!isNumeric($4, drv.ctx)) {
+								ERROR(@3, "Expression defining constant must be numeric");
+								$4 = 0;
+							}
+							
+							if (drv.data.isSymbolDefined($2)) {
+								ERROR(@2, "Symbol '" + $2 + "' already defined");
+							} else {
+								SymbolicAlgebra::Symbol<> s($2);
+								drv.data.addConstant(new AbsSyn::Constant(s, evaluate($4, drv.ctx)));
+								drv.ctx.addConstant(s, evaluate($4, drv.ctx));
+							}
+						}
+						| DEFINE IDENT "=" expr ";"
 						{
 							if (drv.data.isSymbolDefined($2)) {
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
@@ -320,7 +435,18 @@ symbol			: VAR identList IN doubleInterval
 								drv.ctx.addDefinition(s, $4);
 							}
 						}
-						| DYN "(" IDENT ")" "=" expr
+						| DEFINE IDENT "=" expr error
+						{
+							MISSING_SC(@4);
+							if (drv.data.isSymbolDefined($2)) {
+								ERROR(@2, "Symbol '" + $2 + "' already defined");
+							} else {
+								SymbolicAlgebra::Symbol<> s($2);
+								drv.data.addDefinition(new AbsSyn::Definition(s, $4));
+								drv.ctx.addDefinition(s, $4);
+							}
+						}
+						| DYN "(" IDENT ")" "=" expr ";"
 						{
 							if (getParamDegree($6, drv.ctx) > 1) {
 								ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
@@ -338,7 +464,15 @@ symbol			: VAR identList IN doubleInterval
 								}
 							}
 						}
-						| SPEC ":" formula
+						| DYN "(" IDENT ")" "=" expr error
+						{
+							MISSING_SC(@6);
+						}
+						| DYN "(" IDENT error "=" expr ";"
+						{
+							ERROR(@3, "Missing \")\"");
+						}
+						| SPEC ":" formula ";"
 						{
 							std::shared_ptr<STL> f;
 							try {
@@ -351,7 +485,11 @@ symbol			: VAR identList IN doubleInterval
 							$3.reset();
 							drv.data.addSpec(f);
 						}
-						| ASSUME direction
+						| SPEC ":" formula error
+						{
+							MISSING_SC(@3);
+						}
+						| ASSUME direction ";"
 						{
 							if (hasParams($2->getLHS(), drv.ctx) || hasParams($2->getRHS(), drv.ctx)) {
 								ERROR(@2, "Expressions in assumptions cannot contain parameters");
@@ -372,6 +510,10 @@ symbol			: VAR identList IN doubleInterval
 							} else {
 								drv.data.addAssumption($2);
 							}
+						}
+						| ASSUME direction error
+						{
+							MISSING_SC(@2);
 						}
 
 matrices		: var_direction {}
@@ -432,14 +574,26 @@ directionType		: "<"
 								$$ = AbsSyn::Direction::Type::EQ;
 							}
 
-var_direction	: DIR direction
+var_direction	: DIR direction ";"
 							{
 								if ($2->hasParams(drv.ctx)) {
 									ERROR(@2, "Variable directions cannot contain parameters");
 								}
 								drv.data.addDirectionConstraint($2, drv.ctx);
 							}
-							| DIR IDENT ":" direction
+							| DIR direction error
+							{
+								MISSING_SC(@2);
+								if ($2->hasParams(drv.ctx)) {
+									ERROR(@2, "Variable directions cannot contain parameters");
+								}
+								drv.data.addDirectionConstraint($2, drv.ctx);
+							}
+							| DIR error ";"
+							{
+								ERROR(@2, "Error in direction");
+							}
+							| DIR IDENT ":" direction ";"
 							{
 								if ($4->hasParams(drv.ctx)) {
 									ERROR(@2, "Variable directions cannot contain parameters");
@@ -449,12 +603,32 @@ var_direction	: DIR direction
 								}
 								$4->setName($2);
 								drv.data.addDirectionConstraint($4, drv.ctx);
-						}
+							}
+							| DIR IDENT ":" direction error
+							{
+								MISSING_SC(@3);
+								if ($4->hasParams(drv.ctx)) {
+									ERROR(@2, "Variable directions cannot contain parameters");
+								}
+								if (drv.data.isSymbolDefined($2)) {
+									ERROR(@2, "Symbol '" + $2 + "' already defined");
+								}
+								$4->setName($2);
+								drv.data.addDirectionConstraint($4, drv.ctx);
+							}
+							| DIR IDENT error direction ";"
+							{
+								ERROR(@2, "Missing \":\"");
+							}
+							| DIR IDENT error ";"
+							{
+								ERROR(@3, "Error in direction");
+							}
 
-template		: TEMPL "=" "{" rowList "}"
+template		: TEMPL "=" "{" rowList "}" ";"
 						{
 							if ($4[0].size() != drv.data.getVarNum()) {
-								ERROR(@3, "template matrix must have as many columns as the number of variables");
+								ERROR(@4, "template matrix must have as many columns as the number of variables");
 							}
 							
 							if (drv.data.templateRows() != 0) {
@@ -463,9 +637,58 @@ template		: TEMPL "=" "{" rowList "}"
 								drv.data.setTemplate($4);
 							}
 						}
+						| TEMPL "=" "{" rowList "}" error
+						{
+							MISSING_SC(@5);
+							if ($4[0].size() != drv.data.getVarNum()) {
+								ERROR(@4, "template matrix must have as many columns as the number of variables");
+							}
+							
+							if (drv.data.templateRows() != 0) {
+								ERROR(@$, "Redefinition of template matrix");
+							} else {
+								drv.data.setTemplate($4);
+							}
+						}
+						| TEMPL "=" "{" rowList error ";"
+						{
+							ERROR(@4, "Missing \"}\"");
+							if ($4[0].size() != drv.data.getVarNum()) {
+								ERROR(@4, "template matrix must have as many columns as the number of variables");
+							}
+							
+							if (drv.data.templateRows() != 0) {
+								ERROR(@$, "Redefinition of template matrix");
+							} else {
+								drv.data.setTemplate($4);
+							}
+						}
+						| TEMPL "=" "{" "}" ";"
+						{
+							ERROR(@$, "Template cannot be empty");
+						}
+						| TEMPL error ";"
+						{
+							ERROR(@2, "Error in definition of template");
+						}
 
 rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
+						| "{" matrixRow error
+						{
+							ERROR(@2, "Missing \"}\""); $$ = std::vector<std::vector<int>>{$2};
+						}
 						| rowList "," "{" matrixRow "}" { $1.push_back($4); $$ = $1; }
+						| rowList "," "{" matrixRow error
+						{
+							ERROR(@4, "Missing \"}\"");
+							$1.push_back($4);
+							$$ = $1;
+						}
+						| rowList "," error
+						{
+							ERROR(@2, "Unexpected \",\"");
+							$$ = $1;
+						}
 
 matrixRow	: matrixRow "," IDENT
 					{
@@ -504,8 +727,17 @@ matrixRow	: matrixRow "," IDENT
 						
 						$$ = {$1};
 					}
+					| matrixRow "," error
+					{
+						ERROR(@2, "Unexpected \",\"");
+						$$ = $1;
+					}
+					| %empty
+					{
+						$$ = {};
+					}
 
-param_direction	: PDIR direction
+param_direction	: PDIR direction ";"
 								{
 									if ($2->hasVars(drv.ctx)) {
 										ERROR(@2, "Parameter directions cannot contain variables");
@@ -513,7 +745,20 @@ param_direction	: PDIR direction
 									
 									drv.data.addParamDirectionConstraint($2, drv.ctx);
 								}
-								| PDIR IDENT ":" direction
+								| PDIR direction error
+								{
+									MISSING_SC(@2);
+									if ($2->hasVars(drv.ctx)) {
+										ERROR(@2, "Parameter directions cannot contain variables");
+									}
+									
+									drv.data.addParamDirectionConstraint($2, drv.ctx);
+								}
+								| PDIR error ";"
+								{
+									ERROR(@2, "Error in parameter direction");
+								}
+								| PDIR IDENT ":" direction ";"
 								{
 									if ($4->hasVars(drv.ctx)) {
 										ERROR(@2, "Parameter directions cannot contain variables");
@@ -525,6 +770,28 @@ param_direction	: PDIR direction
 									}
 									$4->setName($2);
 									drv.data.addParamDirectionConstraint($4, drv.ctx);
+								}
+								| PDIR IDENT ":" direction error
+								{
+									MISSING_SC(@4);
+									if ($4->hasVars(drv.ctx)) {
+										ERROR(@2, "Parameter directions cannot contain variables");
+										
+									}
+									
+									if (drv.data.isSymbolDefined($2)) {
+										ERROR(@2, "Symbol '" + $2 + "' already defined");
+									}
+									$4->setName($2);
+									drv.data.addParamDirectionConstraint($4, drv.ctx);
+								}
+								| PDIR IDENT error direction ";"
+								{
+									ERROR(@2, "Missing \":\"");
+								}
+								| PDIR IDENT error ";"
+								{
+									ERROR(@3, "Error in parameter direction");
 								}
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }
@@ -571,6 +838,11 @@ intInterval			: "[" expr "," expr "]"
 									
 									$$ = std::pair<int, int>((int) x1, (int) x2);
 								}
+								| "[" expr ";" expr error
+								{
+									ERROR(@4, "Missing \"]\"");
+									$$ = std::pair<int, int>(0, 1);
+								}
 
 doubleInterval	: "[" expr "," expr "]"
 								{
@@ -597,6 +869,11 @@ doubleInterval	: "[" expr "," expr "]"
 									}
 									
 									$$ = std::pair<double, double>(x1, x2);
+								}
+								| "[" expr "," expr error
+								{
+									ERROR(@4, "Missing \"]\"");
+									$$ = std::pair<double, double>(0, 1);
 								}
 
 number		: DOUBLE { $$ = $1; }
@@ -657,6 +934,11 @@ expr		: number	{ $$ = $1; }
 				| expr "-" expr { $$ = $1 - $3; }
 				| "-" expr %prec UMINUS { $$ = -$2; }
 				| "(" expr ")" { $$ = $2;}
+				| "(" expr error
+				{
+					ERROR(@2, "Missing \")\"");
+					$$ = $2;
+				}
 
 formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
 				| expr ">=" expr { $$ = std::make_shared<Atom>($3 - $1); }
@@ -672,19 +954,43 @@ formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
 				| formula OR formula		{ $$ = std::make_shared<Disjunction>($1, $3); }
 				| NOT formula									{ $$ = std::make_shared<Negation>($2); }
 				| "(" formula ")" { $$ = $2; }
+				| "(" formula error
+				{
+					ERROR(@2, "Missing \"(\"");
+					$$ = $2;
+				}
 				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<Always>($2.first, $2.second, $3); }
 				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<Eventually>($2.first, $2.second, $3); }
 				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<Until>($1, $3.first, $3.second, $4); }
 
-option	: OPT TRANS transType
+footer	: OPT option {}
+				| OPT error ";"
+				{
+					ERROR(@2, "Syntax error in option");
+				}
+
+option	: TRANS transType ";"
 				{
 					if (drv.data.isTransModeDefined()) {
 						WARNING(@$, "Transformation type already defined");
 					} else {
-						drv.data.setTransMode($3);
+						drv.data.setTransMode($2);
 					}
 				}
-				| OPT DECOMP
+				| TRANS transType error
+				{
+					MISSING_SC(@2);
+					if (drv.data.isTransModeDefined()) {
+						WARNING(@$, "Transformation type already defined");
+					} else {
+						drv.data.setTransMode($2);
+					}
+				}
+				| TRANS error ";"
+				{
+					ERROR(@2, "Unknown transformation type");
+				}
+				| DECOMP ";"
 				{
 					if (drv.data.isDecompositionDefined()) {
 						WARNING(@$, "Decomposition option already defined");
@@ -692,17 +998,39 @@ option	: OPT TRANS transType
 						drv.data.setDecomposition();
 					}
 				}
-				| OPT ALPHA DOUBLE
+				| DECOMP error
+				{
+					MISSING_SC(@1);
+					if (drv.data.isDecompositionDefined()) {
+						WARNING(@$, "Decomposition option already defined");
+					} else {
+						drv.data.setDecomposition();
+					}
+				}
+				| ALPHA DOUBLE ";"
 				{
 					if (drv.data.isAlphaDefined()) {
 						WARNING(@$, "Alpha already defined");
 					}
 					
-					if ($3 > 1) {
-						ERROR(@3, "Alpha must be between 0 and 1");
+					if ($2 > 1) {
+						ERROR(@2, "Alpha must be between 0 and 1");
 					}
 					
-					drv.data.setAlpha($3);
+					drv.data.setAlpha($2);
+				}
+				| ALPHA DOUBLE error
+				{
+					MISSING_SC(@2);
+					if (drv.data.isAlphaDefined()) {
+						WARNING(@$, "Alpha already defined");
+					}
+					
+					if ($2 > 1) {
+						ERROR(@2, "Alpha must be between 0 and 1");
+					}
+					
+					drv.data.setAlpha($2);
 				}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
@@ -712,11 +1040,101 @@ transType : AFO { $$ = AbsSyn::transType::AFO; }
 
 void yy::parser::error (const location_type& l, const std::string& m)
 {
-	//std::cerr << "\033[1;31mError\033[0m at line " << l.end.line << ", column " << l.end.column << ": " << m << '\n';
-	drv.error(l, m);
+	drv.error(l, m, drv.file);
 }
 
 void yy::parser::report_syntax_error (const yy::parser::context &ctx) const
 {
 	(void) ctx;
+	
+	return;
+	
+#define N 30
+	
+	std::cerr << "Syntax error at " << ctx.location() << std::endl;
+	std::cerr << "Unexpected " << ctx.lookahead().name() << ", ";
+	yy::parser::symbol_kind_type toks[N] = {};
+	ctx.expected_tokens(toks, N);
+	std::cerr << "expected tokens: ";
+	for (unsigned i = 0; i < N; i++) {
+		std::cerr << toks[i] << ", ";
+	}
+	std::cerr << std::endl;
+}
+
+
+inline unsigned editDistance(std::string s1, std::string s2)
+{
+	using namespace std;
+	
+	vector<vector<unsigned>> dists(s1.size(), vector<unsigned>(s2.size()));
+	
+	for (unsigned i = 0; i < s1.size(); i++) {
+		dists[i][0] = i;
+	}
+	for (unsigned i = 0; i < s2.size(); i++) {
+		dists[0][i] = i;
+	}
+	
+	for (unsigned i = 1; i < s1.size(); i++) {
+		for (unsigned j = 1; j < s2.size(); j++) {
+			if (s1[i] == s2[j]) {
+					dists[i][j] = dists[i-1][j-1];
+			} else {
+				dists[i][j] = 1 + min({
+					dists[i-1][j],
+					dists[i][j-1],
+					dists[i-1][j-1]
+				});
+			}
+		}
+	}
+	
+	return dists[s1.size() - 1][s2.size() - 1];
+}
+
+std::string possibleStatements(std::string s)
+{
+	using namespace std;
+	
+	vector<string> statements = {
+		"problem",
+		"variable_mode",
+		"parameter_mode",
+		"var",
+		"param",
+		"const",
+		"define",
+		"dynamic",
+		"spec",
+		"assume",
+		"iterations",
+		"max_parameter_splits",
+		"presplit_parameters",
+		"max_bundle_magnitude",
+		"direction",
+		"parameter_direction",
+		"template",
+		"option"
+	};
+	
+	vector<string> good {};
+	for (unsigned i = 0; i < statements.size(); i++) {
+		double l = max(s.size(), statements[i].size());
+		if (editDistance(s, statements[i]) / l <= 0.34) {
+			good.push_back(statements[i]);
+		}
+	}
+	
+	if (good.size() == 0) {
+		return "";
+	}
+	
+	string res = " Did you mean ";
+	for (unsigned i = 0; i < good.size(); i++) {
+		res += good[i] + (i == good.size() - 1 ? "" : (i == good.size() - 2 ? " or " : ", "));
+	}
+	res += "?";
+	
+	return res;
 }
