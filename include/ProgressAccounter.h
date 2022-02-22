@@ -10,8 +10,11 @@
 #define PROGRESSACCOUNTER_H_
 
 #include <iostream>
+#include <functional>
+
 #include <mutex>
 #include <shared_mutex>
+
 
 class ProgressAccounter
 {
