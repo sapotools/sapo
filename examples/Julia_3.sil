@@ -1,0 +1,22 @@
+problem: reachability;
+
+iterations: 1;
+
+const a0 = -0.25;
+const b0 = -0.775;
+
+const epsilon = 0;
+
+var a in [a0-epsilon, a0+epsilon];
+var b in [b0-epsilon, b0+epsilon];
+
+// c = alpha*i + beta
+const alpha = 0.60159;
+const beta = 0.505;
+
+dynamic(a) = 3*a*b*b - a*a*a + alpha;
+dynamic(b) = b*b*b - 3*a*a*b + beta;
+
+spec: a <= 4;
+
+option compose_dynamic 3;
