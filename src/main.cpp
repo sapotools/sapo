@@ -168,7 +168,8 @@ unsigned int get_max_steps(const Sapo &sapo, const Model *model)
     max_steps += std::pow(1<<splits, num_of_params);
   }
 
-  return max_steps * model->getSpec()->time_bounds().end() + sapo.time_horizon;
+  return max_steps * model->getSpec()->time_bounds().end() + 
+          sapo.time_horizon*std::pow(1<<sapo.max_param_splits, num_of_params);
 }
 
 template<typename OSTREAM>
@@ -188,7 +189,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_p
       sapo.max_param_splits, sapo.num_of_presplits, accounter);
 
   if (display_progress) {
-    accounter->increase_performed_to(max_steps-sapo.time_horizon);
+    accounter->increase_performed_to(max_steps-sapo.time_horizon*synth_params.size());
   }
 
   std::vector<Flowpipe> flowpipes(synth_params.size());
