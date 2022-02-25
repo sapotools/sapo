@@ -158,12 +158,18 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
                      unsigned int k, ProgressAccounter *accounter) const
 {
   using namespace std;
+  const unsigned int num_p_poly = pSet.size();
 
-  // create current bundles list
-  std::list<Bundle> cbundles{initSet};
+  // Each polytope in pSet corresponds to the list of bundles 
+  // reachable by using the parameters in that polytope.
+  // This list is stored in an element of the vector cbundles
+
+  // create current bundle list vector
+  std::list<Bundle> cbundle_list{initSet};
+  std::vector<std::list<Bundle>> cbundles(num_p_poly, cbundle_list);
 
   // create next bundles list
-  std::list<Bundle> nbundles;
+  std::vector<std::list<Bundle>> nbundles;
 
   // last polytope union in flowpipe
   PolytopesUnion last_step;
@@ -173,24 +179,26 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   Flowpipe flowpipe(initSet.get_directions());
   flowpipe.append(initSet);
 
-#ifdef WITH_THREADS
-  std::mutex mutex;
+#ifdef WITH_THREADS_TEMP_DISABLED
+  std::mutex add_mtx;
 
   auto compute_next_bundles_and_add_to_last
-      = [&nbundles, &last_step, &pSet, &mutex](const Sapo *sapo,
-                                               const Bundle &bundle)
+      = [&nbundles, &cbundles, &last_step, &add_mtx](const Sapo *sapo,
+                                                     const Polytope &pSet,
+                                                     const unsigned int pos)
 #else
   auto compute_next_bundles_and_add_to_last
-      = [&nbundles, &last_step, &pSet](const Sapo *sapo, const Bundle &bundle)
+      = [&nbundles, &cbundles, &last_step](const Sapo *sapo,
+                                           const Polytope &pSet,
+                                           const unsigned int pos)
 #endif
 
   {
     // for all the parameter sets
-    for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
-
+    for (auto b_it = std::cbegin(cbundles[pos]); b_it != std::cend(cbundles[pos]); ++b_it) {
       // get the transformed bundle
       Bundle nbundle
-          = bundle.transform(sapo->vars, sapo->params, sapo->dyns, *p_it,
+          = b_it->transform(sapo->vars, sapo->params, sapo->dyns, pSet,
                              sapo->trans); // transform it
 
       if (sapo->decomp > 0) { // if requested, decompose it
@@ -204,11 +212,13 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
       if (!bls.is_empty()) {
         // split if necessary the new reached bundle and add the resulting
         // bundles to the nbundles list
-        nbundles.splice(nbundles.end(),
-                        nbundle.split(sapo->max_bundle_magnitude));
+        nbundles[pos].splice(nbundles[pos].end(),
+                             nbundle.split(sapo->max_bundle_magnitude));
 
         {
-          std::unique_lock<std::mutex> lock(mutex);
+#ifdef WITH_THREADS_TEMP_DISABLED
+          std::unique_lock<std::mutex> lock(add_mtx);
+#endif
           last_step.add(bls);
         }
       }
@@ -221,20 +231,23 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   // TODO: check whether there exists any chance for the last_step to be empty
   while (i < k && last_step.size() != 0) {
 
+    nbundles = std::vector<std::list<Bundle>>(num_p_poly);
+
     // create a new last step reach set
     last_step = PolytopesUnion();
     i++;
 
-#ifdef WITH_THREADS
+    unsigned int pSet_idx = 0;
+#ifdef WITH_THREADS_TEMP_DISABLED
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
     // for all the old bundles
-    for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
-         ++b_it) {
+    for (auto p_it = std::cbegin(pSet); p_it != std::cend(pSet);
+         ++p_it) {
       // submit the task to the thread pool
       thread_pool.submit_to_batch(batch_id,
                                   compute_next_bundles_and_add_to_last, this,
-                                  std::ref(*b_it));
+                                  std::ref(*p_it), pSet_idx++);
     }
 
     // join to the pool threads
@@ -245,17 +258,15 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
 #else  // WITH_THREADS
 
     // for all the old bundles
-    for (auto b_it = std::cbegin(cbundles); b_it != std::cend(cbundles);
-         ++b_it) {
+    for (auto p_it = std::cbegin(pSet); p_it != std::cend(pSet);
+         ++p_it) {
 
-      compute_next_bundles_and_add_to_last(this, std::ref(*b_it));
+      compute_next_bundles_and_add_to_last(this, std::ref(*p_it), pSet_idx++);
     }
 #endif // WITH_THREADS
 
-    // swap current bundles and new bundles
-    std::swap(cbundles, nbundles);
-
-    nbundles = std::list<Bundle>();
+    // move the new bundles content in the current bundles
+    cbundles = std::move(nbundles);
 
     // add the last step to the flow pipe
     flowpipe.append(last_step); // store result
