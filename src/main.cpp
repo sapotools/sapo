@@ -333,9 +333,9 @@ prog_opts parse_opts(const int argc, char **argv)
   prog_opts opts = {"-", false, false, false, 1};
 
 #ifdef WITH_THREADS
-  if (argc > 5) {
+  if (argc > 6) {
 #else
-  if (argc > 3) {
+  if (argc > 4) {
 #endif
     std::cerr << "Syntax error: Too many parameters" << std::endl;
     print_help(std::cerr, argv[0]);
