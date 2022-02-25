@@ -338,6 +338,22 @@ public:
   {
     return alpha;
   }
+  
+  bool isDynamicCompositionEnabled() const
+	{
+		return compose_dynamic;
+	}
+	
+	unsigned getDynamicDegree() const
+	{
+		return dynamic_degree;
+	}
+	
+	void setDynamicDegree(unsigned d)
+	{
+		compose_dynamic = true;
+		dynamic_degree = d;
+	}
 
   bool check(); // checks for errors in model
 
@@ -375,6 +391,8 @@ protected:
   bool decomp, decomp_defined;
   double alpha;
 	bool alphaDefined;
+	bool compose_dynamic;
+	unsigned dynamic_degree;
 	
 	
 	// addition of direction to params or vars

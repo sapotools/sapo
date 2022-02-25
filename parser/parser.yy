@@ -103,6 +103,7 @@
 	OFO
 	DECOMP
 	ALPHA
+	COMPOSE
 	AND					"&&"
 	OR					"||"
 	NOT					"!"
@@ -1036,6 +1037,20 @@ option	: TRANS transType ";"
 					}
 					
 					drv.data.setAlpha($2);
+				}
+				| COMPOSE INTEGER ";"
+				{
+					if ($2 < 1) {
+						yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
+					}
+					drv.data.setDynamicDegree($2);
+				}
+				| COMPOSE INTEGER error
+				{
+					MISSING_SC(@2);
+					if ($2 < 1) {
+						yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
+					}
 				}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }

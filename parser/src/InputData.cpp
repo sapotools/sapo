@@ -13,7 +13,8 @@ InputData::InputData():
     consts(), defs(), assumptions(), spec(NULL), directions(),
     templateMatrix(), paramDirections(),
     trans(transType::T_UNDEF), decomp(false), decomp_defined(false),
-    alpha(0.5), alphaDefined(false)
+    alpha(0.5), alphaDefined(false),
+    compose_dynamic(false), dynamic_degree(1)
 {
 }
 

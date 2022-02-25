@@ -103,6 +103,38 @@ inline double getOffset(const Expression<> &e)
 	return val == 0 ? 0 : val;
 }
 
+// simplify an expanded expression
+inline Expression<> simplify(Expression<> e)
+{
+	std::set<Symbol<>> ids = e.get_symbols();
+	
+	if (ids.size() == 0) {
+		return e.evaluate<double>();
+	} else {
+		// symbol we operate on
+		Symbol<> s = *ids.begin();
+		
+		// accumulator for result
+		Expression<> res = 0;
+		
+		// coefficients for symbol s
+		std::map<int, Expression<>> coeffs = e.get_coeffs(s);
+
+		for (auto it = coeffs.begin(); it != coeffs.end(); it++) {
+			// compute the corresponding power of s
+			Expression<> power = 1;
+			for (int i = 0; i < it->first; i++) {
+				power *= s;
+			}
+			res += power * simplify(it->second);
+		}
+		
+		res.expand();
+		
+		return res;
+	}
+}
+
 
 }
 

@@ -82,6 +82,7 @@ AFO			return yy::parser::make_AFO(loc);
 OFO			return yy::parser::make_OFO(loc);
 decompositions		return yy::parser::make_DECOMP(loc);
 sapo_alpha		return yy::parser::make_ALPHA(loc);
+compose_dynamic			return yy::parser::make_COMPOSE(loc);
 &&			return yy::parser::make_AND(loc);
 \|\|			return yy::parser::make_OR(loc);
 \!			return yy::parser::make_NOT(loc);
