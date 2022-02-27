@@ -32,7 +32,7 @@ protected:
    * @param[in] bi offset
    * @returns true is Ai x <= bi is in the linear system
    */
-  bool is_in(std::vector<double> Ai, const double bi) const;
+  bool is_in(const std::vector<double> &Ai, const double &bi) const;
 
   /**
    * Check whether the solutions of a linear system satisfy a constraint.

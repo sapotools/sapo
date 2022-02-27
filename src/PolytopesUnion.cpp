@@ -158,7 +158,24 @@ PolytopesUnion &PolytopesUnion::add(const Polytope &P)
               << "polytope having a different dimension" << std::endl;
   }
 
+  // if P is empty and is not contained by
+  // the polytopes union
   if (!(P.is_empty() || this->contains(P))) {
+
+    // check whether P contains any of the polytopes in the union
+    for (auto p_it = std::begin(*this); p_it != std::end(*this); ++p_it) {
+      if (P.contains(*p_it)) {
+
+        // if this is the case, replace that polytope by P
+        *p_it = P;
+
+        // return the updated union
+        return *this;
+      }
+    }
+
+    // if P does not contains any polytope in the
+    // union append P to the union itself
     this->push_back(P);
   }
 

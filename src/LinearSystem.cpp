@@ -200,25 +200,49 @@ LinearSystem::LinearSystem(LinearSystem &&orig)
 }
 
 /**
+ * @brief Check whether two linear equations are the same
+ *
+ * @param A1 non-constant coefficient of the first equation
+ * @param b1 constant coefficient of the first equation
+ * @param A2 non-constant coefficient of the second equation
+ * @param b2 constant coefficient of the second equation
+ * @param approx admitted approximation
+ * @return whether the two linear equations are the same
+ */
+bool same_constraint(const std::vector<double> &A1, const double &b1,
+                     const std::vector<double> &A2, const double &b2,
+                     const double approx = 0)
+{
+  if (A1.size() != A2.size()) {
+    return false;
+  }
+
+  if (std::abs(b1 - b2) > approx) {
+    return false;
+  }
+
+  for (unsigned int i = 0; i < A1.size(); ++i) {
+    if (std::abs(A1[i] - A2[i]) > approx) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * Check if a constraint belongs to the linear system
  *
  * @param[in] Ai direction
  * @param[in] bi offset
  * @returns true is Ai x <= b is in the linear system
  */
-bool LinearSystem::is_in(std::vector<double> Ai, const double bi) const
+bool LinearSystem::is_in(const std::vector<double> &Ai, const double &bi) const
 {
-  Ai.push_back(bi);
-
   for (unsigned int i = 0; i < this->A.size(); i++) {
-    std::vector<double> line = this->A[i];
-    line.push_back(this->b[i]);
-    bool is_in = true;
-    for (unsigned int j = 0; j < Ai.size(); j++) {
-      is_in = is_in && (std::abs(Ai[j] - line[j]) < MAX_APPROX_ERROR);
-    }
-    if (is_in)
+    if (same_constraint(this->A[i], this->b[i], Ai, bi)) {
       return true;
+    }
   }
   return false;
 }
@@ -445,10 +469,6 @@ bool LinearSystem::satisfies(const std::vector<double> &Ai,
   }
 
   return false;
-
-  auto max_coeff = max_element(std::begin(Ai), std::end(Ai));
-  auto min_coeff = min_element(std::begin(Ai), std::end(Ai));
-  return ((*max_coeff == *min_coeff) && (*min_coeff == 0) && (bi >= 0));
 }
 
 /**

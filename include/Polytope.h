@@ -65,6 +65,32 @@ public:
   }
 
   /**
+   * @brief Copy operator
+   *
+   * @param orig is the original Polytope
+   * @return a reference to the updated object
+   */
+  Polytope &operator=(const Polytope &orig)
+  {
+    static_cast<LinearSystem *>(this)->operator=(orig);
+
+    return *this;
+  }
+
+  /**
+   * @brief Copy operator
+   *
+   * @param orig is the original Polytope
+   * @return a reference to the updated object
+   */
+  Polytope &operator=(Polytope &&orig)
+  {
+    static_cast<LinearSystem *>(this)->operator=(orig);
+
+    return *this;
+  }
+
+  /**
    * Establish whether a polytope is empty
    *
    * Due to approximation errors, it may return false for some empty
