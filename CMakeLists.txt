@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include_directories(include include/STL parser/include)
 
 find_package(FLEX 2.6.3 REQUIRED)
-find_package(BISON 3.4.0 REQUIRED)
+find_package(BISON 3.6.0 REQUIRED)
 
 flex_target(input_scanner parser/scanner.l
             ${CMAKE_SOURCE_DIR}/parser/src/scanner.cpp)
