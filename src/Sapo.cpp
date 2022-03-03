@@ -604,7 +604,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   using namespace std;
   using namespace SymbolicAlgebra;
 
-  PolytopesUnion result;
+  PolytopesUnion result = pSet;
 
   std::vector<Symbol<>> alpha = get_symbol_vector("f", reachSet.dim());
 
@@ -631,7 +631,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
         = BaseConverter(alpha, sofog).getBernCoeffsMatrix();
 
     Polytope constraints(this->params, controlPts);
-    result.add(intersect(pSet, constraints));
+    result = intersect(result, constraints);
   }
 
   return result;

@@ -74,7 +74,6 @@ private:
       Bundle newReachSet = reachSet.transform(this->vars, this->params,
                                               this->dyns, *p_it, this->trans);
 
-      // TODO: Check whether the object tmpLSset can be removed
       result.add(synthesize(newReachSet, pSet, formula, time + 1));
     }
 
