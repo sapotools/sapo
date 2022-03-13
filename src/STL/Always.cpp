@@ -28,8 +28,8 @@ Always::Always(const int begin, const int end, const std::shared_ptr<STL> f):
 std::ostream &Always::print(std::ostream &os) const
 {
   os << "G " << this->t_itvl << " (" << *(this->f) << ")";
-	
-	return os;
+
+  return os;
 }
 
 Always::~Always() {}

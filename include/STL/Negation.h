@@ -38,12 +38,12 @@ public:
 
   const std::shared_ptr<STL> simplify() const;
 
-  std::ostream & print(std::ostream &os) const;
+  std::ostream &print(std::ostream &os) const;
 
-	TimeInterval time_bounds() const
-	{
-		return f->time_bounds();
-	}
+  TimeInterval time_bounds() const
+  {
+    return f->time_bounds();
+  }
 
   ~Negation();
 };

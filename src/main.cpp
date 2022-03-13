@@ -85,7 +85,8 @@ void print_variables_and_parameters(OSTREAM &os, const Model *model)
 }
 
 template<typename OSTREAM>
-void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_progress)
+void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model,
+                    const bool display_progress)
 {
   using OF = OutputFormatter<OSTREAM>;
 
@@ -98,7 +99,8 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model, const bool disp
 
   ProgressAccounter *accounter = NULL;
   if (display_progress) {
-    accounter = (ProgressAccounter *) new ProgressBar(sapo.time_horizon, BAR_LENGTH, std::ref(std::cerr));
+    accounter = (ProgressAccounter *)new ProgressBar(
+        sapo.time_horizon, BAR_LENGTH, std::ref(std::cerr));
   }
 
   // if the model does not specify any parameter set
@@ -159,28 +161,32 @@ void output_synthesis(OSTREAM &os, const Model *model,
 }
 
 unsigned int get_max_steps(const Sapo &sapo, const Model *model)
-//const unsigned int &max_param_splits, const unsigned int &num_of_params, const unsigned int &time_horizon)
+// const unsigned int &max_param_splits, const unsigned int &num_of_params,
+// const unsigned int &time_horizon)
 {
   unsigned int max_steps = 0;
   const unsigned int num_of_params = model->getParams().size();
 
-  for (unsigned int splits=0; splits<=sapo.max_param_splits; ++splits) {
-    max_steps += std::pow(1<<splits, num_of_params);
+  for (unsigned int splits = 0; splits <= sapo.max_param_splits; ++splits) {
+    max_steps += std::pow(1 << splits, num_of_params);
   }
 
-  return max_steps * model->getSpec()->time_bounds().end() + 
-          sapo.time_horizon*std::pow(1<<sapo.max_param_splits, num_of_params);
+  return max_steps * model->getSpec()->time_bounds().end()
+         + sapo.time_horizon
+               * std::pow(1 << sapo.max_param_splits, num_of_params);
 }
 
 template<typename OSTREAM>
-void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_progress)
+void synthesis(OSTREAM &os, Sapo &sapo, const Model *model,
+               const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
   unsigned int max_steps = 0;
   if (display_progress) {
     max_steps = get_max_steps(sapo, model);
 
-    accounter = (ProgressAccounter *) new ProgressBar(max_steps, BAR_LENGTH, std::ref(std::cerr));
+    accounter = (ProgressAccounter *)new ProgressBar(max_steps, BAR_LENGTH,
+                                                     std::ref(std::cerr));
   }
 
   // Synthesize parameters
@@ -189,7 +195,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_p
       sapo.max_param_splits, sapo.num_of_presplits, accounter);
 
   if (display_progress) {
-    accounter->increase_performed_to(max_steps-sapo.time_horizon*synth_params.size());
+    accounter->increase_performed_to(
+        max_steps - sapo.time_horizon * synth_params.size());
   }
 
   std::vector<Flowpipe> flowpipes(synth_params.size());
@@ -198,9 +205,9 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_p
 #ifdef WITH_THREADS
     auto compute_reachability
         = [&flowpipes, &sapo, &model, &accounter](const PolytopesUnion &pSet,
-                                      unsigned int params_idx) {
-            flowpipes[params_idx]
-                = sapo.reach(*(model->getReachSet()), pSet, sapo.time_horizon, accounter);
+                                                  unsigned int params_idx) {
+            flowpipes[params_idx] = sapo.reach(*(model->getReachSet()), pSet,
+                                               sapo.time_horizon, accounter);
           };
 
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
@@ -223,8 +230,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model, const bool display_p
     unsigned int params_idx = 0;
     for (auto p_it = std::cbegin(synth_params);
          p_it != std::cend(synth_params); ++p_it) {
-      flowpipes[params_idx++]
-          = sapo.reach(*(model->getReachSet()), *p_it, sapo.time_horizon, accounter);
+      flowpipes[params_idx++] = sapo.reach(*(model->getReachSet()), *p_it,
+                                           sapo.time_horizon, accounter);
     }
 #endif
   }
@@ -298,7 +305,7 @@ bool is_number(const char *str)
   return true;
 }
 
-void parser_option(prog_opts& opts, const int argc, char **argv, int& arg_pos)
+void parser_option(prog_opts &opts, const int argc, char **argv, int &arg_pos)
 {
   std::string argv_str = std::string(argv[arg_pos]);
   if (std::string("-h") == argv_str) {
@@ -368,8 +375,8 @@ int main(int argc, char **argv)
 
     exit(EXIT_SUCCESS);
   }
-  
-//  drv.trace_parsing = true;
+
+  //  drv.trace_parsing = true;
 
   if (drv.parse(opts.input_filename) != 0) {
     std::cerr << "Error in loading " << opts.input_filename << std::endl;
@@ -386,7 +393,8 @@ int main(int argc, char **argv)
 
   if (opts.JSON_output) {
     JSON::ostream os(std::cout);
-    perform_computation_and_get_output(os, sapo, model, drv.data.getProblem(), opts.progress);
+    perform_computation_and_get_output(os, sapo, model, drv.data.getProblem(),
+                                       opts.progress);
   } else {
     perform_computation_and_get_output(std::cout, sapo, model,
                                        drv.data.getProblem(), opts.progress);

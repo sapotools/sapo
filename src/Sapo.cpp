@@ -38,7 +38,8 @@ Sapo::Sapo(Model *model):
  * @param[in,out] accounter acccounts for the computation progress
  * @returns the reached flowpipe
  */
-Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k, ProgressAccounter *accounter) const
+Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
+                     ProgressAccounter *accounter) const
 {
   // create current bundles list
   std::list<Bundle> cbundles = initSet.split(max_bundle_magnitude, 1.0);
@@ -86,7 +87,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k, ProgressAccounter *a
       {
 #ifdef WITH_THREADS
         std::unique_lock<std::mutex> lock(mutex);
-#endif //WITH_THREADS
+#endif // WITH_THREADS
         last_step.add(bls);
       }
     }
@@ -160,7 +161,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   using namespace std;
   const unsigned int num_p_poly = pSet.size();
 
-  // Each polytope in pSet corresponds to the list of bundles 
+  // Each polytope in pSet corresponds to the list of bundles
   // reachable by using the parameters in that polytope.
   // This list is stored in an element of the vector cbundles
 
@@ -183,23 +184,22 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   std::mutex add_mtx;
 
   auto compute_next_bundles_and_add_to_last
-      = [&nbundles, &cbundles, &last_step, &add_mtx](const Sapo *sapo,
-                                                     const Polytope &pSet,
-                                                     const unsigned int pos)
+      = [&nbundles, &cbundles, &last_step, &add_mtx](
+            const Sapo *sapo, const Polytope &pSet, const unsigned int pos)
 #else
   auto compute_next_bundles_and_add_to_last
-      = [&nbundles, &cbundles, &last_step](const Sapo *sapo,
-                                           const Polytope &pSet,
-                                           const unsigned int pos)
+      = [&nbundles, &cbundles, &last_step](
+            const Sapo *sapo, const Polytope &pSet, const unsigned int pos)
 #endif
 
   {
     // for all the parameter sets
-    for (auto b_it = std::cbegin(cbundles[pos]); b_it != std::cend(cbundles[pos]); ++b_it) {
+    for (auto b_it = std::cbegin(cbundles[pos]);
+         b_it != std::cend(cbundles[pos]); ++b_it) {
       // get the transformed bundle
       Bundle nbundle
           = b_it->transform(sapo->vars, sapo->params, sapo->dyns, pSet,
-                             sapo->trans); // transform it
+                            sapo->trans); // transform it
 
       if (sapo->decomp > 0) { // if requested, decompose it
         nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
@@ -242,8 +242,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
     // for all the old bundles
-    for (auto p_it = std::cbegin(pSet); p_it != std::cend(pSet);
-         ++p_it) {
+    for (auto p_it = std::cbegin(pSet); p_it != std::cend(pSet); ++p_it) {
       // submit the task to the thread pool
       thread_pool.submit_to_batch(batch_id,
                                   compute_next_bundles_and_add_to_last, this,
@@ -258,8 +257,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
 #else  // WITH_THREADS
 
     // for all the old bundles
-    for (auto p_it = std::cbegin(pSet); p_it != std::cend(pSet);
-         ++p_it) {
+    for (auto p_it = std::cbegin(pSet); p_it != std::cend(pSet); ++p_it) {
 
       compute_next_bundles_and_add_to_last(this, std::ref(*p_it), pSet_idx++);
     }
@@ -371,7 +369,7 @@ public:
 std::list<PolytopesUnion>
 synthesize_list(const Sapo &sapo, const Bundle &reachSet,
                 const std::list<PolytopesUnion> &pSetList,
-                const std::shared_ptr<STL> &formula, 
+                const std::shared_ptr<STL> &formula,
                 ProgressAccounter *accounter)
 {
 
@@ -379,8 +377,8 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
   std::vector<PolytopesUnion> vect_res(pSetList.size());
 
   auto synthesize_funct
-      = [&vect_res, &sapo, &reachSet, &formula, &accounter](const PolytopesUnion pSet,
-                                                const unsigned int idx) {
+      = [&vect_res, &sapo, &reachSet, &formula,
+         &accounter](const PolytopesUnion pSet, const unsigned int idx) {
           vect_res[idx] = sapo.synthesize(reachSet, pSet, formula);
 
           if (accounter != NULL) {
@@ -434,12 +432,12 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
  * @param[in,out] accounter acccounts for the computation progress
  * @returns the list of refined parameter sets
  */
-std::list<PolytopesUnion>
-Sapo::synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                 const std::shared_ptr<STL> formula,
-                 const unsigned int max_splits,
-                 const unsigned int num_of_presplits, 
-                 ProgressAccounter *accounter) const
+std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
+                                           const PolytopesUnion &pSet,
+                                           const std::shared_ptr<STL> formula,
+                                           const unsigned int max_splits,
+                                           const unsigned int num_of_presplits,
+                                           ProgressAccounter *accounter) const
 {
   std::list<PolytopesUnion> pSetList{pSet};
 
@@ -455,7 +453,7 @@ Sapo::synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
       = synthesize_list(*this, reachSet, pSetList, formula, accounter);
 
   if (accounter) {
-    already_performed_steps = max_time*pSetList.size();
+    already_performed_steps = max_time * pSetList.size();
     accounter->increase_performed_to(already_performed_steps);
   }
 
@@ -465,7 +463,7 @@ Sapo::synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
     res = synthesize_list(*this, reachSet, pSetList, formula, accounter);
 
     if (accounter != NULL) {
-      already_performed_steps += max_time*pSetList.size();
+      already_performed_steps += max_time * pSetList.size();
       accounter->increase_performed_to(already_performed_steps);
     }
   }
@@ -546,7 +544,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<STL> formula, 
+                                const std::shared_ptr<STL> formula,
                                 ProgressAccounter *accounter) const
 {
   (void)accounter;
@@ -571,7 +569,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   // Until
   case UNTIL:
     return synthesize(reachSet, pSet,
-                            std::dynamic_pointer_cast<Until>(formula), 0);
+                      std::dynamic_pointer_cast<Until>(formula), 0);
 
   // Always
   case ALWAYS:

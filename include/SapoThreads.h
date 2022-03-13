@@ -1,6 +1,6 @@
 /**
  * @file SapoThreads.h
- * 
+ *
  * An header for the Sapo thread pool.
  *
  * @author Alberto Casagrande <acasagrande@units.it>

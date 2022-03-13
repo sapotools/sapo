@@ -22,16 +22,16 @@ enum formula_type {
   UNTIL,
   ALWAYS,
   EVENTUALLY,
-	NEGATION
+  NEGATION
 };
 
 class STL
 {
-	friend std::ostream &operator<<(std::ostream &os, const STL &f)
-	{
-		return f.print(os);
-	}
-	
+  friend std::ostream &operator<<(std::ostream &os, const STL &f)
+  {
+    return f.print(os);
+  }
+
   formula_type type;
 
 protected:
@@ -46,14 +46,14 @@ public:
   {
     return type;
   }
-  
+
   void setType(formula_type t)
-	{
-		type = t;
-	}
+  {
+    type = t;
+  }
 
   const virtual std::shared_ptr<STL> simplify() const = 0;
-	
+
   virtual std::ostream &print(std::ostream &os) const = 0;
 
   virtual TimeInterval time_bounds() const

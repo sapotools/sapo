@@ -18,7 +18,7 @@ class Eventually : public STL
 {
 private:
   std::shared_ptr<STL> f; // subformula
-  TimeInterval t_itvl;          // temporal formula bounds
+  TimeInterval t_itvl;    // temporal formula bounds
 
 public:
   Eventually(const int begin, const int end, const std::shared_ptr<STL> f);
@@ -34,9 +34,10 @@ public:
   }
 
   const std::shared_ptr<STL> simplify() const
-	{
-		return std::make_shared<Eventually>(t_itvl.begin(), t_itvl.end(), f->simplify());
-	}
+  {
+    return std::make_shared<Eventually>(t_itvl.begin(), t_itvl.end(),
+                                        f->simplify());
+  }
 
   std::ostream &print(std::ostream &os) const;
 

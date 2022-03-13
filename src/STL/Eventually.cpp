@@ -29,7 +29,7 @@ Eventually::Eventually(const int begin, const int end,
  */
 std::ostream &Eventually::print(std::ostream &os) const
 {
-	return os << "F " << this->t_itvl << " (" << *f << ")";
+  return os << "F " << this->t_itvl << " (" << *f << ")";
 }
 
 Eventually::~Eventually() {}

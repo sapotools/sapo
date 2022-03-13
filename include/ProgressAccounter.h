@@ -15,13 +15,12 @@
 #include <mutex>
 #include <shared_mutex>
 
-
 class ProgressAccounter
 {
 protected:
   unsigned int _performed; //!< number of already performed steps
   unsigned int _expected;  //!< total number of expected steps
-  std::mutex _mutex; //!< A mutex for mutual exclusive operations
+  std::mutex _mutex;       //!< A mutex for mutual exclusive operations
 
 public:
   /**
@@ -59,7 +58,7 @@ public:
    * @return the number of expected steps
    */
   const unsigned int &set_expected(const unsigned int expected_steps)
-  { 
+  {
     std::unique_lock<std::mutex> lock(_mutex);
 
     _expected = expected_steps;
@@ -112,7 +111,8 @@ public:
    * @param delta_steps is the number of newly performed steps
    * @return the number of already performed steps
    */
-  virtual const unsigned int &increase_performed(const unsigned int delta_steps=1)
+  virtual const unsigned int &increase_performed(const unsigned int delta_steps
+                                                 = 1)
   {
     std::unique_lock<std::mutex> lock(_mutex);
 
@@ -127,9 +127,10 @@ public:
    * @param performed is the number of performed steps
    * @return the number of already performed steps
    */
-  virtual const unsigned int &increase_performed_to(const unsigned int performed)
+  virtual const unsigned int &
+  increase_performed_to(const unsigned int performed)
   {
-      return set_performed(performed);
+    return set_performed(performed);
   }
 
   virtual ~ProgressAccounter() {}
@@ -146,11 +147,13 @@ class ProgressBar : private ProgressAccounter
    * @brief Increase the number of performed steps
    *
    * This method is not thread-safe
-   * 
+   *
    * @param performed is the number of performed steps
    * @return the number of already performed steps
    */
-  const unsigned int &unsafe_increase_performed_to(const unsigned int performed);
+  const unsigned int &
+  unsafe_increase_performed_to(const unsigned int performed);
+
 public:
   /**
    * @brief A base constructor
@@ -188,7 +191,7 @@ public:
    * @param delta_steps is the number of newly performed steps
    * @return the number of already performed steps
    */
-  const unsigned int &increase_performed(const unsigned int delta_steps=1);
+  const unsigned int &increase_performed(const unsigned int delta_steps = 1);
 
   /**
    * @brief Increase the number of performed steps

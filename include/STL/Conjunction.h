@@ -33,9 +33,9 @@ public:
   }
 
   const std::shared_ptr<STL> simplify() const
-	{
-		return std::make_shared<Conjunction>(f1->simplify(), f2->simplify());
-	}
+  {
+    return std::make_shared<Conjunction>(f1->simplify(), f2->simplify());
+  }
 
   std::ostream &print(std::ostream &os) const;
   TimeInterval time_bounds() const;

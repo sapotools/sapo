@@ -167,7 +167,8 @@ public:
    * @param[in,out] accounter acccounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(const Bundle &initSet, unsigned int k, ProgressAccounter *accounter = NULL) const;
+  Flowpipe reach(const Bundle &initSet, unsigned int k,
+                 ProgressAccounter *accounter = NULL) const;
 
   /**
    * Reachable set computation for parameteric dynamical systems
@@ -191,7 +192,8 @@ public:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL> formula, ProgressAccounter *accounter = NULL) const;
+                            const std::shared_ptr<STL> formula,
+                            ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis with splits
@@ -209,7 +211,8 @@ public:
   std::list<PolytopesUnion>
   synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
              const std::shared_ptr<STL> formula, const unsigned int max_splits,
-             const unsigned int num_of_presplits = 0, ProgressAccounter *accounter = NULL) const;
+             const unsigned int num_of_presplits = 0,
+             ProgressAccounter *accounter = NULL) const;
 };
 
 #endif /* SAPO_H_ */

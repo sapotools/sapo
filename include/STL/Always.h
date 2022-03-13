@@ -20,7 +20,7 @@ class Always : public STL
 private:
   const std::shared_ptr<STL> f; // subformula
   TimeInterval t_itvl;          // temporal formula bounds
-  
+
 public:
   Always(const int begin, const int end, const std::shared_ptr<STL> f);
 
@@ -35,9 +35,10 @@ public:
   }
 
   const std::shared_ptr<STL> simplify() const
-	{
-		return std::make_shared<Always>(t_itvl.begin(), t_itvl.end(), f->simplify());
-	}
+  {
+    return std::make_shared<Always>(t_itvl.begin(), t_itvl.end(),
+                                    f->simplify());
+  }
 
   std::ostream &print(std::ostream &os) const;
 

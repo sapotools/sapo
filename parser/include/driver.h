@@ -17,8 +17,8 @@ public:
   ~driver();
 
   AbsSyn::InputData data;
-	
-	bool errors;
+
+  bool errors;
 
   // Run the parser on file F.  Return 0 on success.
   int parse(const std::string &f);
@@ -34,15 +34,15 @@ public:
   bool trace_scanning;
   // The token's location used by the scanner.
   yy::location location;
-	
-	void warning(const yy::location &l, const std::string &m, const std::string filename);
-	void error(const yy::location &l, const std::string &m, const std::string filename);
-	void missingSemicolon(const yy::location &l, const std::string filename);
+
+  void warning(const yy::location &l, const std::string &m,
+               const std::string filename);
+  void error(const yy::location &l, const std::string &m,
+             const std::string filename);
+  void missingSemicolon(const yy::location &l, const std::string filename);
 
 protected:
-	void printError(const yy::location &l, const std::string filename);
-
+  void printError(const yy::location &l, const std::string filename);
 };
 
-	
 #endif // ! DRIVER_H

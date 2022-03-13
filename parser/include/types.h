@@ -13,7 +13,6 @@ enum problemType {
   SYNTH    // parameter synthesis
 };
 
-
 // defines modalities for representing variables and parameters
 enum modeType {
   M_UNDEF, // undefined

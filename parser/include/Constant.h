@@ -22,12 +22,12 @@ public:
   {
     return s.get_symbol_name(s.get_id());
   }
-  
+
   SymbolicAlgebra::Symbol<> getSymbol() const
   {
-		return s;
-	}
-  
+    return s;
+  }
+
   double getValue() const
   {
     return val;

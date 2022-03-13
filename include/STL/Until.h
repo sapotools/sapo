@@ -41,9 +41,10 @@ public:
   }
 
   const std::shared_ptr<STL> simplify() const
-	{
-		return std::make_shared<Until>(f1->simplify(), t_itvl.begin(), t_itvl.end(), f2->simplify());
-	}
+  {
+    return std::make_shared<Until>(f1->simplify(), t_itvl.begin(),
+                                   t_itvl.end(), f2->simplify());
+  }
 
   std::ostream &print(std::ostream &os) const;
 

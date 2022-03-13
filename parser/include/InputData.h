@@ -145,15 +145,15 @@ public:
       const; // checks if a constant named 'name' already exists
   bool isDefDefined(const std::string &name)
       const; // checks if a definition named 'name' already exists
-	bool isDirectionDefined(const std::string &name)
-			const; // checks if a direction named "name" already exists
+  bool isDirectionDefined(const std::string &name)
+      const; // checks if a direction named "name" already exists
   bool isSymbolDefined(
       const std::string &name) const; // checks if a symbol (var, param, const
                                       // or def) named 'name' already exists
-	
-	SymbolicAlgebra::Symbol<> getSymbol(std::string name)
-		const;		// returns the symbol named "name" (must exist)
-	
+
+  SymbolicAlgebra::Symbol<> getSymbol(
+      std::string name) const; // returns the symbol named "name" (must exist)
+
   const Variable *getVar(int i) const
   {
     return vars[i];
@@ -167,8 +167,8 @@ public:
   Variable *getVar(const std::string &name);
   int getVarPos(const std::string &name)
       const; // return an index such that vars[i] has name 'name'
-	std::vector<SymbolicAlgebra::Symbol<>> getVarSymbols() const;
-	
+  std::vector<SymbolicAlgebra::Symbol<>> getVarSymbols() const;
+
   const Parameter *getParam(int i) const
   {
     return params[i];
@@ -177,8 +177,8 @@ public:
       const; // return the parameter named 'name', which must exist
   int getParamPos(const std::string &name)
       const; // return an index i such that params[i] has name 'name'
-	std::vector<SymbolicAlgebra::Symbol<>> getParamSymbols() const;
-	
+  std::vector<SymbolicAlgebra::Symbol<>> getParamSymbols() const;
+
   const Constant *getConst(int i) const
   {
     return consts[i];
@@ -193,20 +193,23 @@ public:
       const; // return the definition named 'name', which must exist
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
-	
-	const Direction *getAssumption(int i) const // return the assumption in position i
-	{
-		return assumptions[i];
-	}
 
-  void addVariable(Variable *v) // adds a new variable, which name is not already used
-	{
-		vars.push_back(v);
-	}
-  void addParameter(Parameter *p) // adds a new parameter, which name is not already used
-	{
-		params.push_back(p);
-	}
+  const Direction *
+  getAssumption(int i) const // return the assumption in position i
+  {
+    return assumptions[i];
+  }
+
+  void addVariable(
+      Variable *v) // adds a new variable, which name is not already used
+  {
+    vars.push_back(v);
+  }
+  void addParameter(
+      Parameter *p) // adds a new parameter, which name is not already used
+  {
+    params.push_back(p);
+  }
   void addConstant(Constant *c)
   {
     consts.push_back(c);
@@ -216,9 +219,9 @@ public:
     defs.push_back(d);
   } // adds a new definition, which name is not already used
   void addAssumption(Direction *d)
-	{
-		assumptions.push_back(d);
-	} // adds a new assumption
+  {
+    assumptions.push_back(d);
+  } // adds a new assumption
 
   bool isSpecDefined() const
   {
@@ -235,8 +238,8 @@ public:
   {
     return spec;
   }
-  
-	// add direction with specified name
+
+  // add direction with specified name
   void addVarDirectionConstraint(Direction *d);
   unsigned int getDirectionsNum() const
   {
@@ -248,13 +251,13 @@ public:
   }
   const Direction *getDirection(unsigned i) const
   {
-		return directions[i];
-	}
+    return directions[i];
+  }
   bool isBounded(int d) const
-	{
-		return directions[d]->hasLB() && directions[d]->hasUB();
-	}
-	int findDirectionPos(const std::string &name) const;
+  {
+    return directions[d]->hasLB() && directions[d]->hasUB();
+  }
+  int findDirectionPos(const std::string &name) const;
 
   unsigned templateRows() const
   {
@@ -338,22 +341,22 @@ public:
   {
     return alpha;
   }
-  
+
   bool isDynamicCompositionEnabled() const
-	{
-		return compose_dynamic;
-	}
-	
-	unsigned getDynamicDegree() const
-	{
-		return dynamic_degree;
-	}
-	
-	void setDynamicDegree(unsigned d)
-	{
-		compose_dynamic = true;
-		dynamic_degree = d;
-	}
+  {
+    return compose_dynamic;
+  }
+
+  unsigned getDynamicDegree() const
+  {
+    return dynamic_degree;
+  }
+
+  void setDynamicDegree(unsigned d)
+  {
+    compose_dynamic = true;
+    dynamic_degree = d;
+  }
 
   bool check(); // checks for errors in model
 
@@ -375,27 +378,26 @@ protected:
   std::vector<Parameter *> params;
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
-	
-	std::vector<Direction *> assumptions;
+
+  std::vector<Direction *> assumptions;
 
   std::shared_ptr<STL> spec;
 
-	std::vector<Direction *> directions;
+  std::vector<Direction *> directions;
 
   std::vector<std::vector<int>> templateMatrix;
 
-	std::vector<Direction *> paramDirections;
+  std::vector<Direction *> paramDirections;
 
   // SAPO options
   transType trans;
   bool decomp, decomp_defined;
   double alpha;
-	bool alphaDefined;
-	bool compose_dynamic;
-	unsigned dynamic_degree;
-	
-	
-	// addition of direction to params or vars
+  bool alphaDefined;
+  bool compose_dynamic;
+  unsigned dynamic_degree;
+
+  // addition of direction to params or vars
   void addDirectionConstraint(Direction *d, bool isVar);
 };
 

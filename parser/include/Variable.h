@@ -8,58 +8,61 @@ namespace AbsSyn
 
 class Variable
 {
-	friend std::ostream &operator<<(std::ostream &os, Variable &v)
-	{
-		return os << v.s;
-	}
+  friend std::ostream &operator<<(std::ostream &os, Variable &v)
+  {
+    return os << v.s;
+  }
 
 public:
-	Variable(const SymbolicAlgebra::Symbol<> &n): s(n), dynamic(0), covered(false), dynamicDefined(false) {}
+  Variable(const SymbolicAlgebra::Symbol<> &n):
+      s(n), dynamic(0), covered(false), dynamicDefined(false)
+  {
+  }
 
-	~Variable() {}
+  ~Variable() {}
 
-	const std::string &getName() const
-	{
-		return s.get_symbol_name(s.get_id());
-	}
-	
-	SymbolicAlgebra::Symbol<> getSymbol() const
-	{
-		return s;
-	}
+  const std::string &getName() const
+  {
+    return s.get_symbol_name(s.get_id());
+  }
 
-	SymbolicAlgebra::Expression<> getDynamic() const
-	{
-		return dynamic;
-	}
+  SymbolicAlgebra::Symbol<> getSymbol() const
+  {
+    return s;
+  }
 
-	void setDynamic(SymbolicAlgebra::Expression<> e)
-	{
-		dynamic = e;
-		dynamicDefined = true;
-	}
+  SymbolicAlgebra::Expression<> getDynamic() const
+  {
+    return dynamic;
+  }
 
-	// checks if dynamic has already been set
-	bool isDynamicDefined()
-	{
-		return dynamicDefined;
-	}
-	
-	bool isCovered()
-	{
-		return covered;
-	}
-	
-	void setCovered()
-	{
-		this->covered = true;
-	}
+  void setDynamic(SymbolicAlgebra::Expression<> e)
+  {
+    dynamic = e;
+    dynamicDefined = true;
+  }
+
+  // checks if dynamic has already been set
+  bool isDynamicDefined()
+  {
+    return dynamicDefined;
+  }
+
+  bool isCovered()
+  {
+    return covered;
+  }
+
+  void setCovered()
+  {
+    this->covered = true;
+  }
 
 protected:
-	SymbolicAlgebra::Symbol<> s;
-	SymbolicAlgebra::Expression<> dynamic;
-	bool covered;
-	bool dynamicDefined;
+  SymbolicAlgebra::Symbol<> s;
+  SymbolicAlgebra::Expression<> dynamic;
+  bool covered;
+  bool dynamicDefined;
 };
 
 }
