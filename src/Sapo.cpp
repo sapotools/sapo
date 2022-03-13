@@ -41,7 +41,7 @@ Sapo::Sapo(Model *model):
 Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k, ProgressAccounter *accounter) const
 {
   // create current bundles list
-  std::list<Bundle> cbundles{initSet};
+  std::list<Bundle> cbundles = initSet.split(max_bundle_magnitude, 1.0);
 
   // create next bundles list
   std::list<Bundle> nbundles;
@@ -165,7 +165,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   // This list is stored in an element of the vector cbundles
 
   // create current bundle list vector
-  std::list<Bundle> cbundle_list{initSet};
+  std::list<Bundle> cbundle_list = initSet.split(max_bundle_magnitude, 1.0);
   std::vector<std::list<Bundle>> cbundles(num_p_poly, cbundle_list);
 
   // create next bundles list
