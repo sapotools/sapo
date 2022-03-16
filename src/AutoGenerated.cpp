@@ -5,6 +5,8 @@
 
 using namespace AbsSyn;
 
+// ALL THE CODE IN THIS FILE MUST BE REVIEWED
+
 // creates the bundle defined by the model, adding directions and template rows
 // according to assumptions
 Bundle *getBundleWithAssumptions(const InputData &id);

@@ -24,7 +24,7 @@
  * @param[in] sapo_opt options to tune sapo
  */
 Sapo::Sapo(Model *model):
-    trans(0), decomp(0), max_param_splits(0), num_of_presplits(0),
+    tmode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_presplits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
     dyns(model->getDyns()), vars(model->getVars()), params(model->getParams())
 {
@@ -68,7 +68,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
   {
     // get the transformed bundle
     Bundle nbundle = bundle.transform(sapo->vars, sapo->dyns,
-                                      sapo->trans); // transform it
+                                      sapo->tmode); // transform it
 
     if (sapo->decomp > 0) { // if requested, decompose it
       nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
@@ -199,7 +199,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
       // get the transformed bundle
       Bundle nbundle
           = b_it->transform(sapo->vars, sapo->params, sapo->dyns, pSet,
-                            sapo->trans); // transform it
+                            sapo->tmode); // transform it
 
       if (sapo->decomp > 0) { // if requested, decompose it
         nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);

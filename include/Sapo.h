@@ -31,7 +31,7 @@
 class Sapo
 {
 public:
-  unsigned char trans;  //!< transformation (0: static, 1: dynamic)
+  Bundle::transfomation_mode tmode;  //!< transformation mode (OFO or AFO)
   double decomp_weight; //!< decomposition weight
   unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
   std::string plot;     //!< the name of the file were to plot the reach set
@@ -72,7 +72,7 @@ private:
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
       Bundle newReachSet = reachSet.transform(this->vars, this->params,
-                                              this->dyns, *p_it, this->trans);
+                                              this->dyns, *p_it, this->tmode);
 
       result.add(synthesize(newReachSet, pSet, formula, time + 1));
     }

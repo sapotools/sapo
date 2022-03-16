@@ -30,7 +30,7 @@ Sapo init_sapo(Model *model, const AbsSyn::InputData &data,
 {
   Sapo sapo(model);
 
-  sapo.trans = data.getTransValue();
+  sapo.tmode = (data.getTransValue()==AbsSyn::transType::OFO ? Bundle::OFO : Bundle::AFO);
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();

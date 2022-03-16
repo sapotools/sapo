@@ -22,7 +22,17 @@ class Bundle
 {
   using Vector = std::vector<double>;
   using Matrix = std::vector<Vector>;
+public:
 
+  typedef enum {
+    AFO,     /* the image of any parallelotope in the bundle will 
+              * be over-approximated by using all the templates
+              * of the bundle itself */
+    OFO      /* the image of any parallelotope in the bundle will 
+              * be over-approximated by using exclusively the 
+              * parallelotope own template */
+  } transfomation_mode;
+  
 private:
   Matrix dir_matrix;                      //!< direction matrix
   Vector offp;                            //!< superior offset
@@ -141,12 +151,13 @@ private:
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
    * @param[in] max_finder is a pointer to a MaxCoeffFinder object.
-   * @param[in] mode transformation mode (0=OFO,1=AFO)
+   * @param[in] mode transformation mode, i.e., OFO or AFO.
    * @returns transformed bundle
    */
   Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
                    const std::vector<SymbolicAlgebra::Expression<>> &f,
-                   const MaxCoeffFinder *max_finder, int mode) const;
+                   const MaxCoeffFinder *max_finder,
+                   Bundle::transfomation_mode mode) const;
 
 public:
   /**
@@ -303,12 +314,12 @@ public:
    *
    * @param[in] vars variables appearing in the transforming function
    * @param[in] f transforming function
-   * @param[in] mode transformation mode (0=OFO,1=AFO)
+   * @param[in] mode transformation mode, i.e., OFO or AFO
    * @returns transformed bundle
    */
   inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
                           const std::vector<SymbolicAlgebra::Expression<>> &f,
-                          int mode) const
+                          transfomation_mode mode) const
   {
     MaxCoeffFinder max_finder;
 
@@ -322,13 +333,14 @@ public:
    * @param[in] params parameters appearing in the transforming function
    * @param[in] f transforming function
    * @param[in] paraSet set of parameters
-   * @param[in] mode transformation mode (0=OFO,1=AFO)
+   * @param[in] mode transformation mode, i.e., OFO or AFO
    * @returns transformed bundle
    */
   inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
                           const std::vector<SymbolicAlgebra::Symbol<>> &params,
                           const std::vector<SymbolicAlgebra::Expression<>> &f,
-                          const Polytope &paraSet, int mode) const
+                          const Polytope &paraSet, 
+                          transfomation_mode mode) const
   {
     ParamMaxCoeffFinder max_finder(params, paraSet);
 

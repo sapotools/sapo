@@ -307,13 +307,10 @@ public:
     return trans;
   }
 
-  unsigned char
-  getTransValue() const // returns int value used by sapo (AFO = 1, OFO = 0)
+  transType
+  getTransValue() const
   {
-    if (trans == transType::AFO)
-      return 1;
-    else
-      return 0;
+    return trans;
   }
 
   const bool &isDecompositionDefined() const

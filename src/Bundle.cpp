@@ -691,14 +691,14 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
  *
  * @param[in] vars variables appearing in the transforming function
  * @param[in] f transforming function
- * @param[in] max_finder is a pointer to an MaxCoeffFinder object.
- * @param[in] mode transformation mode (0=OFO,1=AFO)
+ * @param[in] max_finder is a pointer to an MaxCoeffFinder object
+ * @param[in] mode transformation mode, i.e., OFO or AFO
  * @returns transformed bundle
  */
 Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
                          const std::vector<SymbolicAlgebra::Expression<>> &f,
                          const Bundle::MaxCoeffFinder *max_finder,
-                         int mode) const
+                         Bundle::transfomation_mode mode) const
 {
   class minCoeffType
   {
@@ -755,10 +755,10 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
     // for each direction
     const size_t num_of_dirs
-        = (mode == 0 ? t_matrix_i.size() : bundle->dir_matrix.size());
+        = (mode == Bundle::OFO ? t_matrix_i.size() : bundle->dir_matrix.size());
 
     for (unsigned int j = 0; j < num_of_dirs; j++) {
-      if (mode == 0) {
+      if (mode == Bundle::OFO) {
         dir_b = t_matrix_i[j];
       } else {
         dir_b = j;
@@ -816,7 +816,7 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
   Bundle res = Bundle(this->dir_matrix, p_coeffs, m_coeffs, this->t_matrix,
                       this->constraintDirections, this->constraintOffsets);
 
-  if (mode == 0) {
+  if (mode == Bundle::OFO) {
     return res.get_canonical();
   }
 
