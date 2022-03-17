@@ -35,11 +35,11 @@ public:
   /**
    * Constructor
    *
-   * @param[in] template_matrix is the template matrix of the parallelotope
+   * @param[in] directions is the vector of the parallelotope directions
    * @param[in] lower_bound is the lower bound offsets of the parallelotope
    * @param[in] upper_bound is the upper bound offsets of the parallelotope
    */
-  Parallelotope(const Matrix &template_matrix, const Vector &lower_bound,
+  Parallelotope(const Matrix &directions, const Vector &lower_bound,
                 const Vector &upper_bound);
 
   /**

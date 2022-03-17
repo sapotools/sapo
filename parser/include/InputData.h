@@ -307,8 +307,7 @@ public:
     return trans;
   }
 
-  transType
-  getTransValue() const
+  transType getTransValue() const
   {
     return trans;
   }

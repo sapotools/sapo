@@ -32,8 +32,9 @@
  * @param[in] orig is the model for the new bundle
  */
 Bundle::Bundle(const Bundle &orig):
-    dir_matrix(orig.dir_matrix), offp(orig.offp), offm(orig.offm),
-    t_matrix(orig.t_matrix), constraintDirections(orig.constraintDirections),
+    dir_matrix(orig.dir_matrix), upper_offset(orig.upper_offset),
+    lower_offset(orig.lower_offset), t_matrix(orig.t_matrix),
+    constraintDirections(orig.constraintDirections),
     constraintOffsets(orig.constraintOffsets)
 {
 }
@@ -51,8 +52,8 @@ Bundle::Bundle(Bundle &&orig)
 void swap(Bundle &A, Bundle &B)
 {
   std::swap(A.dir_matrix, B.dir_matrix);
-  std::swap(A.offp, B.offp);
-  std::swap(A.offm, B.offm);
+  std::swap(A.upper_offset, B.upper_offset);
+  std::swap(A.lower_offset, B.lower_offset);
   std::swap(A.t_matrix, B.t_matrix);
   std::swap(A.constraintDirections, B.constraintDirections);
   std::swap(A.constraintOffsets, B.constraintOffsets);
@@ -75,14 +76,14 @@ double orthProx(std::vector<double> v1, std::vector<double> v2)
  * Constructor that instantiates the bundle with auto-generated variables
  *
  * @param[in] dir_matrix matrix of directions
- * @param[in] offp upper offsets
- * @param[in] offm lower offsets
+ * @param[in] upper_offset upper offsets
+ * @param[in] lower_offset lower offsets
  * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
-               const Vector &offm,
+Bundle::Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
+               const Vector &lower_offset,
                const std::vector<std::vector<int>> &t_matrix):
-    Bundle(dir_matrix, offp, offm, t_matrix, {}, {})
+    Bundle(dir_matrix, upper_offset, lower_offset, t_matrix, {}, {})
 {
 }
 
@@ -90,19 +91,19 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
  * Constructor that instantiates the bundle with auto-generated variables
  *
  * @param[in] dir_matrix matrix of directions
- * @param[in] offp upper offsets
- * @param[in] offm lower offsets
+ * @param[in] upper_offset upper offsets
+ * @param[in] lower_offset lower offsets
  * @param[in] t_matrix t_matrixs matrix
  * @param[in] constrDirs directions that are constrained by assumptions
  * @param[in] constrOffsets offsets of assumptions
  */
-Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
-               const Vector &offm,
+Bundle::Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
+               const Vector &lower_offset,
                const std::vector<std::vector<int>> &t_matrix,
                const std::vector<std::vector<double>> constrDirs,
                const std::vector<double> constrOffsets):
     dir_matrix(dir_matrix),
-    offp(offp), offm(offm), t_matrix(t_matrix),
+    upper_offset(upper_offset), lower_offset(lower_offset), t_matrix(t_matrix),
     constraintDirections(constrDirs), constraintOffsets(constrOffsets)
 {
   using namespace std;
@@ -112,13 +113,13 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &offp,
 
     exit(EXIT_FAILURE);
   }
-  if (dir_matrix.size() != offp.size()) {
-    std::cerr << "Bundle::Bundle : dir_matrix and offp "
+  if (dir_matrix.size() != upper_offset.size()) {
+    std::cerr << "Bundle::Bundle : dir_matrix and upper_offset "
               << "must have the same size" << std::endl;
     exit(EXIT_FAILURE);
   }
-  if (dir_matrix.size() != offm.size()) {
-    std::cerr << "Bundle::Bundle : dir_matrix and offm must have "
+  if (dir_matrix.size() != lower_offset.size()) {
+    std::cerr << "Bundle::Bundle : dir_matrix and lower_offset must have "
               << "the same size" << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -156,11 +157,11 @@ Bundle::operator Polytope() const
   vector<double> b;
   for (unsigned int i = 0; i < this->size(); i++) {
     A.push_back(this->dir_matrix[i]);
-    b.push_back(this->offp[i]);
+    b.push_back(this->upper_offset[i]);
   }
   for (unsigned int i = 0; i < this->size(); i++) {
     A.push_back(-this->dir_matrix[i]);
-    b.push_back(this->offm[i]);
+    b.push_back(this->lower_offset[i]);
   }
 
   return Polytope(A, b);
@@ -190,8 +191,8 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
   for (unsigned int j = 0; j < this->dim(); j++) {
     const int idx = *it;
     Lambda.push_back(this->dir_matrix[idx]);
-    ubound.push_back(this->offp[idx]);
-    lbound.push_back(this->offm[idx]);
+    ubound.push_back(this->upper_offset[idx]);
+    lbound.push_back(-this->lower_offset[idx]);
 
     ++it;
   }
@@ -212,12 +213,12 @@ Bundle Bundle::get_canonical() const
 {
   // get current polytope
   Polytope bund = *this;
-  std::vector<double> canoffp(this->size()), canoffm(this->size());
+  std::vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
   for (unsigned int i = 0; i < this->size(); i++) {
-    canoffp[i] = bund.maximize(this->dir_matrix[i]);
-    canoffm[i] = bund.maximize(-this->dir_matrix[i]);
+    c_up_offset[i] = bund.maximize(this->dir_matrix[i]);
+    c_lo_offset[i] = bund.maximize(-this->dir_matrix[i]);
   }
-  return Bundle(dir_matrix, canoffp, canoffm, t_matrix);
+  return Bundle(dir_matrix, c_up_offset, c_lo_offset, t_matrix);
 }
 
 /**
@@ -406,13 +407,13 @@ double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
 }
 
 std::list<Bundle> &
-split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_offp,
-             std::vector<double> &tmp_offm, const unsigned int idx,
+split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_up_offset,
+             std::vector<double> &tmp_lo_offset, const unsigned int idx,
              const Bundle &splitting, const double &max_bundle_magnitude,
              const double &split_magnitude_ratio)
 {
   if (idx == splitting.get_directions().size()) {
-    res.emplace_back(splitting.get_directions(), tmp_offp, tmp_offm,
+    res.emplace_back(splitting.get_directions(), tmp_up_offset, tmp_lo_offset,
                      splitting.get_templates());
 
     return res;
@@ -427,17 +428,17 @@ split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_offp,
           lower_bound + split_magnitude_ratio * max_bundle_magnitude,
           splitting.get_offsetp(idx));
 
-      tmp_offm[idx] = -lower_bound;
-      tmp_offp[idx] = upper_bound;
-      split_bundle(res, tmp_offp, tmp_offm, idx + 1, splitting,
+      tmp_lo_offset[idx] = -lower_bound;
+      tmp_up_offset[idx] = upper_bound;
+      split_bundle(res, tmp_up_offset, tmp_lo_offset, idx + 1, splitting,
                    max_bundle_magnitude, split_magnitude_ratio);
 
       lower_bound = upper_bound;
     } while (splitting.get_offsetp(idx) != lower_bound);
   } else {
-    tmp_offm[idx] = splitting.get_offsetm(idx);
-    tmp_offp[idx] = splitting.get_offsetp(idx);
-    split_bundle(res, tmp_offp, tmp_offm, idx + 1, splitting,
+    tmp_lo_offset[idx] = splitting.get_offsetm(idx);
+    tmp_up_offset[idx] = splitting.get_offsetp(idx);
+    split_bundle(res, tmp_up_offset, tmp_lo_offset, idx + 1, splitting,
                  max_bundle_magnitude, split_magnitude_ratio);
   }
   return res;
@@ -448,11 +449,11 @@ std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
 {
   std::list<Bundle> split_list;
 
-  std::vector<double> tmp_offp(offp.size());
-  std::vector<double> tmp_offm(offm.size());
+  std::vector<double> tmp_up_offset(upper_offset.size());
+  std::vector<double> tmp_lo_offset(lower_offset.size());
 
-  split_bundle(split_list, tmp_offp, tmp_offm, 0, *this, max_bundle_magnitude,
-               split_magnitude_ratio);
+  split_bundle(split_list, tmp_up_offset, tmp_lo_offset, 0, *this,
+               max_bundle_magnitude, split_magnitude_ratio);
 
   return split_list;
 }
@@ -518,7 +519,7 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
     i++;
   }
 
-  return Bundle(dir_matrix, offp, offm, bestT);
+  return Bundle(dir_matrix, upper_offset, lower_offset, bestT);
 }
 
 std::vector<SymbolicAlgebra::Expression<>>
@@ -755,7 +756,8 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
 
     // for each direction
     const size_t num_of_dirs
-        = (mode == Bundle::OFO ? t_matrix_i.size() : bundle->dir_matrix.size());
+        = (mode == Bundle::OFO ? t_matrix_i.size()
+                               : bundle->dir_matrix.size());
 
     for (unsigned int j = 0; j < num_of_dirs; j++) {
       if (mode == Bundle::OFO) {
@@ -833,7 +835,7 @@ std::vector<double> Bundle::offsetDistances()
 
   std::vector<double> dist(this->size());
   for (unsigned int i = 0; i < this->size(); i++) {
-    dist[i] = std::abs(this->offp[i] - this->offm[i])
+    dist[i] = std::abs(this->upper_offset[i] - this->lower_offset[i])
               / norm_2(this->dir_matrix[i]);
   }
   return dist;

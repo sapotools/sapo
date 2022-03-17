@@ -31,10 +31,10 @@
 class Sapo
 {
 public:
-  Bundle::transfomation_mode tmode;  //!< transformation mode (OFO or AFO)
-  double decomp_weight; //!< decomposition weight
-  unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
-  std::string plot;     //!< the name of the file were to plot the reach set
+  Bundle::transfomation_mode tmode; //!< transformation mode (OFO or AFO)
+  double decomp_weight;             //!< decomposition weight
+  unsigned int decomp; //!< number of decompositions (0: none, >0: yes)
+  std::string plot;    //!< the name of the file were to plot the reach set
   unsigned int time_horizon;     //!< the computation time horizon
   unsigned int max_param_splits; //!< maximum number of splits in synthesis
   unsigned int num_of_presplits; //!< number of presplits in synthesis

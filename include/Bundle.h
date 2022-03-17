@@ -22,21 +22,21 @@ class Bundle
 {
   using Vector = std::vector<double>;
   using Matrix = std::vector<Vector>;
-public:
 
+public:
   typedef enum {
-    AFO,     /* the image of any parallelotope in the bundle will 
-              * be over-approximated by using all the templates
-              * of the bundle itself */
-    OFO      /* the image of any parallelotope in the bundle will 
-              * be over-approximated by using exclusively the 
-              * parallelotope own template */
+    AFO, /* the image of any parallelotope in the bundle will
+          * be over-approximated by using all the templates
+          * of the bundle itself */
+    OFO  /* the image of any parallelotope in the bundle will
+          * be over-approximated by using exclusively the
+          * parallelotope own template */
   } transfomation_mode;
-  
+
 private:
   Matrix dir_matrix;                      //!< direction matrix
-  Vector offp;                            //!< superior offset
-  Vector offm;                            //!< inferior offset
+  Vector upper_offset;                    //!< superior offset
+  Vector lower_offset;                    //!< inferior offset
   std::vector<std::vector<int>> t_matrix; //!< templates matrix
 
   // constraints over directions (assertions)
@@ -178,24 +178,26 @@ public:
    * Constructor that instantiates the bundle with auto-generated variables
    *
    * @param[in] dir_matrix matrix of directions
-   * @param[in] offp upper offsets
-   * @param[in] offm lower offsets
+   * @param[in] upper_offset upper offsets
+   * @param[in] lower_offset lower offsets
    * @param[in] t_matrix t_matrixs matrix
    */
-  Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
+  Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
+         const Vector &lower_offset,
          const std::vector<std::vector<int>> &t_matrix);
 
   /**
    * Constructor that instantiates the bundle with auto-generated variables
    *
    * @param[in] dir_matrix matrix of directions
-   * @param[in] offp upper offsets
-   * @param[in] offm lower offsets
+   * @param[in] upper_offset upper offsets
+   * @param[in] lower_offset lower offsets
    * @param[in] t_matrix t_matrixs matrix
    * @param[in] constrDirs directions that are constrained by assumptions
    * @param[in] constrOffsets offsets of assumptions
    */
-  Bundle(const Matrix &dir_matrix, const Vector &offp, const Vector &offm,
+  Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
+         const Vector &lower_offset,
          const std::vector<std::vector<int>> &t_matrix,
          const std::vector<std::vector<double>> constrDirs,
          const std::vector<double> constrOffsets);
@@ -232,12 +234,12 @@ public:
 
   const double &get_offsetp(long unsigned int i) const
   {
-    return this->offp[i];
+    return this->upper_offset[i];
   }
 
   const double &get_offsetm(long unsigned int i) const
   {
-    return this->offm[i];
+    return this->lower_offset[i];
   }
 
   /**
@@ -265,14 +267,14 @@ public:
     this->t_matrix = t_matrix;
   }
 
-  void setOffsetP(Vector offp)
+  void setOffsetP(const Vector &upper_offset)
   {
-    this->offp = offp;
+    this->upper_offset = upper_offset;
   }
 
-  void setOffsetM(Vector offm)
+  void setOffsetM(const Vector &lower_offset)
   {
-    this->offm = offm;
+    this->lower_offset = lower_offset;
   }
 
   // operations on bundles
@@ -339,7 +341,7 @@ public:
   inline Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
                           const std::vector<SymbolicAlgebra::Symbol<>> &params,
                           const std::vector<SymbolicAlgebra::Expression<>> &f,
-                          const Polytope &paraSet, 
+                          const Polytope &paraSet,
                           transfomation_mode mode) const
   {
     ParamMaxCoeffFinder max_finder(params, paraSet);

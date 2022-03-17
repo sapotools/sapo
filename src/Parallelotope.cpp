@@ -15,20 +15,20 @@
 /**
  * Constructor
  *
- * @param[in] template_matrix is the template matrix of the parallelotope
+ * @param[in] directions is the vector of the parallelotope directions
  * @param[in] lower_bound is the lower bound offsets of the parallelotope
  * @param[in] upper_bound is the upper bound offsets of the parallelotope
  */
-Parallelotope::Parallelotope(const Matrix &template_matrix,
+Parallelotope::Parallelotope(const Matrix &directions,
                              const Vector &lower_bound,
                              const Vector &upper_bound)
 {
-  SparseLinearAlgebra::Matrix<double> tmatrix(template_matrix);
-  SparseLinearAlgebra::PLU_Factorization<double> factorization(tmatrix);
+  const SparseLinearAlgebra::Matrix<double> dmatrix(directions);
+  SparseLinearAlgebra::PLU_Factorization<double> factorization(dmatrix);
 
   try {
     // store the base vertex
-    _base_vertex = factorization.solve(upper_bound);
+    _base_vertex = factorization.solve(lower_bound);
 
   } catch (std::domain_error &) { // if a domain_error is raised, then the
                                   // template is singular
@@ -39,7 +39,7 @@ Parallelotope::Parallelotope(const Matrix &template_matrix,
   // Compute the versors
   std::vector<double> offset(upper_bound.size(), 0);
   for (unsigned int k = 0; k < upper_bound.size(); k++) {
-    const double delta_k = -(upper_bound[k] + lower_bound[k]);
+    const double delta_k = upper_bound[k] - lower_bound[k];
     if (delta_k != 0) {
       offset[k] = delta_k;
     } else {
