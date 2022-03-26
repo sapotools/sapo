@@ -1,5 +1,4 @@
 problem: synthesis;
-parameter_mode: boxes;
 iterations: 100;
 max_parameter_splits: 4;
 

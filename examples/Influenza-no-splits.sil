@@ -1,5 +1,4 @@
 problem: synthesis;
-parameter_mode: boxes;
 iterations: 100;
 
 var s in [0.2, 0.3];

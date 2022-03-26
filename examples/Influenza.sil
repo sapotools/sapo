@@ -2,7 +2,6 @@ problem: synthesis;
 
 iterations: 50;
 
-
 var s, i, t, r;
 
 param tau in [0.001, 0.002];
