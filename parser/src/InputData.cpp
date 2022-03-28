@@ -558,12 +558,7 @@ res = false;
             this->getVarSymbols()));
       }
 
-      vector<double> zeroes(templateMatrix[i].size(), 0);
-
-      DenseLinearAlgebra::PLU_Factorization<double> PLU(M);
-      try {
-        vector<double> res = PLU.solve(zeroes);
-      } catch (domain_error &e) {
+      if (DenseLinearAlgebra::rank(M) != templateMatrix[i].size()) {
         // directions are dependent, parallelotope is not bounded
         cerr << "Template row " << templateMatrix[i]
              << " defines an unbounded parallelotope" << endl;

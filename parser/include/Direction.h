@@ -66,7 +66,7 @@ public:
 
   bool hasLB() const
   {
-    /* Why must be an interval or an equation? Couldn't it be a */
+    /* Why must be an interval or an equation? */
     return type == Type::IN || type == Type::EQ
            || LB != -std::numeric_limits<double>::infinity();
   }
