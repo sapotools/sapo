@@ -319,7 +319,7 @@ int find(std::vector<Direction *> M, Direction *v)
 void InputData::addDirectionConstraint(Direction *d, bool isVar)
 {
   if (d->getType()
-      == Direction::Type::INT) { // constraint is an interval specification
+      == Direction::Type::IN) { // constraint is an interval specification
     this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(),
                                                Direction::Type::LE, 0, 0,
                                                d->getSymbol()),

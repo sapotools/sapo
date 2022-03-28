@@ -27,7 +27,7 @@ std::ostream &operator<<(std::ostream &os, const Direction &d)
   case Direction::Type::EQ:
     os << " = ";
     break;
-  case Direction::Type::INT:
+  case Direction::Type::IN:
     return os << " in [" << d.LB << ", " << d.UB << "]";
   default:
     throw std::logic_error("unsupported direction type");
@@ -39,7 +39,7 @@ std::ostream &operator<<(std::ostream &os, const Direction &d)
 
 double Direction::getLB() const
 {
-  if (type == Type::INT) {
+  if (type == Type::IN) {
     return LB;
   } else if (type == Type::GT || type == Type::GE || type == Type::EQ) {
     return -this->getOffset();
@@ -49,7 +49,7 @@ double Direction::getLB() const
 }
 double Direction::getUB() const
 {
-  if (type == Type::INT) {
+  if (type == Type::IN) {
     return UB;
   } else if (type == Type::LT || type == Type::LE || type == Type::EQ) {
     return this->getOffset();
@@ -63,7 +63,7 @@ void Direction::setLB(double val)
   UB = this->getUB();
 
   if (this->hasUB()) {
-    type = Type::INT;
+    type = Type::IN;
   }
 
   LB = (val == 0 ? 0 : val);
@@ -73,7 +73,7 @@ void Direction::setUB(double val)
   LB = this->getLB();
 
   if (this->hasLB()) {
-    type = Type::INT;
+    type = Type::IN;
   }
 
   UB = (val == 0 ? 0 : val);
@@ -105,8 +105,8 @@ Direction *Direction::getComplementary() const
   case Direction::Type::EQ:
     newType = Direction::Type::EQ;
     break;
-  case Direction::Type::INT:
-    newType = Direction::Type::INT;
+  case Direction::Type::IN:
+    newType = Direction::Type::IN;
     break;
   default:
     throw std::logic_error("undefined direction type");
@@ -165,7 +165,7 @@ std::vector<double> Direction::getDirectionVector(
     coeff = 1;
   } else if (type == Type::GE || type == Type::GT) {
     coeff = -1;
-  } else if (type == Type::INT) {
+  } else if (type == Type::IN) {
     coeff = 1;
   } else if (type == Type::EQ) {
     coeff = 1;

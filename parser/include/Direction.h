@@ -21,7 +21,7 @@ public:
     GT, // >
     GE, // >=
     EQ, // =
-    INT // lhs in [a,b]
+    IN // lhs in [a,b]
   };
 
   Direction(SymbolicAlgebra::Expression<> e1, SymbolicAlgebra::Expression<> e2,
@@ -66,12 +66,14 @@ public:
 
   bool hasLB() const
   {
-    return type == Type::INT || type == Type::EQ
+    /* Why must be an interval or an equation? Couldn't it be a */
+    return type == Type::IN || type == Type::EQ
            || LB != -std::numeric_limits<double>::infinity();
   }
+
   bool hasUB() const
   {
-    return type == Type::INT || type == Type::EQ
+    return type == Type::IN || type == Type::EQ
            || UB != std::numeric_limits<double>::infinity();
   }
 
@@ -82,6 +84,7 @@ public:
   {
     return lhs;
   }
+  
   SymbolicAlgebra::Expression<> getRHS()
   {
     return rhs;
@@ -95,7 +98,7 @@ public:
   bool contains(std::vector<SymbolicAlgebra::Symbol<>> symbols) const
   {
     return AbsSyn::contains(lhs, symbols)
-           || (type != Type::INT && AbsSyn::contains(rhs, symbols));
+           || (type != Type::IN && AbsSyn::contains(rhs, symbols));
   }
 
   Direction *copy() const; // deep copy of direction

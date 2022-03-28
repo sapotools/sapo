@@ -284,7 +284,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
 									drv.data.addVarDirectionConstraint(d);
 								}
 							}
@@ -302,7 +302,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
 									drv.data.addVarDirectionConstraint(d);
 								}
 							}
@@ -348,7 +348,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -366,7 +366,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::INT, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -503,7 +503,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@1, "Assumptions are not supported for synthesis yet");
 							} else if ($2->getType() == AbsSyn::Direction::Type::EQ) {
 								ERROR(@2, "Directions with \"=\" are not supported yet in assumptions");
-							} else if ($2->getType() == AbsSyn::Direction::Type::INT) {
+							} else if ($2->getType() == AbsSyn::Direction::Type::IN) {
 								ERROR(@2, "Directions with intervals are not supported yet in assumptions");
 							} else {
 								drv.data.addAssumption($2);
@@ -545,9 +545,9 @@ direction	: expr directionType expr
 							}
 							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
 								ERROR(@1, "Expression in directions cannot contain parameters");
-								$$ = new AbsSyn::Direction(0, 0, AbsSyn::Direction::Type::INT, $3.first, $3.second);
+								$$ = new AbsSyn::Direction(0, 0, AbsSyn::Direction::Type::IN, $3.first, $3.second);
 							} else {
-								$$ = new AbsSyn::Direction($1, 0, AbsSyn::Direction::Type::INT, $3.first, $3.second);
+								$$ = new AbsSyn::Direction($1, 0, AbsSyn::Direction::Type::IN, $3.first, $3.second);
 							}
 						}
 
