@@ -1,0 +1,21 @@
+problem: reachability;
+
+iterations: 30;
+
+var x;
+var y;
+
+const timestep = 0.0001;
+
+dynamic(x) = x;
+dynamic(y) = y + x*x*timestep;
+
+direction x + y <= 10;
+direction x >= 0;
+direction y >= 0;
+
+template = {
+	{0, 1, 2},
+	{1, 2, 0},
+	{2, 0, 1}
+};

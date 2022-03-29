@@ -9,8 +9,8 @@ var y in [1.99, 2];
 dynamic(x) = x + (y)*0.02;
 dynamic(y) = y + (0.5*(1-x*x)*y - x)*0.02;
 
-direction y - x in [10, 10];
-direction x + y in [10, 10];
+direction y - x = 10;
+direction x + y = 10;
 
 template = {
 	{0, 1},

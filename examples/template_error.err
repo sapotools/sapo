@@ -1,0 +1,5 @@
+[1;31mError[0m at line 20, column 14: template matrix must have as many columns as the number of variables
+   18 |     {0, 1, 2},
+   19 |     {1, 2, 0},
+   20 |     {2, 0, 1}
+Error in loading /Users/alberto/Dropbox/Lavoro/Code/sapo/examples/template_error.sil
