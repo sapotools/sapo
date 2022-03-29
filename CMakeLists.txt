@@ -121,7 +121,8 @@ enable_testing()
 
 set(sapo_tests Ebola Influenza Influenza-no-splits Influenza-splits
                LotkaVolterra Phosphorelay Quadcopter Rossler SIRp SIR
-               VanDerPol )
+               VanDerPol incomplete-directions boundaries_errors
+               template_error)
 
 add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR}
 	                   --target sapo -j 4 -- )
