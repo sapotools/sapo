@@ -284,7 +284,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
 									drv.data.addVarDirectionConstraint(d);
 								}
 							}
@@ -302,7 +302,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
 									drv.data.addVarDirectionConstraint(d);
 								}
 							}
@@ -348,7 +348,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -366,7 +366,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, 0, AbsSyn::Direction::Type::IN, $4.first, $4.second, sym);
+									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -545,9 +545,9 @@ direction	: expr directionType expr
 							}
 							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
 								ERROR(@1, "Expression in directions cannot contain parameters");
-								$$ = new AbsSyn::Direction(0, 0, AbsSyn::Direction::Type::IN, $3.first, $3.second);
+								$$ = new AbsSyn::Direction(0, $3.first, $3.second);
 							} else {
-								$$ = new AbsSyn::Direction($1, 0, AbsSyn::Direction::Type::IN, $3.first, $3.second);
+								$$ = new AbsSyn::Direction($1, $3.first, $3.second);
 							}
 						}
 

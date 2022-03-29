@@ -354,6 +354,23 @@ public:
     dynamic_degree = d;
   }
 
+  /**
+   * @brief Fix boundaries according to the whole input
+   *
+   * There are cases in which a set of constraints is bounded
+   * even though not all constrains are explicitly provided
+   * with an upper and a lower bound. For instance, neither
+   * \f$x\f$ nor \f$y\f$ are apparently upper bounded by the
+   * system \f$\{x + y <= 10, x >= 0, y >= 0\}\f$, however,
+   * the constrains \f$x + y <= 10\f$ forces both of them
+   * to be $10$ at most.
+   * This method considers both the initial set and the
+   * parameter set, discovers the upper and the lower
+   * boundaries over each constraint, and updates their
+   * values in the current object.
+   */
+  void optimize_boundaries();
+
   bool check(); // checks for errors in model
 
 protected:

@@ -18,6 +18,67 @@
 
 #include "JSONStreamer.h"
 
+/**
+ * @brief The result of an optimization process
+ *
+ * @tparam T is the type of the output value
+ */
+template<typename T>
+class OptimizationResult
+{
+  T _optimum;  //!< The optimum value
+  int _status; //!< The status of the process
+public:
+  /**
+   * @brief Construct a new optimization result object
+   *
+   * @param optimum is the optimum value
+   * @param status is the status of the optimization process
+   */
+  OptimizationResult(const T &optimum, const int &status):
+      _optimum(optimum), _status(status)
+  {
+  }
+
+  /**
+   * @brief Copy constructor
+   *
+   * @param orig is the template object
+   */
+  OptimizationResult(const OptimizationResult<T> &orig):
+      _optimum(orig._optimum), _status(orig._status)
+  {
+  }
+
+  /**
+   * @brief Get the optimum value
+   *
+   * @return The optimum value
+   */
+  const T &optimum() const
+  {
+    return _optimum;
+  }
+
+  /**
+   * @brief Get the status of the optimization process
+   *
+   * @return The status of the optimization process
+   */
+  const int &status() const
+  {
+    return _status;
+  }
+
+  OptimizationResult<T> &operator=(const OptimizationResult<T> &orig)
+  {
+    _optimum = orig._optimum;
+    _status = orig._status;
+
+    return *this;
+  }
+};
+
 class LinearSystem
 {
 
@@ -164,30 +225,12 @@ public:
    * Optimize a linear system
    *
    * @param[in] obj_fun objective function
-   * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
+   * @param[in] maximize is a Boolean parameter to establish whether
+   *        maximize (true) or minimize (false) `obj_fun` over the system
    * @return optimum
    */
-  double optimize(const std::vector<double> &obj_fun, const int min_max) const;
-
-  /**
-   * Minimize the linear system
-   *
-   * @param[in] vars list of variables
-   * @param[in] obj_fun objective function
-   * @return minimum
-   */
-  double minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-                  const SymbolicAlgebra::Expression<> &obj_fun) const;
-
-  /**
-   * Maximize the linear system
-   *
-   * @param[in] vars list of variables
-   * @param[in] obj_fun objective function
-   * @return maximum
-   */
-  double maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-                  const SymbolicAlgebra::Expression<> &obj_fun) const;
+  OptimizationResult<double> optimize(const std::vector<double> &obj_fun,
+                                      const bool maximize) const;
 
   /**
    * Minimize the linear system
@@ -195,7 +238,8 @@ public:
    * @param[in] obj_fun objective function
    * @return minimum
    */
-  double minimize(const std::vector<double> &obj_fun_coeffs) const;
+  OptimizationResult<double>
+  minimize(const std::vector<double> &obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -203,7 +247,30 @@ public:
    * @param[in] obj_fun objective function
    * @return maximum
    */
-  double maximize(const std::vector<double> &obj_fun_coeffs) const;
+  OptimizationResult<double>
+  maximize(const std::vector<double> &obj_fun) const;
+
+  /**
+   * Minimize the linear system
+   *
+   * @param[in] symbols array of symbols
+   * @param[in] obj_fun objective function
+   * @return minimum
+   */
+  OptimizationResult<double>
+  minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
+           const SymbolicAlgebra::Expression<> &obj_fun) const;
+
+  /**
+   * Maximize the linear system
+   *
+   * @param[in] symbols array of symbols
+   * @param[in] obj_fun objective function
+   * @return maximum
+   */
+  OptimizationResult<double>
+  maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
+           const SymbolicAlgebra::Expression<> &obj_fun) const;
 
   // testing methods
 

@@ -237,7 +237,9 @@ public:
            = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
   inline T evaluate() const
   {
-    return static_cast<T>(_ex->evaluate());
+    const double value = static_cast<T>(_ex->evaluate());
+
+    return value == 0 ? 0 : value;
   }
 
   /**
@@ -297,6 +299,21 @@ public:
     }
 
     return result;
+  }
+
+  /**
+   * @brief Get the constant term of the expression.
+   *
+   * @return The constant term of the expression.
+   */
+  Expression<C> get_constant_term() const
+  {
+    Expression<C>::replacement_type replacements;
+    for (Symbol<C> symbol: this->get_symbols()) {
+      replacements[symbol] = 0;
+    }
+
+    return Expression<C>(*this).replace(replacements);
   }
 
   /**

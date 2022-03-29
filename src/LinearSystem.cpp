@@ -48,12 +48,14 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
  * @param[in] A template matrix of the system to optimize
  * @param[in] b offset vector of the system to optimize
  * @param[in] obj_fun objective function
- * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
+ * @param[in] maximize is a Boolean parameter to establish whether
+ *        maximize (true) or minimize (false) `obj_fun` over the system
  * @return optimum
  */
-double optimize(const std::vector<std::vector<double>> &A,
-                const std::vector<double> &b,
-                const std::vector<double> &obj_fun, const int min_max)
+OptimizationResult<double> optimize(const std::vector<std::vector<double>> &A,
+                                    const std::vector<double> &b,
+                                    const std::vector<double> &obj_fun,
+                                    const bool maximize)
 {
   unsigned int num_rows = A.size();
   unsigned int num_cols = obj_fun.size();
@@ -68,7 +70,7 @@ double optimize(const std::vector<std::vector<double>> &A,
 
   glp_prob *lp;
   lp = glp_create_prob();
-  glp_set_obj_dir(lp, min_max);
+  glp_set_obj_dir(lp, (maximize ? GLP_MAX : GLP_MIN));
 
   // Turn off verbose mode
   glp_smcp lp_param;
@@ -104,34 +106,66 @@ double optimize(const std::vector<std::vector<double>> &A,
   //	glp_simplex(lp, &lp_param);
 
   double res;
-  if (glp_get_status(lp) == GLP_UNBND) {
-    if (min_max == GLP_MAX) {
+  switch (glp_get_status(lp)) {
+  case GLP_UNBND:
+    if (maximize) {
       res = std::numeric_limits<double>::infinity();
     } else {
       res = -std::numeric_limits<double>::infinity();
     }
-  } else {
+    break;
+  default:
     res = glp_get_obj_val(lp);
   }
+
+  OptimizationResult<double> opt_res(res, glp_get_status(lp));
+
   glp_delete_prob(lp);
   glp_free_env();
   free(ia);
   free(ja);
   free(ar);
-  return res;
+
+  return opt_res;
 }
 
 /**
  * Optimize a linear system
  *
  * @param[in] obj_fun objective function
- * @param[in] min_max minimize of maximize Ax<=b (GLP_MIN=min, GLP_MAX=max)
+ * @param[in] maximize is a Boolean parameter to establish whether
+ *        maximize (true) or minimize (false) `obj_fun` over the system
  * @return optimum
  */
-double LinearSystem::optimize(const std::vector<double> &obj_fun,
-                              const int min_max) const
+OptimizationResult<double>
+LinearSystem::optimize(const std::vector<double> &obj_fun,
+                       const bool maximize) const
 {
-  return ::optimize(this->A, this->b, obj_fun, min_max);
+  return ::optimize(this->A, this->b, obj_fun, maximize);
+}
+
+/**
+ * Minimize the linear system
+ *
+ * @param[in] obj_fun objective function
+ * @return minimum
+ */
+OptimizationResult<double>
+LinearSystem::minimize(const std::vector<double> &obj_fun) const
+{
+  return ::optimize(this->A, this->b, obj_fun, false);
+}
+
+/**
+ * Maximize the linear system
+ *
+ * @param[in] obj_fun objective function
+ * @return maximum
+ */
+OptimizationResult<double>
+LinearSystem::maximize(const std::vector<double> &obj_fun) const
+{
+  return ::optimize(this->A, this->b, obj_fun, true);
 }
 
 /**
@@ -336,31 +370,25 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
     return true;
   }
 
-  std::vector<std::vector<double>> extA(this->A);
-  std::vector<double> obj_fun(this->A[0].size(), 0);
-  obj_fun.push_back(1);
+  std::vector<double> obj_fun(dim(), 0);
+  obj_fun[1] = 0;
 
-  // Add an extra variable to the linear system
-  for (std::vector<std::vector<double>>::iterator row_it = begin(extA);
-       row_it != end(extA); ++row_it) {
-    row_it->push_back(-1);
-  }
+  OptimizationResult<double> res = maximize(obj_fun);
 
-  const double z = ::optimize(extA, this->b, obj_fun, GLP_MIN);
-
-  return (z <= MAX_APPROX_ERROR)
-         || (!strict_inequality && (z < MAX_APPROX_ERROR));
+  return ((res.status() != GLP_NOFEAS) && (res.status() != GLP_INFEAS)
+          && ((res.optimum() <= MAX_APPROX_ERROR)
+              || (!strict_inequality && (res.optimum() < MAX_APPROX_ERROR))));
 }
 
 /**
  * Minimize the linear system
  *
- * @param[in] vars list of variables
+ * @param[in] symbols array of symbols
  * @param[in] obj_fun objective function
  * @return minimum
  */
-double
-LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+OptimizationResult<double>
+LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
                        const SymbolicAlgebra::Expression<> &obj_fun) const
 {
   using namespace SymbolicAlgebra;
@@ -369,50 +397,28 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
   Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
-  for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
-    double coeff = (obj_fun.get_coeff(*v_it, 1)).evaluate<double>();
+  for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
+    double coeff = (obj_fun.get_coeff(*s_it, 1)).evaluate<double>();
 
     obj_fun_coeffs.push_back(coeff);
-    const_term = const_term.get_coeff(*v_it, 0);
+    const_term = const_term.get_coeff(*s_it, 0);
   }
 
   const double c = const_term.evaluate<double>();
-  const double min = optimize(obj_fun_coeffs, GLP_MIN);
+  auto res = minimize(obj_fun_coeffs);
 
-  return (min + c);
-}
-
-/**
- * Minimize the linear system
- *
- * @param[in] obj_fun objective function
- * @return minimum
- */
-double LinearSystem::minimize(const std::vector<double> &obj_fun_coeffs) const
-{
-  return optimize(obj_fun_coeffs, GLP_MIN);
+  return OptimizationResult<double>(res.optimum() + c, res.status());
 }
 
 /**
  * Maximize the linear system
  *
+ * @param[in] symbols array of symbols
  * @param[in] obj_fun objective function
  * @return maximum
  */
-double LinearSystem::maximize(const std::vector<double> &obj_fun_coeffs) const
-{
-  return optimize(obj_fun_coeffs, GLP_MAX);
-}
-
-/**
- * Maximize the linear system
- *
- * @param[in] vars list of variables
- * @param[in] obj_fun objective function
- * @return maximum
- */
-double
-LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+OptimizationResult<double>
+LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
                        const SymbolicAlgebra::Expression<> &obj_fun) const
 {
   using namespace SymbolicAlgebra;
@@ -421,15 +427,16 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
   Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
-  for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
-    const double coeff = obj_fun.get_coeff(*v_it, 1).evaluate<double>();
+  for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
+    const double coeff = obj_fun.get_coeff(*s_it, 1).evaluate<double>();
     obj_fun_coeffs.push_back(coeff);
-    const_term = const_term.get_coeff(*v_it, 0);
+    const_term = const_term.get_coeff(*s_it, 0);
   }
 
   const double c = const_term.evaluate<double>();
+  auto res = maximize(obj_fun_coeffs);
 
-  return maximize(obj_fun_coeffs) + c;
+  return OptimizationResult<double>(res.optimum() + c, res.status());
 }
 
 /**
@@ -457,14 +464,16 @@ bool LinearSystem::satisfies(const std::vector<double> &Ai,
     return true;
   }
 
-  double max = this->maximize(Ai);
-  if (max + MAX_APPROX_ERROR
-      <= bi) { /* This should be max <= bi,
-                                  however, due to double approximation
-                                  errors, testing whether the distance
-                                  between max and bi is greater than a
-                                  fixed positive approximation constant
-                                  is more conservative */
+  OptimizationResult<double> res = this->maximize(Ai);
+
+  if (res.status() != GLP_NOFEAS
+      && res.optimum() + MAX_APPROX_ERROR
+             <= bi) { /* This should be max <= bi,
+                                         however, due to double approximation
+                                         errors, testing whether the distance
+                                         between max and bi is greater than a
+                                         fixed positive approximation constant
+                                         is more conservative */
     return true;
   }
 

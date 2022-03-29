@@ -140,7 +140,7 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
     b.push_back(this->b[cidx]);
 
     try {
-      const double min_value = minimize(this->A[cidx]);
+      const double min_value = minimize(this->A[cidx]).optimum();
 
       A.push_back(-this->A[cidx]);
       if (num_of_splits > 0) {
@@ -232,9 +232,9 @@ double Polytope::bounding_box_volume() const
   for (unsigned int i = 0; i < this->dim(); i++) {
     vector<double> facet = zeros;
     facet[i] = 1;
-    const double b_plus = maximize(facet);
+    const double b_plus = maximize(facet).optimum();
     facet[i] = -1;
-    const double b_minus = minimize(facet);
+    const double b_minus = minimize(facet).optimum();
     vol = vol * (b_plus + b_minus);
   }
 

@@ -142,10 +142,10 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
        ++it) {
     PolytopesUnion::const_iterator ls_it(it->begin());
 
-    double min_value = ls_it->minimize(v_templates[var]);
+    double min_value = ls_it->minimize(v_templates[var]).optimum();
 
     for (; ls_it != it->end(); ++ls_it) {
-      double min_var_value = ls_it->minimize(v_templates[var]);
+      double min_var_value = ls_it->minimize(v_templates[var]).optimum();
 
       min_value = std::min(min_var_value, min_value);
     }
@@ -162,10 +162,10 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
 
     PolytopesUnion::const_iterator ls_it(it->begin());
 
-    double max_value = ls_it->maximize(v_templates[var]);
+    double max_value = ls_it->maximize(v_templates[var]).optimum();
 
     for (; ls_it != it->end(); ++ls_it) {
-      double max_var_value = ls_it->maximize(v_templates[var]);
+      double max_var_value = ls_it->maximize(v_templates[var]).optimum();
 
       max_value = std::min(max_var_value, max_value);
     }

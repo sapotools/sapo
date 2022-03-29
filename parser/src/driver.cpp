@@ -16,6 +16,16 @@ int driver::parse(const std::string &f)
   parse.set_debug_level(trace_parsing);
   int res = parse();
   scan_end();
+
+  try {
+    data.optimize_boundaries();
+  } catch (std::domain_error &e) {
+    // the parameter set is empty
+
+    std::cerr << "The paramter set cannot be empty." << std::endl;
+
+    return 1;
+  }
   if (res == 0 && !errors && data.check())
     return 0;
   else

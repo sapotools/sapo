@@ -1,5 +1,7 @@
 #include "InputData.h"
 
+#include <glpk.h>
+
 using namespace std;
 
 namespace AbsSyn
@@ -318,31 +320,6 @@ int find(std::vector<Direction *> M, Direction *v)
 
 void InputData::addDirectionConstraint(Direction *d, bool isVar)
 {
-  if (d->getType()
-      == Direction::Type::IN) { // constraint is an interval specification
-    this->addDirectionConstraint(new Direction(d->getLHS(), d->getUB(),
-                                               Direction::Type::LE, 0, 0,
-                                               d->getSymbol()),
-                                 isVar);
-    this->addDirectionConstraint(new Direction(d->getLHS(), d->getLB(),
-                                               Direction::Type::GE, 0, 0,
-                                               d->getSymbol()),
-                                 isVar);
-    delete (d);
-    return;
-  } else if (d->getType() == Direction::Type::EQ) {
-    this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(),
-                                               Direction::Type::LE, 0, 0,
-                                               d->getSymbol()),
-                                 isVar);
-    this->addDirectionConstraint(new Direction(d->getLHS(), d->getRHS(),
-                                               Direction::Type::GE, 0, 0,
-                                               d->getSymbol()),
-                                 isVar);
-    delete (d);
-    return;
-  }
-
   Direction *new_dir = d;
   Direction *negated_dir = new_dir->getComplementary();
 
@@ -432,6 +409,162 @@ void InputData::addParamDirectionConstraint(Direction *d)
   return this->addDirectionConstraint(d, false);
 }
 
+double typeCoeff(const Direction::Type &type)
+{
+  if (type == AbsSyn::Direction::Type::GE
+      || type == AbsSyn::Direction::Type::GT) {
+    return -1;
+  }
+
+  return 1;
+}
+
+/**
+ * @brief Build a constraints linear system from a set of constraints
+ *
+ * @tparam T is the type of the symbol domain
+ * @param constraints the set of constraints
+ * @param symbols the order of the constraint symbols in the linear system
+ * @return A linear system representing the provided linear systems
+ */
+template<typename T>
+LinearSystem
+getConstraintsSystem(const std::vector<Direction *> &constraints,
+                     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
+{
+  vector<vector<T>> A{};
+  vector<T> b{};
+
+  for (auto dir_it = std::cbegin(constraints);
+       dir_it != std::cend(constraints); ++dir_it) {
+    const AbsSyn::Direction &dir = **dir_it;
+
+    double coeff = typeCoeff(dir.getType());
+    auto systemRow = dir.getConstraintVector(symbols);
+    // add only bounded constraints
+    if (dir.hasUB()) {
+      A.push_back(coeff * systemRow);
+      b.push_back(coeff * dir.getUB());
+    }
+    if (dir.hasLB()) {
+      A.push_back(-coeff * systemRow);
+      b.push_back(-coeff * dir.getLB());
+    }
+  }
+  return LinearSystem(A, b);
+}
+
+/**
+ * @brief Optimize the boundaries of a constraints set
+ *
+ * @tparam T is the type of the symbol domain
+ * @param constraints the constraint set whose boundaries we want to be
+ * optimized
+ * @param symbols the array of the symbols in the constraint set
+ */
+template<typename T>
+void optimizeConstraintsBoundaries(
+    std::vector<Direction *> &constraints,
+    const std::vector<SymbolicAlgebra::Symbol<>> &symbols)
+{
+  // get the linear system associated to the constraint set
+  LinearSystem constrSystem = getConstraintsSystem(constraints, symbols);
+
+  // for each constraint
+  for (auto c_it = std::begin(constraints); c_it != std::end(constraints);
+       ++c_it) {
+    AbsSyn::Direction &constr = **c_it;
+
+    // coeff belongs to {1,-1} and depends on the
+    // constrain type
+    const double coeff = typeCoeff(constr.getType());
+
+    std::vector<double> constrVector
+        = coeff * constr.getConstraintVector(symbols);
+
+    OptimizationResult<double> opt_res = constrSystem.minimize(constrVector);
+
+    if (opt_res.status() == GLP_NOFEAS) {
+      throw std::domain_error("Infeasable system");
+    }
+
+    constr.setLB(opt_res.optimum());
+
+    opt_res = constrSystem.maximize(constrVector);
+
+    if (opt_res.status() == GLP_NOFEAS) {
+      throw std::domain_error("Infeasable system");
+    }
+    constr.setUB(opt_res.optimum());
+  }
+}
+
+void InputData::optimize_boundaries()
+{
+  // optimize initial set
+  try {
+    optimizeConstraintsBoundaries<double>(directions, this->getVarSymbols());
+  } catch (std::domain_error &e) {
+    // the input set is empty
+    // this condition is admitted
+  }
+
+  // optimize initial parameter set
+  // if the parameter set is empty a domain_error exception is thrown
+  // as this condition is not admitted
+  optimizeConstraintsBoundaries<double>(paramDirections,
+                                        this->getParamSymbols());
+}
+
+/**
+ * @brief Check whether the symbols are bounded by the constraints
+ *
+ * @tparam T
+ * @param what is a textual description of the investigated symbols
+ * @param constraints is a set of constraints
+ * @param symbols is the set of symbols in the constraints
+ * @return true if and only if all the symbols are bounded
+ */
+template<typename T>
+bool checkFiniteBounds(const char *what, std::vector<Direction *> &constraints,
+                       const std::vector<SymbolicAlgebra::Symbol<>> &symbols)
+{
+  if (constraints.size() == 0) {
+    return true;
+  }
+
+  bool result = true;
+  // get the linear system associated to the constraint set
+  LinearSystem constrSystem = getConstraintsSystem(constraints, symbols);
+
+  std::vector<T> sym_array(symbols.size(), 0);
+
+  // for each symbol
+  for (unsigned int i = 0; i < sym_array.size(); ++i) {
+    sym_array[i] = 1;
+
+    // check whether it is lower bounded
+    if (constrSystem.minimize(sym_array).optimum()
+        == -std::numeric_limits<T>::infinity()) {
+      std::cerr << what << " " << symbols[i] << " has no finite lower bound"
+                << std::endl;
+      result = false;
+    }
+
+    // check whether it is bounded
+    if (constrSystem.maximize(sym_array).optimum()
+        == std::numeric_limits<T>::infinity()) {
+      std::cerr << what << " " << symbols[i] << " has no finite upper bound"
+                << std::endl;
+      result = false;
+    }
+
+    sym_array[i] = 0;
+  }
+
+  return result;
+}
+
 bool InputData::check()
 {
   bool res = true;
@@ -455,98 +588,14 @@ bool InputData::check()
     }
   }
 
-  // each var must be covered
-  /*for (unsigned i = 0; i < vars.size(); i++) {
-if (!vars[i]->isCovered()) {
-cerr << "Variable " << vars[i]->getName() << " is not covered by any direction"
-     << endl;
-res = false;
-}
-  }*/
-
-  // for each variable, check if it appears  positively (or negatively) in any
-  // constraint. If so, we conclude that it is upper (or lower) bounded
-  { // put a block to avoid namespace pollution
-    std::vector<bool> hasLB(vars.size(), false), hasUB(vars.size(), false);
-    for (unsigned d = 0; d < directions.size(); d++) {
-      std::vector<double> dirVector
-          = directions[d]->getDirectionVector(this->getVarSymbols());
-      for (unsigned v = 0; v < vars.size(); v++) {
-        if ((dirVector[v] > 0 && directions[d]->hasUB())
-            || (dirVector[v] < 0 && directions[d]->hasLB())) {
-          hasUB[v] = true;
-        }
-        if ((dirVector[v] < 0 && directions[d]->hasUB())
-            || (dirVector[v] > 0 && directions[d]->hasLB())) {
-          hasLB[v] = true;
-        }
-      }
-    }
-
-    for (unsigned v = 0; v < vars.size(); v++) {
-      if (!hasLB[v]) {
-        cerr << "Variable " << vars[v]->getName()
-             << " has no finite lower bound" << endl;
-        res = false;
-      }
-      if (!hasUB[v]) {
-        cerr << "Variable " << vars[v]->getName()
-             << " has no finite upper bound" << endl;
-        res = false;
-      }
-    }
+  auto var_symbols = this->getVarSymbols();
+  if (!checkFiniteBounds<double>("Variable", directions, var_symbols)) {
+    res = false;
   }
 
-  // set variable directions LB where needed
-  if (res) {
-    vector<vector<double>> A{};
-    vector<double> b{};
-    for (unsigned i = 0; i < directions.size(); i++) {
-      // add only bounded directions
-      if (directions[i]->hasUB()) {
-        A.push_back(directions[i]->getDirectionVector(this->getVarSymbols()));
-        b.push_back(directions[i]->getUB());
-      }
-    }
-    for (unsigned i = 0; i < directions.size(); i++) {
-      if (directions[i]->hasLB()) {
-        A.push_back(-directions[i]->getDirectionVector(this->getVarSymbols()));
-        b.push_back(-directions[i]->getLB());
-      }
-    }
-    LinearSystem LS(A, b);
-
-    std::vector<SymbolicAlgebra::Symbol<>> symbols{};
-    for (unsigned i = 0; i < vars.size(); i++) {
-      SymbolicAlgebra::Symbol<> s(vars[i]->getName());
-      symbols.push_back(s);
-    }
-
-    for (unsigned i = 0; i < directions.size(); i++) {
-      if (!directions[i]->hasLB()) {
-        std::vector<double> dirVector
-            = directions[i]->getDirectionVector(this->getVarSymbols());
-        SymbolicAlgebra::Expression<> obj_function = 0;
-        for (unsigned j = 0; j < dirVector.size(); j++) {
-          obj_function += dirVector[j] * symbols[j];
-        }
-
-        double minVal = LS.minimize(symbols, obj_function);
-        directions[i]->setLB(minVal);
-      }
-
-      if (!directions[i]->hasUB()) {
-        std::vector<double> dirVector
-            = directions[i]->getDirectionVector(this->getVarSymbols());
-        SymbolicAlgebra::Expression<> obj_function = 0;
-        for (unsigned j = 0; j < dirVector.size(); j++) {
-          obj_function += dirVector[j] * symbols[j];
-        }
-
-        double maxVal = LS.maximize(symbols, obj_function);
-        directions[i]->setUB(maxVal);
-      }
-    }
+  if (!checkFiniteBounds<double>("Parameter", paramDirections,
+                                 this->getParamSymbols())) {
+    res = false;
   }
 
   // each template row must be bounded
@@ -554,8 +603,8 @@ res = false;
     for (unsigned i = 0; i < templateMatrix.size(); i++) {
       vector<vector<double>> M{};
       for (unsigned j = 0; j < templateMatrix[i].size(); j++) {
-        M.push_back(directions[templateMatrix[i][j]]->getDirectionVector(
-            this->getVarSymbols()));
+        M.push_back(directions[templateMatrix[i][j]]->getConstraintVector(
+            var_symbols));
       }
 
       if (DenseLinearAlgebra::rank(M) != templateMatrix[i].size()) {
@@ -564,142 +613,6 @@ res = false;
              << " defines an unbounded parallelotope" << endl;
         res = false;
       }
-    }
-  }
-
-  // each param must be covered
-  /*for (unsigned i = 0; i < params.size(); i++) {
-if (!params[i]->isCovered()) {
-cerr << "Parameter " << params[i]->getName() << " is not covered by any
-direction"
-     << endl;
-res = false;
-}
-  }*/
-
-  // for each parameter, check if it appears  positively (or negatively) in any
-  // constraint. If so, we conclude that it is upper (or lower) bounded
-  { // put a block to avoid namespace pollution
-    //		double infinity = std::numeric_limits<double>::max();
-    //		double negInfinity = -std::numeric_limits<double>::infinity();
-
-    std::vector<bool> hasLB(params.size(), false), hasUB(params.size(), false);
-    for (unsigned d = 0; d < paramDirections.size(); d++) {
-      std::vector<double> dirVector
-          = paramDirections[d]->getDirectionVector(this->getParamSymbols());
-      for (unsigned p = 0; p < params.size(); p++) {
-        if ((dirVector[p] < 0 && paramDirections[d]->hasLB())
-            || (dirVector[p] > 0 && paramDirections[d]->hasUB())) {
-          hasUB[p] = true;
-        }
-        if ((dirVector[p] > 0 && paramDirections[d]->hasLB())
-            || (dirVector[p] < 0 && paramDirections[d]->hasUB())) {
-          hasLB[p] = true;
-        }
-      }
-    }
-
-    for (unsigned p = 0; p < params.size(); p++) {
-      if (!hasLB[p]) {
-        cerr << "Parameter " << params[p]->getName()
-             << " has no finite lower bound" << endl;
-        res = false;
-      }
-      if (!hasUB[p]) {
-        cerr << "Parameter " << params[p]->getName()
-             << " has no finite upper bound" << endl;
-        res = false;
-      }
-    }
-  }
-
-  // set param directions bounds where needed
-  if (res) {
-    // prepare linear system
-    vector<vector<double>> A{};
-    vector<double> b{};
-    for (unsigned i = 0; i < paramDirections.size(); i++) {
-      if (paramDirections[i]->hasUB()) {
-        A.push_back(
-            paramDirections[i]->getDirectionVector(this->getParamSymbols()));
-        b.push_back(paramDirections[i]->getUB());
-      }
-      if (paramDirections[i]->hasLB()) {
-        A.push_back(paramDirections[i]->getComplementary()->getDirectionVector(
-            this->getParamSymbols()));
-        b.push_back(paramDirections[i]->getLB());
-      }
-    }
-    LinearSystem LS(A, b);
-
-    std::vector<SymbolicAlgebra::Symbol<>> symbols{};
-    for (unsigned i = 0; i < params.size(); i++) {
-      SymbolicAlgebra::Symbol<> s(params[i]->getName());
-      symbols.push_back(s);
-    }
-
-    for (unsigned i = 0; i < paramDirections.size(); i++) {
-      if (!paramDirections[i]->hasLB()) {
-        SymbolicAlgebra::Expression<> obj_function = 0;
-        std::vector<double> dirVector
-            = paramDirections[i]->getDirectionVector(this->getParamSymbols());
-        for (unsigned j = 0; j < dirVector.size(); j++) {
-          obj_function += dirVector[j] * symbols[j];
-        }
-
-        double minVal = LS.minimize(symbols, obj_function);
-        paramDirections[i]->setLB(minVal);
-      }
-
-      if (!paramDirections[i]->hasUB()) {
-        SymbolicAlgebra::Expression<> obj_function = 0;
-        std::vector<double> dirVector
-            = paramDirections[i]->getDirectionVector(this->getParamSymbols());
-        for (unsigned j = 0; j < dirVector.size(); j++) {
-          obj_function += dirVector[j] * symbols[j];
-        }
-
-        double maxVal = LS.maximize(symbols, obj_function);
-        paramDirections[i]->setUB(maxVal);
-      }
-    }
-  }
-
-  /*
-   * check that the number of parameter directions equals the number
-   * of parameters. If they are less, paramter set is not bounded (TODO:
-   * check), if they are more, we would need a polytope, which is not supported
-   */
-  if (paramDirections.size() < params.size()) {
-    cerr << "Too few directions for parameters, set is unbounded" << endl;
-    res = false;
-  } else if (paramDirections.size() > params.size()) {
-    cerr << "Too much directions for parameters, polytopes are not supported"
-         << endl;
-    cerr << "parameters: {" << endl;
-    for (unsigned i = 0; i < params.size(); i++) {
-      cerr << "\t" << *(params[i]) << endl;
-    }
-    cerr << "}" << endl;
-    cerr << "parameter directions: {" << endl;
-    for (unsigned i = 0; i < paramDirections.size(); i++) {
-      cerr << "\t" << *(paramDirections[i]) << endl;
-    }
-    cerr << "}" << endl;
-    res = false;
-  }
-
-  // param directions
-  if (paramMode == modeType::PARAL && paramDirections.size() == 0) {
-    if (paramDirections.size() == 0) {
-      cerr << "Parameter directions must be provided if parameter modality is "
-           << paramMode << endl;
-      res = false;
-    } else if (paramDirections.size() < params.size()) {
-      cerr << "Number of parameter directions must be at least equal to the "
-              "number of parameters"
-           << endl;
-      res = false;
     }
   }
 

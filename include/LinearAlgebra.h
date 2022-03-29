@@ -878,18 +878,18 @@ public:
   friend std::ostream &std::operator<<(std::ostream &os,
                                        const PLU_Factorization<E> &D);
   template<typename E>
-  friend unsigned int rank(const std::vector<std::vector<E>>& A);
+  friend unsigned int rank(const std::vector<std::vector<E>> &A);
 };
 
 /**
  * @brief Compute the rank of a dense matrix.
- * 
+ *
  * @tparam T is the type of the matrix elements
  * @param A is the matrix whose rank must be computed
  * @return The rank of the matrix `A`
  */
 template<typename T>
-unsigned int rank(const std::vector<std::vector<T>>& A)
+unsigned int rank(const std::vector<std::vector<T>> &A)
 {
   if (A.size() == 0) {
     return 0;
@@ -899,7 +899,7 @@ unsigned int rank(const std::vector<std::vector<T>>& A)
 
   unsigned int rank = 0;
   const unsigned max_diag = std::min(A.size(), A[0].size());
-  for (unsigned int i=0; i<max_diag; ++i) {
+  for (unsigned int i = 0; i < max_diag; ++i) {
     if (fact._LU[i][i] != 0) {
       rank++;
     }
@@ -1783,20 +1783,20 @@ public:
 
 /**
  * @brief Compute the rank of a sparse matrix.
- * 
+ *
  * @tparam T is the type of the matrix elements
  * @param A is the matrix whose rank must be computed
  * @return The rank of the matrix `A`
  */
 template<typename T>
-unsigned int rank(const Matrix<T>& A)
+unsigned int rank(const Matrix<T> &A)
 {
   const Matrix<T> U = PLU_Factorization<T>(A);
 
   unsigned int rank = 0;
 
   const unsigned max_diag = std::min(A.num_of_cols(), A.num_of_rows());
-  for (unsigned int i=0; i<max_diag; ++i) {
+  for (unsigned int i = 0; i < max_diag; ++i) {
     if (U[i][i] != 0) {
       rank++;
     }

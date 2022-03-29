@@ -215,8 +215,8 @@ Bundle Bundle::get_canonical() const
   Polytope bund = *this;
   std::vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
   for (unsigned int i = 0; i < this->size(); i++) {
-    c_up_offset[i] = bund.maximize(this->dir_matrix[i]);
-    c_lo_offset[i] = bund.maximize(-this->dir_matrix[i]);
+    c_up_offset[i] = bund.maximize(this->dir_matrix[i]).optimum();
+    c_lo_offset[i] = bund.maximize(-this->dir_matrix[i]).optimum();
   }
   return Bundle(dir_matrix, c_up_offset, c_lo_offset, t_matrix);
 }
@@ -607,13 +607,13 @@ double Bundle::MaxCoeffFinder::coeff_eval_m(
 double Bundle::ParamMaxCoeffFinder::coeff_eval_p(
     const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  return paraSet.maximize(params, bernCoeff);
+  return paraSet.maximize(params, bernCoeff).optimum();
 }
 
 double Bundle::ParamMaxCoeffFinder::coeff_eval_m(
     const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  return paraSet.maximize(params, -bernCoeff);
+  return paraSet.maximize(params, -bernCoeff).optimum();
 }
 
 Bundle::MaxCoeffFinder::MaxCoeffType Bundle::MaxCoeffFinder::find_max_coeffs(

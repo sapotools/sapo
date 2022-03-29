@@ -39,39 +39,25 @@ std::ostream &operator<<(std::ostream &os, const Direction &d)
 
 double Direction::getLB() const
 {
-  if (type == Type::IN) {
-    return LB;
-  } else if (type == Type::GT || type == Type::GE || type == Type::EQ) {
-    return -this->getOffset();
-  } else {
-    return -std::numeric_limits<double>::infinity();
-  }
+  return LB;
 }
+
 double Direction::getUB() const
 {
-  if (type == Type::IN) {
-    return UB;
-  } else if (type == Type::LT || type == Type::LE || type == Type::EQ) {
-    return this->getOffset();
-  } else {
-    return std::numeric_limits<double>::infinity();
-  }
+  return UB;
 }
 
 void Direction::setLB(double val)
 {
-  UB = this->getUB();
-
   if (this->hasUB()) {
     type = Type::IN;
   }
 
   LB = (val == 0 ? 0 : val);
 }
+
 void Direction::setUB(double val)
 {
-  LB = this->getLB();
-
   if (this->hasLB()) {
     type = Type::IN;
   }
@@ -154,7 +140,7 @@ bool Direction::compare(Direction *d) const
   return true;
 }
 
-std::vector<double> Direction::getDirectionVector(
+std::vector<double> Direction::getConstraintVector(
     std::vector<SymbolicAlgebra::Symbol<>> symbols) const
 {
   std::vector<double> res{};
@@ -202,4 +188,32 @@ bool Direction::covers(const SymbolicAlgebra::Symbol<> &s) const
   return getCoefficient(e, s) != 0;
 }
 
+}
+
+std::ostream &operator<<(std::ostream &out, const AbsSyn::Direction &direction)
+{
+  out << direction.getLHS();
+
+  switch (direction.getType()) {
+  case AbsSyn::Direction::Type::EQ:
+    out << " = " << direction.getLB();
+    break;
+  case AbsSyn::Direction::Type::LE:
+    out << " <= " << direction.getUB();
+    break;
+  case AbsSyn::Direction::Type::LT:
+    out << " < " << direction.getUB();
+    break;
+  case AbsSyn::Direction::Type::GE:
+    out << " >= " << direction.getLB();
+    break;
+  case AbsSyn::Direction::Type::GT:
+    out << " > " << direction.getLB();
+    break;
+  case AbsSyn::Direction::Type::IN:
+    out << " in [" << direction.getLB() << "," << direction.getUB() << "]";
+    break;
+  }
+
+  return out;
 }
