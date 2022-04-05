@@ -18,9 +18,9 @@ A web user interface for Sapo is available [here](https://github.com/LucaDorigo/
 
 ### Models
 
-The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form <!-- $x_{k+1} = f(x_k,p)$ --> <img style="transform: translateY(0.1em); background: white;" src="svg/kukKgGlU7t.svg"/>.
+The dynamical systems supported by Sapo are discrete-time polynomial dynamical systems, i.e., dynamical systems whose evolutions can be described by difference equations of the form <!-- $x_{k+1} = f(x_k,p)$ --> <img style="transform: translateY(0.1em); background: white;" src="https://github.com/dreossi/sapo/blob/assets/svg/kukKgGlU7t.svg"/>.
 
-Reachability computation can be carried out also on systems without parameters whose dynamics look like <!-- $x_{k+1} = f(x_k)$ --> <img style="transform: translateY(0.1em); background: white;" src="svg/O2tXhyFGXU.svg"/>  with <!-- $f : R^n \rightarrow R^n$ --> <img style="transform: translateY(0.1em); background: white;" src="svg/6nV9NfgdJZ.svg"/> polynomial.
+Reachability computation can be carried out also on systems without parameters whose dynamics look like <!-- $x_{k+1} = f(x_k)$ --> <img style="transform: translateY(0.1em); background: white;" src="https://github.com/dreossi/sapo/blob/assets/svg/O2tXhyFGXU.svg"/>  with <!-- $f : R^n \rightarrow R^n$ --> <img style="transform: translateY(0.1em); background: white;" src="https://github.com/dreossi/sapo/blob/assets/svg/6nV9NfgdJZ.svg"/> polynomial.
 
 ### Set representation
 
