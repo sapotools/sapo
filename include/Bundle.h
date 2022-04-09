@@ -10,6 +10,7 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
+#include "LinearAlgebra.h"
 #include "BaseConverter.h"
 #include "Polytope.h"
 #include "Parallelotope.h"
@@ -20,9 +21,6 @@
 
 class Bundle
 {
-  using Vector = std::vector<double>;
-  using Matrix = std::vector<Vector>;
-
 public:
   typedef enum {
     AFO, /* the image of any parallelotope in the bundle will
@@ -34,22 +32,22 @@ public:
   } transfomation_mode;
 
 private:
-  Matrix dir_matrix;                      //!< direction matrix
-  Vector upper_offset;                    //!< superior offset
-  Vector lower_offset;                    //!< inferior offset
-  std::vector<std::vector<int>> t_matrix; //!< templates matrix
+  DenseLinearAlgebra::Matrix<double> dir_matrix; //!< direction matrix
+  Vector<double> upper_offset;                   //!< superior offset
+  Vector<double> lower_offset;                   //!< inferior offset
+  DenseLinearAlgebra::Matrix<int> t_matrix;      //!< templates matrix
 
   // constraints over directions (assertions)
   // constrainedDirection[i] * vars <= constraintOffset
-  std::vector<std::vector<double>> constraintDirections;
-  std::vector<double> constraintOffsets;
+  DenseLinearAlgebra::Matrix<double> constraintDirections;
+  Vector<double> constraintOffsets;
 
   /**
    * Compute the distances between the half-spaced of the parallelotopes
    *
    * @returns vector of distances
    */
-  Vector offsetDistances();
+  Vector<double> offsetDistances();
 
   /**
    * @brief A finder for Bernstein coefficient upper and lower-bounds.
@@ -182,9 +180,10 @@ public:
    * @param[in] lower_offset lower offsets
    * @param[in] t_matrix t_matrixs matrix
    */
-  Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
-         const Vector &lower_offset,
-         const std::vector<std::vector<int>> &t_matrix);
+  Bundle(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
+         const Vector<double> &upper_offset,
+         const Vector<double> &lower_offset,
+         const DenseLinearAlgebra::Matrix<int> &t_matrix);
 
   /**
    * Constructor that instantiates the bundle with auto-generated variables
@@ -196,11 +195,12 @@ public:
    * @param[in] constrDirs directions that are constrained by assumptions
    * @param[in] constrOffsets offsets of assumptions
    */
-  Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
-         const Vector &lower_offset,
-         const std::vector<std::vector<int>> &t_matrix,
-         const std::vector<std::vector<double>> constrDirs,
-         const std::vector<double> constrOffsets);
+  Bundle(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
+         const Vector<double> &upper_offset,
+         const Vector<double> &lower_offset,
+         const DenseLinearAlgebra::Matrix<int> &t_matrix,
+         const DenseLinearAlgebra::Matrix<double> &constrDirs,
+         const Vector<double> &constrOffsets);
 
   unsigned int dim() const
   {
@@ -217,17 +217,17 @@ public:
     return this->dir_matrix.size();
   }
 
-  const std::vector<std::vector<int>> &get_templates() const
+  const DenseLinearAlgebra::Matrix<int> &get_templates() const
   {
     return this->t_matrix;
   }
 
-  const std::vector<int> &get_templates(long unsigned int i) const
+  const Vector<int> &get_templates(long unsigned int i) const
   {
     return this->t_matrix[i];
   }
 
-  const std::vector<std::vector<double>> &get_directions() const
+  const DenseLinearAlgebra::Matrix<double> &get_directions() const
   {
     return this->dir_matrix;
   }
@@ -262,17 +262,17 @@ public:
    *
    * @param[in] t_matrix new t_matrix
    */
-  void setTemplate(const std::vector<std::vector<int>> &t_matrix)
+  void setTemplate(const DenseLinearAlgebra::Matrix<int> &t_matrix)
   {
     this->t_matrix = t_matrix;
   }
 
-  void setOffsetP(const Vector &upper_offset)
+  void setOffsetP(const Vector<double> &upper_offset)
   {
     this->upper_offset = upper_offset;
   }
 
-  void setOffsetM(const Vector &lower_offset)
+  void setOffsetM(const Vector<double> &lower_offset)
   {
     this->lower_offset = lower_offset;
   }

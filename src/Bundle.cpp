@@ -67,7 +67,7 @@ void swap(Bundle &A, Bundle &B)
  * @param[in] v2 vector
  * @returns orthogonal proximity
  */
-double orthProx(std::vector<double> v1, std::vector<double> v2)
+double orthProx(Vector<double> v1, Vector<double> v2)
 {
   return std::abs(angle(v1, v2) - M_PI_2);
 }
@@ -80,9 +80,10 @@ double orthProx(std::vector<double> v1, std::vector<double> v2)
  * @param[in] lower_offset lower offsets
  * @param[in] t_matrix templates matrix
  */
-Bundle::Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
-               const Vector &lower_offset,
-               const std::vector<std::vector<int>> &t_matrix):
+Bundle::Bundle(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
+               const Vector<double> &upper_offset,
+               const Vector<double> &lower_offset,
+               const DenseLinearAlgebra::Matrix<int> &t_matrix):
     Bundle(dir_matrix, upper_offset, lower_offset, t_matrix, {}, {})
 {
 }
@@ -97,11 +98,12 @@ Bundle::Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
  * @param[in] constrDirs directions that are constrained by assumptions
  * @param[in] constrOffsets offsets of assumptions
  */
-Bundle::Bundle(const Matrix &dir_matrix, const Vector &upper_offset,
-               const Vector &lower_offset,
-               const std::vector<std::vector<int>> &t_matrix,
-               const std::vector<std::vector<double>> constrDirs,
-               const std::vector<double> constrOffsets):
+Bundle::Bundle(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
+               const Vector<double> &upper_offset,
+               const Vector<double> &lower_offset,
+               const DenseLinearAlgebra::Matrix<int> &t_matrix,
+               const DenseLinearAlgebra::Matrix<double> &constrDirs,
+               const Vector<double> &constrOffsets):
     dir_matrix(dir_matrix),
     upper_offset(upper_offset), lower_offset(lower_offset), t_matrix(t_matrix),
     constraintDirections(constrDirs), constraintOffsets(constrOffsets)
@@ -213,7 +215,7 @@ Bundle Bundle::get_canonical() const
 {
   // get current polytope
   Polytope bund = *this;
-  std::vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
+  Vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
   for (unsigned int i = 0; i < this->size(); i++) {
     c_up_offset[i] = bund.maximize(this->dir_matrix[i]).optimum();
     c_lo_offset[i] = bund.maximize(-this->dir_matrix[i]).optimum();
@@ -297,7 +299,7 @@ bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
  * @returns distance accumulation
  */
 double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
-                     const std::vector<double> &dists)
+                     const Vector<double> &dists)
 {
 
   if (dirsIdx.empty()) {
@@ -319,7 +321,7 @@ double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
  * @returns distance accumulation
  */
 double maxOffsetDist(const std::vector<int> &dirsIdx,
-                     const std::vector<double> &dists)
+                     const Vector<double> &dists)
 {
 
   double dist = 1;
@@ -336,8 +338,8 @@ double maxOffsetDist(const std::vector<int> &dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double maxOffsetDist(const std::vector<std::vector<int>> &T,
-                     const std::vector<double> &dists)
+double maxOffsetDist(const DenseLinearAlgebra::Matrix<int> &T,
+                     const Vector<double> &dists)
 {
   double maxdist = std::numeric_limits<double>::lowest();
   for (unsigned int i = 0; i < T.size(); i++) {
@@ -354,7 +356,7 @@ double maxOffsetDist(const std::vector<std::vector<int>> &T,
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
+double maxOrthProx(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
                    const int vIdx, const std::vector<int> &dirsIdx)
 {
 
@@ -376,7 +378,7 @@ double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
+double maxOrthProx(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
                    const std::vector<int> &dirsIdx)
 {
   double maxProx = 0;
@@ -396,8 +398,8 @@ double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
  * @param[in] T collection of vectors
  * @returns maximum orthogonal proximity
  */
-double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
-                   const std::vector<std::vector<int>> &T)
+double maxOrthProx(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
+                   const DenseLinearAlgebra::Matrix<int> &T)
 {
   double maxorth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
@@ -407,8 +409,8 @@ double maxOrthProx(const std::vector<std::vector<double>> &dir_matrix,
 }
 
 std::list<Bundle> &
-split_bundle(std::list<Bundle> &res, std::vector<double> &tmp_up_offset,
-             std::vector<double> &tmp_lo_offset, const unsigned int idx,
+split_bundle(std::list<Bundle> &res, Vector<double> &tmp_up_offset,
+             Vector<double> &tmp_lo_offset, const unsigned int idx,
              const Bundle &splitting, const double &max_bundle_magnitude,
              const double &split_magnitude_ratio)
 {
@@ -449,8 +451,8 @@ std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
 {
   std::list<Bundle> split_list;
 
-  std::vector<double> tmp_up_offset(upper_offset.size());
-  std::vector<double> tmp_lo_offset(lower_offset.size());
+  Vector<double> tmp_up_offset(upper_offset.size());
+  Vector<double> tmp_lo_offset(lower_offset.size());
 
   split_bundle(split_list, tmp_up_offset, tmp_lo_offset, 0, *this,
                max_bundle_magnitude, split_magnitude_ratio);
@@ -494,14 +496,14 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
     tmpT[i1][j1] = rand() % this->size();
 
     if (!is_permutation_of_other_rows(tmpT, i1)) {
-      std::vector<std::vector<double>> A;
+      DenseLinearAlgebra::Matrix<double> A;
       for (unsigned int j = 0; j < this->dim(); j++) {
         A.push_back(this->dir_matrix[tmpT[i1][j]]);
       }
 
       DenseLinearAlgebra::PLU_Factorization<double> fact(A);
       try {
-        fact.solve(std::vector<double>(this->dim(), 0));
+        fact.solve(Vector<double>(this->dim(), 0));
 
         double w1 = dec_weight * maxOffsetDist(tmpT, offDists)
                     + (1 - dec_weight) * maxOrthProx(this->dir_matrix, tmpT);
@@ -546,7 +548,7 @@ sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
 std::vector<SymbolicAlgebra::Expression<>>
 compute_Bern_coeffs(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
                     const std::vector<SymbolicAlgebra::Expression<>> &f,
-                    const std::vector<double> &dir_vector)
+                    const Vector<double> &dir_vector)
 {
   SymbolicAlgebra::Expression<> Lfog = 0;
   // upper facets
@@ -575,8 +577,8 @@ get_subs_from(const Parallelotope &P,
 {
   using namespace SymbolicAlgebra;
 
-  const std::vector<double> &base_vertex = P.base_vertex();
-  const std::vector<double> &lengths = P.lengths();
+  const Vector<double> &base_vertex = P.base_vertex();
+  const Vector<double> &lengths = P.lengths();
 
   Expression<>::replacement_type repl;
 
@@ -668,14 +670,14 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
     gen_functs.push_back(*it);
   }
 
-  const std::vector<std::vector<double>> &versors = P.versors();
+  const DenseLinearAlgebra::Matrix<double> &versors = P.versors();
 
   for (unsigned int i = 0; i < versors.size(); i++) {
     // some of the non-null rows of the generator matrix
     // correspond to 0-length dimensions in degenerous
     // parallelotopes and must be avoided
     if (P.lengths()[i] != 0) {
-      std::vector<double> vector = P.lengths()[i] * versors[i];
+      Vector<double> vector = P.lengths()[i] * versors[i];
       for (unsigned int j = 0; j < vector.size(); j++) {
         if (vector[j] != 0) {
           gen_functs[j] += alpha[i] * vector[j];
@@ -807,7 +809,7 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
   }
 #endif // WITH_THREADS
 
-  std::vector<double> p_coeffs, m_coeffs;
+  Vector<double> p_coeffs, m_coeffs;
   for (auto it = std::begin(tp_coeffs); it != std::end(tp_coeffs); ++it) {
     p_coeffs.push_back(*it);
   }
@@ -830,10 +832,10 @@ Bundle Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
  *
  * @returns vector of distances
  */
-std::vector<double> Bundle::offsetDistances()
+Vector<double> Bundle::offsetDistances()
 {
 
-  std::vector<double> dist(this->size());
+  Vector<double> dist(this->size());
   for (unsigned int i = 0; i < this->size(); i++) {
     dist[i] = std::abs(this->upper_offset[i] - this->lower_offset[i])
               / norm_2(this->dir_matrix[i]);
@@ -866,7 +868,7 @@ bool isIn(int n, std::vector<int> v)
  * @param[in] vlist set of vectors in which to look for
  * @returns true is v belongs to vlist
  */
-bool isIn(std::vector<int> v, std::vector<std::vector<int>> vlist)
+bool isIn(std::vector<int> v, DenseLinearAlgebra::Matrix<int> vlist)
 {
   for (unsigned int i = 0; i < vlist.size(); i++) {
     if (isPermutation(v, vlist[i])) {
