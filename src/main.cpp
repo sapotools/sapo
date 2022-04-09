@@ -251,15 +251,21 @@ void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo, Model *model,
                                         const AbsSyn::problemType &type,
                                         const bool display_progress)
 {
-  switch (type) {
-  case AbsSyn::problemType::REACH:
-    reach_analysis(os, sapo, model, display_progress);
-    break;
-  case AbsSyn::problemType::SYNTH:
-    synthesis(os, sapo, model, display_progress);
-    break;
-  default:
-    std::cerr << "Unsupported problem type" << std::endl;
+  try {
+    switch (type) {
+    case AbsSyn::problemType::REACH:
+      reach_analysis(os, sapo, model, display_progress);
+      break;
+    case AbsSyn::problemType::SYNTH:
+      synthesis(os, sapo, model, display_progress);
+      break;
+    default:
+      std::cerr << "Unsupported problem type" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+  } catch(std::exception &e) {
+    std::cerr << e.what() << std::endl;
+
     exit(EXIT_FAILURE);
   }
 }

@@ -329,9 +329,8 @@ const double &LinearSystem::getA(unsigned int i, unsigned int j) const
   if (i < this->A.size() && j < this->A[j].size()) {
     return this->A[i][j];
   }
-  std::cerr << "LinearSystem::getA : i and j must be within the LS->A size"
-            << std::endl;
-  exit(EXIT_FAILURE);
+  throw std::domain_error("LinearSystem::getA: i and j must be valid "
+                          "indices for the system matrix A");
 }
 
 /**
@@ -345,9 +344,8 @@ const double &LinearSystem::getb(unsigned int i) const
   if (i < this->b.size()) {
     return this->b[i];
   }
-  std::cerr << "LinearSystem::getb : i and j must be within the LS->b size"
-            << std::endl;
-  exit(EXIT_FAILURE);
+  throw std::domain_error("LinearSystem::getb: i must be a valid "
+                          "index for the system");
 }
 
 /**

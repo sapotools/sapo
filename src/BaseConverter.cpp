@@ -112,9 +112,8 @@ unsigned int BaseConverter::multi_index2pos(
   using namespace std;
 
   if (multi_index.size() != this->degrees.size()) {
-    cout << "BaseConverter::multi_index2pos : multi_index and degrees must "
-            "have same dimension";
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::multi_index2pos : multi_index "
+                            "and degrees must have same dimension");
   }
 
   // Compute the position
@@ -196,9 +195,8 @@ unsigned int nChoosek(unsigned int n, unsigned int k)
 {
 
   if (k > n) {
-    std::cerr << "BaseConverter::nChoosek : n must be larger equal then k"
-              << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::nChoosek: n must be "
+                            "larger equal then k");
   }
 
   unsigned int res = 1;
@@ -220,10 +218,8 @@ unsigned int multi_index_nChoosek(const std::vector<unsigned int> &n,
 {
 
   if (n.size() != k.size()) {
-    std::cerr << "BaseConverter::multi_index_nChoosek : n and k must have "
-                 "same dimension"
-              << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::multi_index_nChoosek: n "
+                            "and k must have same dimension");
   }
 
   unsigned int res = 1;
@@ -371,14 +367,13 @@ void BaseConverter::split(unsigned int direction, double split_point) const
   using namespace std;
 
   if (direction >= this->vars.size()) {
-    cerr << "BaseConverter::split : split direction must be between 0 and "
-         << this->vars.size() << endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::split: split direction must "
+                            "be between 0 and space dimension excluded");
   }
 
   if ((split_point < 0) || (split_point > 1)) {
-    cout << "BaseConverter::split : split_point must be between 0 and 1";
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::split: split_point must be "
+                            "between 0 and 1");
   }
 
   // Extract list of multi-indices and max degree of direction
@@ -450,9 +445,8 @@ std::vector<std::vector<T>> matrixProd(const std::vector<std::vector<T>> &A,
   using namespace std;
 
   if (A[0].size() != B.size()) {
-    cerr << "BaseConverter::matrixProd : matrices dimensions must agree"
-         << endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::matrixProd: matrices dimensions "
+                            "must be the same");
   }
 
   vector<T> product_i(B[0].size(), 0);
@@ -501,8 +495,8 @@ std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
   using namespace std;
 
   if (a.size() != degs.size()) {
-    cout << "BaseConverter::n2t : a and degs must have the same sizes";
-    exit(EXIT_FAILURE);
+    throw std::domain_error("BaseConverter::n2t: a and degs must have "
+                            "the same sizes");
   }
 
   vector<unsigned int> b(2, 0);

@@ -251,9 +251,7 @@ void Polytope::plotRegion(std::ostream &os, const char color) const
 {
 
   if (this->dim() > 3) {
-    std::cerr << "Polytope::plotRegion : maximum 3d sets are allowed"
-              << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("Polytope::plotRegion : maximum 3d sets are allowed");
   }
 
   os << "Ab = [" << std::endl;
@@ -285,9 +283,7 @@ void Polytope::plotRegion(std::ostream &os, const char color) const
 void Polytope::plotRegionT(std::ostream &os, const double t) const
 {
   if (this->dim() > 2) {
-    std::cerr << "Polytope::plotRegionT : maximum 2d sets are allowed"
-              << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("Polytope::plotRegionT : maximum 2d sets are allowed");
   }
 
   os << "Ab = [" << std::endl;
@@ -327,9 +323,7 @@ void Polytope::plotRegion(std::ostream &os, const vector<int> &rows,
 {
 
   if (cols.size() > 3) {
-    std::cerr << "Polytope::plotRegion : cols maximum 3d sets are allowed"
-              << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("Polytope::plotRegion : cols maximum 3d sets are allowed");
   }
 
   os << "Ab = [" << std::endl;

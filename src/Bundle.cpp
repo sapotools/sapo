@@ -111,31 +111,25 @@ Bundle::Bundle(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
   using namespace std;
 
   if (dir_matrix.size() == 0) {
-    std::cerr << "Bundle::Bundle : dir_matrix must be non empty" << std::endl;
-
-    exit(EXIT_FAILURE);
+    throw std::domain_error("Bundle::Bundle: dir_matrix must be non empty");
   }
   if (dir_matrix.size() != upper_offset.size()) {
-    std::cerr << "Bundle::Bundle : dir_matrix and upper_offset "
-              << "must have the same size" << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("Bundle::Bundle: dir_matrix and upper_offset "
+                            "must have the same size");
   }
   if (dir_matrix.size() != lower_offset.size()) {
-    std::cerr << "Bundle::Bundle : dir_matrix and lower_offset must have "
-              << "the same size" << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("Bundle::Bundle: dir_matrix and lower_offset "
+                            "must have the same size");
   }
   if (t_matrix.size() > 0) {
     for (unsigned int i = 0; i < t_matrix.size(); i++) {
       if (t_matrix[i].size() != this->dim()) {
-        std::cerr << "Bundle::Bundle : t_matrix must have " << this->dim()
-                  << " columns" << std::endl;
-        exit(EXIT_FAILURE);
+        throw std::domain_error("Bundle::Bundle: t_matrix must have "
+                                "as many columns as dir_matrix");
       }
     }
   } else {
-    std::cerr << "Bundle::Bundle : t_matrix must be non empty" << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("Bundle::Bundle: t_matrix must be non empty");
   }
 }
 
@@ -180,9 +174,8 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
   using namespace std;
 
   if (i > this->t_matrix.size()) {
-    cerr << "Bundle::getParallelotope : i must be between 0 and "
-         << t_matrix.size() << endl;
-    exit(EXIT_FAILURE);
+    throw std::domain_error("Bundle::getParallelotope: i must be a valid row "
+                            "for the template matrix");
   }
 
   vector<double> lbound, ubound;

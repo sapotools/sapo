@@ -33,12 +33,12 @@ Flowpipe::Flowpipe(const std::vector<std::vector<double>> &variable_templates):
  */
 const PolytopesUnion &Flowpipe::get(const unsigned int i) const
 {
-  if (i < this->size()) {
-    return this->flowpipe[i];
+  if (i >= this->size()) {
+    std::domain_error("Flowpipe::get: i must be between 0 and "
+                      "the flowpipe size");
   }
-  std::cerr << "Flowpipe::get : i must be between 0 and the flowpipe size"
-            << std::endl;
-  exit(EXIT_FAILURE);
+
+  return this->flowpipe[i];
 }
 
 /**
@@ -115,15 +115,13 @@ void Flowpipe::plotProj(std::ostream &os, const unsigned int var,
 {
 
   if (size() == 0 || this->flowpipe[0].is_empty()) {
-    std::cerr << "Flowpipe::plotProjToFile : i must be between "
-              << "0 and the system dimension" << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("Flowpipe::plotProj: The flowpipe must be "
+                      "non-empty");
   }
 
   if (var >= this->flowpipe[0].dim()) {
-    std::cerr << "Flowpipe::plotProjToFile : i must be between "
-              << "0 and the system dimension" << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("Flowpipe::plotProj: var must be between "
+                      "0 and the system dimension");
   }
 
   // select figure

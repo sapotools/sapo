@@ -32,8 +32,7 @@ Parallelotope::Parallelotope(const Matrix &directions,
 
   } catch (std::domain_error &) { // if a domain_error is raised, then the
                                   // template is singular
-    std::cerr << "singular parallelotope" << std::endl << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("Parallelotope::Parallelotope: singular parallelotope");
   }
 
   // Compute the versors
@@ -79,10 +78,8 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
   using namespace std;
 
   if (pts.size() == 0 || pts.size() != pts.front().size()) {
-    std::cerr << "hyperplane_through_points: pts must contain "
-              << "n non-linearly dependent n-dimensional points with n!=0"
-              << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("hyperplane_through_points: pts must contain "
+                      "n non-linearly dependent n-dimensional points");
   }
 
   // build the matrix A=[pts[1]-pts[0],...,pts[n-2]-pts[0]]^T
@@ -117,9 +114,8 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
     lambda = fact.solve(std::vector<double>(A.num_of_rows(), 0));
 
   } catch (std::domain_error &) {
-    std::cerr << "hyperplane_through_points: the points "
-              << "were not linearly independent." << std::endl;
-    exit(EXIT_FAILURE);
+    std::domain_error("hyperplane_through_points: the points "
+                      "are linearly dependent.");
   }
 
   // add the offset to the result
