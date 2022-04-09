@@ -806,10 +806,10 @@ public:
   /**
    * @brief Create a new LUP_Factorization object
    *
-   * This constructor performs the P-LU factorization of
+   * This constructor performs the LUP factorization of
    * a dense matrix.
    *
-   * @param M is the matrix whose P-LU factorization must be computed.
+   * @param M is the matrix whose LUP factorization must be computed.
    */
   LUP_Factorization(const Matrix<T> &M): _P(), _LU(M)
   {
@@ -1678,10 +1678,10 @@ public:
   /**
    * @brief Create a new LUP_Factorization object
    *
-   * This constructor performs the P-LU factorization of
+   * This constructor performs the LUP factorization of
    * a sparse matrix.
    *
-   * @param M is the matrix whose P-LU factorization must be computed.
+   * @param M is the matrix whose LUP factorization must be computed.
    */
   LUP_Factorization(const Matrix<T> &M):
       _P(), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
