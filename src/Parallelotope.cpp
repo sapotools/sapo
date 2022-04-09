@@ -24,7 +24,7 @@ Parallelotope::Parallelotope(const Matrix &directions,
                              const Vector &upper_bound)
 {
   const SparseLinearAlgebra::Matrix<double> dmatrix(directions);
-  SparseLinearAlgebra::PLU_Factorization<double> factorization(dmatrix);
+  SparseLinearAlgebra::LUP_Factorization<double> factorization(dmatrix);
 
   try {
     // store the base vertex
@@ -89,7 +89,7 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
   }
 
   // factorize the A
-  SparseLinearAlgebra::PLU_Factorization<double> fact(A);
+  SparseLinearAlgebra::LUP_Factorization<double> fact(A);
 
   // A is underdetermined because it is a (n-1)x n matrix
   // find the underdetermined dimension udim
@@ -105,7 +105,7 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
   A.add_row(row);
 
   // factorize the new matrix
-  fact = SparseLinearAlgebra::PLU_Factorization<double>(A);
+  fact = SparseLinearAlgebra::LUP_Factorization<double>(A);
 
   std::vector<double> lambda;
   try {

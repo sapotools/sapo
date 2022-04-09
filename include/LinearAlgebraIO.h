@@ -84,7 +84,7 @@ std::ostream &operator<<(std::ostream &os,
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
-                         const SparseLinearAlgebra::PLU_Factorization<T> &D)
+                         const SparseLinearAlgebra::LUP_Factorization<T> &D)
 {
   using namespace std;
   os << "{P=" << D.P() << "," << std::endl
@@ -96,7 +96,7 @@ std::ostream &operator<<(std::ostream &os,
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
-                         const DenseLinearAlgebra::PLU_Factorization<T> &D)
+                         const DenseLinearAlgebra::LUP_Factorization<T> &D)
 {
   using namespace std;
   os << "{P=" << D._P << "," << std::endl << " LU=" << D._LU << "}";

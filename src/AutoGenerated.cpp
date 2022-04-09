@@ -784,9 +784,9 @@ void independenceConstraints(glp_prob **lp,
         M.push_back(C[dirSet[i] - m]);
       }
     }
-    DenseLinearAlgebra::PLU_Factorization<double> PLU(M);
+    DenseLinearAlgebra::LUP_Factorization<double> LUP(M);
     try {
-      std::vector<double> res = PLU.solve(zeroes);
+      std::vector<double> res = LUP.solve(zeroes);
     } catch (std::domain_error &e) {
       // vectors are dependent (?)
       for (unsigned p = 0; p < Pn; p++) {

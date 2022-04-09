@@ -193,7 +193,7 @@ Parallelotope Bundle::getParallelotope(unsigned int i) const
   }
 
   // TODO: Since Lambdas are always the same, check whether
-  //       storing the PLU factorizations of Lambdas may give
+  //       storing the LUP factorizations of Lambdas may give
   //       some speed-up.
   return Parallelotope(Lambda, lbound, ubound);
 }
@@ -494,7 +494,7 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
         A.push_back(this->dir_matrix[tmpT[i1][j]]);
       }
 
-      DenseLinearAlgebra::PLU_Factorization<double> fact(A);
+      DenseLinearAlgebra::LUP_Factorization<double> fact(A);
       try {
         fact.solve(Vector<double>(this->dim(), 0));
 

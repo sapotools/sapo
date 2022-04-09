@@ -718,7 +718,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
 }
 
 /**
- * @brief A Permutation-LU factorization for dense matrices.
+ * @brief A LUP factorization for dense matrices.
  *
  * This class represents a Permutation, Lower-triangular,
  * Upper-triangular factorization for dense matrices. It
@@ -730,7 +730,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
  * @tparam T any numeric type.
  */
 template<typename T>
-class PLU_Factorization
+class LUP_Factorization
 {
   Permutation _P; //!< the permutation
   Matrix<T> _LU;  //!< the L and U matrices
@@ -789,29 +789,29 @@ class PLU_Factorization
 
 public:
   /**
-   * @brief Create a new PLU_Factorization object
+   * @brief Create a new LUP_Factorization object
    *
    */
-  PLU_Factorization(): _P(), _LU() {}
+  LUP_Factorization(): _P(), _LU() {}
 
   /**
-   * @brief Create a new PLU_Factorization object
+   * @brief Create a new LUP_Factorization object
    *
    * @param orig is the model for the new object.
    */
-  PLU_Factorization(const PLU_Factorization &orig): _P(orig._P), _LU(orig._LU)
+  LUP_Factorization(const LUP_Factorization &orig): _P(orig._P), _LU(orig._LU)
   {
   }
 
   /**
-   * @brief Create a new PLU_Factorization object
+   * @brief Create a new LUP_Factorization object
    *
    * This constructor performs the P-LU factorization of
    * a dense matrix.
    *
    * @param M is the matrix whose P-LU factorization must be computed.
    */
-  PLU_Factorization(const Matrix<T> &M): _P(), _LU(M)
+  LUP_Factorization(const Matrix<T> &M): _P(), _LU(M)
   {
     if (M.size() == 0) {
       throw std::domain_error("The parameter is an empty matrix.");
@@ -883,12 +883,12 @@ public:
   }
 
   /**
-   * @brief Copy a PLU_Factorization object.
+   * @brief Copy a LUP_Factorization object.
    *
    * @param orig is the model that must be copied.
    * @return a reference to the updated object.
    */
-  PLU_Factorization<T> &operator=(const PLU_Factorization<T> &orig)
+  LUP_Factorization<T> &operator=(const LUP_Factorization<T> &orig)
   {
     _P = orig._P;
     _LU = orig._LU;
@@ -897,12 +897,12 @@ public:
   }
 
   /**
-   * @brief Copy a PLU_Factorization object.
+   * @brief Copy a LUP_Factorization object.
    *
    * @param orig is the model that must be copied.
    * @return a reference to the updated object.
    */
-  PLU_Factorization<T> &operator=(PLU_Factorization<T> &&orig)
+  LUP_Factorization<T> &operator=(LUP_Factorization<T> &&orig)
   {
     std::swap(_P, orig._P);
     std::swap(_LU, orig._LU);
@@ -964,7 +964,7 @@ public:
 
   template<typename E>
   friend std::ostream &std::operator<<(std::ostream &os,
-                                       const PLU_Factorization<E> &D);
+                                       const LUP_Factorization<E> &D);
   template<typename E>
   friend unsigned int rank(const Matrix<E> &A);
 };
@@ -983,7 +983,7 @@ unsigned int rank(const Matrix<T> &A)
     return 0;
   }
 
-  PLU_Factorization<T> fact(A);
+  LUP_Factorization<T> fact(A);
 
   unsigned int rank = 0;
   const unsigned max_diag = std::min(A.size(), A[0].size());
@@ -1503,14 +1503,14 @@ public:
   }
 
   template<typename E>
-  friend class PLU_Factorization;
+  friend class LUP_Factorization;
 
   template<typename E>
   friend std::ostream &std::operator<<(std::ostream &os, const Matrix<E> &M);
 };
 
 /**
- * @brief A Permutation-LU factorization for sparse matrices.
+ * @brief A LUP factorization for sparse matrices.
  *
  * This class represents a Permutation, Lower-triangular,
  * Upper-triangular factorization for sparse matrices. It
@@ -1522,7 +1522,7 @@ public:
  * @tparam T any numeric type.
  */
 template<typename T>
-class PLU_Factorization
+class LUP_Factorization
 {
   Permutation _P; //!< the permutation
   Matrix<T> _L;   //!< the lower-triangular sparse matrix
@@ -1661,29 +1661,29 @@ class PLU_Factorization
 
 public:
   /**
-   * @brief Create a new PLU_Factorization object
+   * @brief Create a new LUP_Factorization object
    */
-  PLU_Factorization(): _P(), _L(), _U() {}
+  LUP_Factorization(): _P(), _L(), _U() {}
 
   /**
-   * @brief Copy construct a new PLU_Factorization object
+   * @brief Copy construct a new LUP_Factorization object
    *
    * @param orig is the model for the new object.
    */
-  PLU_Factorization(const PLU_Factorization &orig):
+  LUP_Factorization(const LUP_Factorization &orig):
       _P(orig._P), _L(orig._L), _U(orig._U)
   {
   }
 
   /**
-   * @brief Create a new PLU_Factorization object
+   * @brief Create a new LUP_Factorization object
    *
    * This constructor performs the P-LU factorization of
    * a sparse matrix.
    *
    * @param M is the matrix whose P-LU factorization must be computed.
    */
-  PLU_Factorization(const Matrix<T> &M):
+  LUP_Factorization(const Matrix<T> &M):
       _P(), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
   {
     if (M.num_of_rows() == 0 || M.num_of_cols() == 0) {
@@ -1839,12 +1839,12 @@ public:
   }
 
   /**
-   * @brief Copy a PLU_Factorization object.
+   * @brief Copy a LUP_Factorization object.
    *
    * @param orig is the model that must be copied.
    * @return a reference to the updated object.
    */
-  PLU_Factorization<T> &operator=(const PLU_Factorization<T> &orig)
+  LUP_Factorization<T> &operator=(const LUP_Factorization<T> &orig)
   {
     _P = orig._P;
     _L = orig._L;
@@ -1854,12 +1854,12 @@ public:
   }
 
   /**
-   * @brief Copy a PLU_Factorization object.
+   * @brief Copy a LUP_Factorization object.
    *
    * @param orig is the model that must be copied.
    * @return a reference to the updated object.
    */
-  PLU_Factorization<T> &operator=(PLU_Factorization<T> &&orig)
+  LUP_Factorization<T> &operator=(LUP_Factorization<T> &&orig)
   {
     std::swap(_P, orig._P);
     std::swap(_L, orig._L);
@@ -1879,7 +1879,7 @@ public:
 template<typename T>
 unsigned int rank(const Matrix<T> &A)
 {
-  const Matrix<T> U = PLU_Factorization<T>(A);
+  const Matrix<T> U = LUP_Factorization<T>(A);
 
   unsigned int rank = 0;
 
