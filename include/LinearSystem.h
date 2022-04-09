@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "LinearAlgebra.h"
 #include "SymbolicAlgebra.h"
 
 #include "JSONStreamer.h"
@@ -83,8 +84,8 @@ class LinearSystem
 {
 
 protected:
-  std::vector<std::vector<double>> A; // matrix A
-  std::vector<double> b;              // vector b
+  DenseLinearAlgebra::Matrix<double> A; // matrix A
+  Vector<double> b;                     // vector b
 
   /**
    * Check if a constraint belongs to the linear system
@@ -93,7 +94,7 @@ protected:
    * @param[in] bi offset
    * @returns true is Ai x <= bi is in the linear system
    */
-  bool is_in(const std::vector<double> &Ai, const double &bi) const;
+  bool is_in(const Vector<double> &Ai, const double &bi) const;
 
   /**
    * Check whether the solutions of a linear system satisfy a constraint.
@@ -112,7 +113,7 @@ protected:
    *     in which the constraint is satisfied by all the solutions and
    *     this method returns false.
    */
-  bool satisfies(const std::vector<double> &Ai, const double bi) const;
+  bool satisfies(const Vector<double> &Ai, const double bi) const;
 
   /**
    * Check whether one of the constraints in a linear system is redundant.
@@ -156,8 +157,8 @@ public:
    * @param[in] A template matrix
    * @param[in] b offset vector
    */
-  LinearSystem(const std::vector<std::vector<double>> &A,
-               const std::vector<double> &b);
+  LinearSystem(const DenseLinearAlgebra::Matrix<double> &A,
+               const Vector<double> &b);
 
   /**
    * Constructor from a set of symbolic expressions
@@ -187,7 +188,7 @@ public:
    *
    * @return template matrix
    */
-  const std::vector<std::vector<double>> &getA() const
+  const DenseLinearAlgebra::Matrix<double> &getA() const
   {
     return this->A;
   }
@@ -197,7 +198,7 @@ public:
    *
    * @return offset vector
    */
-  const std::vector<double> &getb() const
+  const Vector<double> &getb() const
   {
     return this->b;
   }
@@ -229,7 +230,7 @@ public:
    *        maximize (true) or minimize (false) `obj_fun` over the system
    * @return optimum
    */
-  OptimizationResult<double> optimize(const std::vector<double> &obj_fun,
+  OptimizationResult<double> optimize(const Vector<double> &obj_fun,
                                       const bool maximize) const;
 
   /**
@@ -238,8 +239,7 @@ public:
    * @param[in] obj_fun objective function
    * @return minimum
    */
-  OptimizationResult<double>
-  minimize(const std::vector<double> &obj_fun) const;
+  OptimizationResult<double> minimize(const Vector<double> &obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -247,8 +247,7 @@ public:
    * @param[in] obj_fun objective function
    * @return maximum
    */
-  OptimizationResult<double>
-  maximize(const std::vector<double> &obj_fun) const;
+  OptimizationResult<double> maximize(const Vector<double> &obj_fun) const;
 
   /**
    * Minimize the linear system
@@ -355,7 +354,7 @@ JSON::ostream &operator<<(JSON::ostream &out, const std::vector<T> &v)
 
 template<typename T>
 JSON::ostream &operator<<(JSON::ostream &out,
-                          const std::vector<std::vector<T>> &A)
+                          const DenseLinearAlgebra::Matrix<T> &A)
 {
   out << "[";
   for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
