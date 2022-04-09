@@ -19,6 +19,9 @@
 #include <cmath>   // due to floor
 #include <limits>  // due to numeric_limits
 
+template<typename T>
+using Vector = std::vector<T>;
+
 /**
  * @brief Approximate all the values in a vector up to given decimal digit.
  *
@@ -28,9 +31,9 @@
  * @return the given vector approximated up to `decimal` decimal digits.
  */
 template<typename T>
-inline std::vector<T> approx(const std::vector<T> &v,
-                             const unsigned short decimal
-                             = std::numeric_limits<T>::digits10);
+inline Vector<T> approx(const Vector<T> &v,
+                        const unsigned short decimal
+                        = std::numeric_limits<T>::digits10);
 
 /**
  * @brief Approximate all the values in a vector up to given decimal digit.
@@ -43,9 +46,8 @@ inline std::vector<T> approx(const std::vector<T> &v,
  * @return the given vector approximated up to `decimal` decimal digits.
  */
 template<typename T>
-inline std::vector<T> approx(std::vector<T> &&orig,
-                             const unsigned short decimal
-                             = std::numeric_limits<T>::digits10);
+inline Vector<T> approx(Vector<T> &&orig, const unsigned short decimal
+                                          = std::numeric_limits<T>::digits10);
 
 /**
  * @brief Approximate all the values in a vector up to given decimal digit.
@@ -57,8 +59,8 @@ inline std::vector<T> approx(std::vector<T> &&orig,
  * @return the given vector approximated up to `decimal` decimal digits.
  */
 template<>
-inline std::vector<double> approx<double>(std::vector<double> &&orig,
-                                          const unsigned short decimal)
+inline Vector<double> approx<double>(Vector<double> &&orig,
+                                     const unsigned short decimal)
 {
   if (decimal == std::numeric_limits<double>::digits10) {
     return std::move(orig);
@@ -82,10 +84,10 @@ inline std::vector<double> approx<double>(std::vector<double> &&orig,
  * @return the given vector approximated up to `decimal` decimal digits.
  */
 template<>
-inline std::vector<double> approx<double>(const std::vector<double> &orig,
-                                          const unsigned short decimal)
+inline Vector<double> approx<double>(const Vector<double> &orig,
+                                     const unsigned short decimal)
 {
-  return approx<double>(std::vector<double>(orig), decimal);
+  return approx<double>(Vector<double>(orig), decimal);
 }
 
 /**
@@ -96,7 +98,7 @@ inline std::vector<double> approx<double>(const std::vector<double> &orig,
  * @return the Euclidean norm of the given vector
  */
 template<typename T>
-T norm_2(const std::vector<T> &v)
+T norm_2(const Vector<T> &v)
 {
   T norm = 0;
 
@@ -115,7 +117,7 @@ T norm_2(const std::vector<T> &v)
  * @return the Manhattan norm of the given vector
  */
 template<typename T>
-T norm_1(const std::vector<T> &v)
+T norm_1(const Vector<T> &v)
 {
   T norm = 0;
 
@@ -134,7 +136,7 @@ T norm_1(const std::vector<T> &v)
  * @return the maximum norm of the given vector
  */
 template<typename T>
-T norm_infinity(const std::vector<T> &v)
+T norm_infinity(const Vector<T> &v)
 {
   T norm = 0;
 
@@ -154,9 +156,9 @@ T norm_infinity(const std::vector<T> &v)
  * @return A vector containing the complementaries of the parameter values
  */
 template<typename T>
-std::vector<T> operator-(const std::vector<T> &orig)
+Vector<T> operator-(const Vector<T> &orig)
 {
-  std::vector<T> res = orig;
+  Vector<T> res = orig;
 
   transform(res.begin(), res.end(), res.begin(), std::negate<T>());
 
@@ -170,7 +172,7 @@ std::vector<T> operator-(const std::vector<T> &orig)
  * @return A vector containing the complementaries of the parameter values
  */
 template<typename T>
-std::vector<T> operator-(std::vector<T> &&v)
+Vector<T> operator-(Vector<T> &&v)
 {
   transform(v.begin(), v.end(), v.begin(), std::negate<T>());
 
@@ -186,13 +188,13 @@ std::vector<T> operator-(std::vector<T> &&v)
  * @return the element-wise sum of the two parameters.
  */
 template<typename T>
-std::vector<T> operator+(const std::vector<T> &a, const std::vector<T> &b)
+Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
     throw std::domain_error("The two vectors have different dimensions");
   }
 
-  std::vector<T> res(a.size());
+  Vector<T> res(a.size());
 
   for (unsigned int i = 0; i < res.size(); ++i) {
     res[i] = a[i] + b[i];
@@ -210,7 +212,7 @@ std::vector<T> operator+(const std::vector<T> &a, const std::vector<T> &b)
  * @return the element-wise sum of the two parameters.
  */
 template<typename T>
-std::vector<T> operator+(std::vector<T> &&a, const std::vector<T> &b)
+Vector<T> operator+(Vector<T> &&a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
     throw std::domain_error("The two vectors have different dimensions");
@@ -232,7 +234,7 @@ std::vector<T> operator+(std::vector<T> &&a, const std::vector<T> &b)
  * @return the element-wise sum of the two parameters.
  */
 template<typename T>
-inline std::vector<T> operator+(const std::vector<T> &a, std::vector<T> &&b)
+inline Vector<T> operator+(const Vector<T> &a, Vector<T> &&b)
 {
   return operator+(b, a);
 }
@@ -247,13 +249,13 @@ inline std::vector<T> operator+(const std::vector<T> &a, std::vector<T> &&b)
  * one.
  */
 template<typename T>
-std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
+Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
     throw std::domain_error("The two vectors have different dimensions");
   }
 
-  std::vector<T> res(a.size());
+  Vector<T> res(a.size());
 
   for (unsigned int i = 0; i < res.size(); ++i) {
     res[i] = a[i] - b[i];
@@ -272,7 +274,7 @@ std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
  * one.
  */
 template<typename T>
-std::vector<T> operator-(std::vector<T> &&a, const std::vector<T> &b)
+Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
     throw std::domain_error("The two vectors have different dimensions");
@@ -295,7 +297,7 @@ std::vector<T> operator-(std::vector<T> &&a, const std::vector<T> &b)
  * one.
  */
 template<typename T>
-std::vector<T> operator-(const std::vector<T> &a, std::vector<T> &&b)
+Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
 {
   if (a.size() != b.size()) {
     throw std::domain_error("The two vectors have different dimensions");
@@ -318,9 +320,9 @@ std::vector<T> operator-(const std::vector<T> &a, std::vector<T> &&b)
  * @return the element-wise scalar product $s * v$.
  */
 template<typename T>
-std::vector<T> operator*(const T s, const std::vector<T> &v)
+Vector<T> operator*(const T s, const Vector<T> &v)
 {
-  std::vector<T> res(v.size());
+  Vector<T> res(v.size());
 
   for (unsigned int i = 0; i < res.size(); ++i) {
     res[i] = s * v[i];
@@ -338,7 +340,7 @@ std::vector<T> operator*(const T s, const std::vector<T> &v)
  * @return the element-wise scalar product $v * s$.
  */
 template<typename T>
-inline std::vector<T> operator*(const std::vector<T> &v, const T s)
+inline Vector<T> operator*(const Vector<T> &v, const T s)
 {
   return operator*(s, v);
 }
@@ -352,7 +354,7 @@ inline std::vector<T> operator*(const std::vector<T> &v, const T s)
  * @return the vector product $v1 \cdot v2$.
  */
 template<typename T>
-T operator*(const std::vector<T> &v1, const std::vector<T> &v2)
+T operator*(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
     throw std::domain_error("The two vectors have not the same dimensions.");
@@ -384,13 +386,13 @@ T operator*(const std::vector<T> &v1, const std::vector<T> &v2)
  * @return the vector product $v1 \circ v2$.
  */
 template<typename T>
-std::vector<T> H_prod(const std::vector<T> &v1, const std::vector<T> &v2)
+Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
     throw std::domain_error("The two vectors have not the same dimensions.");
   }
 
-  std::vector<T> res(v1.size());
+  Vector<T> res(v1.size());
   for (unsigned int i = 0; i < v1.size(); ++i) {
     res[i] = v1[i] * v2[i];
   }
@@ -407,7 +409,7 @@ std::vector<T> H_prod(const std::vector<T> &v1, const std::vector<T> &v2)
  * @return the element-wise scalar product $s * v$.
  */
 template<typename T>
-std::vector<T> operator*(const T s, std::vector<T> &&v)
+Vector<T> operator*(const T s, Vector<T> &&v)
 {
   for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
     *v_it *= s;
@@ -425,7 +427,7 @@ std::vector<T> operator*(const T s, std::vector<T> &&v)
  * @return the element-wise scalar product $v * s$.
  */
 template<typename T>
-inline std::vector<T> operator*(std::vector<T> &&v, const T s)
+inline Vector<T> operator*(Vector<T> &&v, const T s)
 {
   return operator*(s, v);
 }
@@ -439,9 +441,9 @@ inline std::vector<T> operator*(std::vector<T> &&v, const T s)
  * @return the element-wise scalar division $v/a$.
  */
 template<typename T>
-std::vector<T> operator/(const std::vector<T> &v, const T s)
+Vector<T> operator/(const Vector<T> &v, const T s)
 {
-  std::vector<T> res(v.size());
+  Vector<T> res(v.size());
 
   for (unsigned int i = 0; i < res.size(); ++i) {
     res[i] = v[i] / s;
@@ -459,7 +461,7 @@ std::vector<T> operator/(const std::vector<T> &v, const T s)
  * @return the element-wise scalar division $v/a$.
  */
 template<typename T>
-std::vector<T> operator/(std::vector<T> &&v, const T s)
+Vector<T> operator/(Vector<T> &&v, const T s)
 {
   for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
     *v_it /= s;
@@ -477,47 +479,9 @@ std::vector<T> operator/(std::vector<T> &&v, const T s)
  * @returns angle between v1 and v2
  */
 template<typename T>
-inline T angle(const std::vector<T> &v1, const std::vector<T> &v2)
+inline T angle(const Vector<T> &v1, const Vector<T> &v2)
 {
   return acos(v1 * v2 / (norm_2(v1) * norm_2(v2)));
-}
-
-/**
- * @brief Compute the row-column matrix-matrix multiplication
- *
- * @tparam T is a numeric type
- * @param A is a dense matrix
- * @param B is a dense matrix
- * @return the row-column matrix-matrix multiplication $A \cdot B$.
- */
-template<typename T>
-std::vector<std::vector<T>> operator*(const std::vector<std::vector<T>> &A,
-                                      const std::vector<std::vector<T>> &B)
-{
-  if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
-      && B.size() == 0) {
-    return std::vector<std::vector<T>>();
-  }
-
-  if (A.front().size() != B.size()) {
-    throw std::domain_error("The two matrices are not compatible for the "
-                            "matrix-matrix multiplication.");
-  }
-
-  std::vector<std::vector<T>> res(A.size(),
-                                  std::vector<T>(B.front().size(), 0));
-
-  for (unsigned int row_idx = 0; row_idx < A.size(); ++row_idx) {
-    for (unsigned int col_idx = 0; col_idx < B.front().size(); ++col_idx) {
-      T value = 0;
-      for (unsigned int k = 0; k < A[row_idx].size(); ++k) {
-        value += A[row_idx][k] * B[k][col_idx];
-      }
-      res[row_idx][col_idx] = value;
-    }
-  }
-
-  return res;
 }
 
 /**
@@ -577,9 +541,9 @@ public:
   }
 
   template<typename T>
-  std::vector<T> operator()(const std::vector<T> &v) const
+  Vector<T> operator()(const Vector<T> &v) const
   {
-    std::vector<T> pv = v;
+    Vector<T> pv = v;
 
     for (auto it = std::begin(_swaps); it != std::end(_swaps); ++it) {
       if (it->first >= v.size() || it->second >= v.size()) {
@@ -628,6 +592,45 @@ public:
 namespace DenseLinearAlgebra
 {
 
+template<typename T>
+using Matrix = std::vector<Vector<T>>;
+
+/**
+ * @brief Compute the row-column matrix-matrix multiplication
+ *
+ * @tparam T is a numeric type
+ * @param A is a dense matrix
+ * @param B is a dense matrix
+ * @return the row-column matrix-matrix multiplication $A \cdot B$.
+ */
+template<typename T>
+Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
+{
+  if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
+      && B.size() == 0) {
+    return Matrix<T>();
+  }
+
+  if (A.front().size() != B.size()) {
+    throw std::domain_error("The two matrices are not compatible for the "
+                            "matrix-matrix multiplication.");
+  }
+
+  Matrix<T> res(A.size(), Vector<T>(B.front().size(), 0));
+
+  for (unsigned int row_idx = 0; row_idx < A.size(); ++row_idx) {
+    for (unsigned int col_idx = 0; col_idx < B.front().size(); ++col_idx) {
+      T value = 0;
+      for (unsigned int k = 0; k < A[row_idx].size(); ++k) {
+        value += A[row_idx][k] * B[k][col_idx];
+      }
+      res[row_idx][col_idx] = value;
+    }
+  }
+
+  return res;
+}
+
 /**
  * @brief A Permutation-LU factorization for dense matrices.
  *
@@ -643,8 +646,8 @@ namespace DenseLinearAlgebra
 template<typename T>
 class PLU_Factorization
 {
-  Permutation _P;                  //!< the permutation
-  std::vector<std::vector<T>> _LU; //!< the L and U matrices
+  Permutation _P; //!< the permutation
+  Matrix<T> _LU;  //!< the L and U matrices
 
   /**
    * @brief Solve the linear system $L\cdot x = b$.
@@ -652,13 +655,13 @@ class PLU_Factorization
    * @param[in] b is the known term of the linear system.
    * @return the vector $x = L^{-1} \cdot b$.
    */
-  std::vector<T> solveL(const std::vector<T> &b) const
+  Vector<T> solveL(const Vector<T> &b) const
   {
-    std::vector<T> x(b.size());
+    Vector<T> x(b.size());
 
     for (unsigned int j = 0; j < _LU.size(); ++j) {
       T value = b[j];
-      const std::vector<T> &row = _LU[j];
+      const Vector<T> &row = _LU[j];
       for (unsigned int i = 0; i < j; ++i) {
         if (row[i] != 0) {
           value -= row[i] * x[i];
@@ -676,14 +679,14 @@ class PLU_Factorization
    * @param[in] b is the known term of the linear system.
    * @return the vector $x = U^{-1} \cdot b$.
    */
-  std::vector<T> solveU(const std::vector<T> &b) const
+  Vector<T> solveU(const Vector<T> &b) const
   {
-    std::vector<T> x(b.size());
+    Vector<T> x(b.size());
 
     for (unsigned int rj = 0; rj < _LU.size(); ++rj) {
       const unsigned int j = _LU.size() - rj - 1;
       T value = b[j];
-      const std::vector<T> &row = _LU[j];
+      const Vector<T> &row = _LU[j];
 
       const T &diag_value = row[j];
       if (diag_value == 0) {
@@ -722,7 +725,7 @@ public:
    *
    * @param M is the matrix whose P-LU factorization must be computed.
    */
-  PLU_Factorization(const std::vector<std::vector<T>> &M): _P(), _LU(M)
+  PLU_Factorization(const Matrix<T> &M): _P(), _LU(M)
   {
     if (M.size() == 0) {
       throw std::domain_error("The parameter is an empty matrix.");
@@ -748,11 +751,11 @@ public:
         }
 
         // nullify all the values below A[j][j]
-        const std::vector<T> &row_j = _LU[j];
+        const Vector<T> &row_j = _LU[j];
         const T &v = row_j[j];
         k += 1;
         while (k < _LU.size()) {
-          std::vector<T> &row_k = _LU[k];
+          Vector<T> &row_k = _LU[k];
           if (row_k[j] != 0) {
             const T ratio = -row_k[j] / v;
             for (unsigned int i = j + 1; i < row_j.size(); ++i) {
@@ -773,7 +776,7 @@ public:
    * @param is the known term of the linear system.
    * @return the vector $x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b$.
    */
-  std::vector<T> solve(const std::vector<T> &b) const
+  Vector<T> solve(const Vector<T> &b) const
   {
     if (b.size() != _LU.size()) {
       throw std::domain_error("Wrong dimensions");
@@ -784,7 +787,7 @@ public:
                               "system cannot be solved.");
     }
 
-    std::vector<T> Pb = _P(b);
+    Vector<T> Pb = _P(b);
 
     // Forward substitution for L
     Pb = solveL(Pb);
@@ -836,13 +839,13 @@ public:
    *
    * @return the factorization lower-triangular matrix.
    */
-  std::vector<std::vector<T>> L() const
+  Matrix<T> L() const
   {
-    std::vector<std::vector<T>> res(_LU.size(), std::vector<T>(_LU.size(), 0));
+    Matrix<T> res(_LU.size(), Vector<T>(_LU.size(), 0));
 
     for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
-      const std::vector<T> &row = _LU[row_idx];
-      std::vector<T> &res_row = res[row_idx];
+      const Vector<T> &row = _LU[row_idx];
+      Vector<T> &res_row = res[row_idx];
       for (unsigned int col_idx = 0; col_idx < row_idx && col_idx < row.size();
            ++col_idx) {
         res_row[col_idx] = row[col_idx];
@@ -858,14 +861,13 @@ public:
    *
    * @return the factorization upper-triangular matrix.
    */
-  std::vector<std::vector<T>> U() const
+  Matrix<T> U() const
   {
-    std::vector<std::vector<T>> res(_LU.size(),
-                                    std::vector<T>(_LU.front().size(), 0));
+    Matrix<T> res(_LU.size(), Vector<T>(_LU.front().size(), 0));
 
     for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
-      const std::vector<T> &row = _LU[row_idx];
-      std::vector<T> &res_row = res[row_idx];
+      const Vector<T> &row = _LU[row_idx];
+      Vector<T> &res_row = res[row_idx];
       for (unsigned int col_idx = row_idx; col_idx < row.size(); ++col_idx) {
         res_row[col_idx] = row[col_idx];
       }
@@ -878,7 +880,7 @@ public:
   friend std::ostream &std::operator<<(std::ostream &os,
                                        const PLU_Factorization<E> &D);
   template<typename E>
-  friend unsigned int rank(const std::vector<std::vector<E>> &A);
+  friend unsigned int rank(const Matrix<E> &A);
 };
 
 /**
@@ -889,7 +891,7 @@ public:
  * @return The rank of the matrix `A`
  */
 template<typename T>
-unsigned int rank(const std::vector<std::vector<T>> &A)
+unsigned int rank(const Matrix<T> &A)
 {
   if (A.size() == 0) {
     return 0;
