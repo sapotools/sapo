@@ -583,6 +583,92 @@ public:
   }
 };
 
+/**
+ * @brief Establish whether two vectors are linearly dependent
+ *
+ * @tparam T is the type of the scalar values
+ * @param v1 is the first vector to be tested
+ * @param v2 is the second vector to be tested
+ * @return true if and only if the two vectors are linearly dependent
+ */
+template<typename T>
+bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
+{
+  if (v1.size() != v2.size()) {
+    throw std::domain_error("The two vectors have not the same dimensions.");
+  }
+
+  // initialize the candidate index to be the first one
+  // different from zero in v1 or v2
+  unsigned int non_zero_idx = v1.size();
+  for (unsigned int i = 0; i < v1.size(); ++i) {
+
+    // if non zero values has not been discovered yet and
+    // at least one of the two elements in the two vectors
+    // differs from zero
+    if (non_zero_idx == v1.size() && (v1[i] != 0 || v2[i] != 0)) {
+
+      if (v1[i] == 0 || v2[i] == 0) {
+        return false;
+      }
+
+      // set the first non-zero index
+      non_zero_idx = i;
+    } else {
+
+      if (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx]) {
+
+        // return that their are not linearly dependent
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @brief Compute the ratio between two linearly dependent vectors.
+ *
+ * @tparam T is the type of the scalar values
+ * @param v1 is the first vector
+ * @param v2 is the second vector
+ * @return The ratio between two linearly dependent vectors.
+ */
+template<typename T>
+T operator/(const Vector<T> &v1, const Vector<T> &v2)
+{
+  if (v1.size() != v2.size()) {
+    throw std::domain_error("The two vectors have not the same dimensions.");
+  }
+
+  // initialize the candidate index to be the first one
+  // different from zero in v1 or v2
+  unsigned int non_zero_idx = v1.size();
+  for (unsigned int i = 0; i < v1.size(); ++i) {
+
+    // if non zero values has not been discovered yet and
+    // at least one of the two elements in the two vectors
+    // differs from zero
+    if (non_zero_idx == v1.size() && (v1[i] != 0 || v2[i] != 0)) {
+
+      if (v1[i] == 0 || v2[i] == 0) {
+        throw std::domain_error("The two vectors are not linealy dependent.");
+      }
+
+      // set the first non-zero index
+      non_zero_idx = i;
+    } else {
+
+      if (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx]) {
+        throw std::domain_error("The two vectors are not linealy dependent.");
+      }
+    }
+  }
+
+  return v1[non_zero_idx] / v2[non_zero_idx];
+}
+
 /*!
  *  \addtogroup DenseLinearAlgebra
  *  @{
