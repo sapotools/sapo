@@ -210,6 +210,16 @@ LinearSystem::LinearSystem(const DenseLinearAlgebra::Matrix<double> &A,
 }
 
 /**
+ * Move constructor that instantiates a linear system
+ *
+ * @param[in] A template matrix
+ * @param[in] b offset vector
+ */
+LinearSystem::LinearSystem(DenseLinearAlgebra::Matrix<double> &&A,
+                           Vector<double> &&b): A(std::move(A)), b(std::move(b))
+{}
+
+/**
  * Constructor that instantiates an empty linear system
  */
 LinearSystem::LinearSystem(): A(), b() {}

@@ -80,6 +80,21 @@ public:
   }
 };
 
+/**
+ * Optimize a linear system
+ *
+ * @param[in] A template matrix of the system to optimize
+ * @param[in] b offset vector of the system to optimize
+ * @param[in] obj_fun objective function
+ * @param[in] maximize is a Boolean parameter to establish whether
+ *        maximize (true) or minimize (false) `obj_fun` over the system
+ * @return optimum
+ */
+OptimizationResult<double> optimize(const DenseLinearAlgebra::Matrix<double> &A,
+                                    const Vector<double> &b,
+                                    const Vector<double> &obj_fun,
+                                    const bool maximize);
+
 class LinearSystem
 {
 
@@ -145,7 +160,7 @@ public:
   LinearSystem(const LinearSystem &orig);
 
   /**
-   * Swap constructor
+   * Move constructor
    *
    * @param[in] orig the original linear system
    */
@@ -159,6 +174,15 @@ public:
    */
   LinearSystem(const DenseLinearAlgebra::Matrix<double> &A,
                const Vector<double> &b);
+
+  /**
+   * Move constructor
+   *
+   * @param[in] A template matrix
+   * @param[in] b offset vector
+   */
+  LinearSystem(DenseLinearAlgebra::Matrix<double> &&A,
+               Vector<double> &&b);
 
   /**
    * Constructor from a set of symbolic expressions
