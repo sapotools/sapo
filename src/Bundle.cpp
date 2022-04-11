@@ -40,7 +40,7 @@ Bundle::Bundle(const Bundle &orig):
 }
 
 /**
- * Swap constructor that instantiates the bundle
+ * Move constructor that instantiates the bundle
  *
  * @param[in, out] orig is the model for the new bundle
  */
@@ -73,7 +73,7 @@ double orthProx(Vector<double> v1, Vector<double> v2)
 }
 
 /**
- * Constructor that instantiates the bundle with auto-generated variables
+ * Constructor
  *
  * @param[in] dir_matrix matrix of directions
  * @param[in] upper_offset upper offsets
@@ -89,7 +89,24 @@ Bundle::Bundle(const DenseLinearAlgebra::Matrix<double> &dir_matrix,
 }
 
 /**
- * Constructor that instantiates the bundle with auto-generated variables
+ * Move constructor
+ *
+ * @param[in] dir_matrix matrix of directions
+ * @param[in] upper_offset upper offsets
+ * @param[in] lower_offset lower offsets
+ * @param[in] t_matrix templates matrix
+ */
+Bundle::Bundle(DenseLinearAlgebra::Matrix<double> &&dir_matrix,
+               Vector<double> &&upper_offset, Vector<double> &&lower_offset,
+               DenseLinearAlgebra::Matrix<int> &&t_matrix):
+    dir_matrix(std::move(dir_matrix)),
+    upper_offset(std::move(upper_offset)),
+    lower_offset(std::move(lower_offset)), t_matrix(std::move(t_matrix))
+{
+}
+
+/**
+ * Constructor
  *
  * @param[in] dir_matrix matrix of directions
  * @param[in] upper_offset upper offsets
@@ -869,6 +886,203 @@ bool isIn(std::vector<int> v, DenseLinearAlgebra::Matrix<int> vlist)
     }
   }
   return false;
+}
+
+LinearSystem get_linear_system(const Bundle &A)
+{
+  DenseLinearAlgebra::Matrix<double> A_dirs = A.get_directions();
+  A_dirs.reserve(2 * A_dirs.size());
+  for (unsigned int i = 0; i < A_dirs.size(); ++i) {
+    A_dirs.push_back(-A_dirs[i]);
+  }
+
+  Vector<double> A_bounds = A.get_upper_offset();
+  A_bounds.reserve(2 * A_bounds.size());
+  for (unsigned int i = 0; i < A_bounds.size(); ++i) {
+    A_bounds.push_back(-A.get_offsetm(i));
+  }
+
+  return LinearSystem(std::move(A_dirs), std::move(A_bounds));
+}
+
+unsigned int
+get_a_linearly_dependent_row_in(const Vector<double> &v,
+                                const DenseLinearAlgebra::Matrix<double> &A)
+{
+  for (unsigned int i = 0; i < A.size(); ++i) {
+    if (are_linearly_dependent(v, A[i])) {
+      return i;
+    }
+  }
+  return A.size();
+}
+
+bool require_copy(const Vector<int> &bundle_template,
+                  const std::vector<unsigned int> &new_ids,
+                  const unsigned int old_size)
+{
+  for (auto &id: bundle_template) {
+    if (new_ids[id] >= old_size) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * @brief Get the intersection between two bundles
+ *
+ * This method intersects the current object and another bundle.
+ * The result is stored in the current object and a reference
+ * to it is returned.
+ *
+ * @param A is the intersecting bundle.
+ * @return a reference to the updated object.
+ */
+Bundle &Bundle::intersect(const Bundle &A)
+{
+  unsigned int old_size = this->size();
+  std::vector<unsigned int> new_ids(A.size());
+
+  // for each direction in A
+  for (unsigned int i = 0; i < A.size(); ++i) {
+    const Vector<double> &A_dir = A.dir_matrix[i];
+    new_ids[i] = get_a_linearly_dependent_row_in(A_dir, this->dir_matrix);
+
+    // if the direction is not present in this object
+    if (new_ids[i] == this->size()) {
+
+      // add the direction and the corresponding boundaries
+      this->dir_matrix.push_back(A_dir);
+      this->lower_offset.push_back(A.lower_offset[i]);
+      this->upper_offset.push_back(A.upper_offset[i]);
+    } else { // if the direction is already included in this object
+
+      // compute the dependency coefficent
+      const unsigned int &new_i = new_ids[i];
+      const double dep_coeff = this->dir_matrix[new_i][0] / A_dir[0];
+
+      // if necessary, increase the lower bound
+      this->lower_offset[new_i]
+          = std::max(this->lower_offset[new_i], A.lower_offset[i] * dep_coeff);
+
+      // if necessary, decrease the upper bound
+      this->upper_offset[new_i]
+          = std::min(this->upper_offset[new_i], A.upper_offset[i] * dep_coeff);
+    }
+  }
+
+  // copy missing templates
+  for (unsigned int i = 0; i < A.t_matrix.size(); ++i) {
+    const std::vector<int> &A_template = A.t_matrix[i];
+    if (require_copy(A_template, new_ids, old_size)) {
+      std::vector<int> t_copy(A_template);
+      for (unsigned int j = 0; j < t_copy.size(); ++j) {
+        t_copy[j] = new_ids[t_copy[j]];
+      }
+      this->t_matrix.push_back(t_copy);
+    }
+  }
+
+  return *this;
+}
+
+/**
+ * @brief Add to the bundle templates for some directions
+ *
+ * @param missing_template_dirs the indices of the directions whose
+ *            template we are missing
+ */
+void Bundle::add_templates_for(
+    std::set<unsigned int> &missing_template_directions)
+{
+  using namespace DenseLinearAlgebra;
+
+  while (!missing_template_directions.empty()) {
+    // fill T with all the bundle directions starting
+    // from those not included in a template
+    Matrix<double> T = this->dir_matrix;
+    Vector<int> row_pos;
+    std::iota(std::begin(row_pos), std::end(row_pos), 1);
+
+    unsigned int j = 0;
+    for (unsigned int i: missing_template_directions) {
+      std::swap(T[i], T[j]);
+      std::swap(row_pos[i], row_pos[j]);
+      ++j;
+    }
+
+    // the LUP factorization find the first n non-linearly
+    // dependent rows in T and the permutation can be used
+    // to discover them
+    using namespace DenseLinearAlgebra;
+    auto fP = LUP_Factorization<double>(T).P();
+    row_pos = fP(row_pos);
+    Vector<int> new_temp(this->dim());
+
+    std::copy(std::begin(row_pos), std::begin(row_pos) + new_temp.size(),
+              std::begin(new_temp));
+
+    this->t_matrix.push_back(new_temp);
+    for (int i: new_temp) {
+      missing_template_directions.erase((unsigned int)i);
+    }
+  }
+}
+
+/**
+ * @brief Get the intersection between this bundle and a linear set
+ *
+ * This method intersects the current instance of the `Bundle` class
+ * and a possible unbounded linear set provided as a `LinearSystem`.
+ * The result is stored in the current object and a reference to it
+ * is returned.
+ *
+ * @param ls is the intersecting bundle.
+ * @return a reference to the updated object.
+ */
+Bundle &Bundle::intersect(const LinearSystem &ls)
+{
+  using namespace DenseLinearAlgebra;
+
+  std::set<unsigned int> outside_templates;
+  const Matrix<double> &A = ls.getA();
+
+  std::vector<unsigned int> new_ids(A.size());
+  // for each row in the linear system
+  for (unsigned int i = 0; i < A.size(); ++i) {
+    const Vector<double> &A_row = A[i];
+
+    new_ids[i] = get_a_linearly_dependent_row_in(A_row, this->dir_matrix);
+
+    // if the direction is not present in this object
+    if (new_ids[i] == this->size()) {
+      // compute a non-influent lower bound for the row
+      LinearSystem this_ls = get_linear_system(*this);
+
+      double lower_bound = this_ls.minimize(A_row).optimum();
+
+      // add the direction and the corresponding boundaries
+      outside_templates.insert(this->dir_matrix.size());
+      this->dir_matrix.push_back(A_row);
+      this->lower_offset.push_back(lower_bound);
+      this->upper_offset.push_back(ls.getb(i));
+    } else {
+      // compute the dependency coefficent
+      const unsigned int &new_i = new_ids[i];
+      const double dep_coeff = this->dir_matrix[new_i] / A_row;
+
+      // if necessary, decrease the upper bound
+      this->upper_offset[new_i]
+          = std::min(this->upper_offset[new_i], ls.getb(i) * dep_coeff);
+    }
+  }
+
+  // add missing templates
+  add_templates_for(outside_templates);
+
+  return *this;
 }
 
 Bundle::~Bundle()

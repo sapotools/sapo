@@ -157,6 +157,14 @@ private:
                    const MaxCoeffFinder *max_finder,
                    Bundle::transfomation_mode mode) const;
 
+  /**
+   * @brief Add to the bundle templates for some directions
+   *
+   * @param missing_template_dirs the indices of the directions whose
+   *            template we are missing
+   */
+  void add_templates_for(std::set<unsigned int> &missing_template_dirs);
+
 public:
   /**
    * @brief Copy constructor.
@@ -173,7 +181,7 @@ public:
   Bundle(Bundle &&orig);
 
   /**
-   * Constructor that instantiates the bundle with auto-generated variables
+   * Constructor
    *
    * @param[in] dir_matrix matrix of directions
    * @param[in] upper_offset upper offsets
@@ -186,7 +194,7 @@ public:
          const DenseLinearAlgebra::Matrix<int> &t_matrix);
 
   /**
-   * Constructor that instantiates the bundle with auto-generated variables
+   * Constructor
    *
    * @param[in] dir_matrix matrix of directions
    * @param[in] upper_offset upper offsets
@@ -202,6 +210,48 @@ public:
          const DenseLinearAlgebra::Matrix<double> &constrDirs,
          const Vector<double> &constrOffsets);
 
+  /**
+   * Move constructor
+   *
+   * @param[in] dir_matrix matrix of directions
+   * @param[in] upper_offset upper offsets
+   * @param[in] lower_offset lower offsets
+   * @param[in] t_matrix t_matrixs matrix
+   */
+  Bundle(DenseLinearAlgebra::Matrix<double> &&dir_matrix,
+         Vector<double> &&upper_offset, Vector<double> &&lower_offset,
+         DenseLinearAlgebra::Matrix<int> &&t_matrix);
+
+  /**
+   * @brief Get the intersection between two bundles
+   *
+   * This method intersects the current object and another bundle.
+   * The result is stored in the current object and a reference
+   * to it is returned.
+   *
+   * @param A is the intersecting bundle.
+   * @return a reference to the updated object.
+   */
+  Bundle &intersect(const Bundle &A);
+
+  /**
+   * @brief Get the intersection between this bundle and a linear set
+   *
+   * This method intersects the current instance of the `Bundle` class
+   * and a possible unbounded linear set provided as a `LinearSystem`.
+   * The result is stored in the current object and a reference to it
+   * is returned.
+   *
+   * @param ls is the intersecting bundle.
+   * @return a reference to the updated object.
+   */
+  Bundle &intersect(const LinearSystem &ls);
+
+  /**
+   * @brief Return the dimension of the bundle space
+   *
+   * @return the number of dimensions of the bundle space
+   */
   unsigned int dim() const
   {
     return (dir_matrix.size() == 0 ? 0 : dir_matrix.front().size());
@@ -240,6 +290,16 @@ public:
   const double &get_offsetm(long unsigned int i) const
   {
     return this->lower_offset[i];
+  }
+
+  const std::vector<double> &get_upper_offset() const
+  {
+    return this->upper_offset;
+  }
+
+  const std::vector<double> &get_lower_offset() const
+  {
+    return this->lower_offset;
   }
 
   /**
