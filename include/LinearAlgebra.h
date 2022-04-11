@@ -166,6 +166,46 @@ Vector<T> operator-(const Vector<T> &orig)
 }
 
 /**
+ * @brief Check whether two vectors are the same
+ * 
+ * @tparam T is the scalar value type
+ * @param a is the first vector to be compared
+ * @param b is the second vector to be compared
+ * @return true if and only if the two vectors are the same
+ */
+template<typename T>
+bool operator==(const Vector<T> &a, const Vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    throw std::domain_error("The two vectors have different dimensions");
+  }
+
+  Vector<double>::const_iterator b_it = std::cbegin(b);
+  for (Vector<double>::const_iterator a_it = std::cbegin(a);
+        a_it != std::cend(a); ++a_it, ++b_it) {
+    if (*a_it != *b_it) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @brief Check whether two vectors differ
+ * 
+ * @tparam T is the scalar value type
+ * @param a is the first vector to be compared
+ * @param b is the second vector to be compared
+ * @return true if and only if the two vectors differ
+ */
+template<typename T>
+bool operator!=(const Vector<T> &a, const Vector<T> &b)
+{
+  return !(a==b);
+}
+
+/**
  * Compute the complementary of a vector of values.
  *
  * @param[in] orig the vector of values to be complementated.
