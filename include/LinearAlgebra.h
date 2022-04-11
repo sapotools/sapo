@@ -489,13 +489,14 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
  *
  * Permutation are square matrices whose row and column
  * sums are one. However, storing a permutation for
- * $n$-dim vectors by using this natural representation
- * requires $n^2$ integer numbers and its application
- * costs $O(n^2)$.
+ * n-dim vectors by using this natural representation
+ * requires \f$n^2\f$ integer numbers and its 
+ * application costs \f$O(n^2)\f$.
  * This class stores permutation is a more efficient
  * way representing only swapped element positions in
  * a map from integer to integer. The application cost
- * belongs to $O(n)$.
+ * belongs to \f$O(m*log m)\f$ where \f$m\f$ is the 
+ * number of swapped positions.
  */
 class Permutation
 {
@@ -540,6 +541,17 @@ public:
     return *this;
   }
 
+  /**
+   * @brief Apply the permutation to a vector
+   * 
+   * This method does not work in-place and 
+   * creates a swapped-version of the input
+   * vector to be returned. 
+   * 
+   * @tparam T is the scalar value type
+   * @param v is the vector to be swapped
+   * @return the swapped vector
+   */
   template<typename T>
   Vector<T> operator()(const Vector<T> &v) const
   {
@@ -556,6 +568,12 @@ public:
     return pv;
   }
 
+  /**
+   * @brief Assignment operator
+   * 
+   * @param P is the template permutation
+   * @return a reference to the updated object
+   */
   Permutation &operator=(const Permutation &P)
   {
     _swaps = P._swaps;
@@ -563,11 +581,24 @@ public:
     return *this;
   }
 
+  /**
+   * @brief Swap two permutations
+   * 
+   * @param P1 the first permutation to be swapped
+   * @param P2 the second permutation to be swapped
+   */
   friend inline void swap(Permutation &P1, Permutation &P2)
   {
     std::swap(P1._swaps, P2._swaps);
   }
 
+  /**
+   * @brief Print formatted permutation
+   * 
+   * @param os is the output stream
+   * @param P is the permutation to be printed
+   * @return a output stream reference
+   */
   friend std::ostream &operator<<(std::ostream &os, const Permutation &P)
   {
     os << "Permutation[";
