@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <algorithm>
+#include <list>
 
 namespace JSON
 {

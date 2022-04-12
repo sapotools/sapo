@@ -46,10 +46,12 @@ if(GLPK_INCLUDE_DIR AND GLPK_LIB)
     "${GLPK_FIND_VERSION_MAJOR}.${GLPK_FIND_VERSION_MINOR}")
   endif()
 
+  set(TEST_FILE ${PROJECT_BINARY_DIR}/glpk-check.cpp)
+
   # This program will fail to compile if GLPK is too old and
   # fail to run if the GLPK library does not support thread 
   # local memory
-  file(WRITE ${PROJECT_BINARY_DIR}/glpk-check.cpp ""
+  file(WRITE ${TEST_FILE} ""
   "#include <glpk.h>\n"
   "#include <stdlib.h>\n"
   "\n"
@@ -72,10 +74,12 @@ if(GLPK_INCLUDE_DIR AND GLPK_LIB)
 
   try_run(GLPK_THREADS GLPK_VERSION_OK
           "${PROJECT_BINARY_DIR}"
-          "${PROJECT_BINARY_DIR}/glpk-check.cpp"
+          "${TEST_FILE}"
           CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${GLPK_INCLUDE_DIR}"
           LINK_LIBRARIES ${GLPK_LIB})
   
+  file(REMOVE ${TEST_FILE})
+
   if(GLPK_THREADS EQUAL 0)
     set(GLPK_THREADS TRUE)
   else()

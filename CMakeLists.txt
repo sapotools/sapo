@@ -10,21 +10,10 @@ set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include_directories(include include/STL parser/include)
-
-find_package(FLEX 2.6.3 REQUIRED)
-find_package(BISON 3.6.0 REQUIRED)
-
-flex_target(input_scanner parser/scanner.l
-            ${CMAKE_SOURCE_DIR}/parser/src/scanner.cpp)
-bison_target(input_parser parser/parser.yy
-             ${CMAKE_SOURCE_DIR}/parser/src/parser.cpp
-             DEFINES_FILE ${CMAKE_SOURCE_DIR}/parser/include/parser.h)
-
 find_package(GLPK REQUIRED)
 find_package(GMP REQUIRED)
 
-set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp GLPK::glpk)
+include_directories(${GMPXX_INCLUDE_DIR} ${GMP_INCLUDE_DIR})
 
 set(THREADED_VERSION TRUE CACHE BOOL "Enable/disable threaded version compilation")
 
@@ -85,19 +74,9 @@ endif()
 
 message("This is Sapo ${SAPO_VERSION}")
 
-configure_file(${CMAKE_SOURCE_DIR}/src/Version.cpp.in ${CMAKE_SOURCE_DIR}/src/Version.cpp @ONLY)
+execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 
-file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp
-	                  ${CMAKE_SOURCE_DIR}/parser/src/*.cpp)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
-add_executable(sapo ${BISON_input_parser_OUTPUT_SOURCE}
-	            ${FLEX_input_scanner_OUTPUTS} ${SOURCES})
-
-target_link_libraries(sapo ${PROJECT_LINK_LIBS})
-
-install(TARGETS sapo DESTINATION bin)
+set(CMAKE_INSTALL_PREFIX ".")
 
 find_program( CLANG_FORMAT_EXE NAMES "clang-format")
 if(NOT CLANG_FORMAT_EXE)
@@ -106,29 +85,7 @@ else()
    message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}")
 endif()
 
-if(CLANG_FORMAT_EXE)
-   file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/include/*.h
-                             ${CMAKE_SOURCE_DIR}/parser/include/*.h)
-
-   add_custom_target( format-code COMMAND ${CLANG_FORMAT_EXE} -i
-                             -style=file ${SOURCES} ${HEADERS} )
-endif()
-
-execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
-
 enable_testing()
 
-set(sapo_tests Ebola Influenza Influenza-no-splits Influenza-splits
-               LotkaVolterra Phosphorelay Quadcopter Rossler SIRp SIR
-               VanDerPol incomplete-directions boundaries_errors
-               template_error)
-
-add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR}
-	                   --target sapo -j 4 -- )
-foreach(test_name ${sapo_tests})
-   add_test(NAME ${test_name}
-	    COMMAND ${CMAKE_COMMAND} -DTEST_NAME=${test_name}
-	                 -DTEST_DIR=${CMAKE_SOURCE_DIR}/examples
-			 -P ${CMAKE_MODULE_PATH}/runtests.cmake)
-   set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP sapo_compilation)
-endforeach()
+add_subdirectory(libSapo)
+add_subdirectory(sapo)
