@@ -74,6 +74,12 @@ endif()
 
 message("This is Sapo ${SAPO_VERSION}")
 
+set(RUNTEST_FILE "${CMAKE_SOURCE_DIR}/scripts/run-tests.bash" )
+
+file(READ "${RUNTEST_FILE}.orig" FILEDATA)
+string(REGEX REPLACE "CMAKE_MAKE_PROGRAM" "${CMAKE_MAKE_PROGRAM}" FILEDATA "${FILEDATA}")
+file(WRITE ${RUNTEST_FILE} "${FILEDATA}")
+
 execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 
 set(CMAKE_INSTALL_PREFIX ".")

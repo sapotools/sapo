@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+[ -f ./scripts/run-tests.bash ] || cmake .
+
 echo "Running pre-commit hook"
-./scripts/run-tests.bash
+sh ./scripts/run-tests.bash
 
 # $? stores exit value of the last command
 if [ $? -ne 0 ]; then

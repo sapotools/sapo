@@ -22,4 +22,5 @@ sapo/include/locations.h
 sapo/include/parser.h
 sapo/src/parser.cpp
 sapo/src/scanner.cpp 
+scripts/run-tests.bash
 uftrace.data*/
