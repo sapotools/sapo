@@ -22,6 +22,6 @@ A web user interface for Sapo is available [here](https://github.com/LucaDorigo/
 
 Please, refer to the wiki pages to have more pieces of information about:
 
-* (Handled models and set representation)[https://github.com/dreossi/sapo/wiki]
-* (Downloading, Building, and Installing Sapo)[https://github.com/dreossi/sapo/wiki/Building-Sapo]
-* (the `sapo` command line application)[https://github.com/dreossi/sapo/wiki/sapo-Application]
+* [Handled models and set representation](https://github.com/dreossi/sapo/wiki)
+* [Downloading, building, and installing Sapo](https://github.com/dreossi/sapo/wiki/Building-Sapo)
+* [The `sapo` command line application](https://github.com/dreossi/sapo/wiki/sapo-Application)
