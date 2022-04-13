@@ -82,8 +82,6 @@ file(WRITE ${RUNTEST_FILE} "${FILEDATA}")
 
 execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install-hooks.bash )
 
-set(CMAKE_INSTALL_PREFIX ".")
-
 find_program( CLANG_FORMAT_EXE NAMES "clang-format")
 if(NOT CLANG_FORMAT_EXE)
    message(STATUS "clang-format not found.")
