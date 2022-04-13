@@ -1,7 +1,10 @@
 include_directories(include include/)
 
-find_package(FLEX 2.6.3 REQUIRED)
-find_package(BISON 3.6.0 REQUIRED)
+find_package(FLEX 2.6.3)
+find_package(BISON 3.6.0)
+
+if (FLEX_FOUND)
+if (BISON_FOUND)
 
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -53,3 +56,13 @@ foreach(test_name ${sapo_tests})
 			 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/runtests.cmake)
    set_tests_properties(${test_name} PROPERTIES FIXTURES_SETUP sapo_compilation)
 endforeach()
+
+else(BISON_FOUND)
+message("Bison is not available: sapo standalone application will not be compiled")
+
+endif(BISON_FOUND)
+else(FLEX_FOUND)
+
+message("Flex is not available: sapo standalone application will not be compiled")
+
+endif(FLEX_FOUND)
