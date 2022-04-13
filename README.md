@@ -12,7 +12,7 @@ For parameter synthesis Sapo computes a refinement of the given set of parameter
 
 In both cases, the analysis can be done on bounded time.
 
-Sapo is provided as both a C++ library, to promote integration by other projects, and a stand-alone tool, to ease its usability.
+Sapo consists in a C++ library, named `libSapo`, and an optional standalone application, named `sapo`, that is meant to ease Sapo usability.
 
 A web user interface for Sapo is available [here](https://github.com/LucaDorigo/webSapo).
 
@@ -24,7 +24,8 @@ Reachability computation can be carried out also on systems without parameters w
 
 ### Set representation
 
-The flowpipe representing the reachable set consists in a series of sets. The sets supported by Sapo are:
+The flowpipe representing the reachable set consists in a series of sets. 
+The sets supported by Sapo are:
 
 - Boxes (or hyperrectangles), i.e., n-dimensional rectangles
 - Parallelotopes, i.e., n-dimensional parallelograms
@@ -34,31 +35,43 @@ The parameter synthesis produces a refined set of parameters represented by:
 
 - Polytopes, i.e., n-dimensional polygon
 
-## <a name="buildsapo">Building Sapo</a>
+## Building Sapo
 
-In order to compile the source code, the following packages are required:
+<a id="requirements"></a>
+In order to compile *libSapo*, the following packages are mandatory:
 
 - a C++14-compatible compiler
 - <a href="https://cmake.org/">cmake</a> (version >= 3.6)
 - <a href="https://www.gnu.org/software/make/">make</a>
-- <a href="https://github.com/westes/flex">Flex</a> (version >= 2.6.3)
-- <a href="https://www.gnu.org/software/bison/manual">Bison</a> (version >= 3.4)
 - <a href="https://gmplib.org">GNU Multi-Precision Library</a>
 - <a href="https://www.gnu.org/software/glpk/">GLPK</a> (version >= 5.0)
+ 
+In addition to the above-mentioned packages, compiling the standalone application *sapo* requires the following softwares:
 
-### Downloading and Compiling Sapo<a id="compile-multithreading"></a>
+- <a href="https://github.com/westes/flex">Flex</a> (version >= 2.6.3)
+- <a href="https://www.gnu.org/software/bison/manual">Bison</a> (version >= 3.6)
 
-Once all the required packages have been installed, download and build Sapo by using the following commands:
+### Compiling `libSapo` and `sapo`<a id="compile-multithreading"></a>
+
+The Sapo source code can be obtained by cloning its GitHub repository:
+```shell
+git clone https://github.com/dreossi/sapo
+```
+At the end of the command execution the current directory will include a subdirectory, named `sapo`, containing the Sapo source code.
+
+Once all [the required packages](#requirements) have been installed, build both `libSapo` and `sapo` 
+by using the following commands:
 
 ```sh
-git clone https://github.com/dreossi/sapo
 cd sapo
 cmake .
 make
 ```
 
-This generates the executable `./bin/sapo` which supports multi-threading even though 
-[it only runs one thread by default](#multithreading).
+This command generates both the dynamic and the static versions of `libSapo` and, 
+whenever the requirements are met, produced the executable `./sapo/bin/sapo`. 
+The standalone application supports 
+multi-threading even though [it only uses one thread by default](#multithreading).
 
 If you prefer to compile plain sequential code, then replace the last two lines of
 above instructions by
@@ -68,7 +81,7 @@ cmake -DTHREADED_VERSION:BOOL=FALSE .
 make
 ```
 
-## Testing Sapo
+### Testing Sapo
 
 In order to test whether Sapo is properly working in your system, please call from 
 the command line:
@@ -77,26 +90,46 @@ the command line:
 make test
 ```
 
-## Using Sapo stand-alone application
-The Sapo stand-alone application `sapo` accepts input in the
-[SIL file format](SIL.md) from either the standard input or a file.
+### Installing Sapo
 
-Users can execute `sapo` by either passing the path of the input file, as in
-
+In order to install `libSapo` and, possibly, `sapo` system-wise use the command:
 ```sh
-./bin/sapo path/to/file.sil
+make install
 ```
+The default install directory is `/usr/local/`. The standalone application will be 
+placed in `<INSTALL_DIRECTORY}>/bin`, the library in `<INSTALL_DIRECTORY>/lib`, and its header files 
+in `<INSTALL_DIRECTORY>/include`. 
 
-or without any argument. In the latter case, the tool reads its input from 
-standard input.
-
+To change the default install directory execute:
 ```sh
-cat path/to/file.sil | ./bin/sapo
+cmake -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIRECTORY> .
+make install
+```
+where `<INSTALL_DIRECTORY>` must be replaced by the aimed installed directory, e.g., `/usr` or `./`.
+
+## Using `sapo`
+The Sapo standalone application `sapo` accepts input in the
+[SIL file format](sapo/doc/SIL.md) from either the standard input or a file.
+
+If the tool has been installed in a directory in the user path, 
+the `sapo` application can be executed simply by typing its name on a shell. 
+Otherwise, the name of the directory containing the executable must be 
+prepended to the executable name itself (e.g., `./sapo/bin/sapo`). In the next examples, 
+we will assume that `sapo` has been installed in a directory included among 
+those in the user path.
+
+`sapo` reads the problem specification from an input file as in 
+```sh
+sapo path/to/file.sil
+```
+or from the standard input 
+```sh
+cat path/to/file.sil | sapo
 ```
 
 The outputs are always written on standard output.
 
-Some examples of SIL files are provided for your convenience in the directory [examples](examples) in this repository.
+Some examples of SIL files are provided for your convenience in the directory [examples](sapo/examples) in this repository.
 
 A complete list of `sapo` command line options can be obtained by using the `-h` option.
 
@@ -108,10 +141,10 @@ by default. In order to increase the number of threads, use the `sapo` command l
 
 This option can take as parameter either nothing or one natural number greater than 0. By issuing the command
 ```sh
-./bin/sapo -t path/to/file.sil
+sapo -t path/to/file.sil
 ```
 `sapo` uses the maximum number of concurrent threads for the executing architecture, while the line
 ```sh
-./bin/sapo -t 5 path/to/file.sil
+sapo -t 5 path/to/file.sil
 ```
 makes `sapo` running 5 threads. 
