@@ -13,7 +13,6 @@
 
 #endif // WITH_THREADS
 
-#include <gmpxx.h>
 
 /*!
  *  \addtogroup SymbolicAlgebra
@@ -2823,6 +2822,7 @@ public:
   }
 };
 
+#ifdef __GMP_PLUSPLUS__
 template<>
 template<>
 inline double Expression<mpq_class>::evaluate<double>() const
@@ -2831,6 +2831,7 @@ inline double Expression<mpq_class>::evaluate<double>() const
 
   return value.get_d();
 }
+#endif
 
 template<typename C>
 Expression<C>::Expression(_base_expression_type<C> *_ex): _ex(_ex)
