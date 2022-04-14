@@ -90,7 +90,7 @@ public:
  *        maximize (true) or minimize (false) `obj_fun` over the system
  * @return optimum
  */
-OptimizationResult<double> optimize(const DenseLinearAlgebra::Matrix<double> &A,
+OptimizationResult<double> optimize(const std::vector<Vector<double>> &A,
                                     const Vector<double> &b,
                                     const Vector<double> &obj_fun,
                                     const bool maximize);
@@ -99,8 +99,8 @@ class LinearSystem
 {
 
 protected:
-  DenseLinearAlgebra::Matrix<double> A; // matrix A
-  Vector<double> b;                     // vector b
+  std::vector<Vector<double>> A; // matrix A
+  Vector<double> b;              // vector b
 
   /**
    * Check if a constraint belongs to the linear system
@@ -172,8 +172,7 @@ public:
    * @param[in] A template matrix
    * @param[in] b offset vector
    */
-  LinearSystem(const DenseLinearAlgebra::Matrix<double> &A,
-               const Vector<double> &b);
+  LinearSystem(const std::vector<Vector<double>> &A, const Vector<double> &b);
 
   /**
    * Move constructor
@@ -181,8 +180,7 @@ public:
    * @param[in] A template matrix
    * @param[in] b offset vector
    */
-  LinearSystem(DenseLinearAlgebra::Matrix<double> &&A,
-               Vector<double> &&b);
+  LinearSystem(std::vector<Vector<double>> &&A, Vector<double> &&b);
 
   /**
    * Constructor from a set of symbolic expressions
@@ -212,7 +210,7 @@ public:
    *
    * @return template matrix
    */
-  const DenseLinearAlgebra::Matrix<double> &getA() const
+  const std::vector<Vector<double>> &getA() const
   {
     return this->A;
   }

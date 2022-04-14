@@ -365,7 +365,7 @@ Bundle *getBundleWithAssumptions(const InputData &id)
 
   /* END OF MYSTERY */
 
-  return new Bundle(directions, UB, -LB, templ, constrDirs, constrOffsets);
+  return new Bundle(directions, LB, UB, templ, constrDirs, constrOffsets);
 }
 
 /**!
@@ -557,7 +557,7 @@ computeTemplate(const std::vector<std::vector<double>> A,
     for (unsigned d = 0; d < m + c; d++) {
       if (glp_get_col_prim(lp, map_paral(d, P, Pn) + 1) == 1) {
         //			if (glp_mip_col_val(lp, map_paral(d, P, Pn) +
-        //1)
+        // 1)
         //== 1) {
         T[P].push_back(d);
       }

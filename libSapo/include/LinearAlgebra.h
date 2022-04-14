@@ -167,7 +167,7 @@ Vector<T> operator-(const Vector<T> &orig)
 
 /**
  * @brief Check whether two vectors are the same
- * 
+ *
  * @tparam T is the scalar value type
  * @param a is the first vector to be compared
  * @param b is the second vector to be compared
@@ -182,7 +182,7 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
 
   Vector<double>::const_iterator b_it = std::cbegin(b);
   for (Vector<double>::const_iterator a_it = std::cbegin(a);
-        a_it != std::cend(a); ++a_it, ++b_it) {
+       a_it != std::cend(a); ++a_it, ++b_it) {
     if (*a_it != *b_it) {
       return false;
     }
@@ -193,7 +193,7 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
 
 /**
  * @brief Check whether two vectors differ
- * 
+ *
  * @tparam T is the scalar value type
  * @param a is the first vector to be compared
  * @param b is the second vector to be compared
@@ -202,7 +202,7 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
 template<typename T>
 bool operator!=(const Vector<T> &a, const Vector<T> &b)
 {
-  return !(a==b);
+  return !(a == b);
 }
 
 /**
@@ -530,12 +530,12 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
  * Permutation are square matrices whose row and column
  * sums are one. However, storing a permutation for
  * n-dim vectors by using this natural representation
- * requires \f$n^2\f$ integer numbers and its 
+ * requires \f$n^2\f$ integer numbers and its
  * application costs \f$O(n^2)\f$.
  * This class stores permutation is a more efficient
  * way representing only swapped element positions in
  * a map from integer to integer. The application cost
- * belongs to \f$O(m*log m)\f$ where \f$m\f$ is the 
+ * belongs to \f$O(m*log m)\f$ where \f$m\f$ is the
  * number of swapped positions.
  */
 class Permutation
@@ -583,11 +583,11 @@ public:
 
   /**
    * @brief Apply the permutation to a vector
-   * 
-   * This method does not work in-place and 
+   *
+   * This method does not work in-place and
    * creates a swapped-version of the input
-   * vector to be returned. 
-   * 
+   * vector to be returned.
+   *
    * @tparam T is the scalar value type
    * @param v is the vector to be swapped
    * @return the swapped vector
@@ -610,7 +610,7 @@ public:
 
   /**
    * @brief Assignment operator
-   * 
+   *
    * @param P is the template permutation
    * @return a reference to the updated object
    */
@@ -623,7 +623,7 @@ public:
 
   /**
    * @brief Swap two permutations
-   * 
+   *
    * @param P1 the first permutation to be swapped
    * @param P2 the second permutation to be swapped
    */
@@ -634,7 +634,7 @@ public:
 
   /**
    * @brief Print formatted permutation
-   * 
+   *
    * @param os is the output stream
    * @param P is the permutation to be printed
    * @return a output stream reference

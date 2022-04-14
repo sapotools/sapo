@@ -263,7 +263,7 @@ void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo, Model *model,
       std::cerr << "Unsupported problem type" << std::endl;
       exit(EXIT_FAILURE);
     }
-  } catch(std::exception &e) {
+  } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
 
     exit(EXIT_FAILURE);

@@ -586,7 +586,6 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   }
 }
 
-// TODO: the following method is too long and must be split.
 /**
  * Parameter synthesis for atomic formulas
  *
@@ -599,40 +598,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<Atom> atom) const
 {
-  using namespace std;
-  using namespace SymbolicAlgebra;
-
-  PolytopesUnion result = pSet;
-
-  std::vector<Symbol<>> alpha = get_symbol_vector("f", reachSet.dim());
-
-  for (unsigned int i = 0; i < reachSet.num_of_templates();
-       i++) { // for each parallelotope
-
-    Parallelotope P = reachSet.getParallelotope(i);
-    std::vector<Expression<>> genFun
-        = build_instanciated_generator_functs(alpha, P);
-
-    const std::vector<Expression<>> fog = sub_vars(this->dyns, vars, genFun);
-
-    // compose sigma(f(gamma(x)))
-    Expression<>::replacement_type repl;
-    for (unsigned int j = 0; j < this->vars.size(); j++) {
-      repl[vars[j]] = fog[j];
-    }
-
-    Expression<> sofog = atom->getPredicate();
-    sofog.replace(repl);
-
-    // compute the Bernstein control points
-    std::vector<Expression<>> controlPts
-        = BaseConverter(alpha, sofog).getBernCoeffsMatrix();
-
-    Polytope constraints(this->params, controlPts);
-    result = intersect(result, constraints);
-  }
-
-  return result;
+  return reachSet.synthesize(vars, params, dyns, pSet, atom);
 }
 
 /**

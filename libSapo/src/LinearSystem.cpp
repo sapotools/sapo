@@ -52,9 +52,10 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
  *        maximize (true) or minimize (false) `obj_fun` over the system
  * @return optimum
  */
-OptimizationResult<double>
-optimize(const DenseLinearAlgebra::Matrix<double> &A, const Vector<double> &b,
-         const Vector<double> &obj_fun, const bool maximize)
+OptimizationResult<double> optimize(const std::vector<Vector<double>> &A,
+                                    const Vector<double> &b,
+                                    const Vector<double> &obj_fun,
+                                    const bool maximize)
 {
   unsigned int num_rows = A.size();
   unsigned int num_cols = obj_fun.size();
@@ -191,7 +192,7 @@ bool zeroLine(const Vector<double> &line)
  * @param[in] A template matrix
  * @param[in] b offset vector
  */
-LinearSystem::LinearSystem(const DenseLinearAlgebra::Matrix<double> &A,
+LinearSystem::LinearSystem(const std::vector<Vector<double>> &A,
                            const Vector<double> &b)
 {
   bool smart_insert = false;
@@ -215,9 +216,12 @@ LinearSystem::LinearSystem(const DenseLinearAlgebra::Matrix<double> &A,
  * @param[in] A template matrix
  * @param[in] b offset vector
  */
-LinearSystem::LinearSystem(DenseLinearAlgebra::Matrix<double> &&A,
-                           Vector<double> &&b): A(std::move(A)), b(std::move(b))
-{}
+LinearSystem::LinearSystem(std::vector<Vector<double>> &&A,
+                           Vector<double> &&b):
+    A(std::move(A)),
+    b(std::move(b))
+{
+}
 
 /**
  * Constructor that instantiates an empty linear system

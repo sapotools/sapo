@@ -53,6 +53,17 @@ public:
   }
 
   /**
+   * Move Constructor
+   *
+   * @param[in] A template matrix
+   * @param[in] b offset vector
+   */
+  Polytope(std::vector<std::vector<double>> &&A, std::vector<double> &&b):
+      LinearSystem(A, b)
+  {
+  }
+
+  /**
    * Constructor from a set of symbolic expressions
    *
    * @param[in] vars list of variables appearing in the constraints

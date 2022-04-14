@@ -219,10 +219,20 @@ public:
 /**
  * Compute the intersection between a polytopes unions and a polytope
  *
+ * @param[in] A is a polytopes union
+ * @param[in] B is a polytope
+ * @return the polytopes union representing the intersection of the
+ * parameters
+ */
+PolytopesUnion intersect(const PolytopesUnion &A, const Polytope &B);
+
+/**
+ * Compute the intersection between a polytopes unions and a polytope
+ *
  * @param[in] A is a polytope
  * @param[in] B is a polytopes union
  * @return the polytopes union representing the intersection of the two
- * parameters.
+ * parameters
  */
 inline PolytopesUnion intersect(const Polytope &A, const PolytopesUnion &B)
 {
@@ -234,7 +244,7 @@ inline PolytopesUnion intersect(const Polytope &A, const PolytopesUnion &B)
  *
  * @param[in] A is a polytopes union
  * @param[in] B is a polytopes union
- * @return the union of the two polytopes unions.
+ * @return the union of the two polytopes unions
  */
 PolytopesUnion unite(const PolytopesUnion &A, const PolytopesUnion &B);
 
@@ -243,7 +253,7 @@ PolytopesUnion unite(const PolytopesUnion &A, const PolytopesUnion &B);
  *
  * @param[in] A is a polytope
  * @param[in] B is a polytope
- * @return the union of the two polytopes.
+ * @return the union of the two polytopes
  */
 PolytopesUnion unite(const Polytope &A, const Polytope &B);
 

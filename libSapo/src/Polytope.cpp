@@ -323,7 +323,8 @@ void Polytope::plotRegion(std::ostream &os, const vector<int> &rows,
 {
 
   if (cols.size() > 3) {
-    std::domain_error("Polytope::plotRegion : cols maximum 3d sets are allowed");
+    std::domain_error(
+        "Polytope::plotRegion : cols maximum 3d sets are allowed");
   }
 
   os << "Ab = [" << std::endl;
