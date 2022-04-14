@@ -908,7 +908,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
   thread_pool.close_batch(batch_id);
 #else  // WITH_THREADS
   for (unsigned int i = 0; i < this->num_of_templates(); i++) {
-    minimizeCoeffs(this, i);
+    refine_coeff_itvl(this, i);
   }
 #endif // WITH_THREADS
 
