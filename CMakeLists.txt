@@ -13,8 +13,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(GLPK REQUIRED)
 find_package(GMP REQUIRED)
 
-include_directories(${GMPXX_INCLUDE_DIR} ${GMP_INCLUDE_DIR})
-
 set(THREADED_VERSION TRUE CACHE BOOL "Enable/disable threaded version compilation")
 
 if(THREADED_VERSION)

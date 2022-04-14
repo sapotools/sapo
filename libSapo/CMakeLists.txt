@@ -3,6 +3,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Version.cpp.in ${CMAKE_CURRENT_SO
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
+include_directories(${GMPXX_INCLUDE_DIR} ${GMP_INCLUDE_DIR})
 include_directories(include include/STL)
 
 add_library(objlib OBJECT ${SOURCES})
