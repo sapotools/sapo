@@ -753,6 +753,29 @@ template<typename T>
 using Matrix = std::vector<Vector<T>>;
 
 /**
+ * @brief Transpose a matrix
+ * 
+ * @tparam T is the scalar value type
+ * @param A is the matrix to be transposed
+ * @return the transposed matrix
+ */
+template<typename T>
+Matrix<T> transpose(const Matrix<T>& A)
+{
+  size_t num_of_rows = A.size();
+  size_t num_of_cols = (num_of_rows == 0 ? 0: A[0].size());
+  Matrix<T> TA(num_of_cols, Vector<T>(num_of_rows));
+
+  for (size_t i=0; i<num_of_rows; ++i) {
+    for (size_t j=0; j<num_of_cols; ++j) {
+      TA[j][i] = A[i][j];
+    }
+  }
+
+  return TA;
+}
+
+/**
  * @brief Compute the row-column matrix-matrix multiplication
  *
  * @tparam T is a numeric type
@@ -1577,8 +1600,34 @@ public:
   friend class LUP_Factorization;
 
   template<typename E>
+  friend Matrix<E> transpose(const Matrix<E>& A);
+
+  template<typename E>
   friend std::ostream &std::operator<<(std::ostream &os, const Matrix<E> &M);
 };
+
+/**
+ * @brief Transpose a matrix
+ * 
+ * @tparam T is the scalar value type
+ * @param A is the matrix to be transposed
+ * @return the transposed matrix
+ */
+template<typename T>
+Matrix<T> transpose(const Matrix<T>& A)
+{ 
+  Matrix<T> TA(A.num_of_cols(), A.num_of_rows());
+
+  for (auto row_it = std::cbegin(A._matrix); row_it != std::cend(A._matrix);
+         ++row_it) {
+    for (auto elem_it = std::cbegin(row_it->second);
+               elem_it != std::cend(row_it->second); ++elem_it) {
+      TA[elem_it->first][row_it->first] = elem_it->second;
+    }
+  }
+
+  return TA;
+}
 
 /**
  * @brief A LUP factorization for sparse matrices.
