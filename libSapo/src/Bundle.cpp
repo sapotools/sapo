@@ -87,7 +87,7 @@ Bundle::Bundle(const std::vector<Vector<double>> &directions,
                const Vector<double> &lower_bounds,
                const Vector<double> &upper_bounds,
                const std::vector<Vector<int>> &templates):
-    Bundle(directions, upper_bounds, lower_bounds, templates, {}, {})
+    Bundle(directions, lower_bounds, upper_bounds, templates, {}, {})
 {
 }
 
