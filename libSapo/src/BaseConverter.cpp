@@ -501,10 +501,14 @@ std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
 
   vector<unsigned int> b(2, 0);
   b[0] = a[0];
-  b[1] = a[1];
+  if (a.size()>1) {
+    b[1] = a[1];
 
-  for (unsigned int i = 2; i < a.size(); i++) {
-    b[1] = b[1] + (a[i] * prod(degs, 1, i));
+    for (unsigned int i = 2; i < a.size(); i++) {
+      b[1] = b[1] + (a[i] * prod(degs, 1, i));
+    }
+  } else {
+    b[1] = 0;
   }
   return b;
 }
@@ -611,7 +615,7 @@ transp(const std::vector<std::vector<SymbolicAlgebra::Expression<>>> &M,
 
   const unsigned int prod_degs2n = prod(degs, 2, degs.size());
 
-  const unsigned int rows_t = degs[1];
+  const unsigned int rows_t = (degs.size()>1 ? degs[1]: 1);
   const unsigned int cols_t = prod(degs, 2, degs.size()) * degs[0];
 
   vector<vector<Expression<>>> M_transp(rows_t,
