@@ -22,6 +22,19 @@
 // define the default versor magnitude multiplier for bundle splits
 #define SPLIT_MAGNITUDE_RATIO 0.75
 
+/**
+ * @brief A class for parallelotope bundles
+ * 
+ * A paralletope bundle represents the intersection between 
+ * different non-singular parallelotopes. 
+ * This class stores all of the parallelotope directions/axes 
+ * in one single array and constraints each of them between 
+ * an upper and a lower bound. 
+ * The original parallelotopes can be rebuild by using the 
+ * a array of templates. Each template is a Natural-valued 
+ * array corresponding to a parallelotope. It stores which 
+ * directions are involved in the corresponding paralletope. 
+ */ 
 class Bundle
 {
 public:
