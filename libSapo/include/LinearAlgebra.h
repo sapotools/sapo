@@ -538,21 +538,21 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
  * belongs to \f$O(m*log m)\f$ where \f$m\f$ is the
  * number of swapped positions.
  */
-class Permutation
+class Permutation: std::map<unsigned int, unsigned int>
 {
-  std::map<unsigned int, unsigned int> _swaps; //!< the swapped positions
 public:
   /**
    * @brief Create a new Permutation object
    */
-  Permutation(): _swaps() {}
+  Permutation(): std::map<unsigned int, unsigned int>() {}
 
   /**
    * @brief Copy constructor for Permutation object
    *
    * @param orig
    */
-  Permutation(const Permutation &orig): _swaps(orig._swaps) {}
+  Permutation(const Permutation &orig): 
+    std::map<unsigned int, unsigned int>(orig) {}
 
   /**
    * @brief Swaps two positions.
@@ -568,15 +568,15 @@ public:
     // for both the positions
     for (const unsigned int &pos: {i, j}) {
       // if the position is not stored among the swaps yet
-      if (_swaps.find(pos) == std::end(_swaps)) {
+      if (this->find(pos) == this->end()) {
 
         // store it
-        _swaps[pos] = pos;
+        this->operator[](pos) = pos;
       }
     }
 
     // swap the two positions
-    std::swap(_swaps[i], _swaps[j]);
+    std::swap(this->at(i), this->at(j));
 
     return *this;
   }
@@ -597,7 +597,7 @@ public:
   {
     Vector<T> pv = v;
 
-    for (auto it = std::begin(_swaps); it != std::end(_swaps); ++it) {
+    for (auto it = this->begin(); it != this->end(); ++it) {
       if (it->first >= v.size() || it->second >= v.size()) {
         throw std::domain_error(
             "Permutation and vector dimensions are not compatible.");
@@ -616,20 +616,10 @@ public:
    */
   Permutation &operator=(const Permutation &P)
   {
-    _swaps = P._swaps;
+    static_cast<std::map<unsigned int, unsigned int>>(*this) = 
+      static_cast<std::map<unsigned int, unsigned int>>(P);
 
     return *this;
-  }
-
-  /**
-   * @brief Swap two permutations
-   *
-   * @param P1 the first permutation to be swapped
-   * @param P2 the second permutation to be swapped
-   */
-  friend inline void swap(Permutation &P1, Permutation &P2)
-  {
-    std::swap(P1._swaps, P2._swaps);
   }
 
   /**
@@ -642,8 +632,8 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const Permutation &P)
   {
     os << "Permutation[";
-    for (auto it = std::begin(P._swaps); it != std::end(P._swaps); ++it) {
-      if (it != std::begin(P._swaps)) {
+    for (auto it = P.begin(); it != P.end(); ++it) {
+      if (it != P.begin()) {
         os << ",";
       }
       os << it->second << "->" << it->first;
@@ -1088,6 +1078,58 @@ unsigned int rank(const Matrix<T> &A)
   }
 
   return rank;
+}
+
+/**
+ * @brief Compute the determinant of a matrix
+ * 
+ * The determinant is evaluated by using three steps: first
+ * of all, the LUP decomposition of the matrix is computed,
+ * then the product of the elements in \f$U\f$ main diagonal
+ * is computed, and, finally, this product is multiplied by 
+ * \f$-1\f$ if the number of swaps in \f$P\f$ are odd.
+ * 
+ * @tparam T is the scalar domain type
+ * @param A is the matrix whose determinant must be computed
+ * @return the determinant of the matrix `A`
+ */
+template<typename T>
+T determinant(Matrix<T> &A)
+{
+  if (A.size()==0 || A.front().size()) {
+    throw std::domain_error("Determinant of a 0x0-matrix not supported");
+  }
+  
+  // Compute the factorization
+  LUP_Factorization<T> fact(A);
+
+  // multiply the elements in U main diagonal
+  T det = 1;
+  unsigned int elem_in_diag = std::min(A.size(), 
+                                       A.front().size());
+  for (unsigned int i=0; i<elem_in_diag; ++i)
+  {
+    det *= fact.U()[i][i];
+
+    if (det == 0) {
+      return 0;
+    }
+  }
+
+  // Evaluate the number of row swaps and determine
+  // the {1, -1} multiplier 
+  auto P = fact.P();
+  std::vector<bool> swaps(A.size(), true);
+  for (auto P_it = P.begin(); P_it != P.end(); ++P_it) {
+    unsigned int j=P_it->first;
+    while (swaps[j]) {
+      swaps[j] = false;
+      j = P[j];
+      det = -1*det;
+    }
+  }
+
+  return det;
 }
 
 }
@@ -2011,6 +2053,58 @@ unsigned int rank(const Matrix<T> &A)
   }
 
   return rank;
+}
+
+/**
+ * @brief Compute the determinant of a matrix
+ * 
+ * The determinant is evaluated by using three steps: first
+ * of all, the LUP decomposition of the matrix is computed,
+ * then the product of the elements in \f$U\f$ main diagonal
+ * is computed, and, finally, this product is multiplied by 
+ * \f$-1\f$ if the number of swaps in \f$P\f$ are odd.
+ * 
+ * @tparam T is the scalar domain type
+ * @param A is the matrix whose determinant must be computed
+ * @return the determinant of the matrix `A`
+ */
+template<typename T>
+T determinant(Matrix<T> &A)
+{
+  if (A.num_of_rows()==0 || A.num_of_cols()==0) {
+    throw std::domain_error("Determinant of a 0x0-matrix not supported");
+  }
+  
+  // Compute the factorization
+  LUP_Factorization<T> fact(A);
+
+  T det = 1;
+  // multiply the elements in U main diagonal
+  unsigned int elem_in_diag = std::min(A.num_of_rows(), 
+                                       A.num_of_cols());
+  for (unsigned int i=0; i<elem_in_diag; ++i)
+  {
+    det *= fact.U()[i][i];
+
+    if (det == 0) {
+      return 0;
+    }
+  }
+
+  // Evaluate the number of row swaps and determine
+  // the {1, -1} multiplier
+  auto P = fact.P();
+  std::vector<bool> swaps(A.size(), true);
+  for (auto P_it = P.begin(); P_it != P.end(); ++P_it) {
+    unsigned int j=P_it->first;
+    while (swaps[j]) {
+      swaps[j] = false;
+      j = P[j];
+      det = -1*det;
+    }
+  }
+
+  return det;
 }
 
 }
