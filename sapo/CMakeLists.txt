@@ -43,7 +43,7 @@ endif()
 
 set(sapo_tests Ebola Influenza Influenza-no-splits Influenza-splits
                LotkaVolterra Phosphorelay Quadcopter Rossler SIRp SIR
-               VanDerPol incomplete-directions)
+	       VanDerPol SIR_vax_assume incomplete-directions)
 
 add_test(sapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR}
 	                   --target sapo -j 4 -- )
