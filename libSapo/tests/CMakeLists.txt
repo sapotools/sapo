@@ -6,9 +6,9 @@ if(${Boost_unit_test_framework_FOUND})
 
     set(LIBSAPO_TESTS linear_algebra)
     foreach(TEST ${LIBSAPO_TESTS})
-        ADD_EXECUTABLE( ${TEST} ${TEST}.cpp )
-        target_link_libraries(${TEST} Sapo ${Boost_LIBRARIES})
-        ADD_TEST(${TEST} ${TEST})
+        ADD_EXECUTABLE( test_${TEST} ${TEST}.cpp )
+        target_link_libraries(test_${TEST} Sapo ${Boost_LIBRARIES})
+        ADD_TEST(${TEST} test_${TEST})
     endforeach()
 endif()
 
