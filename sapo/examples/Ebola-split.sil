@@ -11,8 +11,6 @@ var q in [0, 0];
 var i in [0.19, 0.2];
 var r in [0, 0];
 
-var s, e, q, i, r;
-
 // definition of parameters
 param kappa1 in [0.2, 0.3];
 param gamma1 in [0.2, 0.5];
