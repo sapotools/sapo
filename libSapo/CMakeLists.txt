@@ -33,3 +33,8 @@ if(CLANG_FORMAT_EXE)
    add_custom_target( format-lib-code COMMAND ${CLANG_FORMAT_EXE} -i
                              -style=file ${SOURCES} ${HEADERS} )
 endif()
+
+add_test(libSapo_compilation "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR}
+	                   --target Sapo -j 4 -- )
+
+add_subdirectory(tests)
