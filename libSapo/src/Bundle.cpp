@@ -763,7 +763,7 @@ public:
  * @brief Perform the parametric synthesis for an atom
  *
  * This method computes a set of parameters such that the
- * transformation from the current bundle satisfy the
+ * transformation from the current bundle satisfies the
  * provided atom.
  *
  * @param[in] variables is the vector of variables
@@ -823,8 +823,8 @@ Bundle::synthesize(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
 /**
  * @brief Transform the bundle according to a dynamic law
  *
- * @param[in] variables is the vector of variables
- * @param[in] dynamics is the vector of dynamic law expressions
+ * @param[in] variables is the vector of the variables
+ * @param[in] dynamics is the vector of the dynamic law expressions
  * @param[in] max_finder is a pointer to an MinMaxCoeffFinder object
  * @param[in] mode transformation mode, i.e., OFO or AFO
  * @returns the transformed bundle

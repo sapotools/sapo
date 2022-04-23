@@ -499,7 +499,7 @@ public:
    * @brief Perform the parametric synthesis for an atom
    *
    * This method computes a set of parameters such that the
-   * transformation from the current bundle satisfy the
+   * transformation from the current bundle satisfies the
    * provided atom.
    *
    * @param[in] variables is the vector of variables
