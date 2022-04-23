@@ -180,8 +180,8 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
     throw std::domain_error("The two vectors have different dimensions");
   }
 
-  Vector<double>::const_iterator b_it = std::cbegin(b);
-  for (Vector<double>::const_iterator a_it = std::cbegin(a);
+  auto b_it = std::cbegin(b);
+  for (auto a_it = std::cbegin(a);
        a_it != std::cend(a); ++a_it, ++b_it) {
     if (*a_it != *b_it) {
       return false;
@@ -348,7 +348,7 @@ Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
     b[i] *= -1;
   }
 
-  return a;
+  return b;
 }
 
 /**
@@ -483,6 +483,10 @@ inline Vector<T> operator*(Vector<T> &&v, const T s)
 template<typename T>
 Vector<T> operator/(const Vector<T> &v, const T s)
 {
+  if (s==0) {
+    throw std::domain_error("Division by 0");
+  }
+
   Vector<T> res(v.size());
 
   for (unsigned int i = 0; i < res.size(); ++i) {
@@ -659,6 +663,10 @@ bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
     throw std::domain_error("The two vectors have not the same dimensions.");
   }
 
+  if (v1.size() == 0) {
+    throw std::domain_error("The two vectors must have size greater than 0.");
+  }
+
   // initialize the candidate index to be the first one
   // different from zero in v1 or v2
   unsigned int non_zero_idx = v1.size();
@@ -667,22 +675,27 @@ bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
     // if non zero values has not been discovered yet and
     // at least one of the two elements in the two vectors
     // differs from zero
-    if (non_zero_idx == v1.size() && (v1[i] != 0 || v2[i] != 0)) {
+    if (non_zero_idx == v1.size()) {
+      if (v1[i] != 0 || v2[i] != 0) {
+        if (v1[i] == 0 || v2[i] == 0) {
+          return false;
+        }
 
-      if (v1[i] == 0 || v2[i] == 0) {
-        return false;
+        // set the first non-zero index
+        non_zero_idx = i;
       }
-
-      // set the first non-zero index
-      non_zero_idx = i;
     } else {
-
-      if (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx]) {
+      if ((v1[i] == 0 && v2[i] != 0)||(v1[i] != 0 && v2[i] == 0)||
+          (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx])) {
 
         // return that their are not linearly dependent
         return false;
       }
     }
+  }
+
+  if (non_zero_idx==v1.size()) {
+    return false;
   }
 
   return true;
@@ -711,20 +724,26 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
     // if non zero values has not been discovered yet and
     // at least one of the two elements in the two vectors
     // differs from zero
-    if (non_zero_idx == v1.size() && (v1[i] != 0 || v2[i] != 0)) {
+    if (non_zero_idx == v1.size()) {
+      if (v1[i] != 0 || v2[i] != 0) {
+        if (v1[i] == 0 || v2[i] == 0) {
+          throw std::domain_error("The two vectors are not linealy dependent.");
+        }
 
-      if (v1[i] == 0 || v2[i] == 0) {
-        throw std::domain_error("The two vectors are not linealy dependent.");
+        // set the first non-zero index
+       non_zero_idx = i;
       }
-
-      // set the first non-zero index
-      non_zero_idx = i;
     } else {
 
-      if (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx]) {
+      if ((v1[i] == 0 && v2[i] != 0)||(v1[i] != 0 && v2[i] == 0)||
+          (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx])) {
         throw std::domain_error("The two vectors are not linealy dependent.");
       }
     }
+  }
+
+  if (non_zero_idx==v1.size()) {
+    throw std::domain_error("The two vectors are not linealy dependent.");
   }
 
   return v1[non_zero_idx] / v2[non_zero_idx];
