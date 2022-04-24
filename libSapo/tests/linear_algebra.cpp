@@ -458,13 +458,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_neq, T, test_types)
     }
 }
 
-
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_sum, T, test_types)
 {
     using namespace DenseLinearAlgebra;
     std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, Matrix<T>>> tests{
         {{{{}},{{}}}, {{}}},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{6,7,8}}}, {{0,2,4},{6,8,10},{12,14,16}}},
+        {{{{0,1,2},{3,4,5},{6,7,8}},{{0,0,0},{0,0,0},{0,0,0}}}, {{0,1,2},{3,4,5},{6,7,8}}},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,-4,5},{6,7,8}}}, {{0,2,4},{6,0,10},{12,14,16}}},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,3,6},{1,4,7},{2,5,8}}}, {{0,4,8},{4,8,12},{8,12,16}}},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{0,7,8}}}, {{0,2,4},{6,8,10},{6,14,16}}}
@@ -487,6 +487,35 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_sum, T, test_types)
     }
 }
 
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_subtraction, T, test_types)
+{
+    using namespace DenseLinearAlgebra;
+    std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, Matrix<T>>> tests{
+        {{{{}},{{}}}, {{}}},
+        {{{{0,2,4},{6,8,10},{12,14,16}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,1,2},{3,4,5},{6,7,8}}},
+        {{{{0,1,2},{3,4,5},{6,7,8}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,0,0},{0,0,0},{0,0,0}}},
+        {{{{0,2,4},{6,0,10},{12,14,16}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,1,2},{3,-4,5},{6,7,8}}},
+        {{{{0,4,8},{4,8,12},{8,12,16}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,3,6},{1,4,7},{2,5,8}}},
+        {{{{0,2,4},{6,8,10},{6,14,16}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,1,2},{3,4,5},{0,7,8}}}
+    };
+
+    for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
+        auto sub = test_it->first.first - test_it->first.second;
+        bool beval = (sub == test_it->second);
+        BOOST_REQUIRE_MESSAGE(beval, "(" << test_it->first.first << " - "
+                                          << test_it->first.second  << ") == " 
+                                          << sub << " != " << test_it->second);   
+    }
+
+    std::vector<std::pair<Matrix<T>, Matrix<T>>> err_test{
+        {{{0,1,2},{3,4,5},{6,7,8}},
+         {{0,0,1,2},{1,3,4,5},{2,6,7,8},{3,0,7,1}}},
+    };
+    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
+        BOOST_REQUIRE_THROW(operator-(test_it->first,test_it->second), std::domain_error); 
+    }
+}
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_transpose, T, test_types)
 {
     using namespace DenseLinearAlgebra;
@@ -501,4 +530,112 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_transpose, T, test_types)
         BOOST_REQUIRE_MESSAGE(beval, "transpose(" << test_it->first << ") == "
                                           << transp << " != " << test_it->second);   
     }
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_vector_prod, T, test_types)
+{
+    using namespace DenseLinearAlgebra;
+    std::vector<std::pair<std::pair<Matrix<T>, std::vector<T>>, std::vector<T>>> tests{
+        {{{},{}}, {}},
+        {{{{0,2,4},{6,8,10},{12,14,16}}, {1,0,0}}, {0,6,12}},
+        {{{{0,2,4},{6,8,10},{12,14,16}}, {0,1,0}}, {2,8,14}},
+        {{{{0,2,4},{6,8,10},{12,14,16}}, {0,0,1}}, {4,10,16}},
+        {{{{1,0,0},{0,1,0},{0,0,1}}, {0,2,4}}, {0,2,4}},
+        {{{{1,0,0},{0,1,0},{0,0,1}}, {6,8,10}}, {6,8,10}},
+        {{{{1,0,0},{0,1,0},{0,0,1}}, {12,14,16}}, {12,14,16}},
+        {{{{0,1,2},{3,4,5},{6,7,8}}, {0,0,0}}, {0,0,0}},
+        {{{{0,0,0},{0,0,0},{0,0,0}}, {3,4,5}}, {0,0,0}},
+        {{{{0,1,0},{1,0,0},{0,0,1}}, {3,4,5}}, {4,3,5}},
+        {{{{0,4,1},{-4,3,1},{-2,1,0}}, {3,4,5}}, {21,5,-2}},
+        {{{{0,1,2},{3,4,5},{1,1,1}}, {-4,3,1}}, {5,5,0}}
+    };
+
+    for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
+        auto prod = test_it->first.first * test_it->first.second;
+        bool beval = (prod == test_it->second);
+        BOOST_REQUIRE_MESSAGE(beval, "(" << test_it->first.first << " * "
+                                          << test_it->first.second  << ") == " 
+                                          << prod << " != " << test_it->second);   
+    }
+
+
+    std::vector<std::pair<Matrix<T>, std::vector<T>>> err_test{
+        {{{0,0,1,2},{1,3,4,5},{2,6,7,8},{3,0,7,1}}, {0,1,2}},
+        {{{0,1,2},{3,4,5},{6,7,8}}, {0,0,1,2}},
+    };
+    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
+        BOOST_REQUIRE_THROW(operator*(test_it->first,test_it->second), std::domain_error); 
+    }
+    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
+        BOOST_REQUIRE_THROW(operator*(test_it->first,test_it->second), std::domain_error); 
+    }
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_matrix_prod, T, test_types)
+{
+    using namespace DenseLinearAlgebra;
+    std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, Matrix<T>>> tests{
+        {{{},{}}, {}},
+        {{{{0,2,4},{6,8,10},{12,14,16}}, {{1,0,0},{0,1,0},{0,0,1}}}, {{0,2,4},{6,8,10},{12,14,16}}},
+        {{{{1,0,0},{0,1,0},{0,0,1}}, {{0,2,4},{6,8,10},{12,14,16}}}, {{0,2,4},{6,8,10},{12,14,16}}},
+        {{{{0,1,2},{3,4,5},{6,7,8}}, {{0,0,0},{0,0,0},{0,0,0}}}, {{0,0,0},{0,0,0},{0,0,0}}},
+        {{{{0,0,0},{0,0,0},{0,0,0}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,0,0},{0,0,0},{0,0,0}}},
+        {{{{0,1,0},{1,0,0},{0,0,1}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{3,4,5},{0,1,2},{6,7,8}}},
+        {{{{0,1,2},{3,4,5},{6,7,8}}, {{0,1,0},{1,0,0},{0,0,1}}}, {{1,0,2},{4,3,5},{7,6,8}}},
+        {{{{0,4,1},{-4,3,1},{-2,1,0}}, {{0,1,2},{3,4,5},{1,1,1}}}, {{13,17,21},{10,9,8},{3,2,1}}},
+        {{{{0,1,2},{3,4,5},{1,1,1}}, {{0,4,1},{-4,3,1},{-2,1,0}}}, {{-8,5,1},{-26,29,7},{-6,8,2}}}
+    };
+
+    for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
+        auto prod = test_it->first.first * test_it->first.second;
+        bool beval = (prod == test_it->second);
+        BOOST_REQUIRE_MESSAGE(beval, "(" << test_it->first.first << " * "
+                                          << test_it->first.second  << ") == " 
+                                          << prod << " != " << test_it->second);   
+    }
+
+    std::vector<std::pair<Matrix<T>, Matrix<T>>> err_test{
+        {{{0,0,1,2},{1,3,4,5},{2,6,7,8},{3,0,7,1}},
+         {{0,1,2},{3,4,5},{6,7,8}}},
+        {{{0,1,2},{3,4,5},{6,7,8}},
+         {{0,0,1,2},{1,3,4,5},{2,6,7,8},{3,0,7,1}}},
+    };
+    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
+        BOOST_REQUIRE_THROW(operator-(test_it->first,test_it->second), std::domain_error); 
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_LUP, T, test_types)
+{
+ using namespace DenseLinearAlgebra;
+    std::vector<std::pair<Matrix<T>, std::pair<Vector<T>, std::pair<Matrix<T>, Matrix<T>>>>> tests{
+        {{{1,0,0},{0,1,0},{0,0,1}}, {{1,2,3}, {{{1,0,0},{0,1,0},{0,0,1}}, {{1,0,0},{0,1,0},{0,0,1}}}}},
+        {{{0,1,0},{0,0,1},{1,0,0}}, {{3,1,2}, {{{1,0,0},{0,1,0},{0,0,1}}, {{1,0,0},{0,1,0},{0,0,1}}}}},
+        {{{0,3,1},{1,15,1},{7,0,0}}, {{2,1,3}, {{{1,0,0},{0,1,0},{7,-35,1}}, {{1,15,1},{0,3,1},{0,0,28}}}}},
+    };
+
+    for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
+
+        LUP_Factorization<T> fact(test_it->first); 
+        std::vector<T> p(test_it->first.size());
+        std::iota(std::begin(p), std::end(p), 1);
+        p = fact.P()(p);
+        bool beval = ((p == test_it->second.first) && (fact.U() == test_it->second.second.second)
+                        && (fact.L() == test_it->second.second.first));
+        BOOST_REQUIRE_MESSAGE(beval, "LUP_Factorization(" << test_it->first << ") == (" 
+                                          << p << "," << fact.L() << "," << fact.U() << 
+                                          ") != (" << test_it->second.first << "," 
+                                          << test_it->second.second.first << "," 
+                                          << test_it->second.second.second << ")");   
+    }
+
+    /*
+    std::vector<Matrix<T>> err_test{
+        {{}},
+    };
+    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
+        BOOST_REQUIRE_THROW(LUP_Factorization<T> fact(*test_it), std::domain_error); 
+    }
+    */
 }
