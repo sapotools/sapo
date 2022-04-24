@@ -785,6 +785,40 @@ Matrix<T> transpose(const Matrix<T>& A)
 }
 
 /**
+ * @brief Compute the row-column matrix-vector multiplication
+ *
+ * @tparam T is a numeric type
+ * @param A is a dense matrix
+ * @param v is a vector
+ * @return the row-column matrix-vector multiplication $A \cdot v$.
+ */
+template<typename T>
+Vector<T> operator*(const Matrix<T> &A, const Vector<T> &v)
+{
+  if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
+      && v.size() == 0) {
+    return Vector<T>();
+  }
+
+  if (A.size() == 0 || A.front().size() != v.size()) {
+    throw std::domain_error("The matrix and the vector are not compatible for the "
+                            "matrix-vector multiplication.");
+  }
+
+  Vector<T> res(A.size(), 0);
+
+  auto res_it = std::begin(res);
+  for (auto A_row_it = std::begin(A);A_row_it != std::end(A); ++A_row_it, ++res_it) {
+    auto A_elem_it = std::begin(*A_row_it);
+    for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it, ++A_elem_it) {
+      *res_it += (*A_elem_it) * (*v_it);
+    }
+  }
+
+  return res;
+}
+
+/**
  * @brief Compute the row-column matrix-matrix multiplication
  *
  * @tparam T is a numeric type
