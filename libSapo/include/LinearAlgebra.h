@@ -380,7 +380,7 @@ Vector<T> operator*(const T s, const Vector<T> &v)
  * @return the element-wise scalar product $v * s$.
  */
 template<typename T>
-inline Vector<T> operator*(const Vector<T> &v, const T s)
+Vector<T> operator*(const Vector<T> &v, const T s)
 {
   return operator*(s, v);
 }
@@ -507,6 +507,10 @@ Vector<T> operator/(const Vector<T> &v, const T s)
 template<typename T>
 Vector<T> operator/(Vector<T> &&v, const T s)
 {
+  if (s==0) {
+    throw std::domain_error("Division by 0");
+  }
+
   for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
     *v_it /= s;
   }
@@ -542,7 +546,7 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
  * belongs to \f$O(m*log m)\f$ where \f$m\f$ is the
  * number of swapped positions.
  */
-class Permutation: std::map<unsigned int, unsigned int>
+class Permutation : public std::map<unsigned int, unsigned int>
 {
 public:
   /**
@@ -959,10 +963,25 @@ public:
         return;
       }
 
-      // find the first non-null value below A[j-1][j]
-      unsigned int k = j;
-      while (k < _LU.size() && _LU[k][j] == 0) {
-        k++;
+      // find the non-null value below A[j-1][j] whose absolute value
+      // is the nearest to 1
+      unsigned int k = _LU.size();
+      T delta = 1;
+      unsigned int l=j;
+      while (l<_LU.size() && delta > 0) {
+        if (_LU[l][j] != 0) {
+          T new_delta = std::abs(1-std::abs(_LU[l][j]));
+          if (k==_LU.size()) {
+            delta = new_delta;
+            k = l;
+          } else {
+            if (new_delta < delta) {
+              delta = new_delta;
+              k = l;
+            }
+          }
+        }
+        ++l;
       }
 
       // if it does not exist, skip to the next row/column
@@ -976,7 +995,7 @@ public:
         // nullify all the values below A[j][j]
         const Vector<T> &row_j = _LU[j];
         const T &v = row_j[j];
-        k += 1;
+        k = j + 1;
         while (k < _LU.size()) {
           Vector<T> &row_k = _LU[k];
           if (row_k[j] != 0) {
@@ -1147,9 +1166,9 @@ unsigned int rank(const Matrix<T> &A)
  * @return the determinant of the matrix `A`
  */
 template<typename T>
-T determinant(Matrix<T> &A)
+T determinant(const Matrix<T> &A)
 {
-  if (A.size()==0 || A.front().size()) {
+  if (A.size()==0 || A.front().size()==0) {
     throw std::domain_error("Determinant of a 0x0-matrix not supported");
   }
   
@@ -1178,15 +1197,146 @@ T determinant(Matrix<T> &A)
     while (swaps[j]) {
       swaps[j] = false;
       j = P[j];
-      det = -1*det;
+      if (j != P_it->first) {
+        det = -1*det;
+      }
     }
   }
 
   return det;
 }
 
+/**
+ * @brief Compute the inverse matrix
+ * 
+ * @tparam T is the type of the scalar values
+ * @param A is the matrix to be inverted
+ * @return a matrix \f$A^{-1}\f$ such that \f$A\cdot A^{-1} = I\f$
+ */
+template<typename T>
+Matrix<T> inverse(Matrix<T> &A)
+{
+  if (A.size()==0 || A.front().size()==0) {
+    throw std::domain_error("Inverse of a 0x0-matrix not supported");
+  }
+  
+  Matrix<T> Ainv;
+
+  // Compute the factorization
+  LUP_Factorization<T> fact(A);
+  std::vector<T> vi(A.size(),0);
+
+  for (unsigned int i=0; i<A.size(); ++i) {
+    vi[i] = 1;
+    Ainv.push_back(fact.solve(vi));
+    vi[i] = 0;
+  }
+
+  return transpose(Ainv);
+}
+
 }
 /*! @} End of DenseLinearAlgebra group */
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A*\textrm{scalar}\f$
+ */
+template<typename T>
+DenseLinearAlgebra::Matrix<T> operator*(DenseLinearAlgebra::Matrix<T> &&A, const T scalar)
+{
+  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
+    for (auto elem_it = std::begin(*row_it); elem_it != std::end(*row_it); ++elem_it) {
+      *elem_it *= scalar;
+    }
+  }
+
+  return A;
+}
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A*\textrm{scalar}\f$
+ */
+template<typename T>
+DenseLinearAlgebra::Matrix<T> operator*(const DenseLinearAlgebra::Matrix<T>& A, const T scalar)
+{
+  return operator*(DenseLinearAlgebra::Matrix<T>(A), scalar); 
+}
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param scalar is a scalar value
+ * @param A is a matrix
+ * @return the matrix \f$\textrm{scalar}*A\f$
+ */
+template<typename T>
+DenseLinearAlgebra::Matrix<T> operator*(const T scalar, const DenseLinearAlgebra::Matrix<T>& A)
+{
+  return A*scalar;
+}
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param scalar is a scalar value
+ * @param A is a matrix
+ * @return the matrix \f$\textrm{scalar}*A\f$
+ */
+template<typename T>
+DenseLinearAlgebra::Matrix<T> operator*(const T scalar, DenseLinearAlgebra::Matrix<T>&& A)
+{
+  return operator*(std::move(A),scalar);
+}
+
+/**
+ * @brief Element-wise scalar division for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A/\textrm{scalar}\f$
+ */
+template<typename T>
+DenseLinearAlgebra::Matrix<T> operator/(DenseLinearAlgebra::Matrix<T> &&A, const T scalar)
+{
+  if (scalar==0) {
+    throw std::domain_error("Division by 0");
+  }
+
+  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
+    for (auto elem_it = std::begin(*row_it); elem_it != std::end(*row_it); ++elem_it) {
+      *elem_it /= scalar;
+    }
+  }
+
+  return A;
+}
+
+/**
+ * @brief Element-wise scalar division for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A/\textrm{scalar}\f$
+ */
+template<typename T>
+DenseLinearAlgebra::Matrix<T> operator/(const DenseLinearAlgebra::Matrix<T>& A, const T scalar)
+{
+  return operator/(DenseLinearAlgebra::Matrix<T>(A), scalar); ; 
+}
 
 /*!
  *  \addtogroup SparseLinearAlgebra
@@ -1601,6 +1751,37 @@ public:
   }
 
   /**
+   * @brief Compare two matrices
+   * 
+   * @param A is a matrix
+   * @return true if and only if this object and the 
+   *     parameter have the same sizes and contains 
+   *     the same values
+   */
+  bool operator==(const Matrix<T>& A) const
+  {
+    if (A.num_of_rows()!=this->num_of_rows() || 
+        A.num_of_cols()!=this->num_of_cols()) {
+      return false;
+    }
+
+    auto A_row_it = std::begin(A._matrix);
+    auto row_it = std::begin(this->_matrix);
+
+    for (; A_row_it != std::end(A._matrix); ++A_row_it, ++row_it) {
+      auto A_elem_it = std::begin(A_row_it->second);
+      auto elem_it = std::begin(row_it->second);
+      for (; A_elem_it != std::end(A_row_it->second); ++A_elem_it, ++elem_it) {
+        if (A_elem_it->second != elem_it->second) {
+          return false;
+        }
+      } 
+    }
+
+    return true;
+  }
+
+  /**
    * @brief Matrix-vector product
    *
    * @param v is the vector that must the multiplied to the matrix.
@@ -1691,6 +1872,54 @@ public:
     return res;
   }
 
+  /**
+   * @brief Element-wise scalar multiplication for matrices
+   * 
+   * @tparam T is the type of scalar values
+   * @param A is a matrix
+   * @param scalar is a scalar value
+   * @return the matrix \f$A*\textrm{scalar}\f$
+   */
+  template<typename E>
+  friend Matrix<E> operator*(Matrix<E>&& A, const T scalar)
+  {
+    for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
+          ++row_it) {
+      for (auto elem_it = std::begin(row_it->second);
+            elem_it != std::end(row_it->second); ++elem_it) {
+        elem_it->second *= scalar;
+      }
+    }
+
+    return std::move(A);
+  }
+
+  /**
+   * @brief Element-wise scalar division for matrices
+   * 
+   * @tparam T is the type of scalar values
+   * @param A is a matrix
+   * @param scalar is a scalar value
+   * @return the matrix \f$A/\textrm{scalar}\f$
+   */
+  template<typename E>
+  friend Matrix<E> operator/(Matrix<E>&& A, const E scalar)
+  {
+    if (scalar==0) {
+      throw std::domain_error("Division by 0");
+    }
+
+    for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
+          ++row_it) {
+      for (auto elem_it = std::begin(row_it->second);
+            elem_it != std::end(row_it->second); ++elem_it) {
+        elem_it->second /= scalar;
+      }
+    }
+
+    return std::move(A);
+  }
+
   template<typename E>
   friend class LUP_Factorization;
 
@@ -1775,9 +2004,9 @@ class LUP_Factorization
   /**
    * @brief Swap two matrix rows.
    *
-   * This method swaps the `row_idx`-th row and the first row
+   * This method swaps the `row_idx`-th row and the row
    * below the diagonal whose value in column `row_idx` is not
-   * zero.
+   * zero and is the nearest to \f$1\f$.
    *
    * @param non_zero_below_diag is the vector such that
    *     `non_zero_below_diag[i]` is the set of row indexes `j`
@@ -1795,10 +2024,20 @@ class LUP_Factorization
       std::domain_error("The parameter is a singular matrix.");
     }
 
-    // get the index of the leastest row having a non-empty value in this
-    // column
-    unsigned int new_row_idx = *(non_zero_below_diag[row_idx].begin());
-
+    // get the index of the row having a non-empty value in this
+    // column which is the nearest to \f$1\f$.
+    auto l = non_zero_below_diag[row_idx].begin();
+    auto new_row_idx = *l;
+    T delta = std::abs(1-std::abs(_U._matrix[new_row_idx][row_idx]));
+    
+    for (++l; l != non_zero_below_diag[row_idx].end(); ++l) {
+      T new_delta = std::abs(1-std::abs(_U._matrix[*l][row_idx]));
+      if (delta < new_delta) {
+        new_row_idx = *l;
+        delta = new_delta;
+      }
+    }
+  
     // otherwise swap the current row and the row of the leastest row having a
     // non-empty value in this column
     std::swap(_U._matrix[row_idx], _U._matrix[new_row_idx]);
@@ -2122,7 +2361,7 @@ unsigned int rank(const Matrix<T> &A)
  * @return the determinant of the matrix `A`
  */
 template<typename T>
-T determinant(Matrix<T> &A)
+T determinant(const Matrix<T> &A)
 {
   if (A.num_of_rows()==0 || A.num_of_cols()==0) {
     throw std::domain_error("Determinant of a 0x0-matrix not supported");
@@ -2147,20 +2386,108 @@ T determinant(Matrix<T> &A)
   // Evaluate the number of row swaps and determine
   // the {1, -1} multiplier
   auto P = fact.P();
-  std::vector<bool> swaps(A.size(), true);
+  std::vector<bool> swaps(A.num_of_rows(), true);
   for (auto P_it = P.begin(); P_it != P.end(); ++P_it) {
     unsigned int j=P_it->first;
     while (swaps[j]) {
       swaps[j] = false;
       j = P[j];
-      det = -1*det;
+      if (j != P_it->first) {
+        det = -1*det;
+      }
     }
   }
 
   return det;
 }
 
+/**
+ * @brief Compute the inverse matrix
+ * 
+ * @tparam T is the type of the scalar values
+ * @param A is the matrix to be inverted
+ * @return a matrix \f$A^{-1}\f$ such that \f$A\cdot A^{-1} = I\f$
+ */
+template<typename T>
+Matrix<T> inverse(Matrix<T> &A)
+{
+  if (A.num_of_rows()==0 || A.num_of_cols()==0) {
+    throw std::domain_error("Inverse of a 0x0-matrix not supported");
+  }
+  
+  Matrix<T> Ainv;
+
+  // Compute the factorization
+  LUP_Factorization<T> fact(A);
+  std::vector<T> vi(A.num_of_rows(),0);
+
+  for (unsigned int i=0; i<A.num_of_rows(); ++i) {
+    vi[i] = 1;
+    Ainv.add_row(fact.solve(vi));
+    vi[i] = 0;
+  }
+
+  return transpose(Ainv);
+}
+
 }
 /*! @} End of SparseLinearAlgebra group */
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A*\textrm{scalar}\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator*(const SparseLinearAlgebra::Matrix<T>& A, const T scalar)
+{
+  return operator*(SparseLinearAlgebra::Matrix<T>(A), scalar); 
+}
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param scalar is a scalar value
+ * @param A is a matrix
+ * @return the matrix \f$\textrm{scalar}*A\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator*(const T scalar, const SparseLinearAlgebra::Matrix<T>& A)
+{
+  return A*scalar;
+}
+
+/**
+ * @brief Element-wise scalar multiplication for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param scalar is a scalar value
+ * @param A is a matrix
+ * @return the matrix \f$\textrm{scalar}*A\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator*(const T scalar, SparseLinearAlgebra::Matrix<T>&& A)
+{
+  return operator*(std::move(A),scalar);
+}
+
+/**
+ * @brief Element-wise scalar division for matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A/\textrm{scalar}\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator/(const SparseLinearAlgebra::Matrix<T>& A, const T scalar)
+{
+  return operator/(SparseLinearAlgebra::Matrix<T>(A), scalar); ; 
+}
+
 
 #endif // LINEAR_ALGEBRA_H
