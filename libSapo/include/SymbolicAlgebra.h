@@ -1570,17 +1570,11 @@ public:
    */
   void print(std::ostream &os) const
   {
-    os << _value;
+    os << (_value==0 ? 0 : _value);
   }
 
   ~_constant_type()
   {
-    /*
-    std::cout << "QUI ";
-    this->print(std::cout);
-
-    std::cout << " T" <<std::endl;
-    */
   }
 };
 
@@ -2058,7 +2052,7 @@ public:
   void print(std::ostream &os) const
   {
     if (_constant != 0 || _sum.size() == 0) {
-      os << _constant;
+      os << (_constant==0 ? 0 : _constant);
     }
 
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
@@ -2109,7 +2103,7 @@ class _finite_prod_type : public _base_expression_type<C>
                          const C constant = 1)
   {
     if (constant != 1 || _list.size() == 0) {
-      os << constant;
+      os << (constant==0 ? 0 : constant);
     }
 
     for (auto it = std::begin(_list); it != std::end(_list); ++it) {

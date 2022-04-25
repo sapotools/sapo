@@ -4,7 +4,7 @@ if(${Boost_unit_test_framework_FOUND})
     include_directories(${Boost_INCLUDE_DIRS})
     link_directories(${Boost_LIBRARY_DIRS})
 
-    set(LIBSAPO_TESTS linear_algebra)
+    set(LIBSAPO_TESTS linear_algebra symbolic_algebra)
     foreach(TEST ${LIBSAPO_TESTS})
         ADD_EXECUTABLE( test_${TEST} ${TEST}.cpp )
         target_link_libraries(test_${TEST} Sapo ${Boost_LIBRARIES})

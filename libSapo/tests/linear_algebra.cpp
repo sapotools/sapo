@@ -736,7 +736,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_inverse, T, test_types)
         auto inv = inverse(test_it->first);
         auto correct = test_it->second.first/test_it->second.second;
         bool beval = (inv == correct);
-        BOOST_REQUIRE_MESSAGE(beval, "" << "inverse(" << test_it->first << ") == " 
+        BOOST_REQUIRE_MESSAGE(beval, "inverse(" << test_it->first << ") == " 
                                           << inv << " != " << correct);   
     }
 
@@ -768,7 +768,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
         auto inv = inverse(A);
         auto correct = SparseLinearAlgebra::Matrix<T>(test_it->second.first)/test_it->second.second;
         bool beval = (inv == correct);
-        BOOST_REQUIRE_MESSAGE(beval, "" << "inverse(" << A << ") == " 
+        BOOST_REQUIRE_MESSAGE(beval, "inverse(" << A << ") == " 
                                           << inv << " != " << correct << " " << (inv-correct));   
     }
 
