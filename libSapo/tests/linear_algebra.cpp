@@ -652,7 +652,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_solve, T, test_types)
     }
 }
 
-/*
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
 {
     using namespace DenseLinearAlgebra;
@@ -664,17 +663,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-
         SparseLinearAlgebra::LUP_Factorization<T> fact(test_it->first.first);
         std::vector<T> sol = fact.solve(test_it->first.second);
         bool beval = (sol == test_it->second);
         BOOST_REQUIRE_MESSAGE(beval, "solve(" << test_it->first.first << "," << test_it->first.second << ") == " 
-                                          << sol << " != " << test_it->second << " " << (sol-test_it->second) );   
+                                          << sol << " != " << test_it->second);   
     }
 }
-*/
-
-
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_determinant, T, test_types)
 {
@@ -774,7 +769,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
         auto correct = SparseLinearAlgebra::Matrix<T>(test_it->second.first)/test_it->second.second;
         bool beval = (inv == correct);
         BOOST_REQUIRE_MESSAGE(beval, "" << "inverse(" << A << ") == " 
-                                          << inv << " != " << correct);   
+                                          << inv << " != " << correct << " " << (inv-correct));   
     }
 
     /*

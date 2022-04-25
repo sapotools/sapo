@@ -324,7 +324,7 @@ Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
     a[i] -= b[i];
   }
 
-  return a;
+  return std::move(a);
 }
 
 /**
@@ -348,7 +348,7 @@ Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
     b[i] *= -1;
   }
 
-  return b;
+  return std::move(b);
 }
 
 /**
@@ -1239,6 +1239,25 @@ Matrix<T> inverse(Matrix<T> &A)
 /*! @} End of DenseLinearAlgebra group */
 
 /**
+ * @brief Compute the maximum norm of a dense matrix
+ *
+ * @tparam T is a numeric type supporting the `abs` function.
+ * @param v is a vector
+ * @return the maximum norm of the given dense matrix
+ */
+template<typename T>
+T norm_infinity(const DenseLinearAlgebra::Matrix<T> &A)
+{
+  T norm = 0;
+
+  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
+    norm = std::max(norm, norm_infinity(*row_it));
+  }
+
+  return norm;
+}
+
+/**
  * @brief Element-wise scalar multiplication for matrices
  * 
  * @tparam T is the type of scalar values
@@ -1408,6 +1427,61 @@ protected:
       }
 
       row_it->second[col_idx] = value;
+
+      return row_it->second[col_idx];
+    }
+
+    /**
+     * @brief The assignment method
+     *
+     * This method assign a value to the referenced matrix element. If the
+     * element already exists, it reassigns it with a new value. If the
+     * matrix element does not exists yet, it creates the referenced
+     * element (and its row if necessary) and assigns it with `value`.
+     *
+     * @param value is value that must be assign to the referenced element.
+     * @return a reference to the assigned matrix element.
+     */
+    T &operator+=(const T &value)
+    {
+      // TODO: delete the row if it only contains zeros
+      auto row_it = A._matrix.find(row_idx);
+
+      if (row_it == std::end(A._matrix)) {
+        A._matrix[row_idx] = Matrix<T>::RowType();
+
+        row_it = A._matrix.find(row_idx);
+      }
+
+      row_it->second[col_idx] = row_it->second[col_idx] + value;
+
+      return row_it->second[col_idx];
+    }
+
+
+    /**
+     * @brief The assignment method
+     *
+     * This method assign a value to the referenced matrix element. If the
+     * element already exists, it reassigns it with a new value. If the
+     * matrix element does not exists yet, it creates the referenced
+     * element (and its row if necessary) and assigns it with `value`.
+     *
+     * @param value is value that must be assign to the referenced element.
+     * @return a reference to the assigned matrix element.
+     */
+    T &operator-=(const T &value)
+    {
+      // TODO: delete the row if it only contains zeros
+      auto row_it = A._matrix.find(row_idx);
+
+      if (row_it == std::end(A._matrix)) {
+        A._matrix[row_idx] = Matrix<T>::RowType();
+
+        row_it = A._matrix.find(row_idx);
+      }
+
+      row_it->second[col_idx] = row_it->second[col_idx] - value;
 
       return row_it->second[col_idx];
     }
@@ -1873,9 +1947,75 @@ public:
   }
 
   /**
+   * @brief Element-wise scalar sum for matrices
+   * 
+   * @tparam E is the type of scalar values
+   * @param A is a sparse matrix
+   * @param B is a sparse matrix
+   * @return the sparse matrix \f$A+B\f$
+   */
+  template<typename E>
+  friend Matrix<E> operator+(Matrix<E>&& A, const Matrix<E>& B)
+  {
+    for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
+          ++row_it) {
+      for (auto elem_it = std::begin(row_it->second);
+            elem_it != std::end(row_it->second); ++elem_it) {
+        A[row_it->first][elem_it->first] += elem_it->second;
+      }
+    }
+
+    return std::move(A);
+  }
+
+  /**
+   * @brief Element-wise scalar subtraction for matrices
+   * 
+   * @tparam E is the type of scalar values
+   * @param A is a sparse matrix
+   * @param B is a sparse matrix
+   * @return the sparse matrix \f$A-B\f$
+   */
+  template<typename E>
+  friend Matrix<E> operator-(Matrix<E>&& A, const Matrix<E>& B)
+  {
+    for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
+          ++row_it) {
+      for (auto elem_it = std::begin(row_it->second);
+            elem_it != std::end(row_it->second); ++elem_it) {
+        A[row_it->first][elem_it->first] -= elem_it->second;
+      }
+    }
+
+    return std::move(A);
+  }
+
+  /**
+   * @brief Element-wise scalar subtraction for matrices
+   * 
+   * @tparam E is the type of scalar values
+   * @param A is a sparse matrix
+   * @param B is a sparse matrix
+   * @return the sparse matrix \f$A-B\f$
+   */
+  template<typename E>
+  friend Matrix<E> operator-(const Matrix<E>& A, Matrix<E>&& B)
+  {
+    for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
+          ++row_it) {
+      for (auto elem_it = std::begin(row_it->second);
+            elem_it != std::end(row_it->second); ++elem_it) {
+        elem_it->second *= -1;
+      }
+    }
+
+    return std::move(B)+A;
+  }
+
+  /**
    * @brief Element-wise scalar multiplication for matrices
    * 
-   * @tparam T is the type of scalar values
+   * @tparam E is the type of scalar values
    * @param A is a matrix
    * @param scalar is a scalar value
    * @return the matrix \f$A*\textrm{scalar}\f$
@@ -1897,7 +2037,7 @@ public:
   /**
    * @brief Element-wise scalar division for matrices
    * 
-   * @tparam T is the type of scalar values
+   * @tparam E is the type of scalar values
    * @param A is a matrix
    * @param scalar is a scalar value
    * @return the matrix \f$A/\textrm{scalar}\f$
@@ -2029,10 +2169,10 @@ class LUP_Factorization
     auto l = non_zero_below_diag[row_idx].begin();
     auto new_row_idx = *l;
     T delta = std::abs(1-std::abs(_U._matrix[new_row_idx][row_idx]));
-    
+
     for (++l; l != non_zero_below_diag[row_idx].end(); ++l) {
       T new_delta = std::abs(1-std::abs(_U._matrix[*l][row_idx]));
-      if (delta < new_delta) {
+      if (new_delta < delta) {
         new_row_idx = *l;
         delta = new_delta;
       }
@@ -2155,18 +2295,20 @@ public:
         return;
       }
 
-      // get the diagonal element on the row
-      auto diag_elem = row_it->second.find(row_idx);
 
-      if (diag_elem == std::end(row_it->second)) {
-        // the diagonal element is empty
+      typename Matrix<T>::RowType::const_iterator diag_elem;
+      if (!non_zero_below_diag[row_idx].empty()) {
 
-        if (!non_zero_below_diag[row_idx].empty()) {
-          swap_with_the_leastest_non_zero_row_in_column(non_zero_below_diag,
-                                                        row_idx);
+        // swap the current row with the row below whose new 
+        // diagonal element is the nearest to 1 different from 0
+        swap_with_the_leastest_non_zero_row_in_column(non_zero_below_diag,
+                                                      row_idx);
 
-          diag_elem = _U._matrix[row_it->first].find(row_idx);
-        }
+        diag_elem = _U._matrix[row_it->first].find(row_idx);
+      } else {
+
+        // get the diagonal element on the row
+        diag_elem = row_it->second.find(row_idx);
       }
 
       // after the previous conditional statement either the
@@ -2434,6 +2576,55 @@ Matrix<T> inverse(Matrix<T> &A)
 /*! @} End of SparseLinearAlgebra group */
 
 /**
+ * @brief Element-wise scalar sum for sparse matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A+B\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator+(const SparseLinearAlgebra::Matrix<T>& A, 
+                                         const SparseLinearAlgebra::Matrix<T>&& B)
+{
+  return std::move(B)+A;
+}
+
+/**
+ * @brief Element-wise scalar sum for sparse matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A+B\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator+(const SparseLinearAlgebra::Matrix<T>& A, 
+                                         const SparseLinearAlgebra::Matrix<T>& B)
+{
+  SparseLinearAlgebra::Matrix<T> C(B);
+
+  return std::move(C)+A;
+}
+
+/**
+ * @brief Element-wise scalar subtraction for sparse matrices
+ * 
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A-B\f$
+ */
+template<typename T>
+SparseLinearAlgebra::Matrix<T> operator-(const SparseLinearAlgebra::Matrix<T>& A, 
+                                         const SparseLinearAlgebra::Matrix<T>& B)
+{
+  SparseLinearAlgebra::Matrix<T> C(A);
+
+  return std::move(C)-B;
+}
+
+/**
  * @brief Element-wise scalar multiplication for matrices
  * 
  * @tparam T is the type of scalar values
@@ -2472,7 +2663,7 @@ SparseLinearAlgebra::Matrix<T> operator*(const T scalar, const SparseLinearAlgeb
 template<typename T>
 SparseLinearAlgebra::Matrix<T> operator*(const T scalar, SparseLinearAlgebra::Matrix<T>&& A)
 {
-  return operator*(std::move(A),scalar);
+  return std::move(operator*(std::move(A),scalar));
 }
 
 /**
