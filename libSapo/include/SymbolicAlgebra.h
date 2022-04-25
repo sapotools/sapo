@@ -46,10 +46,8 @@ class Expression;
 /**
  * @brief A class to represent algebraic symbols
  *
- * This class represents algebraic symbols. It univocally associates any symbol
- * name to an id by using two static members: the `_declared_symbols` map and
- * the `_symbol_names` vector. The former maps any symbol name to an id; the
- * latter connects an id to the corresponding symbol name.
+ * This class represents algebraic symbols. It univocally 
+ * associates any symbol name to an identifier.
  *
  * @tparam C is the type of numeric constants.
  */
@@ -129,6 +127,19 @@ public:
     return _symbol_names[id];
   }
 };
+};
+
+template<typename C>
+struct std::less<SymbolicAlgebra::Symbol<C>>{
+  constexpr bool operator()(const SymbolicAlgebra::Symbol<C> &a, 
+                            const SymbolicAlgebra::Symbol<C> &b) const
+  {
+    return a.get_id() < b.get_id();
+  }
+};
+
+namespace SymbolicAlgebra
+{
 
 #ifdef WITH_THREADS
 template<typename C>
@@ -3611,6 +3622,10 @@ Symbol<C>::Symbol(const std::string &name): Expression<C>()
   std::unique_lock<std::mutex> lock(_mutex);
 #endif // WITH_THREADS
 
+  if (name.size()==0) {
+    throw std::domain_error("Symbols must have a non-null name");
+  }
+
   auto found_symb = _declared_symbols.find(name);
 
   if (found_symb == std::end(_declared_symbols)) {
@@ -3627,12 +3642,6 @@ template<typename C>
 Symbol<C>::Symbol(const Symbol<C> &orig):
     Expression<C>((orig._ex == nullptr ? nullptr : orig._ex->clone()))
 {
-}
-
-template<typename C>
-constexpr bool operator<(const Symbol<C> &a, const Symbol<C> &b)
-{
-  return a.get_id() < b.get_id();
 }
 
 }
