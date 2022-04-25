@@ -79,7 +79,7 @@ inline bool isNumeric(const Expression<> &e)
 inline double getCoefficient(const Expression<> &e, const Symbol<> &s)
 {
   // avoid -0
-  double val = e.get_coeff(s, 1).evaluate<double>();
+  double val = e.get_coeff(s, 1).evaluate();
   return val == 0 ? 0 : val;
 }
 
@@ -100,7 +100,7 @@ inline double getOffset(const Expression<> &e)
   temp.replace(rep);
 
   // avoid -0
-  double val = temp.evaluate<double>();
+  double val = temp.evaluate();
   return val == 0 ? 0 : val;
 }
 
@@ -110,7 +110,7 @@ inline Expression<> simplify(Expression<> e)
   std::set<Symbol<>> ids = e.get_symbols();
 
   if (ids.size() == 0) {
-    return e.evaluate<double>();
+    return e.evaluate();
   } else {
     // symbol we operate on
     Symbol<> s = *ids.begin();

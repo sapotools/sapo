@@ -607,7 +607,7 @@ get_subs_from(const Parallelotope &P,
 double Bundle::MinMaxCoeffFinder::eval_coeff(
     const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  double value = bernCoeff.evaluate<double>();
+  double value = bernCoeff.evaluate();
 
   // TODO: The following conditional evaluation avoids -0
   //       values. Check the difference between -0 and 0.

@@ -407,7 +407,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
-								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate<double>()));
+								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate()));
 							}
 						}
 						| CONST IDENT "=" expr error
@@ -422,7 +422,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
-								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate<double>()));
+								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate()));
 							}
 						}
 						| DEFINE IDENT "=" expr ";"
@@ -814,14 +814,14 @@ intInterval			: "[" expr "," expr "]"
 										ERROR(@2, "Intervals require numeric expressions");
 										x1 = 0;
 									} else {
-										x1 = $2.evaluate<double>();
+										x1 = $2.evaluate();
 									}
 									
 									if (!AbsSyn::isNumeric($4)) {
 										ERROR(@4, "Intervals require numeric expressions");
 										x2 = 1;
 									} else {
-										x2 = $4.evaluate<double>();
+										x2 = $4.evaluate();
 									}
 									
 									if ((int) x1 != x1) {
@@ -854,14 +854,14 @@ doubleInterval	: "[" expr "," expr "]"
 										ERROR(@2, "Intervals require numeric expressions");
 										x1 = 0;
 									} else {
-										x1 = $2.evaluate<double>();
+										x1 = $2.evaluate();
 									}
 									
 									if (!AbsSyn::isNumeric($4)) {
 										ERROR(@4, "Intervals require numeric expressions");
 										x2 = 1;
 									} else {
-										x2 = $4.evaluate<double>();
+										x2 = $4.evaluate();
 									}
 									
 									if (x2 < x1) {
@@ -905,7 +905,7 @@ expr		: number	{ $$ = $1; }
 						ERROR(@3, "Exponent must be numeric");
 						val = 1;
 					} else {
-						val = $3.evaluate<double>();
+						val = $3.evaluate();
 					}
 					
 					if (val != (int) val) {

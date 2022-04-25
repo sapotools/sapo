@@ -23,7 +23,15 @@
 namespace SymbolicAlgebra
 {
 
-typedef enum { CONSTANT, SYMBOL, FINITE_SUM, FINITE_PROD } ExpressionType;
+/**
+ * @brief Expression types
+ */
+typedef enum { 
+  CONSTANT,     // Constant
+  SYMBOL,       // Symbol
+  FINITE_SUM,   // Finite sum
+  FINITE_PROD   // Finite product
+} ExpressionType;
 
 template<typename C>
 class _constant_type;
@@ -105,6 +113,16 @@ public:
    * @param orig is the Symbol object to be copied.
    */
   Symbol(const Symbol<C> &orig);
+
+  /**
+   * @brief Get the Symbol name
+   * 
+   * @return return the symbol name
+   */
+  const std::string &get_name() const
+  {
+    return Symbol<C>::get_symbol_name(get_id());
+  }
 
   /**
    * @brief Get the Symbol id.
@@ -242,12 +260,9 @@ public:
    *
    * @return The numeric evaluation of the expression.
    */
-  template<typename T,
-           typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-  inline T evaluate() const
+  inline C evaluate() const
   {
-    const double value = static_cast<T>(_ex->evaluate());
+    const C value = _ex->evaluate();
 
     return value == 0 ? 0 : value;
   }

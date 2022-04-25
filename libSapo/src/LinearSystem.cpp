@@ -315,14 +315,14 @@ LinearSystem::LinearSystem(
 
     for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
       // Extract the coefficient of the i-th variable (grade 1)
-      double coeff = (c_it->get_coeff(*v_it, 1)).evaluate<double>();
+      double coeff = (c_it->get_coeff(*v_it, 1)).evaluate();
       Ai.push_back(coeff);
 
       // Project to obtain the constant term
       const_term = const_term.get_coeff(*v_it, 0);
     }
 
-    double bi = const_term.evaluate<double>();
+    double bi = const_term.evaluate();
 
     if (!this->is_in(Ai, -bi)) {
       this->A.push_back(Ai);
@@ -408,13 +408,13 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
-    double coeff = (obj_fun.get_coeff(*s_it, 1)).evaluate<double>();
+    double coeff = (obj_fun.get_coeff(*s_it, 1)).evaluate();
 
     obj_fun_coeffs.push_back(coeff);
     const_term = const_term.get_coeff(*s_it, 0);
   }
 
-  const double c = const_term.evaluate<double>();
+  const double c = const_term.evaluate();
   auto res = minimize(obj_fun_coeffs);
 
   return OptimizationResult<double>(res.optimum() + c, res.status());
@@ -438,12 +438,12 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
-    const double coeff = obj_fun.get_coeff(*s_it, 1).evaluate<double>();
+    const double coeff = obj_fun.get_coeff(*s_it, 1).evaluate();
     obj_fun_coeffs.push_back(coeff);
     const_term = const_term.get_coeff(*s_it, 0);
   }
 
-  const double c = const_term.evaluate<double>();
+  const double c = const_term.evaluate();
   auto res = maximize(obj_fun_coeffs);
 
   return OptimizationResult<double>(res.optimum() + c, res.status());
