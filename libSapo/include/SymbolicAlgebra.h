@@ -341,6 +341,11 @@ public:
     return Expression<C>(*this).replace(replacements);
   }
 
+  bool has_symbols() const
+  {
+    return _ex->has_symbols();
+  }
+
   /**
    * @brief Destroy the Expression object.
    */
@@ -2556,6 +2561,17 @@ public:
 
     for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
       auto map_it = (*it)->get_coeffs(symbol_id);
+
+      // if 0 is among the returned coefficients
+      auto constant = map_it.find(0);
+      if (constant != std::end(map_it) && 
+          !constant->second->has_symbols() && 
+           constant->second->evaluate()==0) {
+          
+        // delete it
+        map_it.erase(constant);
+      }
+
       std::map<int, _base_expression_type<C> *> next_res;
       for (auto res_coeff = std::begin(res); res_coeff != std::end(res);
            ++res_coeff) {
@@ -2572,9 +2588,13 @@ public:
         }
         delete res_coeff->second;
       }
+      res.clear();
       std::swap(res, next_res);
     }
 
+    if (res.size()==0) {
+      res[0] = 0;
+    }
     return res;
   }
 
@@ -2610,13 +2630,19 @@ public:
    */
   void print(std::ostream &os) const
   {
-    if (_numerator.size() > 0 || _constant != 1) {
+    C constant = _constant;
+    if (constant<0) {
+      os << "-";
+      constant = -constant;
+    }
+
+    if (_numerator.size() > 0 || constant != 1) {
       if (_denominator.size() > 0) {
         os << "(";
-        print_list(os, _numerator, _constant);
+        print_list(os, _numerator, constant);
         os << ")";
       } else {
-        print_list(os, _numerator, _constant);
+        print_list(os, _numerator, constant);
       }
     }
     if (_denominator.size() > 0) {
@@ -2859,7 +2885,7 @@ Expression<C>::Expression(_base_expression_type<C> *_ex): _ex(_ex)
 }
 
 template<typename C>
-Expression<C>::Expression(): _ex(nullptr)
+Expression<C>::Expression(): _ex(new _constant_type<C>(static_cast<C>(0)))
 {
 }
 
@@ -3020,6 +3046,42 @@ const Expression<C> &Expression<C>::operator/=(Expression<C> &&rhs)
   _ex = _ex->divided_by(rhs_ex);
 
   return *this;
+}
+
+template<typename C>
+Expression<C> simplify(const Expression<C>& exp)
+{
+  std::set<Symbol<C>> symbols = exp.get_symbols();
+  if (symbols.size() == 0) {
+    return exp;
+  }
+
+  int p = 1;
+  Expression<C> simpl_ex(0), power(1);
+
+  Symbol<C> x = *std::begin(symbols);
+  auto x_coeffs = exp.get_coeffs(x);
+  for (auto c_it = std::begin(x_coeffs); c_it != std::end(x_coeffs); ++c_it) {
+    c_it->second = simplify(c_it->second);
+
+    if (c_it->second.has_symbols() || c_it->second.evaluate()!=0) {
+      while (p<c_it->first) {
+        ++p;
+        power *= x;
+      }
+      simpl_ex += power*c_it->second;
+    }
+  }
+
+  return simpl_ex;
+}
+
+template<typename C>
+bool equivalent(const Expression<C>& exp_a, const Expression<C>& exp_b)
+{
+  Expression<C> diff = simplify(exp_a - exp_b);
+
+  return !(diff.has_symbols() || diff.evaluate()!=0);
 }
 
 /**
