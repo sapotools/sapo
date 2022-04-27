@@ -2579,14 +2579,19 @@ public:
              ++it_coeff) {
           const int degree = res_coeff->first + it_coeff->first;
           auto res_coeff_clone = res_coeff->second->clone();
-          res_coeff_clone = res_coeff_clone->multiply(it_coeff->second);
-          if (next_res.find(degree) == std::end(next_res)) {
+          res_coeff_clone = res_coeff_clone->multiply(it_coeff->second->clone());
+          auto coeff_degree = next_res.find(degree);
+          if (coeff_degree == std::end(next_res)) {
             next_res[degree] = res_coeff_clone;
           } else {
-            next_res[degree] = next_res[degree]->add(res_coeff_clone);
+            (coeff_degree->second) = (coeff_degree->second)->add(res_coeff_clone);
           }
         }
         delete res_coeff->second;
+      }
+      for (auto it_coeff = std::begin(map_it); it_coeff != std::end(map_it);
+             ++it_coeff) {
+        delete it_coeff->second;
       }
       res.clear();
       std::swap(res, next_res);
@@ -2880,7 +2885,7 @@ inline double Expression<mpq_class>::evaluate<double>() const
 #endif
 
 template<typename C>
-Expression<C>::Expression(_base_expression_type<C> *_ex): _ex(_ex)
+Expression<C>::Expression(_base_expression_type<C> *ex): _ex(ex)
 {
 }
 
@@ -3677,7 +3682,7 @@ Expression<C> operator/(Expression<C> &&lhs, Expression<C> &&rhs)
 }
 
 template<typename C>
-Symbol<C>::Symbol(): Expression<C>()
+Symbol<C>::Symbol(): Expression<C>(nullptr)
 {
 }
 
@@ -3687,7 +3692,7 @@ Symbol<C>::Symbol(const char *name): Symbol<C>(std::string(name))
 }
 
 template<typename C>
-Symbol<C>::Symbol(const std::string &name): Expression<C>()
+Symbol<C>::Symbol(const std::string &name): Expression<C>(nullptr)
 {
 #ifdef WITH_THREADS
   std::unique_lock<std::mutex> lock(_mutex);

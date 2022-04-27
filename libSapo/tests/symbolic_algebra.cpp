@@ -93,25 +93,6 @@ bool operator==(const std::set<Symbol<T>>& set_a,
 }
 
 template<typename T>
-bool operator==(const Expression<T>& exp_a,
-                const Expression<T>& exp_b)
-{
-    std::string s_a;
-    {
-        std::ostringstream ss_a;
-
-        ss_a << exp_a;
-
-        s_a = ss_a.str();
-    }
-    std::ostringstream ss_b;
-
-    ss_b << exp_b;
-
-    return s_a == ss_b.str();
-}
-
-template<typename T>
 bool equivalent(const std::map<int, Expression<T>>& map_a,
                 const std::map<int, Expression<T>>& map_b)
 {
@@ -212,12 +193,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_expr_coeffs, T, test_types)
                        {z, {{0,2*y},{1,2*y}}},
                        {x, {{0,2*(y*z + y)}}}} },
         {x*(y + z*y), {{y, {{1,(1 + z)*x}}},
-                  //     {z, {{0,x*y},{1,x*y}}},
-                       {x, {{1,y + z*y}}}} },
+                       {z, {{0,x*y},{1,x*y}}},
+                       {x, {{1,y + z*y}}} }},
         {3 + 4*y + z - x*(y + z*(z*y)*z), 
                                {{y, {{0,3 + z},{1,4 - x*(1+z*z*z)}}},
                                 {x, {{0,3 + 4*y + z},{1,-y-y*z*z*z}}},
-                                //{z, {{0,3 + 4*y-x*y},{1,1},{3,-x*y}}}
+                                {z, {{0,3 + 4*y-x*y},{1,1},{3,-x*y}}}
                                }},
     };
 
