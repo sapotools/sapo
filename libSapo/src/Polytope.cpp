@@ -127,6 +127,8 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
                                     std::vector<double> &b,
                                     const unsigned int num_of_splits) const
 {
+  using namespace LinearAlgebra;
+  
   if (this->A.size() == cidx) {
     Polytope ls(A, b);
     ls.simplify();

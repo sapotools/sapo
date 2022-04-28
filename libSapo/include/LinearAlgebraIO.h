@@ -62,7 +62,7 @@ std::ostream &operator<<(std::ostream &out,
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
-                         const SparseLinearAlgebra::Matrix<T> &M)
+                         const LinearAlgebra::Sparse::Matrix<T> &M)
 {
   os << "[ #rows: " << M.num_of_rows() << " #cols: " << M.num_of_cols() << " ";
   for (auto row_it = std::begin(M._matrix); row_it != std::end(M._matrix);
@@ -84,7 +84,7 @@ std::ostream &operator<<(std::ostream &os,
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
-                         const SparseLinearAlgebra::LUP_Factorization<T> &D)
+                         const LinearAlgebra::Sparse::LUP_Factorization<T> &D)
 {
   using namespace std;
   os << "{P=" << D.P() << "," << std::endl
@@ -96,7 +96,7 @@ std::ostream &operator<<(std::ostream &os,
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
-                         const DenseLinearAlgebra::LUP_Factorization<T> &D)
+                         const LinearAlgebra::Dense::LUP_Factorization<T> &D)
 {
   using namespace std;
   os << "{P=" << D._P << "," << std::endl << " LU=" << D._LU << "}";

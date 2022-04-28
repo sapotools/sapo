@@ -48,15 +48,15 @@ public:
   } transfomation_mode;
 
 private:
-  std::vector<Vector<double>> directions; //!< the vector of directions
-  Vector<double> lower_bounds;            //!< direction upper bounds
-  Vector<double> upper_bounds;            //!< direction lower bounds
-  std::vector<Vector<int>> templates;     //!< templates matrix
+  std::vector<LinearAlgebra::Vector<double>> directions; //!< the vector of directions
+  LinearAlgebra::Vector<double> lower_bounds;            //!< direction upper bounds
+  LinearAlgebra::Vector<double> upper_bounds;            //!< direction lower bounds
+  std::vector<LinearAlgebra::Vector<int>> templates;     //!< templates matrix
 
   // constraints over directions (assertions)
   // constrainedDirection[i] * vars <= constraintOffset
-  std::vector<Vector<double>> constraintDirections;
-  Vector<double> constraintOffsets;
+  std::vector<LinearAlgebra::Vector<double>> constraintDirections;
+  LinearAlgebra::Vector<double> constraintOffsets;
 
   /**
    * Compute the edge lengths
@@ -66,7 +66,7 @@ private:
    *
    * @returns the vector of the edge lengths
    */
-  Vector<double> edge_lengths();
+  LinearAlgebra::Vector<double> edge_lengths();
 
   /**
    * @brief A class to find the minimum and the maximum Bernstein coefficients
@@ -200,10 +200,10 @@ public:
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the template vector
    */
-  Bundle(const std::vector<Vector<double>> &directions,
-         const Vector<double> &lower_bounds,
-         const Vector<double> &upper_bounds,
-         const std::vector<Vector<int>> &templates);
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+         const LinearAlgebra::Vector<double> &lower_bounds,
+         const LinearAlgebra::Vector<double> &upper_bounds,
+         const std::vector<LinearAlgebra::Vector<int>> &templates);
 
   /**
    * @brief A constructor
@@ -215,12 +215,12 @@ public:
    * @param[in] constrDirs directions that are constrained by assumptions
    * @param[in] constrOffsets offsets of assumptions
    */
-  Bundle(const std::vector<Vector<double>> &directions,
-         const Vector<double> &lower_bounds,
-         const Vector<double> &upper_bounds,
-         const std::vector<Vector<int>> &templates,
-         const std::vector<Vector<double>> &constrDirs,
-         const Vector<double> &constrOffsets);
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+         const LinearAlgebra::Vector<double> &lower_bounds,
+         const LinearAlgebra::Vector<double> &upper_bounds,
+         const std::vector<LinearAlgebra::Vector<int>> &templates,
+         const std::vector<LinearAlgebra::Vector<double>> &constrDirs,
+         const LinearAlgebra::Vector<double> &constrOffsets);
 
   /**
    * @brief A move constructor
@@ -230,9 +230,9 @@ public:
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the template vector
    */
-  Bundle(std::vector<Vector<double>> &&directions,
-         Vector<double> &&lower_bounds, Vector<double> &&upper_bounds,
-         std::vector<Vector<int>> &&templates);
+  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+         LinearAlgebra::Vector<double> &&lower_bounds, LinearAlgebra::Vector<double> &&upper_bounds,
+         std::vector<LinearAlgebra::Vector<int>> &&templates);
 
   /**
    * @brief Get the intersection between two bundles
@@ -294,7 +294,7 @@ public:
    *
    * @return a reference to the template vector
    */
-  const std::vector<Vector<int>> &get_templates() const
+  const std::vector<LinearAlgebra::Vector<int>> &get_templates() const
   {
     return this->templates;
   }
@@ -305,7 +305,7 @@ public:
    * @param i is the index of the aimed template
    * @return a reference to the i-th template
    */
-  const Vector<int> &get_template(unsigned int i) const
+  const LinearAlgebra::Vector<int> &get_template(unsigned int i) const
   {
     return this->templates[i];
   }
@@ -315,7 +315,7 @@ public:
    *
    * @return a reference to the vector of directions
    */
-  const std::vector<Vector<double>> &get_directions() const
+  const std::vector<LinearAlgebra::Vector<double>> &get_directions() const
   {
     return this->directions;
   }
@@ -326,7 +326,7 @@ public:
    * @param i is the index of the aimed direction
    * @return  a reference to the i-th direction in the bundle
    */
-  const Vector<double> &get_direction(unsigned int i) const
+  const LinearAlgebra::Vector<double> &get_direction(unsigned int i) const
   {
     return this->directions[i];
   }
@@ -395,7 +395,7 @@ public:
    *
    * @param[in] templates is the new template vector
    */
-  void set_templates(const std::vector<Vector<int>> &templates)
+  void set_templates(const std::vector<LinearAlgebra::Vector<int>> &templates)
   {
     this->templates = templates;
   }
@@ -405,7 +405,7 @@ public:
    *
    * @param upper_bounds is the vector of the direction upper bounds
    */
-  void set_upper_bounds(const Vector<double> &upper_bounds)
+  void set_upper_bounds(const LinearAlgebra::Vector<double> &upper_bounds)
   {
     this->upper_bounds = upper_bounds;
   }
@@ -415,7 +415,7 @@ public:
    *
    * @param upper_bounds is the vector of the direction lower bounds
    */
-  void set_lower_bounds(const Vector<double> &lower_bounds)
+  void set_lower_bounds(const LinearAlgebra::Vector<double> &lower_bounds)
   {
     this->lower_bounds = lower_bounds;
   }

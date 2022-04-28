@@ -264,6 +264,8 @@ std::vector<std::vector<double>> getDirections(const InputData &id)
 
 Bundle *getBundleWithAssumptions(const InputData &id)
 {
+  using namespace LinearAlgebra;
+
   std::vector<std::vector<double>> directions;
   std::vector<double> LB, UB;
 
@@ -784,7 +786,7 @@ void independenceConstraints(glp_prob **lp,
         M.push_back(C[dirSet[i] - m]);
       }
     }
-    DenseLinearAlgebra::LUP_Factorization<double> LUP(M);
+    LinearAlgebra::Dense::LUP_Factorization<double> LUP(M);
     try {
       std::vector<double> res = LUP.solve(zeroes);
     } catch (std::domain_error &e) {

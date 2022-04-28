@@ -70,9 +70,9 @@ void swap(Bundle &A, Bundle &B)
  * @param[in] v2 vector
  * @returns orthogonal proximity
  */
-double orthProx(Vector<double> v1, Vector<double> v2)
+double orthProx(LinearAlgebra::Vector<double> v1, LinearAlgebra::Vector<double> v2)
 {
-  return std::abs(angle(v1, v2) - M_PI_2);
+  return std::abs(LinearAlgebra::angle(v1, v2) - M_PI_2);
 }
 
 /**
@@ -83,10 +83,10 @@ double orthProx(Vector<double> v1, Vector<double> v2)
  * @param[in] upper_bounds upper offsets
  * @param[in] templates templates matrix
  */
-Bundle::Bundle(const std::vector<Vector<double>> &directions,
-               const Vector<double> &lower_bounds,
-               const Vector<double> &upper_bounds,
-               const std::vector<Vector<int>> &templates):
+Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+               const LinearAlgebra::Vector<double> &lower_bounds,
+               const LinearAlgebra::Vector<double> &upper_bounds,
+               const std::vector<LinearAlgebra::Vector<int>> &templates):
     Bundle(directions, lower_bounds, upper_bounds, templates, {}, {})
 {
 }
@@ -99,9 +99,9 @@ Bundle::Bundle(const std::vector<Vector<double>> &directions,
  * @param[in] upper_bounds upper offsets
  * @param[in] templates templates matrix
  */
-Bundle::Bundle(std::vector<Vector<double>> &&directions,
-               Vector<double> &&lower_bounds, Vector<double> &&upper_bounds,
-               std::vector<Vector<int>> &&templates):
+Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+               LinearAlgebra::Vector<double> &&lower_bounds, LinearAlgebra::Vector<double> &&upper_bounds,
+               std::vector<LinearAlgebra::Vector<int>> &&templates):
     directions(std::move(directions)),
     lower_bounds(std::move(lower_bounds)),
     upper_bounds(std::move(upper_bounds)), templates(std::move(templates))
@@ -118,12 +118,12 @@ Bundle::Bundle(std::vector<Vector<double>> &&directions,
  * @param[in] constrDirs directions that are constrained by assumptions
  * @param[in] constrOffsets offsets of assumptions
  */
-Bundle::Bundle(const std::vector<Vector<double>> &directions,
-               const Vector<double> &lower_bounds,
-               const Vector<double> &upper_bounds,
-               const std::vector<Vector<int>> &templates,
-               const std::vector<Vector<double>> &constrDirs,
-               const Vector<double> &constrOffsets):
+Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+               const LinearAlgebra::Vector<double> &lower_bounds,
+               const LinearAlgebra::Vector<double> &upper_bounds,
+               const std::vector<LinearAlgebra::Vector<int>> &templates,
+               const std::vector<LinearAlgebra::Vector<double>> &constrDirs,
+               const LinearAlgebra::Vector<double> &constrOffsets):
     directions(directions),
     lower_bounds(lower_bounds), upper_bounds(upper_bounds),
     templates(templates), constraintDirections(constrDirs),
@@ -169,6 +169,7 @@ Bundle &Bundle::operator=(Bundle &&orig)
 Bundle::operator Polytope() const
 {
   using namespace std;
+  using namespace LinearAlgebra;
 
   std::vector<Vector<double>> A;
   Vector<double> b;
@@ -200,7 +201,7 @@ Parallelotope Bundle::get_parallelotope(unsigned int i) const
   }
 
   vector<double> lbound, ubound;
-  vector<vector<double>> Lambda;
+  vector<LinearAlgebra::Vector<double>> Lambda;
 
   vector<int>::const_iterator it = std::begin(this->templates[i]);
   // upper facets
@@ -229,7 +230,7 @@ Bundle Bundle::get_canonical() const
 {
   // get current polytope
   Polytope bund = *this;
-  Vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
+  LinearAlgebra::Vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
   for (unsigned int i = 0; i < this->size(); ++i) {
     c_up_offset[i] = bund.maximize(this->directions[i]).optimum();
     c_lo_offset[i] = bund.minimize(this->directions[i]).optimum();
@@ -313,7 +314,7 @@ bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
  * @returns distance accumulation
  */
 double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
-                     const Vector<double> &dists)
+                     const LinearAlgebra::Vector<double> &dists)
 {
 
   if (dirsIdx.empty()) {
@@ -335,7 +336,7 @@ double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
  * @returns distance accumulation
  */
 double maxOffsetDist(const std::vector<int> &dirsIdx,
-                     const Vector<double> &dists)
+                     const LinearAlgebra::Vector<double> &dists)
 {
 
   double dist = 1;
@@ -352,8 +353,8 @@ double maxOffsetDist(const std::vector<int> &dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double maxOffsetDist(const std::vector<Vector<int>> &T,
-                     const Vector<double> &dists)
+double maxOffsetDist(const std::vector<LinearAlgebra::Vector<int>> &T,
+                     const LinearAlgebra::Vector<double> &dists)
 {
   double maxdist = std::numeric_limits<double>::lowest();
   for (unsigned int i = 0; i < T.size(); i++) {
@@ -370,7 +371,7 @@ double maxOffsetDist(const std::vector<Vector<int>> &T,
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double maxOrthProx(const std::vector<Vector<double>> &directions,
+double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
                    const int vIdx, const std::vector<int> &dirsIdx)
 {
 
@@ -392,7 +393,7 @@ double maxOrthProx(const std::vector<Vector<double>> &directions,
  * @param[in] dirsIdx indexes of vectors to be considered
  * @returns maximum orthogonal proximity
  */
-double maxOrthProx(const std::vector<Vector<double>> &directions,
+double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
                    const std::vector<int> &dirsIdx)
 {
   double maxProx = 0;
@@ -412,8 +413,8 @@ double maxOrthProx(const std::vector<Vector<double>> &directions,
  * @param[in] T collection of vectors
  * @returns maximum orthogonal proximity
  */
-double maxOrthProx(const std::vector<Vector<double>> &directions,
-                   const std::vector<Vector<int>> &T)
+double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
+                   const std::vector<LinearAlgebra::Vector<int>> &T)
 {
   double maxorth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
@@ -423,8 +424,8 @@ double maxOrthProx(const std::vector<Vector<double>> &directions,
 }
 
 std::list<Bundle> &
-split_bundle(std::list<Bundle> &res, Vector<double> &lower_bounds,
-             Vector<double> &upper_bounds, const unsigned int idx,
+split_bundle(std::list<Bundle> &res, LinearAlgebra::Vector<double> &lower_bounds,
+             LinearAlgebra::Vector<double> &upper_bounds, const unsigned int idx,
              const Bundle &splitting, const double &max_bundle_magnitude,
              const double &split_magnitude_ratio, int)
 {
@@ -465,8 +466,8 @@ std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
 {
   std::list<Bundle> split_list;
 
-  Vector<double> upper_bounds(this->size());
-  Vector<double> lower_bounds(this->size());
+  LinearAlgebra::Vector<double> upper_bounds(this->size());
+  LinearAlgebra::Vector<double> lower_bounds(this->size());
 
   split_bundle(split_list, lower_bounds, upper_bounds, 0, *this,
                max_bundle_magnitude, split_magnitude_ratio, 3);
@@ -487,20 +488,21 @@ std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
 Bundle Bundle::decompose(double dec_weight, int max_iters)
 {
   using namespace std;
+  using namespace LinearAlgebra;
 
   vector<double> offDists = this->edge_lengths();
 
   // get current template and try to improve it
-  vector<vector<int>> curT = this->templates;
+  vector<Vector<int>> curT = this->templates;
 
   // get current template and try to improve it
-  vector<vector<int>> bestT = this->templates;
+  vector<Vector<int>> bestT = this->templates;
   int temp_card = this->templates.size();
 
   int i = 0;
   while (i < max_iters) {
 
-    vector<vector<int>> tmpT = curT;
+    vector<Vector<int>> tmpT = curT;
 
     // generate random coordinates to swap
     unsigned int i1 = rand() % temp_card;
@@ -515,7 +517,7 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
         A.push_back(this->directions[tmpT[i1][j]]);
       }
 
-      DenseLinearAlgebra::LUP_Factorization<double> fact(A);
+      Dense::LUP_Factorization<double> fact(A);
       try {
         fact.solve(Vector<double>(this->dim(), 0));
 
@@ -562,7 +564,7 @@ sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
 std::vector<SymbolicAlgebra::Expression<>>
 compute_Bern_coeffs(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
                     const std::vector<SymbolicAlgebra::Expression<>> &f,
-                    const Vector<double> &dir_vector)
+                    const LinearAlgebra::Vector<double> &dir_vector)
 {
   SymbolicAlgebra::Expression<> Lfog = 0;
   // upper facets
@@ -591,8 +593,8 @@ get_subs_from(const Parallelotope &P,
 {
   using namespace SymbolicAlgebra;
 
-  const Vector<double> &base_vertex = P.base_vertex();
-  const Vector<double> &lengths = P.lengths();
+  const LinearAlgebra::Vector<double> &base_vertex = P.base_vertex();
+  const LinearAlgebra::Vector<double> &lengths = P.lengths();
 
   Expression<>::replacement_type repl;
 
@@ -694,6 +696,8 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
     const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
     const Parallelotope &P)
 {
+  using namespace LinearAlgebra;
+
   std::vector<SymbolicAlgebra::Expression<>> gen_functs;
   for (auto it = std::begin(P.base_vertex()); it != std::end(P.base_vertex());
        ++it) {
@@ -838,6 +842,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
 
   using namespace std;
   using namespace SymbolicAlgebra;
+  using namespace LinearAlgebra;
 
   vector<CondSyncUpdate<std::less<double>>> max_coeffs(this->size());
   vector<CondSyncUpdate<std::greater<double>>> min_coeffs(this->size());
@@ -912,7 +917,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
   }
 #endif // WITH_THREADS
 
-  Vector<double> lower_bounds, upper_bounds;
+  LinearAlgebra::Vector<double> lower_bounds, upper_bounds;
   for (auto it = std::begin(max_coeffs); it != std::end(max_coeffs); ++it) {
     upper_bounds.push_back(*it);
   }
@@ -936,8 +941,9 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
  *
  * @returns vector of distances
  */
-Vector<double> Bundle::edge_lengths()
+LinearAlgebra::Vector<double> Bundle::edge_lengths()
 {
+  using namespace LinearAlgebra;
 
   Vector<double> dist(this->size());
   for (unsigned int i = 0; i < this->size(); i++) {
@@ -972,7 +978,7 @@ bool isIn(int n, std::vector<int> v)
  * @param[in] vlist set of vectors in which to look for
  * @returns true is v belongs to vlist
  */
-bool isIn(std::vector<int> v, std::vector<Vector<int>> vlist)
+bool isIn(std::vector<int> v, std::vector<LinearAlgebra::Vector<int>> vlist)
 {
   for (unsigned int i = 0; i < vlist.size(); i++) {
     if (isPermutation(v, vlist[i])) {
@@ -984,6 +990,8 @@ bool isIn(std::vector<int> v, std::vector<Vector<int>> vlist)
 
 LinearSystem get_linear_system(const Bundle &A)
 {
+  using namespace LinearAlgebra;
+
   std::vector<Vector<double>> A_dirs = A.get_directions();
   A_dirs.reserve(2 * A_dirs.size());
   for (unsigned int i = 0; i < A_dirs.size(); ++i) {
@@ -1000,18 +1008,18 @@ LinearSystem get_linear_system(const Bundle &A)
 }
 
 unsigned int
-get_a_linearly_dependent_row_in(const Vector<double> &v,
-                                const std::vector<Vector<double>> &A)
+get_a_linearly_dependent_row_in(const LinearAlgebra::Vector<double> &v,
+                                const std::vector<LinearAlgebra::Vector<double>> &A)
 {
   for (unsigned int i = 0; i < A.size(); ++i) {
-    if (are_linearly_dependent(v, A[i])) {
+    if (LinearAlgebra::are_linearly_dependent(v, A[i])) {
       return i;
     }
   }
   return A.size();
 }
 
-bool require_copy(const Vector<int> &bundle_template,
+bool require_copy(const LinearAlgebra::Vector<int> &bundle_template,
                   const std::vector<unsigned int> &new_ids,
                   const unsigned int old_size)
 {
@@ -1041,7 +1049,7 @@ Bundle &Bundle::intersect(const Bundle &A)
 
   // for each direction in A
   for (unsigned int i = 0; i < A.size(); ++i) {
-    const Vector<double> &A_dir = A.directions[i];
+    const LinearAlgebra::Vector<double> &A_dir = A.directions[i];
     new_ids[i] = get_a_linearly_dependent_row_in(A_dir, this->directions);
 
     // if the direction is not present in this object
@@ -1091,7 +1099,8 @@ Bundle &Bundle::intersect(const Bundle &A)
 void Bundle::add_templates_for(
     std::set<unsigned int> &missing_template_directions)
 {
-  using namespace DenseLinearAlgebra;
+  using namespace LinearAlgebra;
+  using namespace LinearAlgebra::Dense;
 
   while (!missing_template_directions.empty()) {
     // fill T with all the bundle directions starting
@@ -1110,7 +1119,6 @@ void Bundle::add_templates_for(
     // the LUP factorization find the first n non-linearly
     // dependent rows in T and the permutation can be used
     // to discover them
-    using namespace DenseLinearAlgebra;
     auto fP = LUP_Factorization<double>(T).P();
     row_pos = fP(row_pos);
     Vector<int> new_temp(this->dim());
@@ -1138,7 +1146,8 @@ void Bundle::add_templates_for(
  */
 Bundle &Bundle::intersect(const LinearSystem &ls)
 {
-  using namespace DenseLinearAlgebra;
+  using namespace LinearAlgebra;
+  using namespace LinearAlgebra::Dense;
 
   std::set<unsigned int> outside_templates;
   const Matrix<double> &A = ls.getA();
@@ -1146,7 +1155,7 @@ Bundle &Bundle::intersect(const LinearSystem &ls)
   std::vector<unsigned int> new_ids(A.size());
   // for each row in the linear system
   for (unsigned int i = 0; i < A.size(); ++i) {
-    const Vector<double> &A_row = A[i];
+    const LinearAlgebra::Vector<double> &A_row = A[i];
 
     new_ids[i] = get_a_linearly_dependent_row_in(A_row, this->directions);
 

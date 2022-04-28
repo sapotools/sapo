@@ -90,17 +90,17 @@ public:
  *        maximize (true) or minimize (false) `obj_fun` over the system
  * @return optimum
  */
-OptimizationResult<double> optimize(const std::vector<Vector<double>> &A,
-                                    const Vector<double> &b,
-                                    const Vector<double> &obj_fun,
+OptimizationResult<double> optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
+                                    const LinearAlgebra::Vector<double> &b,
+                                    const LinearAlgebra::Vector<double> &obj_fun,
                                     const bool maximize);
 
 class LinearSystem
 {
 
 protected:
-  std::vector<Vector<double>> A; // matrix A
-  Vector<double> b;              // vector b
+  std::vector<LinearAlgebra::Vector<double>> A; // matrix A
+  LinearAlgebra::Vector<double> b;              // vector b
 
   /**
    * Check if a constraint belongs to the linear system
@@ -109,7 +109,7 @@ protected:
    * @param[in] bi offset
    * @returns true is Ai x <= bi is in the linear system
    */
-  bool is_in(const Vector<double> &Ai, const double &bi) const;
+  bool is_in(const LinearAlgebra::Vector<double> &Ai, const double &bi) const;
 
   /**
    * Check whether the solutions of a linear system satisfy a constraint.
@@ -128,7 +128,7 @@ protected:
    *     in which the constraint is satisfied by all the solutions and
    *     this method returns false.
    */
-  bool satisfies(const Vector<double> &Ai, const double bi) const;
+  bool satisfies(const LinearAlgebra::Vector<double> &Ai, const double bi) const;
 
   /**
    * Check whether one of the constraints in a linear system is redundant.
@@ -172,7 +172,7 @@ public:
    * @param[in] A template matrix
    * @param[in] b offset vector
    */
-  LinearSystem(const std::vector<Vector<double>> &A, const Vector<double> &b);
+  LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A, const LinearAlgebra::Vector<double> &b);
 
   /**
    * Move constructor
@@ -180,7 +180,7 @@ public:
    * @param[in] A template matrix
    * @param[in] b offset vector
    */
-  LinearSystem(std::vector<Vector<double>> &&A, Vector<double> &&b);
+  LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A, LinearAlgebra::Vector<double> &&b);
 
   /**
    * Constructor from a set of symbolic expressions
@@ -210,7 +210,7 @@ public:
    *
    * @return template matrix
    */
-  const std::vector<Vector<double>> &getA() const
+  const std::vector<LinearAlgebra::Vector<double>> &getA() const
   {
     return this->A;
   }
@@ -220,7 +220,7 @@ public:
    *
    * @return offset vector
    */
-  const Vector<double> &getb() const
+  const LinearAlgebra::Vector<double> &getb() const
   {
     return this->b;
   }
@@ -252,7 +252,7 @@ public:
    *        maximize (true) or minimize (false) `obj_fun` over the system
    * @return optimum
    */
-  OptimizationResult<double> optimize(const Vector<double> &obj_fun,
+  OptimizationResult<double> optimize(const LinearAlgebra::Vector<double> &obj_fun,
                                       const bool maximize) const;
 
   /**
@@ -261,7 +261,7 @@ public:
    * @param[in] obj_fun objective function
    * @return minimum
    */
-  OptimizationResult<double> minimize(const Vector<double> &obj_fun) const;
+  OptimizationResult<double> minimize(const LinearAlgebra::Vector<double> &obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -269,7 +269,7 @@ public:
    * @param[in] obj_fun objective function
    * @return maximum
    */
-  OptimizationResult<double> maximize(const Vector<double> &obj_fun) const;
+  OptimizationResult<double> maximize(const LinearAlgebra::Vector<double> &obj_fun) const;
 
   /**
    * Minimize the linear system
@@ -376,7 +376,7 @@ JSON::ostream &operator<<(JSON::ostream &out, const std::vector<T> &v)
 
 template<typename T>
 JSON::ostream &operator<<(JSON::ostream &out,
-                          const DenseLinearAlgebra::Matrix<T> &A)
+                          const LinearAlgebra::Dense::Matrix<T> &A)
 {
   out << "[";
   for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {

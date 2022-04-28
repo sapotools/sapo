@@ -52,9 +52,9 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
  *        maximize (true) or minimize (false) `obj_fun` over the system
  * @return optimum
  */
-OptimizationResult<double> optimize(const std::vector<Vector<double>> &A,
-                                    const Vector<double> &b,
-                                    const Vector<double> &obj_fun,
+OptimizationResult<double> optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
+                                    const LinearAlgebra::Vector<double> &b,
+                                    const LinearAlgebra::Vector<double> &obj_fun,
                                     const bool maximize)
 {
   unsigned int num_rows = A.size();
@@ -138,7 +138,7 @@ OptimizationResult<double> optimize(const std::vector<Vector<double>> &A,
  * @return optimum
  */
 OptimizationResult<double>
-LinearSystem::optimize(const Vector<double> &obj_fun,
+LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
                        const bool maximize) const
 {
   return ::optimize(this->A, this->b, obj_fun, maximize);
@@ -151,7 +151,7 @@ LinearSystem::optimize(const Vector<double> &obj_fun,
  * @return minimum
  */
 OptimizationResult<double>
-LinearSystem::minimize(const Vector<double> &obj_fun) const
+LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
   return ::optimize(this->A, this->b, obj_fun, false);
 }
@@ -163,7 +163,7 @@ LinearSystem::minimize(const Vector<double> &obj_fun) const
  * @return maximum
  */
 OptimizationResult<double>
-LinearSystem::maximize(const Vector<double> &obj_fun) const
+LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
   return ::optimize(this->A, this->b, obj_fun, true);
 }
@@ -175,7 +175,7 @@ LinearSystem::maximize(const Vector<double> &obj_fun) const
  * @param[in] line vector to test
  * @return true is the vector is nulle
  */
-bool zeroLine(const Vector<double> &line)
+bool zeroLine(const LinearAlgebra::Vector<double> &line)
 {
   bool zeros = true;
   unsigned int i = 0;
@@ -192,8 +192,8 @@ bool zeroLine(const Vector<double> &line)
  * @param[in] A template matrix
  * @param[in] b offset vector
  */
-LinearSystem::LinearSystem(const std::vector<Vector<double>> &A,
-                           const Vector<double> &b)
+LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
+                           const LinearAlgebra::Vector<double> &b)
 {
   bool smart_insert = false;
 
@@ -216,8 +216,8 @@ LinearSystem::LinearSystem(const std::vector<Vector<double>> &A,
  * @param[in] A template matrix
  * @param[in] b offset vector
  */
-LinearSystem::LinearSystem(std::vector<Vector<double>> &&A,
-                           Vector<double> &&b):
+LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
+                           LinearAlgebra::Vector<double> &&b):
     A(std::move(A)),
     b(std::move(b))
 {
@@ -255,8 +255,8 @@ LinearSystem::LinearSystem(LinearSystem &&orig)
  * @param approx admitted approximation
  * @return whether the two linear equations are the same
  */
-bool same_constraint(const Vector<double> &A1, const double &b1,
-                     const Vector<double> &A2, const double &b2,
+bool same_constraint(const LinearAlgebra::Vector<double> &A1, const double &b1,
+                     const LinearAlgebra::Vector<double> &A2, const double &b2,
                      const double approx = 0)
 {
   if (A1.size() != A2.size()) {
@@ -283,7 +283,7 @@ bool same_constraint(const Vector<double> &A1, const double &b1,
  * @param[in] bi offset
  * @returns true is Ai x <= b is in the linear system
  */
-bool LinearSystem::is_in(const Vector<double> &Ai, const double &bi) const
+bool LinearSystem::is_in(const LinearAlgebra::Vector<double> &Ai, const double &bi) const
 {
   for (unsigned int i = 0; i < this->A.size(); i++) {
     if (same_constraint(this->A[i], this->b[i], Ai, bi)) {
@@ -310,7 +310,7 @@ LinearSystem::LinearSystem(
   // lconstraints.unique();  // remove multiple copies of the same expression
 
   for (auto c_it = begin(lconstraints); c_it != end(lconstraints); ++c_it) {
-    Vector<double> Ai;
+    LinearAlgebra::Vector<double> Ai;
     Expression<> const_term(*c_it);
 
     for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
@@ -380,7 +380,7 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
     return true;
   }
 
-  Vector<double> obj_fun(dim(), 0);
+  LinearAlgebra::Vector<double> obj_fun(dim(), 0);
   obj_fun[1] = 0;
 
   OptimizationResult<double> res = maximize(obj_fun);
@@ -403,7 +403,7 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 {
   using namespace SymbolicAlgebra;
 
-  Vector<double> obj_fun_coeffs;
+  LinearAlgebra::Vector<double> obj_fun_coeffs;
   Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
@@ -433,7 +433,7 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 {
   using namespace SymbolicAlgebra;
 
-  Vector<double> obj_fun_coeffs;
+  LinearAlgebra::Vector<double> obj_fun_coeffs;
   Expression<> const_term(obj_fun);
 
   // Extract the coefficient of the i-th variable (grade 1)
@@ -464,7 +464,7 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
  *     the solutions of the system. There are cases in which the constraint
  *     is satisfied by all the solutions and this method returns false.
  */
-bool LinearSystem::satisfies(const Vector<double> &Ai, const double bi) const
+bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, const double bi) const
 {
   if (size() == 0)
     return false;
@@ -506,7 +506,7 @@ bool LinearSystem::satisfies(const Vector<double> &Ai, const double bi) const
 bool LinearSystem::constraint_is_redundant(const unsigned int i) const
 {
   LinearSystem tmp(*this);
-  Vector<double> Ai(dim(), 0);
+  LinearAlgebra::Vector<double> Ai(dim(), 0);
   double bi(0);
 
   // replace the i-th constraint with the empty constraint

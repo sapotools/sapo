@@ -11,6 +11,8 @@ typedef boost::mpl::list<double> test_types;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_1, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::vector<T>, T>> tests{
         {{}, 0},
         {{1,7,5,0}, 13},
@@ -30,6 +32,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_1, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_2, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::vector<T>, T>> tests{
         {{}, 0},
         {{1,7,5,5}, 10},
@@ -50,6 +54,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_2, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_inf, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::vector<T>, T>> tests{
         {{}, 0},
         {{1,7,5,5}, 7},
@@ -70,6 +76,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_inf, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_eq, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, bool>> tests{
         {{{},{}}, true},
         {{{1,7,5,5}, {1,7,5,5}}, true},
@@ -99,6 +107,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_eq, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_neq, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, bool>> tests{
         {{{},{}}, false},
         {{{1,7,5,5}, {1,7,5,5}}, false},
@@ -128,6 +138,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_neq, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_subtraction, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, std::vector<T>>> tests{
         {{{},{}},{}},
         {{{1,7,5,5}, {1,7,5,5}}, {0,0,0,0}},
@@ -157,6 +169,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_subtraction, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sum, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, std::vector<T>>> tests{
         {{{},{}},{}},
         {{{1,7,5,5}, {1,7,5,5}}, {2,14,10,10}},
@@ -186,6 +200,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sum, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_mult_pre, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<T, std::vector<T>>, std::vector<T>>> tests{
         {{0,{}},{}},
         {{8,{}},{}},
@@ -208,6 +224,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_mult_pre, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_mult_post, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, T>, std::vector<T>>> tests{
         {{{},0},{}},
         {{{},8},{}},
@@ -230,6 +248,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_mult_post, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_div, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, T>, std::vector<T>>> tests{
         {{{},8},{}},
         {{{},-4},{}},
@@ -258,6 +278,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_div, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_neg, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::vector<T>, std::vector<T>>> tests{
         {{},{}},
         {{1,7,5,5}, {-1,-7,-5,-5}},
@@ -276,6 +298,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_neg, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_prod, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, T>> tests{
         {{{},{}},0},
         {{{1,7,5,5}, {1,7,5,5}}, 100},
@@ -305,6 +329,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_prod, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_H_prod, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, std::vector<T>>> tests{
         {{{},{}},{}},
         {{{1,7,5,5}, {1,7,5,5}}, {1,49,25,25}},
@@ -334,6 +360,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_H_prod, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_linear_dep, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, bool>> tests{
         {{{1,7,5,5}, {1,7,5,5}}, true},
         {{{2,14,10,10}, {1,7,5,5}}, true},
@@ -369,6 +397,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_linear_dep, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_linear_dep_ratio, T, test_types)
 {
+    using namespace LinearAlgebra;
+
     std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, T>> tests{
         {{{1,7,5,5}, {1,7,5,5}}, 1},
         {{{2,14,10,10}, {1,7,5,5}}, 2},
@@ -404,7 +434,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_linear_dep_ratio, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_eq, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, bool>> tests{
         {{{{}},{{}}}, true},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{6,7,8}}}, true},
@@ -432,7 +464,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_eq, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_neq, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, bool>> tests{
         {{{{}},{{}}}, false},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{6,7,8}}}, false},
@@ -460,7 +494,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_neq, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_sum, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, Matrix<T>>> tests{
         {{{{}},{{}}}, {{}}},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{6,7,8}}}, {{0,2,4},{6,8,10},{12,14,16}}},
@@ -489,7 +525,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_sum, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_subtraction, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, Matrix<T>>> tests{
         {{{{}},{{}}}, {{}}},
         {{{{0,2,4},{6,8,10},{12,14,16}}, {{0,1,2},{3,4,5},{6,7,8}}}, {{0,1,2},{3,4,5},{6,7,8}}},
@@ -518,7 +556,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_subtraction, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_transpose, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<Matrix<T>, Matrix<T>>> tests{
         {{},{}},
         {{{0,1,2},{3,4,5},{6,7,8}},{{0,3,6},{1,4,7},{2,5,8}}}
@@ -534,7 +574,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_transpose, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_vector_prod, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, std::vector<T>>, std::vector<T>>> tests{
         {{{},{}}, {}},
         {{{{0,2,4},{6,8,10},{12,14,16}}, {1,0,0}}, {0,6,12}},
@@ -573,7 +615,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_vector_prod, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_matrix_prod, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Matrix<T>>, Matrix<T>>> tests{
         {{{},{}}, {}},
         {{{{0,2,4},{6,8,10},{12,14,16}}, {{1,0,0},{0,1,0},{0,0,1}}}, {{0,2,4},{6,8,10},{12,14,16}}},
@@ -607,7 +651,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_matrix_prod, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_LUP, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<Matrix<T>, std::pair<Vector<T>, std::pair<Matrix<T>, Matrix<T>>>>> tests{
         {{{1,0,0},{0,1,0},{0,0,1}}, {{1,2,3}, {{{1,0,0},{0,1,0},{0,0,1}}, {{1,0,0},{0,1,0},{0,0,1}}}}},
         {{{0,1,0},{0,0,1},{1,0,0}}, {{3,1,2}, {{{1,0,0},{0,1,0},{0,0,1}}, {{1,0,0},{0,1,0},{0,0,1}}}}},
@@ -634,7 +680,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_LUP, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_solve, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Vector<T>>, Vector<T>>> tests{
         {{{{1,0,0},{0,1,0},{0,0,1}}, {1,2,3}}, {1,2,3}},
         {{{{0,1,0},{0,0,1},{1,0,0}}, {1,2,3}}, {3,1,2}},
@@ -654,7 +702,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_solve, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<std::pair<Matrix<T>, Vector<T>>, Vector<T>>> tests{
         {{{{1,0,0},{0,1,0},{0,0,1}}, {1,2,3}}, {1,2,3}},
         {{{{0,1,0},{0,0,1},{1,0,0}}, {1,2,3}}, {3,1,2}},
@@ -663,7 +713,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        SparseLinearAlgebra::LUP_Factorization<T> fact(test_it->first.first);
+        LinearAlgebra::Sparse::LUP_Factorization<T> fact(test_it->first.first);
         std::vector<T> sol = fact.solve(test_it->first.second);
         bool beval = (sol == test_it->second);
         BOOST_REQUIRE_MESSAGE(beval, "solve(" << test_it->first.first << "," << test_it->first.second << ") == " 
@@ -673,7 +723,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_determinant, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<Matrix<T>, T>> tests{
         {{{0,2,4},{6,8,10},{12,14,16}}, 0},
         {{{1,0,0},{0,1,0},{0,0,1}}, 1},
@@ -697,8 +749,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_determinant, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_determinant, T, test_types)
 {
-    using namespace SparseLinearAlgebra;
-    std::vector<std::pair<DenseLinearAlgebra::Matrix<T>, T>> tests{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Sparse;
+
+    std::vector<std::pair<LinearAlgebra::Dense::Matrix<T>, T>> tests{
         {{{0,2,4},{6,8,10},{12,14,16}}, 0},
         {{{1,0,0},{0,1,0},{0,0,1}}, 1},
         {{{0,1,2},{3,4,5},{6,7,8}}, 0},
@@ -722,7 +776,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_determinant, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_inverse, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<Matrix<T>,std::pair<Matrix<T>, T>>> tests{
         {{{0,2,4},{6,8,10},{12,14,17}}, {{{2,-11,6},{-9,24,-12},{6,-12,6}}, 6}},
         {{{1,0,0},{0,1,0},{0,0,1}}, {{{1,0,0},{0,1,0},{0,0,1}}, 1}},
@@ -753,7 +809,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_inverse, T, test_types)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
 {
-    using namespace DenseLinearAlgebra;
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
     std::vector<std::pair<Matrix<T>,std::pair<Matrix<T>, T>>> tests{
         {{{0,2,4},{6,8,10},{12,14,17}}, {{{2,-11,6},{-9,24,-12},{6,-12,6}}, 6}},
         {{{1,0,0},{0,1,0},{0,0,1}}, {{{1,0,0},{0,1,0},{0,0,1}}, 1}},
@@ -764,9 +822,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        SparseLinearAlgebra::Matrix<T> A(test_it->first);
+        LinearAlgebra::Sparse::Matrix<T> A(test_it->first);
         auto inv = inverse(A);
-        auto correct = SparseLinearAlgebra::Matrix<T>(test_it->second.first)/test_it->second.second;
+        auto correct = LinearAlgebra::Sparse::Matrix<T>(test_it->second.first)/test_it->second.second;
         bool beval = (inv == correct);
         BOOST_REQUIRE_MESSAGE(beval, "inverse(" << A << ") == " 
                                           << inv << " != " << correct << " " << (inv-correct));   
@@ -780,7 +838,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
         //{{0,1,2},{3,4,5},{1,1,1}},
     };
     for (auto test_it = std::begin(test_errs); test_it != std::end(test_errs); ++test_it) {
-        SparseLinearAlgebra::Matrix<T> A(*test_it);
+        LinearAlgebra::Sparse::Matrix<T> A(*test_it);
         BOOST_REQUIRE_THROW(inverse(A), std::domain_error);
     }
     */

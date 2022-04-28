@@ -19,6 +19,8 @@
 #include <cmath>   // due to floor
 #include <limits>  // due to numeric_limits
 
+namespace LinearAlgebra {
+
 template<typename T>
 using Vector = std::vector<T>;
 
@@ -46,8 +48,8 @@ inline Vector<T> approx(const Vector<T> &v,
  * @return the given vector approximated up to `decimal` decimal digits.
  */
 template<typename T>
-inline Vector<T> approx(Vector<T> &&orig, const unsigned short decimal
-                                          = std::numeric_limits<T>::digits10);
+inline Vector<T> approx(Vector<T> &&v, const unsigned short decimal
+                                        = std::numeric_limits<T>::digits10);
 
 /**
  * @brief Approximate all the values in a vector up to given decimal digit.
@@ -59,19 +61,19 @@ inline Vector<T> approx(Vector<T> &&orig, const unsigned short decimal
  * @return the given vector approximated up to `decimal` decimal digits.
  */
 template<>
-inline Vector<double> approx<double>(Vector<double> &&orig,
+inline Vector<double> approx<double>(Vector<double> &&v,
                                      const unsigned short decimal)
 {
   if (decimal == std::numeric_limits<double>::digits10) {
-    return std::move(orig);
+    return std::move(v);
   }
 
   const double mult = std::pow(10, decimal);
-  for (auto it = std::begin(orig); it != std::end(orig); ++it) {
+  for (auto it = std::begin(v); it != std::end(v); ++it) {
     *it = floor(*it * mult) / mult;
   }
 
-  return std::move(orig);
+  return std::move(v);
 }
 
 /**
@@ -754,12 +756,12 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
 }
 
 /*!
- *  \addtogroup DenseLinearAlgebra
+ *  \addtogroup Dense
  *  @{
  */
 
 //! Linear algebra for dense matrices
-namespace DenseLinearAlgebra
+namespace Dense
 {
 
 template<typename T>
@@ -1012,11 +1014,10 @@ public:
   }
 
   /**
-   * @brief Compute the solution of the system $(L \cot U) \cdot x = P^{-1}
-   * \cdot b$
+   * @brief Compute the solution of \f$(L\cdot U)\cdot x=P^{-1}\cdot b\f$
    *
-   * @param is the known term of the linear system.
-   * @return the vector $x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b$.
+   * @param b is the known term of the linear system.
+   * @return the vector \f$x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b\f$.
    */
   Vector<T> solve(const Vector<T> &b) const
   {
@@ -1246,7 +1247,7 @@ Matrix<T> inverse(Matrix<T> &A)
  * @return the maximum norm of the given dense matrix
  */
 template<typename T>
-T norm_infinity(const DenseLinearAlgebra::Matrix<T> &A)
+T norm_infinity(const Dense::Matrix<T> &A)
 {
   T norm = 0;
 
@@ -1266,7 +1267,7 @@ T norm_infinity(const DenseLinearAlgebra::Matrix<T> &A)
  * @return the matrix \f$A*\textrm{scalar}\f$
  */
 template<typename T>
-DenseLinearAlgebra::Matrix<T> operator*(DenseLinearAlgebra::Matrix<T> &&A, const T scalar)
+Dense::Matrix<T> operator*(Dense::Matrix<T> &&A, const T scalar)
 {
   for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
     for (auto elem_it = std::begin(*row_it); elem_it != std::end(*row_it); ++elem_it) {
@@ -1286,9 +1287,9 @@ DenseLinearAlgebra::Matrix<T> operator*(DenseLinearAlgebra::Matrix<T> &&A, const
  * @return the matrix \f$A*\textrm{scalar}\f$
  */
 template<typename T>
-DenseLinearAlgebra::Matrix<T> operator*(const DenseLinearAlgebra::Matrix<T>& A, const T scalar)
+Dense::Matrix<T> operator*(const Dense::Matrix<T>& A, const T scalar)
 {
-  return operator*(DenseLinearAlgebra::Matrix<T>(A), scalar); 
+  return operator*(Dense::Matrix<T>(A), scalar); 
 }
 
 /**
@@ -1300,7 +1301,7 @@ DenseLinearAlgebra::Matrix<T> operator*(const DenseLinearAlgebra::Matrix<T>& A, 
  * @return the matrix \f$\textrm{scalar}*A\f$
  */
 template<typename T>
-DenseLinearAlgebra::Matrix<T> operator*(const T scalar, const DenseLinearAlgebra::Matrix<T>& A)
+Dense::Matrix<T> operator*(const T scalar, const Dense::Matrix<T>& A)
 {
   return A*scalar;
 }
@@ -1314,7 +1315,7 @@ DenseLinearAlgebra::Matrix<T> operator*(const T scalar, const DenseLinearAlgebra
  * @return the matrix \f$\textrm{scalar}*A\f$
  */
 template<typename T>
-DenseLinearAlgebra::Matrix<T> operator*(const T scalar, DenseLinearAlgebra::Matrix<T>&& A)
+Dense::Matrix<T> operator*(const T scalar, Dense::Matrix<T>&& A)
 {
   return operator*(std::move(A),scalar);
 }
@@ -1328,7 +1329,7 @@ DenseLinearAlgebra::Matrix<T> operator*(const T scalar, DenseLinearAlgebra::Matr
  * @return the matrix \f$A/\textrm{scalar}\f$
  */
 template<typename T>
-DenseLinearAlgebra::Matrix<T> operator/(DenseLinearAlgebra::Matrix<T> &&A, const T scalar)
+Dense::Matrix<T> operator/(Dense::Matrix<T> &&A, const T scalar)
 {
   if (scalar==0) {
     throw std::domain_error("Division by 0");
@@ -1352,18 +1353,18 @@ DenseLinearAlgebra::Matrix<T> operator/(DenseLinearAlgebra::Matrix<T> &&A, const
  * @return the matrix \f$A/\textrm{scalar}\f$
  */
 template<typename T>
-DenseLinearAlgebra::Matrix<T> operator/(const DenseLinearAlgebra::Matrix<T>& A, const T scalar)
+Dense::Matrix<T> operator/(const Dense::Matrix<T>& A, const T scalar)
 {
-  return operator/(DenseLinearAlgebra::Matrix<T>(A), scalar); ; 
+  return operator/(Dense::Matrix<T>(A), scalar); ; 
 }
 
 /*!
- *  \addtogroup SparseLinearAlgebra
+ *  \addtogroup Sparse
  *  @{
  */
 
 //! Linear algebra for sparse matrices
-namespace SparseLinearAlgebra
+namespace Sparse
 {
 
 /**
@@ -2378,11 +2379,10 @@ public:
   }
 
   /**
-   * @brief Compute the solution of the system $(L \cot U) \cdot x = P^{-1}
-   * \cdot b$
+   * @brief Compute the solution of \f$(L\cdot U)\cdot x=P^{-1}\cdot b\f$
    *
    * @param b is the known term of the linear system.
-   * @return the vector $x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b$.
+   * @return the vector \f$x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b\f$.
    */
   std::vector<T> solve(const std::vector<T> &b) const
   {
@@ -2584,8 +2584,8 @@ Matrix<T> inverse(Matrix<T> &A)
  * @return the sparse matrix \f$A+B\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator+(const SparseLinearAlgebra::Matrix<T>& A, 
-                                         const SparseLinearAlgebra::Matrix<T>&& B)
+Sparse::Matrix<T> operator+(const Sparse::Matrix<T>& A, 
+                            const Sparse::Matrix<T>&& B)
 {
   return std::move(B)+A;
 }
@@ -2599,10 +2599,10 @@ SparseLinearAlgebra::Matrix<T> operator+(const SparseLinearAlgebra::Matrix<T>& A
  * @return the sparse matrix \f$A+B\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator+(const SparseLinearAlgebra::Matrix<T>& A, 
-                                         const SparseLinearAlgebra::Matrix<T>& B)
+Sparse::Matrix<T> operator+(const Sparse::Matrix<T>& A, 
+                                         const Sparse::Matrix<T>& B)
 {
-  SparseLinearAlgebra::Matrix<T> C(B);
+  Sparse::Matrix<T> C(B);
 
   return std::move(C)+A;
 }
@@ -2616,10 +2616,10 @@ SparseLinearAlgebra::Matrix<T> operator+(const SparseLinearAlgebra::Matrix<T>& A
  * @return the sparse matrix \f$A-B\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator-(const SparseLinearAlgebra::Matrix<T>& A, 
-                                         const SparseLinearAlgebra::Matrix<T>& B)
+Sparse::Matrix<T> operator-(const Sparse::Matrix<T>& A, 
+                                         const Sparse::Matrix<T>& B)
 {
-  SparseLinearAlgebra::Matrix<T> C(A);
+  Sparse::Matrix<T> C(A);
 
   return std::move(C)-B;
 }
@@ -2633,9 +2633,9 @@ SparseLinearAlgebra::Matrix<T> operator-(const SparseLinearAlgebra::Matrix<T>& A
  * @return the matrix \f$A*\textrm{scalar}\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator*(const SparseLinearAlgebra::Matrix<T>& A, const T scalar)
+Sparse::Matrix<T> operator*(const Sparse::Matrix<T>& A, const T scalar)
 {
-  return operator*(SparseLinearAlgebra::Matrix<T>(A), scalar); 
+  return operator*(Sparse::Matrix<T>(A), scalar); 
 }
 
 /**
@@ -2647,7 +2647,7 @@ SparseLinearAlgebra::Matrix<T> operator*(const SparseLinearAlgebra::Matrix<T>& A
  * @return the matrix \f$\textrm{scalar}*A\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator*(const T scalar, const SparseLinearAlgebra::Matrix<T>& A)
+Sparse::Matrix<T> operator*(const T scalar, const Sparse::Matrix<T>& A)
 {
   return A*scalar;
 }
@@ -2661,7 +2661,7 @@ SparseLinearAlgebra::Matrix<T> operator*(const T scalar, const SparseLinearAlgeb
  * @return the matrix \f$\textrm{scalar}*A\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator*(const T scalar, SparseLinearAlgebra::Matrix<T>&& A)
+Sparse::Matrix<T> operator*(const T scalar, Sparse::Matrix<T>&& A)
 {
   return std::move(operator*(std::move(A),scalar));
 }
@@ -2675,10 +2675,10 @@ SparseLinearAlgebra::Matrix<T> operator*(const T scalar, SparseLinearAlgebra::Ma
  * @return the matrix \f$A/\textrm{scalar}\f$
  */
 template<typename T>
-SparseLinearAlgebra::Matrix<T> operator/(const SparseLinearAlgebra::Matrix<T>& A, const T scalar)
+Sparse::Matrix<T> operator/(const Sparse::Matrix<T>& A, const T scalar)
 {
-  return operator/(SparseLinearAlgebra::Matrix<T>(A), scalar); ; 
+  return operator/(Sparse::Matrix<T>(A), scalar); 
 }
-
+}
 
 #endif // LINEAR_ALGEBRA_H

@@ -23,8 +23,10 @@ Parallelotope::Parallelotope(const Matrix &directions,
                              const Vector &lower_bound,
                              const Vector &upper_bound)
 {
-  const SparseLinearAlgebra::Matrix<double> dmatrix(directions);
-  SparseLinearAlgebra::LUP_Factorization<double> factorization(dmatrix);
+  using namespace LinearAlgebra;
+
+  const Sparse::Matrix<double> dmatrix(directions);
+  Sparse::LUP_Factorization<double> factorization(dmatrix);
 
   try {
     // store the base vertex
@@ -76,6 +78,7 @@ std::vector<double>
 hyperplane_through_points(const std::list<std::vector<double>> &pts)
 {
   using namespace std;
+  using namespace LinearAlgebra;
 
   if (pts.size() == 0 || pts.size() != pts.front().size()) {
     std::domain_error("hyperplane_through_points: pts must contain "
@@ -83,29 +86,29 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
   }
 
   // build the matrix A=[pts[1]-pts[0],...,pts[n-2]-pts[0]]^T
-  SparseLinearAlgebra::Matrix<double> A;
+  Sparse::Matrix<double> A;
   for (auto pts_it = ++std::begin(pts); pts_it != std::end(pts); ++pts_it) {
     A.add_row(pts.front() - *pts_it);
   }
 
   // factorize the A
-  SparseLinearAlgebra::LUP_Factorization<double> fact(A);
+  Sparse::LUP_Factorization<double> fact(A);
 
   // A is underdetermined because it is a (n-1)x n matrix
   // find the underdetermined dimension udim
   unsigned int udim = 0;
-  const SparseLinearAlgebra::Matrix<double> &U = fact.U();
+  const Sparse::Matrix<double> &U = fact.U();
   while (udim < U.num_of_rows() && U[udim][udim] != 0) {
     ++udim;
   }
 
   // add to A the versor on udim
-  SparseLinearAlgebra::Matrix<double>::RowType row;
+  Sparse::Matrix<double>::RowType row;
   row[udim] = 1;
   A.add_row(row);
 
   // factorize the new matrix
-  fact = SparseLinearAlgebra::LUP_Factorization<double>(A);
+  fact = LinearAlgebra::Sparse::LUP_Factorization<double>(A);
 
   std::vector<double> lambda;
   try {
@@ -134,6 +137,7 @@ hyperplane_through_points(const std::list<std::vector<double>> &pts)
 Parallelotope::operator Polytope() const
 {
   using namespace std;
+  using namespace LinearAlgebra;
 
   const unsigned int dim = this->dim();
 
