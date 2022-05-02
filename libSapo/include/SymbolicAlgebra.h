@@ -3275,7 +3275,7 @@ Expression<C> simplify(const Expression<C>& exp)
     return exp;
   }
 
-  int p = 1;
+  int p = 0;
   Expression<C> simpl_ex(0), power(1);
 
   Symbol<C> x = *std::begin(symbols);
@@ -3296,11 +3296,23 @@ Expression<C> simplify(const Expression<C>& exp)
 }
 
 template<typename C>
-bool equivalent(const Expression<C>& exp_a, const Expression<C>& exp_b)
+bool are_equivalent(const Expression<C>& lhs, const Expression<C>& rhs)
 {
-  Expression<C> diff = simplify(exp_a - exp_b);
+  Expression<C> diff = simplify(lhs - rhs);
 
   return !(diff.has_symbols() || diff.evaluate()!=0);
+}
+
+template<typename C>
+inline bool are_equivalent(const Expression<C>& lhs, const C& rhs)
+{
+  return are_equivalent(lhs, Expression<C>(rhs));
+}
+
+template<typename C>
+inline bool are_equivalent(const C& lhs, const Expression<C>& rhs)
+{
+  return are_equivalent(rhs, lhs);
 }
 
 /**
@@ -3309,13 +3321,13 @@ bool equivalent(const Expression<C>& exp_a, const Expression<C>& exp_b)
  * @tparam C is the numeric type of constants.
  * @param lhs is an expression.
  * @param rhs is a constant value.
- * @return true if and only if the first parameter is equivalent to the
- *         second one.
+ * @return true if and only if the expression is equivalent to the 
+ *        constant value
  */
 template<typename C>
 inline bool operator==(const Expression<C> &lhs, const C rhs)
 {
-  return (!(lhs._ex->has_symbols()) && lhs._ex->evaluate() == rhs);
+  return are_equivalent(lhs, rhs);
 }
 
 /**

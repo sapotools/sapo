@@ -93,7 +93,7 @@ bool operator==(const std::set<Symbol<T>>& set_a,
 }
 
 template<typename T>
-bool equivalent(const std::map<int, Expression<T>>& map_a,
+bool are_equivalent(const std::map<int, Expression<T>>& map_a,
                 const std::map<int, Expression<T>>& map_b)
 {
     if (map_a.size() != map_b.size()) {
@@ -105,7 +105,7 @@ bool equivalent(const std::map<int, Expression<T>>& map_a,
 
     for (; a_it != std::end(map_a); ++a_it, ++b_it) {
         if (!((*a_it).first == (*b_it).first && 
-                equivalent((*a_it).second,(*b_it).second))) {
+                are_equivalent((*a_it).second,(*b_it).second))) {
             return false;
         }
     }
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_expr_coeffs, T, test_types)
     for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
         for (auto s_it = std::begin(t_it->second); s_it != std::end(t_it->second); ++s_it) {
             auto coeffs = t_it->first.get_coeffs((*s_it).first);
-            bool beval = equivalent(coeffs,(*s_it).second);
+            bool beval = are_equivalent(coeffs,(*s_it).second);
             std::ostringstream ss;
             ss << "("<< t_it->first << ").get_coeffs("<< (*s_it).first << ") = " << coeffs 
                << " != " << (*s_it).second;
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_equivalence, T, test_types)
     };
 
     for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
-        bool beval = equivalent(t_it->first.second,t_it->first.first)==t_it->second;
+        bool beval = are_equivalent(t_it->first.second,t_it->first.first)==t_it->second;
         std::ostringstream ss;
         ss << t_it->first.first << (t_it->second ? " != ": " == ") << t_it->first.second;
         BOOST_REQUIRE_MESSAGE(beval, ss.str());
