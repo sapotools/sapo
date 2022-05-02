@@ -82,26 +82,41 @@ std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-template<typename T>
-std::ostream &operator<<(std::ostream &os,
-                         const LinearAlgebra::Sparse::LUP_Factorization<T> &D)
+std::ostream &operator<<(std::ostream &os, const LinearAlgebra::Permutation &P)
 {
-  using namespace std;
-  os << "{P=" << D.P() << "," << std::endl
-     << " L=" << D.L() << "," << std::endl
-     << " U=" << D.U() << "}";
+  os << "Permutation[";
+  for (auto it = P.begin(); it != P.end(); ++it) {
+    if (it != P.begin()) {
+      os << ",";
+    }
+    os << it->second << "->" << it->first;
+  }
+  os << "]";
 
   return os;
 }
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os,
-                         const LinearAlgebra::Dense::LUP_Factorization<T> &D)
+                         const LinearAlgebra::Sparse::LUP_Factorization<T> &F)
 {
   using namespace std;
-  os << "{P=" << D._P << "," << std::endl << " LU=" << D._LU << "}";
+  os << "{P=" << F.P() << "," << std::endl
+     << " L=" << F.L() << "," << std::endl
+     << " U=" << F.U() << "}";
 
   return os;
 }
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os,
+                         const LinearAlgebra::Dense::LUP_Factorization<T> &F)
+{
+  using namespace std;
+  os << "{P=" << F._P << "," << std::endl << " LU=" << F._LU << "}";
+
+  return os;
+}
+
 }
 #endif // LINEAR_ALGEBRA_H

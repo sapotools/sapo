@@ -25,12 +25,12 @@ template<typename T>
 using Vector = std::vector<T>;
 
 /**
- * @brief Approximate all the values in a vector up to given decimal digit.
+ * @brief Approximate all the values in a vector up to given decimal digit
  *
  * @tparam T is a numerical type
  * @param v is a the vector
- * @param decimal is the number of decimal number in the result.
- * @return the given vector approximated up to `decimal` decimal digits.
+ * @param decimal is the number of decimal number in the result
+ * @return the given vector approximated up to `decimal` decimal digits
  */
 template<typename T>
 inline Vector<T> approx(const Vector<T> &v,
@@ -38,27 +38,27 @@ inline Vector<T> approx(const Vector<T> &v,
                         = std::numeric_limits<T>::digits10);
 
 /**
- * @brief Approximate all the values in a vector up to given decimal digit.
+ * @brief Approximate all the values in a vector up to given decimal digit
  *
  * This function can be mainly used to speed up the computation.
  *
  * @tparam T is a numerical type
  * @param v is a the vector
- * @param decimal is the number of decimal number in the result.
- * @return the given vector approximated up to `decimal` decimal digits.
+ * @param decimal is the number of decimal number in the result
+ * @return the given vector approximated up to `decimal` decimal digits
  */
 template<typename T>
 inline Vector<T> approx(Vector<T> &&v, const unsigned short decimal
                                         = std::numeric_limits<T>::digits10);
 
 /**
- * @brief Approximate all the values in a vector up to given decimal digit.
+ * @brief Approximate all the values in a vector up to given decimal digit
  *
  * This function can be mainly used to speed up the computation.
  *
  * @param v is a the vector
- * @param decimal is the number of decimal number in the result.
- * @return the given vector approximated up to `decimal` decimal digits.
+ * @param decimal is the number of decimal number in the result
+ * @return the given vector approximated up to `decimal` decimal digits
  */
 template<>
 inline Vector<double> approx<double>(Vector<double> &&v,
@@ -77,13 +77,13 @@ inline Vector<double> approx<double>(Vector<double> &&v,
 }
 
 /**
- * @brief Approximate all the values in a vector up to given decimal digit.
+ * @brief Approximate all the values in a vector up to given decimal digit
  *
  * This function can be mainly used to speed up the computation.
  *
  * @param v is a the vector
- * @param decimal is the number of decimal number in the result.
- * @return the given vector approximated up to `decimal` decimal digits.
+ * @param decimal is the number of decimal number in the result
+ * @return the given vector approximated up to `decimal` decimal digits
  */
 template<>
 inline Vector<double> approx<double>(const Vector<double> &orig,
@@ -95,7 +95,7 @@ inline Vector<double> approx<double>(const Vector<double> &orig,
 /**
  * @brief Compute the Euclidean norm of a vector
  *
- * @tparam T is a numeric type supporting the `sqrt` function.
+ * @tparam T is a numeric type supporting the `sqrt` function
  * @param v is a vector
  * @return the Euclidean norm of the given vector
  */
@@ -114,7 +114,7 @@ T norm_2(const Vector<T> &v)
 /**
  * @brief Compute the Manhattan norm of a vector
  *
- * @tparam T is a numeric type supporting the `abs` function.
+ * @tparam T is a numeric type supporting the `abs` function
  * @param v is a vector
  * @return the Manhattan norm of the given vector
  */
@@ -133,7 +133,7 @@ T norm_1(const Vector<T> &v)
 /**
  * @brief Compute the maximum norm of a vector
  *
- * @tparam T is a numeric type supporting the `abs` function.
+ * @tparam T is a numeric type supporting the `abs` function
  * @param v is a vector
  * @return the maximum norm of the given vector
  */
@@ -154,7 +154,7 @@ T norm_infinity(const Vector<T> &v)
 /**
  * Compute the complementary of a vector of values.
  *
- * @param[in] orig the vector of values to be complementated.
+ * @param[in] orig the vector of values to be complementated
  * @return A vector containing the complementaries of the parameter values
  */
 template<typename T>
@@ -210,7 +210,7 @@ bool operator!=(const Vector<T> &a, const Vector<T> &b)
 /**
  * Compute the complementary of a vector of values.
  *
- * @param[in] orig the vector of values to be complementated.
+ * @param[in] orig the vector of values to be complementated
  * @return A vector containing the complementaries of the parameter values
  */
 template<typename T>
@@ -222,12 +222,12 @@ Vector<T> operator-(Vector<T> &&v)
 }
 
 /**
- * @brief Compute the element-wise sum of two vectors.
+ * @brief Compute the element-wise sum of two vectors
  *
  * @tparam T any numeric type
- * @param a is the first vector to be added.
- * @param b is the second vector to be added.
- * @return the element-wise sum of the two parameters.
+ * @param a is the first vector to be added
+ * @param b is the second vector to be added
+ * @return the element-wise sum of the two parameters
  */
 template<typename T>
 Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
@@ -246,12 +246,12 @@ Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
 }
 
 /**
- * @brief Compute the element-wise sum of two vectors.
+ * @brief Compute the element-wise sum of two vectors
  *
  * @tparam T any numeric type
- * @param a is the first vector to be added.
- * @param b is the second vector to be added.
- * @return the element-wise sum of the two parameters.
+ * @param a is the first vector to be added
+ * @param b is the second vector to be added
+ * @return the element-wise sum of the two parameters
  */
 template<typename T>
 Vector<T> operator+(Vector<T> &&a, const Vector<T> &b)
@@ -268,12 +268,12 @@ Vector<T> operator+(Vector<T> &&a, const Vector<T> &b)
 }
 
 /**
- * @brief Compute the element-wise sum of two vectors.
+ * @brief Compute the element-wise sum of two vectors
  *
  * @tparam T any numeric type
- * @param a is the first vector to be added.
- * @param b is the second vector to be added.
- * @return the element-wise sum of the two parameters.
+ * @param a is the first vector to be added
+ * @param b is the second vector to be added
+ * @return the element-wise sum of the two parameters
  */
 template<typename T>
 inline Vector<T> operator+(const Vector<T> &a, Vector<T> &&b)
@@ -282,13 +282,13 @@ inline Vector<T> operator+(const Vector<T> &a, Vector<T> &&b)
 }
 
 /**
- * @brief Compute the element-wise difference of two vectors.
+ * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T any numeric type
- * @param a is the vector from which the second parameter must be subtracted.
- * @param b is the vector that must be subtracted.
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
- * one.
+ *         one
  */
 template<typename T>
 Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
@@ -307,13 +307,13 @@ Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
 }
 
 /**
- * @brief Compute the element-wise difference of two vectors.
+ * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T any numeric type
- * @param a is the vector from which the second parameter must be subtracted.
- * @param b is the vector that must be subtracted.
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
- * one.
+ *         one
  */
 template<typename T>
 Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
@@ -330,13 +330,13 @@ Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
 }
 
 /**
- * @brief Compute the element-wise difference of two vectors.
+ * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T any numeric type
- * @param a is the vector from which the second parameter must be subtracted.
- * @param b is the vector that must be subtracted.
- * @return the element-wise difference of the second parameter from the first
- * one.
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
+ * @return the element-wise difference of the second parameter from the 
+ *         first one
  */
 template<typename T>
 Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
@@ -354,12 +354,12 @@ Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
 }
 
 /**
- * @brief Compute the element-wise scalar product.
+ * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type.
- * @param s is a scalar value.
- * @param v is a vector.
- * @return the element-wise scalar product $s * v$.
+ * @tparam T any numeric type
+ * @param s is a scalar value
+ * @param v is a vector
+ * @return the element-wise scalar product \f$s * \f$
  */
 template<typename T>
 Vector<T> operator*(const T s, const Vector<T> &v)
@@ -374,12 +374,12 @@ Vector<T> operator*(const T s, const Vector<T> &v)
 }
 
 /**
- * @brief Compute the element-wise scalar product.
+ * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type.
- * @param v is a vector.
- * @param s is a scalar value.
- * @return the element-wise scalar product $v * s$.
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar product \f$v * \f$
  */
 template<typename T>
 Vector<T> operator*(const Vector<T> &v, const T s)
@@ -388,12 +388,12 @@ Vector<T> operator*(const Vector<T> &v, const T s)
 }
 
 /**
- * @brief Compute the vector product.
+ * @brief Compute the vector product
  *
- * @tparam T any numeric type.
- * @param v1 is a vector.
- * @param v2 is a vector.
- * @return the vector product $v1 \cdot v2$.
+ * @tparam T any numeric type
+ * @param v1 is a vector
+ * @param v2 is a vector
+ * @return the vector product \f$v1 \cdot v\f$
  */
 template<typename T>
 T operator*(const Vector<T> &v1, const Vector<T> &v2)
@@ -414,18 +414,18 @@ T operator*(const Vector<T> &v1, const Vector<T> &v2)
 }
 
 /**
- * @brief Compute the Hadamard product of two vectors.
+ * @brief Compute the Hadamard product of two vectors
  *
  * This method computes the Hadamard product of two vectors
- * $v_1 \circ v_2$, i.e., it returns a vector whose elements
+ * \f$v_1 \circ v_\f$, i.e., it returns a vector whose elements
  * are obtained by element-wise multiplying of the
  * parameters.
- * $$(v_1 \circ v_2)[i] = v_1[i]*v_2[i]$$
+ * \f\f$(v_1 \circ v_2)[i] = v_1[i]*v_2[i\f$$
  *
- * @tparam T any numeric type.
- * @param v1 is a vector.
- * @param v2 is a vector.
- * @return the vector product $v1 \circ v2$.
+ * @tparam T any numeric type
+ * @param v1 is a vector
+ * @param v2 is a vector
+ * @return the vector product \f$v1 \circ v\f$
  */
 template<typename T>
 Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
@@ -443,12 +443,12 @@ Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
 }
 
 /**
- * @brief Compute the element-wise scalar product.
+ * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type.
- * @param s is a scalar value.
- * @param v is a vector.
- * @return the element-wise scalar product $s * v$.
+ * @tparam T any numeric type
+ * @param s is a scalar value
+ * @param v is a vector
+ * @return the element-wise scalar product \f$s * \f$
  */
 template<typename T>
 Vector<T> operator*(const T s, Vector<T> &&v)
@@ -461,12 +461,12 @@ Vector<T> operator*(const T s, Vector<T> &&v)
 }
 
 /**
- * @brief Compute the element-wise scalar product.
+ * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type.
- * @param v is a vector.
- * @param s is a scalar value.
- * @return the element-wise scalar product $v * s$.
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar product \f$v * \f$
  */
 template<typename T>
 inline Vector<T> operator*(Vector<T> &&v, const T s)
@@ -475,12 +475,12 @@ inline Vector<T> operator*(Vector<T> &&v, const T s)
 }
 
 /**
- * @brief Compute the element-wise scalar division.
+ * @brief Compute the element-wise scalar division
  *
- * @tparam T any numeric type.
- * @param v is a vector.
- * @param s is a scalar value.
- * @return the element-wise scalar division $v/a$.
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar division \f$v/\f$
  */
 template<typename T>
 Vector<T> operator/(const Vector<T> &v, const T s)
@@ -499,12 +499,12 @@ Vector<T> operator/(const Vector<T> &v, const T s)
 }
 
 /**
- * @brief Compute the element-wise scalar division.
+ * @brief Compute the element-wise scalar division
  *
- * @tparam T any numeric type.
- * @param v is a vector.
- * @param s is a scalar value.
- * @return the element-wise scalar division $v/a$.
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar division \f$v/\f$
  */
 template<typename T>
 Vector<T> operator/(Vector<T> &&v, const T s)
@@ -535,7 +535,7 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
 }
 
 /**
- * @brief A class to represent pemutations.
+ * @brief A class to represent pemutations
  *
  * Permutation are square matrices whose row and column
  * sums are one. However, storing a permutation for
@@ -565,13 +565,13 @@ public:
     std::map<unsigned int, unsigned int>(orig) {}
 
   /**
-   * @brief Swaps two positions.
+   * @brief Swaps two positions
    *
    * This method swaps two positions in the permutation.
    *
-   * @param i first position to be swapped.
-   * @param j second position to be swapped.
-   * @return The updated permutation.
+   * @param i first position to be swapped
+   * @param j second position to be swapped
+   * @return The updated permutation
    */
   Permutation &swap(const unsigned int i, const unsigned int j)
   {
@@ -639,19 +639,7 @@ public:
    * @param P is the permutation to be printed
    * @return a output stream reference
    */
-  friend std::ostream &operator<<(std::ostream &os, const Permutation &P)
-  {
-    os << "Permutation[";
-    for (auto it = P.begin(); it != P.end(); ++it) {
-      if (it != P.begin()) {
-        os << ",";
-      }
-      os << it->second << "->" << it->first;
-    }
-    os << "]";
-
-    return os;
-  }
+  friend std::ostream &operator<<(std::ostream &os, const Permutation &P);
 };
 
 /**
@@ -708,12 +696,12 @@ bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
 }
 
 /**
- * @brief Compute the ratio between two linearly dependent vectors.
+ * @brief Compute the ratio between two linearly dependent vectors
  *
  * @tparam T is the type of the scalar values
  * @param v1 is the first vector
  * @param v2 is the second vector
- * @return The ratio between two linearly dependent vectors.
+ * @return The ratio between two linearly dependent vectors
  */
 template<typename T>
 T operator/(const Vector<T> &v1, const Vector<T> &v2)
@@ -764,6 +752,11 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
 namespace Dense
 {
 
+/**
+ * @brief An alias for dense matrices
+ * 
+ * @tparam T is the scalar value type
+ */
 template<typename T>
 using Matrix = std::vector<Vector<T>>;
 
@@ -796,7 +789,7 @@ Matrix<T> transpose(const Matrix<T>& A)
  * @tparam T is a numeric type
  * @param A is a dense matrix
  * @param v is a vector
- * @return the row-column matrix-vector multiplication $A \cdot v$.
+ * @return the row-column matrix-vector multiplication \f$A \cdot \f$
  */
 template<typename T>
 Vector<T> operator*(const Matrix<T> &A, const Vector<T> &v)
@@ -830,7 +823,7 @@ Vector<T> operator*(const Matrix<T> &A, const Vector<T> &v)
  * @tparam T is a numeric type
  * @param A is a dense matrix
  * @param B is a dense matrix
- * @return the row-column matrix-matrix multiplication $A \cdot B$.
+ * @return the row-column matrix-matrix multiplication \f$A \cdot \f$
  */
 template<typename T>
 Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
@@ -861,7 +854,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
 }
 
 /**
- * @brief A LUP factorization for dense matrices.
+ * @brief A LUP factorization for dense matrices
  *
  * This class represents a Permutation, Lower-triangular,
  * Upper-triangular factorization for dense matrices. It
@@ -870,7 +863,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
  * represented by a matrix, but instead by using a
  * vector of indexes swaps.
  *
- * @tparam T any numeric type.
+ * @tparam T any numeric type
  */
 template<typename T>
 class LUP_Factorization
@@ -879,10 +872,10 @@ class LUP_Factorization
   Matrix<T> _LU;  //!< the L and U matrices
 
   /**
-   * @brief Solve the linear system $L\cdot x = b$.
+   * @brief Solve the linear system \f$L\cdot x = \f$
    *
-   * @param[in] b is the known term of the linear system.
-   * @return the vector $x = L^{-1} \cdot b$.
+   * @param[in] b is the known term of the linear system
+   * @return the vector \f$x = L^{-1} \cdot \f$
    */
   Vector<T> solveL(const Vector<T> &b) const
   {
@@ -903,10 +896,10 @@ class LUP_Factorization
   }
 
   /**
-   * @brief Solve the linear system $U\cdot x = b$.
+   * @brief Solve the linear system \f$U\cdot x = \f$
    *
-   * @param[in] b is the known term of the linear system.
-   * @return the vector $x = U^{-1} \cdot b$.
+   * @param[in] b is the known term of the linear system
+   * @return the vector \f$x = U^{-1} \cdot \f$
    */
   Vector<T> solveU(const Vector<T> &b) const
   {
@@ -940,7 +933,7 @@ public:
   /**
    * @brief Create a new LUP_Factorization object
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   LUP_Factorization(const LUP_Factorization &orig): _P(orig._P), _LU(orig._LU)
   {
@@ -952,7 +945,7 @@ public:
    * This constructor performs the LUP factorization of
    * a dense matrix.
    *
-   * @param M is the matrix whose LUP factorization must be computed.
+   * @param M is the matrix whose LUP factorization must be computed
    */
   LUP_Factorization(const Matrix<T> &M): _P(), _LU(M)
   {
@@ -1016,8 +1009,8 @@ public:
   /**
    * @brief Compute the solution of \f$(L\cdot U)\cdot x=P^{-1}\cdot b\f$
    *
-   * @param b is the known term of the linear system.
-   * @return the vector \f$x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b\f$.
+   * @param b is the known term of the linear system
+   * @return the vector \f$x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b\f$
    */
   Vector<T> solve(const Vector<T> &b) const
   {
@@ -1040,10 +1033,10 @@ public:
   }
 
   /**
-   * @brief Copy a LUP_Factorization object.
+   * @brief Copy a LUP_Factorization object
    *
-   * @param orig is the model that must be copied.
-   * @return a reference to the updated object.
+   * @param orig is the model that must be copied
+   * @return a reference to the updated object
    */
   LUP_Factorization<T> &operator=(const LUP_Factorization<T> &orig)
   {
@@ -1054,10 +1047,10 @@ public:
   }
 
   /**
-   * @brief Copy a LUP_Factorization object.
+   * @brief Copy a LUP_Factorization object
    *
-   * @param orig is the model that must be copied.
-   * @return a reference to the updated object.
+   * @param orig is the model that must be copied
+   * @return a reference to the updated object
    */
   LUP_Factorization<T> &operator=(LUP_Factorization<T> &&orig)
   {
@@ -1080,7 +1073,7 @@ public:
   /**
    * @brief Return the factorization lower-triangular matrix
    *
-   * @return the factorization lower-triangular matrix.
+   * @return the factorization lower-triangular matrix
    */
   Matrix<T> L() const
   {
@@ -1102,7 +1095,7 @@ public:
   /**
    * @brief Return the factorization upper-triangular matrix
    *
-   * @return the factorization upper-triangular matrix.
+   * @return the factorization upper-triangular matrix
    */
   Matrix<T> U() const
   {
@@ -1119,17 +1112,32 @@ public:
     return res;
   }
 
+  /**
+   * @brief Print a LUP factorization in a stream
+   * 
+   * @tparam E is the scalar value type
+   * @param os is the output stream
+   * @param F is the factorization to be printed
+   * @return a reference to the output stream
+   */
   template<typename E>
   friend std::ostream &std::operator<<(std::ostream &os,
-                                       const LUP_Factorization<E> &D);
+                                       const LUP_Factorization<E> &F);
+  /**
+   * @brief Compute the rank of a dense matrix
+   *
+   * @tparam E is the scalar value type
+   * @param A is the matrix whose rank must be computed
+   * @return The rank of the matrix `A`
+   */
   template<typename E>
   friend unsigned int rank(const Matrix<E> &A);
 };
 
 /**
- * @brief Compute the rank of a dense matrix.
+ * @brief Compute the rank of a dense matrix
  *
- * @tparam T is the type of the matrix elements
+ * @tparam T is the scalar value type
  * @param A is the matrix whose rank must be computed
  * @return The rank of the matrix `A`
  */
@@ -1242,7 +1250,7 @@ Matrix<T> inverse(Matrix<T> &A)
 /**
  * @brief Compute the maximum norm of a dense matrix
  *
- * @tparam T is a numeric type supporting the `abs` function.
+ * @tparam T is a numeric type supporting the `abs` function
  * @param v is a vector
  * @return the maximum norm of the given dense matrix
  */
@@ -1368,15 +1376,19 @@ namespace Sparse
 {
 
 /**
- * @brief A class to represent sparse matrices.
+ * @brief A class to represent sparse matrices
  *
- * @tparam T any numeric type.
+ * The matrix is internally represented as a map 
+ * index-row type and each row is a index-element 
+ * type.
+ * 
+ * @tparam T any numeric type
  */
 template<typename T>
 class Matrix
 {
 public:
-  typedef std::map<unsigned int, T> RowType;
+  typedef std::map<unsigned int, T> RowType; //!< the index-row map
 
 protected:
   class _row_ref_type;
@@ -1413,8 +1425,8 @@ protected:
      * matrix element does not exists yet, it creates the referenced
      * element (and its row if necessary) and assigns it with `value`.
      *
-     * @param value is value that must be assign to the referenced element.
-     * @return a reference to the assigned matrix element.
+     * @param value is value that must be assign to the referenced element
+     * @return a reference to the assigned matrix element
      */
     T &operator=(const T &value)
     {
@@ -1440,8 +1452,8 @@ protected:
      * matrix element does not exists yet, it creates the referenced
      * element (and its row if necessary) and assigns it with `value`.
      *
-     * @param value is value that must be assign to the referenced element.
-     * @return a reference to the assigned matrix element.
+     * @param value is value that must be assign to the referenced element
+     * @return a reference to the assigned matrix element
      */
     T &operator+=(const T &value)
     {
@@ -1468,8 +1480,8 @@ protected:
      * matrix element does not exists yet, it creates the referenced
      * element (and its row if necessary) and assigns it with `value`.
      *
-     * @param value is value that must be assign to the referenced element.
-     * @return a reference to the assigned matrix element.
+     * @param value is value that must be assign to the referenced element
+     * @return a reference to the assigned matrix element
      */
     T &operator-=(const T &value)
     {
@@ -1490,7 +1502,7 @@ protected:
     /**
      * @brief The typecast operator for the type T
      *
-     * @return The value of the matrix element.
+     * @return The value of the matrix element
      */
     operator T() const
     {
@@ -1538,7 +1550,7 @@ protected:
     /**
      * @brief Copy constructor for row reference objects
      *
-     * @param orig is the model for the new object.
+     * @param orig is the model for the new object
      */
     _row_ref_type(const _row_ref_type &orig): A(orig.A), row_idx(orig.row_idx)
     {
@@ -1548,8 +1560,8 @@ protected:
      * @brief Return a reference of the element in the `col_idx`-th position of
      * the row
      *
-     * @param col_idx is the index of the aimed value.
-     * @return a reference of the element in position `col_idx`.
+     * @param col_idx is the index of the aimed value
+     * @return a reference of the element in position `col_idx`
      */
     _elem_ref_type operator[](const unsigned int col_idx)
     {
@@ -1586,7 +1598,7 @@ protected:
     /**
      * @brief Copy constructor for constant row reference objects
      *
-     * @param orig is the model for the new object.
+     * @param orig is the model for the new object
      */
     _const_row_ref_type(const _const_row_ref_type &orig):
         A(orig.A), row_idx(orig.row_idx)
@@ -1596,8 +1608,8 @@ protected:
     /**
      * @brief Return the value in the `col_idx`-th position of the row
      *
-     * @param col_idx is the index of the aimed value.
-     * @return a copy of the value in position `col_idx`.
+     * @param col_idx is the index of the aimed value
+     * @return a copy of the value in position `col_idx`
      */
     T operator[](const unsigned int col_idx) const
     {
@@ -1631,7 +1643,7 @@ protected:
    * @brief Transform a vector in a RowType
    *
    * @param row to original vector
-   * @return the RowType representing `row`.
+   * @return the RowType representing `row`
    */
   static RowType get_RowType(const std::vector<T> &row)
   {
@@ -1660,8 +1672,8 @@ public:
    * This method creates a new sparse matrix having a given number
    * of rows and columns whose elements equal zero.
    *
-   * @param num_of_rows is the number of rows in the new matrix.
-   * @param num_of_cols is the number of columns in the new matrix.
+   * @param num_of_rows is the number of rows in the new matrix
+   * @param num_of_cols is the number of columns in the new matrix
    */
   Matrix(const unsigned int num_of_rows, const unsigned int num_of_cols):
       _matrix(), _num_of_rows(num_of_rows), _num_of_cols(num_of_cols)
@@ -1671,8 +1683,8 @@ public:
   /**
    * @brief Create a new Matrix object
    *
-   * @param orig is the model for the new matrix.
-   * @param up_to_row is the number of rows to be considered in `orig`.
+   * @param orig is the model for the new matrix
+   * @param up_to_row is the number of rows to be considered in `orig`
    */
   Matrix(const std::vector<std::vector<T>> &orig,
          const unsigned int up_to_row):
@@ -1703,14 +1715,14 @@ public:
   /**
    * @brief Create a new Matrix object
    *
-   * @param orig is the model for the new matrix.
+   * @param orig is the model for the new matrix
    */
   Matrix(const std::vector<std::vector<T>> &orig): Matrix(orig, orig.size()) {}
 
   /**
    * @brief Clone Matrix object
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   Matrix(const Matrix<T> &orig):
       _matrix(orig._matrix), _num_of_rows(orig._num_of_rows),
@@ -1719,11 +1731,11 @@ public:
   }
 
   /**
-   * @brief Add a row to the matrix.
+   * @brief Add a row to the matrix
    *
-   * @param row_idx is the index of the new row.
-   * @param row is the new row.
-   * @return a reference to the updated object.
+   * @param row_idx is the index of the new row
+   * @param row is the new row
+   * @return a reference to the updated object
    */
   Matrix<T> &add_row(unsigned row_idx, const RowType &row)
   {
@@ -1749,11 +1761,11 @@ public:
   }
 
   /**
-   * @brief Add a row to the matrix.
+   * @brief Add a row to the matrix
    *
-   * @param row_idx is the index of the new row.
-   * @param row is the new row.
-   * @return a reference to the updated object.
+   * @param row_idx is the index of the new row
+   * @param row is the new row
+   * @return a reference to the updated object
    */
   inline Matrix<T> &add_row(unsigned row_idx, const std::vector<T> &row)
   {
@@ -1761,10 +1773,10 @@ public:
   }
 
   /**
-   * @brief Add a row as last row of the matrix.
+   * @brief Add a row as last row of the matrix
    *
-   * @param row is the new row.
-   * @return a reference to the updated object.
+   * @param row is the new row
+   * @return a reference to the updated object
    */
   inline Matrix<T> &add_row(const RowType &row)
   {
@@ -1772,10 +1784,10 @@ public:
   }
 
   /**
-   * @brief Add a row as last row of the matrix.
+   * @brief Add a row as last row of the matrix
    *
-   * @param row is the new row.
-   * @return a reference to the updated object.
+   * @param row is the new row
+   * @return a reference to the updated object
    */
   inline Matrix<T> &add_row(const std::vector<T> &row)
   {
@@ -1785,8 +1797,8 @@ public:
   /**
    * @brief Get a constant reference to one of the matrix rows
    *
-   * @param row_idx is the index of the aimed row.
-   * @return the constant reference of the `row_idx`-th row.
+   * @param row_idx is the index of the aimed row
+   * @return the constant reference of the `row_idx`-th row
    */
   typename Matrix<T>::_const_row_ref_type
   operator[](const unsigned int row_idx) const
@@ -1797,8 +1809,8 @@ public:
   /**
    * @brief Get a reference to one of the matrix rows
    *
-   * @param row_idx is the index of the aimed row.
-   * @return the reference of the `row_idx`-th row.
+   * @param row_idx is the index of the aimed row
+   * @return the reference of the `row_idx`-th row
    */
   typename Matrix<T>::_row_ref_type operator[](const unsigned int row_idx)
   {
@@ -1808,7 +1820,7 @@ public:
   /**
    * @brief Return the number of columns in the matrix
    *
-   * @return the number of columns in the matrix.
+   * @return the number of columns in the matrix
    */
   size_t num_of_cols() const
   {
@@ -1818,7 +1830,7 @@ public:
   /**
    * @brief Return the number of rows in the matrix
    *
-   * @return the number of rows in the matrix.
+   * @return the number of rows in the matrix
    */
   size_t num_of_rows() const
   {
@@ -1829,9 +1841,8 @@ public:
    * @brief Compare two matrices
    * 
    * @param A is a matrix
-   * @return true if and only if this object and the 
-   *     parameter have the same sizes and contains 
-   *     the same values
+   * @return true if and only if this object and the parameter 
+   *         have the same sizes and contains the same values
    */
   bool operator==(const Matrix<T>& A) const
   {
@@ -1859,8 +1870,8 @@ public:
   /**
    * @brief Matrix-vector product
    *
-   * @param v is the vector that must the multiplied to the matrix.
-   * @return the product between the current matrix and `v`.
+   * @param v is the vector that must the multiplied to the matrix
+   * @return the product between the current matrix and `v`
    */
   std::vector<T> operator*(const std::vector<T> &v) const
   {
@@ -1887,8 +1898,8 @@ public:
   /**
    * @brief Copy a matrix
    *
-   * @param orig is the matrix that must be copied.
-   * @return a reference to the updated object.
+   * @param orig is the matrix that must be copied
+   * @return a reference to the updated object
    */
   Matrix<T> &operator=(const Matrix<T> &orig)
   {
@@ -1902,8 +1913,8 @@ public:
   /**
    * @brief Copy a matrix
    *
-   * @param orig is the matrix that must be copied.
-   * @return a reference to the updated object.
+   * @param orig is the matrix that must be copied
+   * @return a reference to the updated object
    */
   Matrix<T> &operator=(Matrix<T> &&orig)
   {
@@ -1918,7 +1929,7 @@ public:
    * @brief Compute the row-column matrix-matrix multiplication
    *
    * @param A is a matrix
-   * @return The row-column multiplication between this object and `A`.
+   * @return The row-column multiplication between this object and `A`
    */
   Matrix<T> operator*(const Matrix<T> &A) const
   {
@@ -2064,9 +2075,24 @@ public:
   template<typename E>
   friend class LUP_Factorization;
 
+  /**
+   * @brief Get the transpose matrix
+   * 
+   * @tparam E is the scalar value type
+   * @param A is a sparse matrix
+   * @return the transpose matrix \f$A^T\f$
+   */
   template<typename E>
   friend Matrix<E> transpose(const Matrix<E>& A);
 
+  /**
+   * @brief Print a sparse matrix in a stream
+   * 
+   * @tparam E is the scalar value type
+   * @param os is the output stream
+   * @param M is the matrix to be printed
+   * @return a reference to the output stream
+   */
   template<typename E>
   friend std::ostream &std::operator<<(std::ostream &os, const Matrix<E> &M);
 };
@@ -2095,7 +2121,7 @@ Matrix<T> transpose(const Matrix<T>& A)
 }
 
 /**
- * @brief A LUP factorization for sparse matrices.
+ * @brief A LUP factorization for sparse matrices
  *
  * This class represents a Permutation, Lower-triangular,
  * Upper-triangular factorization for sparse matrices. It
@@ -2104,7 +2130,7 @@ Matrix<T> transpose(const Matrix<T>& A)
  * represented by a matrix, but instead by using a
  * vector of indexes swaps.
  *
- * @tparam T any numeric type.
+ * @tparam T any numeric type
  */
 template<typename T>
 class LUP_Factorization
@@ -2120,8 +2146,8 @@ class LUP_Factorization
    * of row indexes `j` greater than `i` and having non-zero
    * value in column `i`.
    *
-   * @param M is a sparse matrix.
-   * @return the vector of non-zero rows below the diagonal.
+   * @param M is a sparse matrix
+   * @return the vector of non-zero rows below the diagonal
    */
   static std::vector<std::set<unsigned int>>
   get_non_zero_below_diag(const Matrix<T> &M)
@@ -2143,7 +2169,7 @@ class LUP_Factorization
   }
 
   /**
-   * @brief Swap two matrix rows.
+   * @brief Swap two matrix rows
    *
    * This method swaps the `row_idx`-th row and the row
    * below the diagonal whose value in column `row_idx` is not
@@ -2152,7 +2178,7 @@ class LUP_Factorization
    * @param non_zero_below_diag is the vector such that
    *     `non_zero_below_diag[i]` is the set of row indexes `j`
    *     greater than `i` and having non-zero value in column `i`.
-   * @param row_idx is the index of the row that must be swaped down.
+   * @param row_idx is the index of the row that must be swaped down
    */
   void swap_with_the_leastest_non_zero_row_in_column(
       std::vector<std::set<unsigned int>> &non_zero_below_diag,
@@ -2201,10 +2227,10 @@ class LUP_Factorization
   }
 
   /**
-   * @brief Solve the linear system $L\cdot x = b$.
+   * @brief Solve the linear system \f$L\cdot x = \f$
    *
-   * @param[in] b is the known term of the linear system.
-   * @return the vector $x = L^{-1} \cdot b$.
+   * @param[in] b is the known term of the linear system
+   * @return the vector \f$x = L^{-1} \cdot \f$
    */
   std::vector<T> solveL(const std::vector<T> &b) const
   {
@@ -2228,10 +2254,10 @@ class LUP_Factorization
   }
 
   /**
-   * @brief Solve the linear system $U\cdot x = b$.
+   * @brief Solve the linear system \f$U\cdot x = \f$
    *
-   * @param[in] b is the known term of the linear system.
-   * @return the vector $x = U^{-1} \cdot b$.
+   * @param[in] b is the known term of the linear system
+   * @return the vector \f$x = U^{-1} \cdot \f$
    */
   std::vector<T> solveU(const std::vector<T> &b) const
   {
@@ -2263,7 +2289,7 @@ public:
   /**
    * @brief Copy construct a new LUP_Factorization object
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   LUP_Factorization(const LUP_Factorization &orig):
       _P(orig._P), _L(orig._L), _U(orig._U)
@@ -2276,7 +2302,7 @@ public:
    * This constructor performs the LUP factorization of
    * a sparse matrix.
    *
-   * @param M is the matrix whose LUP factorization must be computed.
+   * @param M is the matrix whose LUP factorization must be computed
    */
   LUP_Factorization(const Matrix<T> &M):
       _P(), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
@@ -2381,8 +2407,8 @@ public:
   /**
    * @brief Compute the solution of \f$(L\cdot U)\cdot x=P^{-1}\cdot b\f$
    *
-   * @param b is the known term of the linear system.
-   * @return the vector \f$x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b\f$.
+   * @param b is the known term of the linear system
+   * @return the vector \f$x = (U^{-1} \cdot L^{-1} \cdot P^{-1}) \cdot b\f$
    */
   std::vector<T> solve(const std::vector<T> &b) const
   {
@@ -2435,10 +2461,10 @@ public:
   }
 
   /**
-   * @brief Copy a LUP_Factorization object.
+   * @brief Copy a LUP_Factorization object
    *
-   * @param orig is the model that must be copied.
-   * @return a reference to the updated object.
+   * @param orig is the model that must be copied
+   * @return a reference to the updated object
    */
   LUP_Factorization<T> &operator=(const LUP_Factorization<T> &orig)
   {
@@ -2450,10 +2476,10 @@ public:
   }
 
   /**
-   * @brief Copy a LUP_Factorization object.
+   * @brief Copy a LUP_Factorization object
    *
-   * @param orig is the model that must be copied.
-   * @return a reference to the updated object.
+   * @param orig is the model that must be copied
+   * @return a reference to the updated object
    */
   LUP_Factorization<T> &operator=(LUP_Factorization<T> &&orig)
   {
@@ -2466,7 +2492,7 @@ public:
 };
 
 /**
- * @brief Compute the rank of a sparse matrix.
+ * @brief Compute the rank of a sparse matrix
  *
  * @tparam T is the type of the matrix elements
  * @param A is the matrix whose rank must be computed
