@@ -328,6 +328,24 @@ public:
   }
 
   /**
+   * @brief Get a subset of the expression symbols
+   * 
+   * @param max_cardinality is the maximum number of symbols to be returned
+   * @return A set, whose cardinality is `max_cardinality` at most, of the symbols 
+   *           in the expression 
+   */
+  std::set<Symbol<C>> get_symbols(const unsigned int max_cardinality) const
+  {
+    std::set<Symbol<C>> result;
+
+    for (typename Symbol<C>::SymbolIdType sid: _ex->get_symbol_ids(max_cardinality)) {
+      result.emplace(Symbol<C>::get_symbol_name(sid));
+    }
+
+    return result;
+  }
+
+  /**
    * @brief Get the constant term of the expression.
    *
    * @return The constant term of the expression.
@@ -1315,6 +1333,15 @@ public:
   virtual std::set<SymbolIdType> get_symbol_ids() const = 0;
 
   /**
+   * @brief Get the ids of the symbols in the expression.
+   * 
+   * @param max_cardinality is the maximum number of symbol ids to be returned
+   * @return A set, whose cardinality is `max_cardinality` at most, of the symbol 
+   *          identifiers in the expression 
+   */
+  virtual std::set<SymbolIdType> get_symbol_ids(const unsigned int max_cardinality) const = 0;
+
+  /**
    * @brief Test the presence of any symbol.
    *
    * @return true if and only if the expression as one symbol at least.
@@ -1714,6 +1741,20 @@ public:
   }
 
   /**
+   * @brief Get the ids of the symbols in the expression.
+   * 
+   * @param max_cardinality is the maximum number of symbol ids to be returned
+   * @return A set, whose cardinality is `max_cardinality` at most, of the symbol 
+   *          identifiers in the expression 
+   */
+  std::set<SymbolIdType> get_symbol_ids(const unsigned int max_cardinality) const
+  {
+    (void)max_cardinality;
+    
+    return std::set<SymbolIdType>();
+  }
+
+  /**
    * @brief Test the presence of any symbol.
    *
    * @return true if and only if the expression as one symbol at least.
@@ -2063,9 +2104,32 @@ public:
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
       std::set<SymbolIdType> it_ids = (*it)->get_symbol_ids();
 
-      for (auto it_it = std::begin(it_ids); it_it != std::end(it_ids);
-           ++it_it) {
-        ids.insert(*it_it);
+      ids.insert(std::begin(it_ids), std::end(it_ids));
+    }
+
+    return ids;
+  }
+
+  /**
+   * @brief Get the ids of the symbols in the expression.
+   * 
+   * @param max_cardinality is the maximum number of symbol ids to be returned
+   * @return A set, whose cardinality is `max_cardinality` at most, of the symbol 
+   *          identifiers in the expression 
+   */
+  std::set<SymbolIdType> get_symbol_ids(const unsigned int max_cardinality) const
+  {
+    std::set<SymbolIdType> ids;
+
+    unsigned int missing = max_cardinality;
+    for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
+      std::set<SymbolIdType> it_ids = (*it)->get_symbol_ids(missing);
+
+      ids.insert(std::begin(it_ids), std::end(it_ids));
+
+      missing = max_cardinality-ids.size();
+      if (missing == 0) {
+        return ids;
       }
     }
 
@@ -2609,9 +2673,34 @@ public:
       for (auto it = std::begin(_list); it != std::end(_list); ++it) {
         std::set<SymbolIdType> it_ids = (*it)->get_symbol_ids();
 
-        for (auto it_it = std::begin(it_ids); it_it != std::end(it_ids);
-             ++it_it) {
-          ids.insert(*it_it);
+        ids.insert(std::begin(it_ids), std::end(it_ids));
+      }
+    }
+
+    return ids;
+  }
+
+  /**
+   * @brief Get the ids of the symbols in the expression.
+   * 
+   * @param max_cardinality is the maximum number of symbol ids to be returned
+   * @return A set, whose cardinality is `max_cardinality` at most, of the symbol 
+   *          identifiers in the expression 
+   */
+  std::set<SymbolIdType> get_symbol_ids(const unsigned int max_cardinality) const
+  {
+    std::set<SymbolIdType> ids;
+
+    unsigned int missing = max_cardinality;
+    for (auto &_list: {_numerator, _denominator}) {
+      for (auto it = std::begin(_list); it != std::end(_list); ++it) {
+        std::set<SymbolIdType> it_ids = (*it)->get_symbol_ids(missing);
+
+        ids.insert(std::begin(it_ids), std::end(it_ids));
+
+        missing = max_cardinality-ids.size();
+        if (missing == 0) {
+          return ids;
         }
       }
     }
@@ -2978,6 +3067,22 @@ public:
   }
 
   /**
+   * @brief Get the ids of the symbols in the expression.
+   * 
+   * @param max_cardinality is the maximum number of symbol ids to be returned
+   * @return A set, whose cardinality is `max_cardinality` at most, of the symbol 
+   *          identifiers in the expression 
+   */
+  std::set<SymbolIdType> get_symbol_ids(const unsigned int max_cardinality) const
+  {
+    if (max_cardinality==0) {
+      return std::set<SymbolIdType>();
+    }
+
+    return std::set<SymbolIdType>({_id});
+  }
+
+  /**
    * @brief Test the presence of any symbol.
    *
    * @return true if and only if the expression as one symbol at least.
@@ -3270,16 +3375,25 @@ const Expression<C> &Expression<C>::operator/=(Expression<C> &&rhs)
 template<typename C>
 Expression<C> simplify(const Expression<C>& exp)
 {
-  std::set<Symbol<C>> symbols = exp.get_symbols();
+  // get at most one of the symbols in the expression
+  std::set<Symbol<C>> symbols = exp.get_symbols(1);
+
+  // if the expression has no symbols
   if (symbols.size() == 0) {
+
+    // it is already simplified
     return exp;
   }
 
+  // otherwise, get the polynomial representation of the 
+  // expression on the found symbol
   int p = 0;
   Expression<C> simpl_ex(0), power(1);
 
   Symbol<C> x = *std::begin(symbols);
   auto x_coeffs = exp.get_coeffs(x);
+
+  // simplify all the coefficients
   for (auto c_it = std::begin(x_coeffs); c_it != std::end(x_coeffs); ++c_it) {
     c_it->second = simplify(c_it->second);
 
@@ -3452,7 +3566,8 @@ inline bool operator>(const Expression<C> &lhs, const C rhs)
     return (lhs-rhs) > 0;
   }
 
-  auto symbols = lhs.get_symbols();
+  // get at most one symbols from lhs
+  auto symbols = lhs.get_symbols(1);
 
   // if lhs has no symbols
   if (symbols.size()==0) {
