@@ -3435,7 +3435,30 @@ inline bool operator!=(const int lhs, const Expression<C> &rhs)
 template<typename C>
 inline bool operator>(const Expression<C> &lhs, const C rhs)
 {
-  return (!(lhs._ex->has_symbols()) && lhs._ex->evaluate() > rhs);
+  // reduce the problem to lhs-rhs > 0
+  if (rhs != 0) {
+    return (lhs-rhs) > 0;
+  }
+
+  auto symbols = lhs.get_symbols();
+
+  // if lhs has no symbols
+  if (symbols.size()==0) {
+    // compare its value with 0
+    return lhs.evaluate() > 0;
+  }
+
+  // otherwise, lhs > 0 iff all its even 
+  // coefficients are > 0 and those odd are 0
+  auto coeffs = lhs.get_coeffs(*std::begin(symbols));
+
+  for (auto c_it = std::begin(coeffs); c_it != std::end(coeffs); ++c_it) {
+    if ((c_it->first % 2 != 0)&&(c_it->second < 0)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
