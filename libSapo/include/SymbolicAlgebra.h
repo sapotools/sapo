@@ -284,9 +284,8 @@ public:
   /**
    * @brief Get the coefficients of the polynomial expression.
    *
-   * @param symbol_id is the symbol id whose term coefficient is aimed.
-   * @return The coefficients of the polynomial expression on the
-   *          symbol whose id is `symbol_id`.
+   * @param symbol is the symbol whose term coefficient is aimed.
+   * @return The coefficients of the polynomial expression on `symbol`.
    */
   std::map<int, Expression<C>> get_coeffs(const Symbol<C> &symbol) const
   {
@@ -524,41 +523,183 @@ public:
   template<typename T>
   friend bool operator>(const T lhs, const Expression<T> &rhs);
 
+
+  /**
+   * @brief Get the sum between two expressions
+   * 
+   * This method builds an expression that represents the sum 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`+`rhs`
+   */
   template<typename T>
   friend Expression<T> operator+(const Expression<T> &lhs,
                                  const Expression<T> &rhs);
+
+  /**
+   * @brief Get the subtraction between two expressions
+   * 
+   * This method builds an expression that represents the subtractions 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`-`rhs`
+   */
   template<typename T>
   friend Expression<T> operator-(const Expression<T> &lhs,
                                  const Expression<T> &rhs);
+
+  /**
+   * @brief Get the division between two expressions
+   * 
+   * This method builds an expression that represents the division between
+   * two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is the dividend expression
+   * @param rhs is the divisior expression
+   * @return the expression that represents `lhs`/`rhs`
+   */
   template<typename T>
   friend Expression<T> operator*(const Expression<T> &lhs,
                                  const Expression<T> &rhs);
+
+  /**
+   * @brief Get the division between two expressions
+   * 
+   * This method builds an expression that represents the division between
+   * two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is the dividend expression
+   * @param rhs is the divisior expression
+   * @return the expression that represents `lhs`/`rhs`
+   */
   template<typename T>
   friend Expression<T> operator/(const Expression<T> &lhs,
                                  const Expression<T> &rhs);
 
+  /**
+   * @brief Get the sum between two expressions
+   * 
+   * This method builds an expression that represents the sum 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`+`rhs`
+   */
   template<typename T>
   friend Expression<T> operator+(Expression<T> &&lhs,
                                  const Expression<T> &rhs);
+
+  /**
+   * @brief Get the subtraction between two expressions
+   * 
+   * This method builds an expression that represents the subtractions 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`-`rhs`
+   */
   template<typename T>
   friend Expression<T> operator-(Expression<T> &&lhs,
                                  const Expression<T> &rhs);
+
+  /**
+   * @brief Get the multiplication between two expressions
+   * 
+   * This method builds an expression that represents the mutiplication 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`*`rhs`
+   */
   template<typename T>
   friend Expression<T> operator*(Expression<T> &&lhs,
                                  const Expression<T> &rhs);
+
+  /**
+   * @brief Get the division between two expressions
+   * 
+   * This method builds an expression that represents the division between
+   * two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is the dividend expression
+   * @param rhs is the divisior expression
+   * @return the expression that represents `lhs`/`rhs`
+   */
   template<typename T>
   friend Expression<T> operator/(Expression<T> &&lhs,
                                  const Expression<T> &rhs);
 
+  /**
+   * @brief Get the sum between two expressions
+   * 
+   * This method builds an expression that represents the sum 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`+`rhs`
+   */
   template<typename T>
   friend Expression<T> operator+(const Expression<T> &lhs,
                                  Expression<T> &&rhs);
+
+  /**
+   * @brief Get the subtraction between two expressions
+   * 
+   * This method builds an expression that represents the subtractions 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`-`rhs`
+   */
   template<typename T>
   friend Expression<T> operator-(const Expression<T> &lhs,
                                  Expression<T> &&rhs);
+
+  /**
+   * @brief Get the multiplication between two expressions
+   * 
+   * This method builds an expression that represents the mutiplication 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`*`rhs`
+   */
   template<typename T>
   friend Expression<T> operator*(const Expression<T> &lhs,
                                  Expression<T> &&rhs);
+
+  /**
+   * @brief Get the division between two expressions
+   * 
+   * This method builds an expression that represents the division between
+   * two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is the dividend expression
+   * @param rhs is the divisior expression
+   * @return the expression that represents `lhs`/`rhs`
+   */
   template<typename T>
   friend Expression<T> operator/(const Expression<T> &lhs,
                                  Expression<T> &&rhs);
@@ -572,7 +713,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param lhs is an expression.
    * @param value is an expression.
-   * @return An expression that represents the sum `lhs + value`.
+   * @return An expression that represents the sum `lhs`+`value`.
    */
   template<typename T,
            typename
@@ -597,7 +738,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param value is an expression.
    * @param rhs is an expression.
-   * @return An expression that represents the subtraction `value - rhs`.
+   * @return An expression that represents the subtraction `value`-`rhs`.
    */
   template<typename T,
            typename
@@ -617,7 +758,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param value is an expression.
    * @param rhs is an expression.
-   * @return An expression that represents the subtraction `value * rhs`.
+   * @return An expression that represents the subtraction `value`*`rhs`.
    */
   template<typename T,
            typename
@@ -646,7 +787,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param value is a constant value.
    * @param rhs is an expression.
-   * @return An expression that represents the division `lhs / value`.
+   * @return An expression that represents the division `lhs`/`value`.
    */
   template<typename T,
            typename
@@ -669,7 +810,7 @@ public:
    * @tparam T is the type of numeric value
    * @param value is a value
    * @param rhs is an expression
-   * @return An expression that represents the sum `value+rhs`
+   * @return An expression that represents the sum `value`+`rhs`
    */
   template<typename T,
            typename
@@ -689,7 +830,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param lhs is an expression.
    * @param value is an expression.
-   * @return An expression that represents the subtraction `lhs - value`.
+   * @return An expression that represents the subtraction `lhs`-`value`.
    */
   template<typename T,
            typename
@@ -709,7 +850,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param lhs is an expression.
    * @param value is an expression.
-   * @return An expression that represents the subtraction `lhs * value`.
+   * @return An expression that represents the subtraction `lhs`*`value`.
    */
   template<typename T,
            typename
@@ -730,7 +871,7 @@ public:
    * @tparam T is the type of numeric value.
    * @param lhs is an expression.
    * @param value is a constant value.
-   * @return An expression that represents the division `lhs / value`.
+   * @return An expression that represents the division `lhs`/`value`.
    */
   template<typename T,
            typename
@@ -745,18 +886,80 @@ public:
     return lhs * (1 / static_cast<C>(value));
   }
 
+  /**
+   * @brief Get the sum between two expressions
+   * 
+   * This method builds an expression that represents the sum 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`+`rhs`
+   */
   template<typename T>
   friend Expression<T> operator+(Expression<T> &&lhs, Expression<T> &&rhs);
+
+  /**
+   * @brief Get the subtraction between two expressions
+   * 
+   * This method builds an expression that represents the subtractions 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`-`rhs`
+   */
   template<typename T>
   friend Expression<T> operator-(Expression<T> &&lhs, Expression<T> &&rhs);
+
+  /**
+   * @brief Get the multiplication between two expressions
+   * 
+   * This method builds an expression that represents the mutiplication 
+   * between two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is an expression
+   * @param rhs is another expression
+   * @return the expression that represents `lhs`*`rhs`
+   */
   template<typename T>
   friend Expression<T> operator*(Expression<T> &&lhs, Expression<T> &&rhs);
+
+  /**
+   * @brief Get the division between two expressions
+   * 
+   * This method builds an expression that represents the division between
+   * two expressions.
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param lhs is the dividend expression
+   * @param rhs is the divisior expression
+   * @return the expression that represents `lhs`/`rhs`
+   */
   template<typename T>
   friend Expression<T> operator/(Expression<T> &&lhs, Expression<T> &&rhs);
 
+  /**
+   * @brief Swap two expressions
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param a is one of the expressions to be swapped
+   * @param b is the other one expression to be swapped
+   */
   template<typename T>
   friend void std::swap(Expression<T> &a, Expression<T> &b);
 
+  /**
+   * @brief Print an expression in a stream 
+   * 
+   * @tparam T is the type of the constant values in the expression
+   * @param os is the output stream
+   * @param ex is the expression to be printed
+   * @return the output stream
+   */
   template<typename T>
   friend std::ostream &std::operator<<(std::ostream &os,
                                        const Expression<T> &ex);
@@ -3262,7 +3465,7 @@ inline bool operator>(const Expression<C> &lhs, const int rhs)
 template<typename C>
 inline bool operator>(const C lhs, const Expression<C> &rhs)
 {
-  return (!(rhs._ex->has_symbols()) && rhs._ex->evaluate() < lhs);
+  return -rhs > -lhs;
 }
 
 /**
@@ -3277,7 +3480,7 @@ inline bool operator>(const C lhs, const Expression<C> &rhs)
 template<typename C>
 inline bool operator>(const int lhs, const Expression<C> &rhs)
 {
-  return static_cast<int>(lhs) > rhs;
+  return static_cast<C>(lhs) > rhs;
 }
 
 /**
