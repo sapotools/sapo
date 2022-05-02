@@ -488,9 +488,9 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const std::shared_ptr<STL::Conjunction> conj) const
 {
   PolytopesUnion Pu1
-      = this->synthesize(reachSet, pSet, conj->getLeftSubFormula());
+      = this->synthesize(reachSet, pSet, conj->get_left_subformula());
   PolytopesUnion Pu2
-      = this->synthesize(reachSet, pSet, conj->getRightSubFormula());
+      = this->synthesize(reachSet, pSet, conj->get_right_subformula());
   return intersect(Pu1, Pu2);
 }
 
@@ -507,8 +507,8 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const std::shared_ptr<STL::Disjunction> disj) const
 {
   PolytopesUnion Pu
-      = this->synthesize(reachSet, pSet, disj->getLeftSubFormula());
-  Pu.add(this->synthesize(reachSet, pSet, disj->getRightSubFormula()));
+      = this->synthesize(reachSet, pSet, disj->get_left_subformula());
+  Pu.add(this->synthesize(reachSet, pSet, disj->get_right_subformula()));
 
   return Pu;
 }
@@ -530,7 +530,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   std::shared_ptr<STL::Until> u
       = std::make_shared<STL::Until>(true_atom, ev->time_bounds().begin(),
                                      ev->time_bounds().end(),
-                                     ev->getSubFormula());
+                                     ev->get_subformula());
 
   return this->synthesize(reachSet, pSet, u, 0);
 }
@@ -626,7 +626,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   if (t_itvl > time) {
     // Synthesize wrt phi1
     PolytopesUnion P1
-        = this->synthesize(reachSet, pSet, formula->getLeftSubFormula());
+        = this->synthesize(reachSet, pSet, formula->get_left_subformula());
     if (P1.is_empty()) {
       return P1; // false until
     } else {
@@ -638,23 +638,23 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   if (t_itvl.end() > time) {
     // Refine wrt phi1 and phi2
     PolytopesUnion P1
-        = this->synthesize(reachSet, pSet, formula->getLeftSubFormula());
+        = this->synthesize(reachSet, pSet, formula->get_left_subformula());
 
     if (P1.is_empty()) {
-      return this->synthesize(reachSet, pSet, formula->getRightSubFormula());
+      return this->synthesize(reachSet, pSet, formula->get_right_subformula());
     }
 
     PolytopesUnion result
         = transition_and_synthesis(reachSet, P1, formula, time);
     result.add(
-        this->synthesize(reachSet, pSet, formula->getRightSubFormula()));
+        this->synthesize(reachSet, pSet, formula->get_right_subformula()));
 
     return result;
   }
 
   // If none of the above condition holds, then it must holds that :
   // 			t_itvl.begin()<=time and t_itvl.end()==time
-  return this->synthesize(reachSet, pSet, formula->getRightSubFormula());
+  return this->synthesize(reachSet, pSet, formula->get_right_subformula());
 }
 
 /**
@@ -690,7 +690,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
     // Refine wrt phi
     PolytopesUnion P
-        = this->synthesize(reachSet, pSet, formula->getSubFormula());
+        = this->synthesize(reachSet, pSet, formula->get_subformula());
 
     if (P.is_empty()) {
       return P;
@@ -701,5 +701,5 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 
   // If none of the above condition holds, then it must holds that :
   // 			t_itvl.begin()<=time and t_itvl.end()==time
-  return this->synthesize(reachSet, pSet, formula->getSubFormula());
+  return this->synthesize(reachSet, pSet, formula->get_subformula());
 }

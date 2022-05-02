@@ -11,7 +11,7 @@
 namespace STL
 {
 
-STL::STL(formula_type type): type(type) {}
+STL::STL(formula_type type): _type(type) {}
 
 STL::~STL() {}
 

@@ -810,7 +810,7 @@ Bundle::synthesize(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
       repl[variables[j]] = fog[j];
     }
 
-    Expression<> sofog = atom->getPredicate();
+    Expression<> sofog = atom->get_expression();
     sofog.replace(repl);
 
     // compute the Bernstein control points

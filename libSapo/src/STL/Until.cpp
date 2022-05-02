@@ -12,27 +12,41 @@ namespace STL
 {
 
 /**
- * Constructor that instantiates an Until formula (f1 U_[a,b] f2)
+ * @brief A constructor for STL until formulas
+ * 
+ * This constructor creates an object of the type 
+ * Until to represent the STL formula 
+ * \f$\textrm{left} U_{[\textrm{begin},\textrm{end}]} \textrm{right}\f$.
  *
- * @param[in] f1 left subformula
- * @param[in] begin is beginning of temporal interval
+ * @param[in] left is the left subformula
+ * @param[in] begin is the begin of temporal interval
  * @param[in] end is the end of temporal interval
- * @param[in] f2 right subformula
+ * @param[in] right is the right subformula
  */
-Until::Until(const std::shared_ptr<STL> f1, const int begin, const int end,
-             const std::shared_ptr<STL> f2):
-    STL(UNTIL),
-    f1(f1), f2(f2), t_itvl(begin, end)
+Until::Until(const std::shared_ptr<STL> left,
+             const int begin, const int end,
+             const std::shared_ptr<STL> right):
+    STL(UNTIL), _left(left), _right(right), _t_itvl(begin, end)
 {
 }
 
 /**
- * Print the formula
+ * @brief Print the STL formula in a stream
+ * 
+ * This method is publicly wrapped by the function
+ * `operator<<(std::ostream&, const STL::STL &)`.
+ * 
+ * @param os is the output stream
+ * @return a reference to the output stream
  */
 std::ostream &Until::print(std::ostream &os) const
 {
-  return os << "(" << *f1 << ") U " << t_itvl << " (" << *f2 << ")";
+  return os << "(" << *_left << ") U " 
+            << _t_itvl << " (" << *_right << ")";
 }
 
+/**
+ * @brief Destroy the STL until formula
+ */
 Until::~Until() {}
 }

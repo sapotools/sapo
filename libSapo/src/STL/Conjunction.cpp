@@ -12,35 +12,52 @@ namespace STL
 {
 
 /**
- * Constructor that instantiates a Conjunction STL formula (f1 /\ f2)
+ * @brief A constructor for STL conjunction
+ * 
+ * This constructor creates an object of the type 
+ * Conjunction to represent the STL formula 
+ * \f$\textrm{left} \land \textrm{right}\f$.
  *
- * @param[in] f1 left conjunct
- * @param[in] f2 right conjunct
+ * @param[in] left is the left-side conjunction subformula
+ * @param[in] right is the right-side conjunction subformula
  */
-Conjunction::Conjunction(const std::shared_ptr<STL> f1,
-                         const std::shared_ptr<STL> f2):
-    STL(CONJUNCTION),
-    f1(f1), f2(f2)
+Conjunction::Conjunction(const std::shared_ptr<STL> left,
+                         const std::shared_ptr<STL> right):
+    STL(CONJUNCTION), _left(left), _right(right)
 {
 }
 
 /**
- * Print the formula
+ * @brief Print the STL formula in a stream
+ * 
+ * This method is publicly wrapped by the function
+ * `operator<<(std::ostream&, const STL::STL &)`.
+ * 
+ * @param os is the output stream
+ * @return a reference to the output stream
  */
 std::ostream &Conjunction::print(std::ostream &os) const
 {
-  return os << "(" << *f1 << ") && (" << *f2 << ")";
+  return os << "(" << *_left << ") && (" << *_right << ")";
 }
 
+/**
+ * @brief Get the formula time bounds 
+ * 
+ * @return the time interval affecting the formula sematics
+ */
 TimeInterval Conjunction::time_bounds() const
 {
-  const TimeInterval ti1 = f1->time_bounds();
-  const TimeInterval ti2 = f2->time_bounds();
+  const TimeInterval ti1 = _left->time_bounds();
+  const TimeInterval ti2 = _right->time_bounds();
 
   return TimeInterval(std::min(ti1.begin(), ti2.begin()),
                       std::max(ti1.end(), ti2.end()));
 }
 
+/**
+ * @brief Destroy a STL conjunction formula
+ */
 Conjunction::~Conjunction() {}
 
 }

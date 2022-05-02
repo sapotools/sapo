@@ -474,7 +474,7 @@ symbol			: VAR identList IN doubleInterval ";"
 						{
 							std::shared_ptr<STL::STL> f;
 							try {
-								f = $3->simplify();
+								f = $3->get_PNF();
 							} catch (std::logic_error &e) {
 								ERROR(@3, "Negations of UNTIL are not allowed");
 								f = std::make_shared<STL::Atom>(0);

@@ -3,7 +3,8 @@
  * Atomic STL formula
  *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @version 0.2
  */
 
 #ifndef ATOM_H_
@@ -16,37 +17,95 @@
 namespace STL
 {
 
+/**
+ * @brief The STL atomic formula
+ * 
+ * This class represents STL atomic formulas.
+ * Every atoms have the form \f$e \geq 0\f$ where 
+ * \f$e\f$ is a `SymbolicAlgebra::Expression`.
+ */
 class Atom : public STL
 {
 private:
-  static int num_of_atoms;
+  static unsigned int _num_of_atoms;    //!< Number of instanciated atoms
 
-  SymbolicAlgebra::Expression<> predicate; //!< predicate
-  int id;                                  //!< atom identifier
+  SymbolicAlgebra::Expression<> _expr;  //!< Atom expression
+  unsigned int _id;                     //!< Atom identifier
+
+protected:
+
+  /**
+   * @brief Print the STL formula in a stream
+   * 
+   * This method is publicly wrapped by the function
+   * `operator<<(std::ostream&, const STL::STL &)`.
+   * 
+   * @param os is the output stream
+   * @return a reference to the output stream
+   */
+  std::ostream &print(std::ostream &os) const;
 
 public:
-  Atom(const SymbolicAlgebra::Expression<> &predicate);
+  /**
+   * @brief A constructor for STL atomic formulas
+   * 
+   * This constructor creates an object of the type 
+   * Atom to represent the STL formula 
+   * \f$\textrm{expression} \geq 0\f$.
+   *
+   * @param[in] expression is the atom expression
+   */
+  Atom(const SymbolicAlgebra::Expression<> &expression);
 
-  const SymbolicAlgebra::Expression<> &getPredicate() const
+  /**
+   * @brief Get the atom formula expression
+   * 
+   * Every atomic fomula has the form 
+   * \f$\textrm{expression} \geq 0\f$. This method 
+   * returns the formula expression.
+   * 
+   * @return the atom formula expression
+   */
+  inline const SymbolicAlgebra::Expression<> &get_expression() const
   {
-    return predicate;
-  };
-
-  std::ostream &print(std::ostream &os) const
-  {
-    return os << this->predicate << " <= 0";
+    return _expr;
   }
 
-  int getID() const
+  /**
+   * @brief Get the atom id
+   * 
+   * Every atom is uniquely identified by a natural number.
+   * This method returns the atom identifier.
+   * 
+   * @return the atom identifier
+   */
+  inline const unsigned int& get_id() const
   {
-    return this->id;
+    return _id;
   }
 
-  const std::shared_ptr<STL> simplify() const
+  /**
+   * @brief Get an equivalent formula in Positive Normal Form (PNF)
+   * 
+   * A STL formula is in Positive Normal Form (PNF) if it does 
+   * not use the negation operator. 
+   * For any STL formula \f$\phi\f$ there exists a STL 
+   * formula \f$\varphi\f$ in PNF such that 
+   * \f[\models \phi \Longleftrightarrow \models \varphi.\f]
+   * This method computes the STL formula in PNF of the 
+   * current formula. In the case of an atom, this consists 
+   * is a copy of the atom itself.
+   * 
+   * @return The equivalent STL formula in PNF
+   */
+  inline const std::shared_ptr<STL> get_PNF() const
   {
-    return std::make_shared<Atom>(predicate);
+    return std::make_shared<Atom>(_expr);
   }
 
+  /**
+   * @brief Destroy the STL atomic formula
+   */
   ~Atom();
 };
 

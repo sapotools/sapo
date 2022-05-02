@@ -11,22 +11,40 @@
 namespace STL
 {
 
-int Atom::num_of_atoms = 0;
+unsigned int Atom::_num_of_atoms = 0;
 
 /**
- * Constructor that instantiates a atomic predicate
+ * @brief A constructor for STL atomic formulas
+ * 
+ * This constructor creates an object of the type 
+ * Atom to represent the STL formula 
+ * \f$\textrm{expression} \geq 0\f$.
  *
- * @param[in] predicate a symbolic expression
- * @param[in] id an identifier for the atomic formula
+ * @param[in] expression is the atom expression
  */
-Atom::Atom(const SymbolicAlgebra::Expression<> &predicate):
-    STL(ATOM), predicate(predicate), id(this->num_of_atoms++)
+Atom::Atom(const SymbolicAlgebra::Expression<> &expression):
+    STL(ATOM), _expr(expression), _id(this->_num_of_atoms++)
 {
 }
 
-Atom::~Atom()
+/**
+ * @brief Print the STL formula in a stream
+ * 
+ * This method is publicly wrapped by the function
+ * `operator<<(std::ostream&, const STL::STL &)`.
+ * 
+ * @param os is the output stream
+ * @return a reference to the output stream
+ */
+std::ostream &Atom::print(std::ostream &os) const
 {
-  // TODO Auto-generated destructor stub
+  return os << this->_expr << " <= 0";
 }
+
+/**
+ * @brief Destroy the STL atomic formula
+ */
+Atom::~Atom()
+{}
 
 }
