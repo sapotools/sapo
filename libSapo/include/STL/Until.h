@@ -15,6 +15,8 @@
 #include "STL.h"
 #include "TimeInterval.h"
 
+namespace STL {
+
 class Until : public STL
 {
 
@@ -51,4 +53,5 @@ public:
   ~Until();
 };
 
+}
 #endif /* UNTIL_H */

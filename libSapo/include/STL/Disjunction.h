@@ -13,6 +13,9 @@
 
 #include "STL.h"
 
+namespace STL
+{
+
 class Disjunction : public STL
 {
 
@@ -42,5 +45,6 @@ public:
 
   ~Disjunction();
 };
+}
 
 #endif /* CONJUNCTION_H_ */

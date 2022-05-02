@@ -10,6 +10,9 @@
 
 #include "Always.h"
 
+namespace STL
+{
+
 /**
  * Constructor that instantiates an Always formula (G_[a,b]f)
  *
@@ -33,3 +36,5 @@ std::ostream &Always::print(std::ostream &os) const
 }
 
 Always::~Always() {}
+
+}

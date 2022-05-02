@@ -8,6 +8,9 @@
 
 #include "Conjunction.h"
 
+namespace STL
+{
+
 /**
  * Constructor that instantiates a Conjunction STL formula (f1 /\ f2)
  *
@@ -39,3 +42,5 @@ TimeInterval Conjunction::time_bounds() const
 }
 
 Conjunction::~Conjunction() {}
+
+}

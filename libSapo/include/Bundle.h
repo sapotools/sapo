@@ -517,7 +517,7 @@ public:
              const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
              const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
              const PolytopesUnion &parameter_set,
-             const std::shared_ptr<Atom> atom) const;
+             const std::shared_ptr<STL::Atom> atom) const;
 
   /**
    * @brief Copy operator

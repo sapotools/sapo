@@ -10,6 +10,9 @@
 
 #include <iostream>
 
+namespace STL
+{
+
 /**
  * Constructor that instantiates a Disjunction STL formula (f1 /\ f2)
  *
@@ -41,3 +44,5 @@ TimeInterval Disjunction::time_bounds() const
 }
 
 Disjunction::~Disjunction() {}
+
+}

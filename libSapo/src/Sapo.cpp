@@ -369,7 +369,7 @@ public:
 std::list<PolytopesUnion>
 synthesize_list(const Sapo &sapo, const Bundle &reachSet,
                 const std::list<PolytopesUnion> &pSetList,
-                const std::shared_ptr<STL> &formula,
+                const std::shared_ptr<STL::STL> &formula,
                 ProgressAccounter *accounter)
 {
 
@@ -434,7 +434,7 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
  */
 std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
                                            const PolytopesUnion &pSet,
-                                           const std::shared_ptr<STL> formula,
+                                           const std::shared_ptr<STL::STL> formula,
                                            const unsigned int max_splits,
                                            const unsigned int num_of_presplits,
                                            ProgressAccounter *accounter) const
@@ -485,7 +485,7 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Conjunction> conj) const
+                                const std::shared_ptr<STL::Conjunction> conj) const
 {
   PolytopesUnion Pu1
       = this->synthesize(reachSet, pSet, conj->getLeftSubFormula());
@@ -504,7 +504,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Disjunction> disj) const
+                                const std::shared_ptr<STL::Disjunction> disj) const
 {
   PolytopesUnion Pu
       = this->synthesize(reachSet, pSet, disj->getLeftSubFormula());
@@ -523,13 +523,14 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Eventually> ev) const
+                                const std::shared_ptr<STL::Eventually> ev) const
 {
-  std::shared_ptr<Atom> true_atom = std::make_shared<Atom>(-1);
+  std::shared_ptr<STL::Atom> true_atom = std::make_shared<STL::Atom>(-1);
 
-  std::shared_ptr<Until> u
-      = std::make_shared<Until>(true_atom, ev->time_bounds().begin(),
-                                ev->time_bounds().end(), ev->getSubFormula());
+  std::shared_ptr<STL::Until> u
+      = std::make_shared<STL::Until>(true_atom, ev->time_bounds().begin(),
+                                     ev->time_bounds().end(),
+                                     ev->getSubFormula());
 
   return this->synthesize(reachSet, pSet, u, 0);
 }
@@ -544,42 +545,42 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<STL> formula,
+                                const std::shared_ptr<STL::STL> formula,
                                 ProgressAccounter *accounter) const
 {
   (void)accounter;
 
-  switch (formula->getType()) {
+  switch (formula->get_type()) {
 
   // Atomic predicate
-  case ATOM:
+  case STL::ATOM:
     return synthesize(reachSet, pSet,
-                      std::dynamic_pointer_cast<Atom>(formula));
+                      std::dynamic_pointer_cast<STL::Atom>(formula));
 
   // Conjunction
-  case CONJUNCTION:
+  case STL::CONJUNCTION:
     return synthesize(reachSet, pSet,
-                      std::dynamic_pointer_cast<Conjunction>(formula));
+                      std::dynamic_pointer_cast<STL::Conjunction>(formula));
 
   // Disjunction
-  case DISJUNCTION:
+  case STL::DISJUNCTION:
     return synthesize(reachSet, pSet,
-                      std::dynamic_pointer_cast<Disjunction>(formula));
+                      std::dynamic_pointer_cast<STL::Disjunction>(formula));
 
   // Until
-  case UNTIL:
+  case STL::UNTIL:
     return synthesize(reachSet, pSet,
-                      std::dynamic_pointer_cast<Until>(formula), 0);
+                      std::dynamic_pointer_cast<STL::Until>(formula), 0);
 
   // Always
-  case ALWAYS:
+  case STL::ALWAYS:
     return synthesize(reachSet, pSet,
-                      std::dynamic_pointer_cast<Always>(formula), 0);
+                      std::dynamic_pointer_cast<STL::Always>(formula), 0);
 
   // Eventually
-  case EVENTUALLY:
+  case STL::EVENTUALLY:
     return synthesize(reachSet, pSet,
-                      std::dynamic_pointer_cast<Eventually>(formula));
+                      std::dynamic_pointer_cast<STL::Eventually>(formula));
 
   default:
     throw std::logic_error("Unsupported formula");
@@ -596,7 +597,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Atom> atom) const
+                                const std::shared_ptr<STL::Atom> atom) const
 {
   return reachSet.synthesize(vars, params, dyns, pSet, atom);
 }
@@ -612,7 +613,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Until> formula,
+                                const std::shared_ptr<STL::Until> formula,
                                 const int time) const
 {
   const TimeInterval &t_itvl = formula->time_bounds();
@@ -667,7 +668,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
-                                const std::shared_ptr<Always> formula,
+                                const std::shared_ptr<STL::Always> formula,
                                 const int time) const
 {
   const TimeInterval &t_itvl = formula->time_bounds();

@@ -89,7 +89,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Atom> formula) const;
+                            const std::shared_ptr<STL::Atom> formula) const;
 
   /**
    * Parmeter synthesis for conjunctions
@@ -100,7 +100,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Conjunction> formula) const;
+                            const std::shared_ptr<STL::Conjunction> formula) const;
 
   /**
    * Parmeter synthesis for disjunctions
@@ -111,7 +111,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Disjunction> formula) const;
+                            const std::shared_ptr<STL::Disjunction> formula) const;
 
   /**
    * Parameter synthesis for until formulas
@@ -123,7 +123,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Until> formula,
+                            const std::shared_ptr<STL::Until> formula,
                             const int time) const;
 
   /**
@@ -136,7 +136,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Always> formula,
+                            const std::shared_ptr<STL::Always> formula,
                             const int time) const;
   /**
    * Parmeter synthesis for the eventually fomulas
@@ -148,7 +148,7 @@ private:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<Eventually> ev) const;
+                            const std::shared_ptr<STL::Eventually> ev) const;
 
 public:
   /**
@@ -192,7 +192,7 @@ public:
    * @returns refined parameter set
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL> formula,
+                            const std::shared_ptr<STL::STL> formula,
                             ProgressAccounter *accounter = NULL) const;
 
   /**
@@ -210,7 +210,7 @@ public:
    */
   std::list<PolytopesUnion>
   synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-             const std::shared_ptr<STL> formula, const unsigned int max_splits,
+             const std::shared_ptr<STL::STL> formula, const unsigned int max_splits,
              const unsigned int num_of_presplits = 0,
              ProgressAccounter *accounter = NULL) const;
 };

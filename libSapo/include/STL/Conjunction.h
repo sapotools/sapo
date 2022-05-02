@@ -13,6 +13,10 @@
 
 #include "STL.h"
 
+
+namespace STL
+{
+
 class Conjunction : public STL
 {
 
@@ -42,5 +46,7 @@ public:
 
   ~Conjunction();
 };
+
+}
 
 #endif /* CONJUNCTION_H_ */

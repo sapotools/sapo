@@ -10,6 +10,9 @@
 
 #include <iostream>
 
+namespace STL
+{
+
 /**
  * Constructor that instantiates an Eventually formula (F_[a,b]f)
  *
@@ -33,3 +36,5 @@ std::ostream &Eventually::print(std::ostream &os) const
 }
 
 Eventually::~Eventually() {}
+
+}

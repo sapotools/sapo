@@ -14,6 +14,9 @@
 #include "STL.h"
 #include "TimeInterval.h"
 
+namespace STL
+{
+
 class Always : public STL
 {
 
@@ -44,5 +47,6 @@ public:
 
   virtual ~Always();
 };
+}
 
 #endif /* ALWAYS_H */

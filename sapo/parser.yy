@@ -156,7 +156,7 @@
 %nterm <SymbolicAlgebra::Expression<>> expr
 %nterm <std::vector<int>> matrixRow
 %nterm <std::vector<std::vector<int>>> rowList
-%nterm <std::shared_ptr<STL> > formula
+%nterm <std::shared_ptr<STL::STL> > formula
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> direction
 %nterm <AbsSyn::Direction::Type> directionType
@@ -472,12 +472,12 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| SPEC ":" formula ";"
 						{
-							std::shared_ptr<STL> f;
+							std::shared_ptr<STL::STL> f;
 							try {
 								f = $3->simplify();
 							} catch (std::logic_error &e) {
 								ERROR(@3, "Negations of UNTIL are not allowed");
-								f = std::make_shared<Atom>(0);
+								f = std::make_shared<STL::Atom>(0);
 							}
 							
 							$3.reset();
@@ -946,28 +946,28 @@ expr		: number	{ $$ = $1; }
 					$$ = $2;
 				}
 
-formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
-				| expr ">=" expr { $$ = std::make_shared<Atom>($3 - $1); }
-				| expr "<" expr { $$ = std::make_shared<Atom>($1 - $3); }
-				| expr "<=" expr { $$ = std::make_shared<Atom>($1 - $3); }
+formula	: expr ">" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
+				| expr ">=" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
+				| expr "<" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
+				| expr "<=" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
 				| expr "=" expr
 				{
-					std::shared_ptr<STL> f1 = std::make_shared<Atom>($1 - $3);
-					std::shared_ptr<STL> f2 = std::make_shared<Atom>($3 - $1);
-					$$ = std::make_shared<Conjunction>(f1, f2);
+					std::shared_ptr<STL::STL> f1 = std::make_shared<STL::Atom>($1 - $3);
+					std::shared_ptr<STL::STL> f2 = std::make_shared<STL::Atom>($3 - $1);
+					$$ = std::make_shared<STL::Conjunction>(f1, f2);
 				}
-				| formula AND formula		{ $$ = std::make_shared<Conjunction>($1, $3); }
-				| formula OR formula		{ $$ = std::make_shared<Disjunction>($1, $3); }
-				| NOT formula									{ $$ = std::make_shared<Negation>($2); }
+				| formula AND formula		{ $$ = std::make_shared<STL::Conjunction>($1, $3); }
+				| formula OR formula		{ $$ = std::make_shared<STL::Disjunction>($1, $3); }
+				| NOT formula									{ $$ = std::make_shared<STL::Negation>($2); }
 				| "(" formula ")" { $$ = $2; }
 				| "(" formula error
 				{
 					ERROR(@2, "Missing \"(\"");
 					$$ = $2;
 				}
-				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<Always>($2.first, $2.second, $3); }
-				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<Eventually>($2.first, $2.second, $3); }
-				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<Until>($1, $3.first, $3.second, $4); }
+				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<STL::Always>($2.first, $2.second, $3); }
+				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<STL::Eventually>($2.first, $2.second, $3); }
+				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<STL::Until>($1, $3.first, $3.second, $4); }
 
 footer	: OPT option {}
 				| OPT error ";"

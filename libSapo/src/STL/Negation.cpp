@@ -8,6 +8,9 @@
 
 #include "Negation.h"
 
+namespace STL
+{
+
 /**
  * Constructor that instantiates a negation formula (not f)
  *
@@ -27,7 +30,7 @@ Negation::~Negation() {}
 
 const std::shared_ptr<STL> Negation::simplify() const
 {
-  switch (f->getType()) {
+  switch (f->get_type()) {
   case formula_type::ATOM: {
     std::shared_ptr<Atom> atom = std::dynamic_pointer_cast<Atom>(f);
     return std::make_shared<Atom>(-atom->getPredicate());
@@ -76,4 +79,6 @@ const std::shared_ptr<STL> Negation::simplify() const
     throw std::logic_error("Unsupported formula type");
   }
   }
+}
+
 }

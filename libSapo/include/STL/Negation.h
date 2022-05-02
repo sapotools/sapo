@@ -22,6 +22,9 @@
 #include "Until.h"
 #include "TimeInterval.h"
 
+namespace STL 
+{
+
 class Negation : public STL
 {
 
@@ -48,4 +51,5 @@ public:
   ~Negation();
 };
 
+}
 #endif /* Eventually_H */

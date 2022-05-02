@@ -8,6 +8,9 @@
 
 #include "Until.h"
 
+namespace STL
+{
+
 /**
  * Constructor that instantiates an Until formula (f1 U_[a,b] f2)
  *
@@ -32,3 +35,4 @@ std::ostream &Until::print(std::ostream &os) const
 }
 
 Until::~Until() {}
+}

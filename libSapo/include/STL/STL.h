@@ -15,6 +15,8 @@
 
 #include "TimeInterval.h"
 
+namespace STL {
+
 enum formula_type {
   ATOM,
   CONJUNCTION,
@@ -27,41 +29,27 @@ enum formula_type {
 
 class STL
 {
-  friend std::ostream &operator<<(std::ostream &os, const STL &f)
-  {
-    return f.print(os);
-  }
-
-  formula_type type;
-
 protected:
-  int options;
+  formula_type type;
 
   STL(formula_type type);
 
+  virtual std::ostream &print(std::ostream &os) const = 0;
 public:
-  const STL &set_options(const int options);
 
-  const formula_type &getType() const
+  inline const formula_type &get_type() const
   {
     return type;
   }
 
-  void setType(formula_type t)
-  {
-    type = t;
-  }
-
   const virtual std::shared_ptr<STL> simplify() const = 0;
 
-  virtual std::ostream &print(std::ostream &os) const = 0;
-
-  virtual TimeInterval time_bounds() const
-  {
-    return TimeInterval(1);
-  }
+  virtual TimeInterval time_bounds() const;
 
   virtual ~STL();
+
+  friend std::ostream &operator<<(std::ostream &os, const STL &formula);
 };
 
+}
 #endif /* STL_H_ */

@@ -785,7 +785,7 @@ Bundle::synthesize(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
                    const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
                    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
                    const PolytopesUnion &parameter_set,
-                   const std::shared_ptr<Atom> atom) const
+                   const std::shared_ptr<STL::Atom> atom) const
 {
   using namespace std;
   using namespace SymbolicAlgebra;

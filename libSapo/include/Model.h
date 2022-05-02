@@ -25,7 +25,7 @@ protected:
   Bundle *reachSet; // Initial reach set
   PolytopesUnion *paraSet;
 
-  std::shared_ptr<STL> spec;
+  std::shared_ptr<STL::STL> spec;
 
   std::string name;
 
@@ -49,7 +49,7 @@ public:
         const std::vector<SymbolicAlgebra::Symbol<>> &params,
         const std::vector<SymbolicAlgebra::Expression<>> &dyns,
         const Bundle &reachSet, const PolytopesUnion &paraSet,
-        const std::shared_ptr<STL> specification,
+        const std::shared_ptr<STL::STL> specification,
         const std::string name = "Unknown"):
       vars(vars),
       params(params), dyns(dyns), reachSet(new Bundle(reachSet)),
@@ -85,7 +85,7 @@ public:
   {
     return this->paraSet;
   }
-  const std::shared_ptr<STL> getSpec() const
+  const std::shared_ptr<STL::STL> getSpec() const
   {
     return this->spec;
   }

@@ -8,6 +8,9 @@
 
 #include "Atom.h"
 
+namespace STL
+{
+
 int Atom::num_of_atoms = 0;
 
 /**
@@ -24,4 +27,6 @@ Atom::Atom(const SymbolicAlgebra::Expression<> &predicate):
 Atom::~Atom()
 {
   // TODO Auto-generated destructor stub
+}
+
 }

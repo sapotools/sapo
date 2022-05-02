@@ -13,6 +13,9 @@
 
 #include "STL.h"
 
+namespace STL
+{
+
 class Atom : public STL
 {
 private:
@@ -46,5 +49,7 @@ public:
 
   ~Atom();
 };
+
+}
 
 #endif /* ATOM_H_ */

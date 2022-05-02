@@ -14,6 +14,9 @@
 #include "STL.h"
 #include "TimeInterval.h"
 
+namespace STL
+{
+
 class Eventually : public STL
 {
 private:
@@ -43,5 +46,7 @@ public:
 
   ~Eventually();
 };
+
+}
 
 #endif /* Eventually_H */

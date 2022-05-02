@@ -227,14 +227,14 @@ public:
   {
     return spec != NULL;
   }
-  void addSpec(std::shared_ptr<STL> f)
+  void addSpec(std::shared_ptr<STL::STL> f)
   {
     if (spec == NULL)
       spec = f;
     else
-      spec = std::make_shared<Conjunction>(spec, f);
+      spec = std::make_shared<STL::Conjunction>(spec, f);
   }
-  const std::shared_ptr<STL> getSpec() const
+  const std::shared_ptr<STL::STL> getSpec() const
   {
     return spec;
   }
@@ -394,7 +394,7 @@ protected:
 
   std::vector<Direction *> assumptions;
 
-  std::shared_ptr<STL> spec;
+  std::shared_ptr<STL::STL> spec;
 
   std::vector<Direction *> directions;
 
