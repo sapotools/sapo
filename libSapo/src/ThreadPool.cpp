@@ -3,7 +3,7 @@
 /**
  * @brief Get information about a batch
  *
- * @param batch_id is the searched batch id
+ * @param[in] batch_id is the searched batch id
  * @return a reference to the batch information
  */
 ThreadPool::BatchInfo &
@@ -22,9 +22,9 @@ ThreadPool::get_batch_info(const ThreadPool::BatchId batch_id)
 }
 
 /**
- * @brief Extract next task from the queue.
+ * @brief Extract next task from the queue
  *
- * @return The next task to be executed.
+ * @return The next task to be executed
  */
 bool ThreadPool::extract_next_task(ThreadPool::Task &next,
                                    std::unique_lock<std::mutex> &lock)
@@ -66,9 +66,9 @@ bool ThreadPool::extract_next_task(ThreadPool::Task &next,
 }
 
 /**
- * @brief The main thread loop.
+ * @brief The main thread loop
  *
- * @param thread_id is the thread id in the pool.
+ * @param[in] thread_id is the thread id in the pool
  */
 void ThreadPool::consumer_loop(unsigned int thread_id)
 {
@@ -122,9 +122,9 @@ void ThreadPool::consumer_loop(unsigned int thread_id)
 }
 
 /**
- * @brief Create a new Thread Pool object.
+ * @brief Create a new Thread Pool object
  *
- * @param num_of_threads is the number of thread in the pool.
+ * @param[in] num_of_threads is the number of thread in the pool
  */
 ThreadPool::ThreadPool(const unsigned num_of_threads):
     _threads(), _queue(), _terminating(false)
@@ -138,9 +138,9 @@ ThreadPool::ThreadPool(const unsigned num_of_threads):
 ThreadPool::ThreadPool(): ThreadPool(std::thread::hardware_concurrency()) {}
 
 /**
- * @brief Initialize a new task batch.
+ * @brief Initialize a new task batch
  *
- * @return The batch id of the new batch.
+ * @return The batch id of the new batch
  */
 ThreadPool::BatchId ThreadPool::create_batch()
 {
@@ -174,9 +174,9 @@ ThreadPool::BatchId ThreadPool::create_batch()
 }
 
 /**
- * @brief Close the batch and remove it from the pool.
+ * @brief Close the batch and remove it from the pool
  *
- * @param batch_id is the id of the batch to be closed.
+ * @param[in] batch_id is the id of the batch to be closed
  */
 void ThreadPool::close_batch(const unsigned int batch_id)
 {
@@ -211,9 +211,9 @@ void ThreadPool::close_batch(const unsigned int batch_id)
 }
 
 /**
- * @brief Join the thread pool and complete the batch.
+ * @brief Join the thread pool and complete the batch
  *
- * @param batch_id is the id of the batch that must be completed.
+ * @param[in] batch_id is the id of the batch that must be completed
  */
 void ThreadPool::join_threads(const unsigned int batch_id)
 {
@@ -314,9 +314,9 @@ void ThreadPool::terminate()
 }
 
 /**
- * @brief Re-initialize the pool.
+ * @brief Re-initialize the pool
  *
- * @param num_of_threads is the new number of threads.
+ * @param[in] num_of_threads is the new number of threads
  */
 void ThreadPool::reinit(const unsigned int &num_of_threads)
 {
@@ -333,9 +333,9 @@ void ThreadPool::reinit(const unsigned int &num_of_threads)
 }
 
 /**
- * @brief Add some threads to the pool.
+ * @brief Add some threads to the pool
  *
- * @param num_of_new_threads is the number of new threads.
+ * @param[in] num_of_new_threads is the number of new threads
  */
 void ThreadPool::add_new_threads(const unsigned int num_of_new_threads)
 {
@@ -347,9 +347,9 @@ void ThreadPool::add_new_threads(const unsigned int num_of_new_threads)
 }
 
 /**
- * @brief Reset the pool.
+ * @brief Reset the pool
  *
- * @param num_of_threads is the new number of threads.
+ * @param[in] num_of_threads is the new number of threads
  */
 void ThreadPool::reset(const unsigned int num_of_threads)
 {
@@ -358,7 +358,7 @@ void ThreadPool::reset(const unsigned int num_of_threads)
 }
 
 /**
- * @brief Destroy the thread pool.
+ * @brief Destroy the thread pool
  */
 ThreadPool::~ThreadPool()
 {
