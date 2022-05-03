@@ -11,16 +11,32 @@ namespace JSON
 
 enum Command { debug, production };
 
+/**
+ * @brief A JSON output stream
+ */
 class ostream : public std::ostream
 {
-  bool filter_unnecessary;
+  bool filter_unnecessary; //!< A flag to filter spaces and new lines
 
 public:
+  /**
+   * @brief A constructor for `JSON::ostream`
+   * 
+   * @param os is the output stream to which the JSON output will be redirected
+   * @param filter_unnecessary is a flag to filter spaces and new lines
+   */
   ostream(std::ostream &os = std::cout, const bool filter_unnecessary = false):
       std::ostream(os.rdbuf()), filter_unnecessary(filter_unnecessary)
   {
   }
 
+  /**
+   * @brief Print a JSON command in a JSON stream
+   * 
+   * @param out is the JSON output stream
+   * @param cmd is a JSON command
+   * @return a reference to the JSON output stream
+   */
   friend JSON::ostream &operator<<(JSON::ostream &out,
                                    const JSON::Command &cmd)
   {
@@ -36,6 +52,13 @@ public:
     return out;
   }
 
+  /**
+   * @brief Print a character in a JSON stream
+   * 
+   * @param out is the JSON output stream
+   * @param ch is a character
+   * @return a reference to the JSON output stream
+   */
   friend JSON::ostream &operator<<(JSON::ostream &out, const char &ch)
   {
     std::list<char> un_chars{'\n', '\t', ' '};
@@ -48,6 +71,13 @@ public:
     return out;
   }
 
+  /**
+   * @brief Print a string in a JSON stream
+   * 
+   * @param out is the JSON output stream
+   * @param str is a string
+   * @return a reference to the JSON output stream
+   */
   friend JSON::ostream &operator<<(JSON::ostream &out, const std::string &str)
   {
     if (out.filter_unnecessary) {
@@ -67,6 +97,13 @@ public:
     return out;
   }
 
+  /**
+   * @brief Print a value in a JSON stream
+   * 
+   * @param out is the JSON output stream
+   * @param value is a value
+   * @return a reference to the JSON output stream
+   */
   friend JSON::ostream &operator<<(JSON::ostream &out, const double &value)
   {
     if (value == 0) {
@@ -79,6 +116,13 @@ public:
     return out;
   }
 
+  /**
+   * @brief Print a constant string in a JSON stream
+   * 
+   * @param out is the JSON output stream
+   * @param value is a constant string
+   * @return a reference to the JSON output stream
+   */
   friend JSON::ostream &operator<<(JSON::ostream &out, const char *value)
   {
     dynamic_cast<std::ostream &>(out) << value;
