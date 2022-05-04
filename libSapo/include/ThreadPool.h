@@ -99,7 +99,7 @@ protected:
    *
    * @param[out] next is the parameter to be assigned with the next task
    * @param[in] lock is the the lock used to extract the next task
-   * @return true if and only if `next` has been reassigned
+   * @return `true` if and only if `next` has been reassigned
    */
   bool extract_next_task(ThreadPool::Task &next,
                          std::unique_lock<std::mutex> &lock);
