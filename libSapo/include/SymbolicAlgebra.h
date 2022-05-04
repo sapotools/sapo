@@ -119,7 +119,7 @@ public:
   /**
    * @brief Get the Symbol name
    *
-   * @return return the symbol name
+   * @return the symbol name
    */
   const std::string &get_name() const
   {
@@ -169,7 +169,7 @@ struct std::less<SymbolicAlgebra::Symbol<C>> {
    * 
    * @param a is a symbol
    * @param b is a symbol
-   * @return true if and only if the index of `a` is smaller, than 
+   * @return `true` if and only if the index of `a` is smaller, than 
    *         that of `b`.
    */
   constexpr bool operator()(const SymbolicAlgebra::Symbol<C> &a,
@@ -388,7 +388,7 @@ public:
   /**
    * @brief Establish whether the expression contains symbols
    *
-   * @return true if and only if the expression has contains
+   * @return `true` if and only if the expression has contains
    *         one symbol at least
    */
   bool has_symbols() const
@@ -566,7 +566,7 @@ public:
    * @tparam C is the numeric type of constants
    * @param lhs is an expression
    * @param rhs is a constant value
-   * @return true if and only if the expression is equivalent to the
+   * @return `true` if and only if the expression is equivalent to the
    *         constant value
    */
   template<typename T>
@@ -578,7 +578,7 @@ public:
    * @tparam C is the numeric type of constants
    * @param lhs is an expression
    * @param rhs is a constant value
-   * @return true if and only if the first parameter is constant and it is
+   * @return `true` if and only if the first parameter is constant and it is
    *         greater than the second one
    */
   template<typename T>
@@ -1387,7 +1387,7 @@ public:
   /**
    * @brief Test the presence of any symbol
    *
-   * @return true if and only if the expression as one symbol at least
+   * @return `true` if and only if the expression as one symbol at least
    */
   virtual bool has_symbols() const = 0;
 
@@ -1451,7 +1451,7 @@ public:
   /**
    * @brief Check whether this is the constant 0
    *
-   * @return true if and only if this is the constant 0
+   * @return `true` if and only if this is the constant 0
    */
   bool is_zero() const
   {
@@ -1801,7 +1801,7 @@ public:
   /**
    * @brief Test the presence of any symbol
    *
-   * @return true if and only if the expression as one symbol at least
+   * @return `true` if and only if the expression as one symbol at least
    */
   bool has_symbols() const
   {
@@ -2182,7 +2182,7 @@ public:
   /**
    * @brief Test the presence of any symbol
    *
-   * @return true if and only if the expression as one symbol at least
+   * @return `true` if and only if the expression as one symbol at least
    */
   bool has_symbols() const
   {
@@ -2756,7 +2756,7 @@ public:
   /**
    * @brief Test the presence of any symbol
    *
-   * @return true if and only if the expression as one symbol at least
+   * @return `true` if and only if the expression as one symbol at least
    */
   bool has_symbols() const
   {
@@ -3133,7 +3133,7 @@ public:
   /**
    * @brief Test the presence of any symbol
    *
-   * @return true if and only if the expression as one symbol at least
+   * @return `true` if and only if the expression as one symbol at least
    */
   bool has_symbols() const
   {
@@ -3477,7 +3477,7 @@ Expression<C> simplify(const Expression<C> &exp)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is an expression
- * @return true if and only if the two expressions are equivalent
+ * @return `true` if and only if the two expressions are equivalent
  */
 template<typename C>
 bool are_equivalent(const Expression<C> &lhs, const Expression<C> &rhs)
@@ -3493,7 +3493,7 @@ bool are_equivalent(const Expression<C> &lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the expression is equivalent to the
+ * @return `true` if and only if the expression is equivalent to the
  *         constant value
  */
 template<typename C>
@@ -3508,7 +3508,7 @@ inline bool are_equivalent(const Expression<C> &lhs, const C &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the constant value is equivalent to the
+ * @return `true` if and only if the constant value is equivalent to the
  *         expression
  */
 template<typename C>
@@ -3523,7 +3523,7 @@ inline bool are_equivalent(const C &lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the expression is equivalent to the
+ * @return `true` if and only if the expression is equivalent to the
  *         constant value
  */
 template<typename C>
@@ -3538,7 +3538,7 @@ inline bool operator==(const Expression<C> &lhs, const C rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is equivalent to the
+ * @return `true` if and only if the first parameter is equivalent to the
  *         second one
  */
 template<typename C>
@@ -3553,7 +3553,7 @@ inline bool operator==(const Expression<C> &lhs, const int rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the first parameter is equivalent to the
+ * @return `true` if and only if the first parameter is equivalent to the
  *         second one
  */
 template<typename C>
@@ -3568,7 +3568,7 @@ inline bool operator==(const C lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the first parameter is equivalent to the
+ * @return `true` if and only if the first parameter is equivalent to the
  *         second one
  */
 template<typename C>
@@ -3583,7 +3583,7 @@ inline bool operator==(const int lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is not equivalent to the
+ * @return `true` if and only if the first parameter is not equivalent to the
  *         second one
  */
 template<typename C>
@@ -3598,7 +3598,7 @@ inline bool operator!=(const Expression<C> &lhs, const C rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is not equivalent to the
+ * @return `true` if and only if the first parameter is not equivalent to the
  *         second one
  */
 template<typename C>
@@ -3613,7 +3613,7 @@ inline bool operator!=(const Expression<C> &lhs, const int rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the first parameter is not equivalent to the
+ * @return `true` if and only if the first parameter is not equivalent to the
  *         second one
  */
 template<typename C>
@@ -3628,7 +3628,7 @@ inline bool operator!=(const C lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the first parameter is not equivalent to the
+ * @return `true` if and only if the first parameter is not equivalent to the
  *         second one
  */
 template<typename C>
@@ -3643,7 +3643,7 @@ inline bool operator!=(const int lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is constant and it is
+ * @return `true` if and only if the first parameter is constant and it is
  *         greater than the second one
  */
 template<typename C>
@@ -3682,7 +3682,7 @@ inline bool operator>(const Expression<C> &lhs, const C rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is constant and it is
+ * @return `true` if and only if the first parameter is constant and it is
  *         greater than the second one
  */
 template<typename C>
@@ -3697,7 +3697,7 @@ inline bool operator>(const Expression<C> &lhs, const int rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the second parameter is a constant
+ * @return `true` if and only if the second parameter is a constant
  *         expression and it is lesser than the first one
  */
 template<typename C>
@@ -3712,7 +3712,7 @@ inline bool operator>(const C lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the second parameter is a constant
+ * @return `true` if and only if the second parameter is a constant
  *         expression and it is lesser than the first one
  */
 template<typename C>
@@ -3727,7 +3727,7 @@ inline bool operator>(const int lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is a constant
+ * @return `true` if and only if the first parameter is a constant
  *         expression and it is lesser than the second one
  */
 template<typename C>
@@ -3742,7 +3742,7 @@ inline bool operator<(const Expression<C> &lhs, const C rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
  * @param rhs is a constant value
- * @return true if and only if the first parameter is a constant
+ * @return `true` if and only if the first parameter is a constant
  *         expression and it is lesser than the second one
  */
 template<typename C>
@@ -3757,7 +3757,7 @@ inline bool operator<(const Expression<C> &lhs, const int rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the second parameter is a constant
+ * @return `true` if and only if the second parameter is a constant
  *         expression and it is greater than the first one
  */
 template<typename C>
@@ -3772,7 +3772,7 @@ inline bool operator<(const C lhs, const Expression<C> &rhs)
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
  * @param rhs is an expression
- * @return true if and only if the second parameter is a constant
+ * @return `true` if and only if the second parameter is a constant
  *         expression and it is greater than the first one
  */
 template<typename C>
