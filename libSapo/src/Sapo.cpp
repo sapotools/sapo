@@ -51,8 +51,8 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
   last_step.add(initSet);
 
   // create flowpipe
-  Flowpipe flowpipe(initSet.get_directions());
-  flowpipe.append(initSet);
+  Flowpipe flowpipe;
+  flowpipe.push_back(initSet);
 
 #ifdef WITH_THREADS
   std::mutex mutex;
@@ -135,7 +135,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
     nbundles = std::list<Bundle>();
 
     // add the last step to the flow pipe
-    flowpipe.append(last_step); // store result
+    flowpipe.push_back(last_step); // store result
 
     if (accounter != NULL) {
       accounter->increase_performed();
@@ -176,8 +176,8 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   last_step.add(initSet);
 
   // create flowpipe
-  Flowpipe flowpipe(initSet.get_directions());
-  flowpipe.append(initSet);
+  Flowpipe flowpipe;
+  flowpipe.push_back(initSet);
 
 #ifdef WITH_THREADS_TEMP_DISABLED
   std::mutex add_mtx;
@@ -266,7 +266,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
     cbundles = std::move(nbundles);
 
     // add the last step to the flow pipe
-    flowpipe.append(last_step); // store result
+    flowpipe.push_back(last_step); // store result
 
     if (accounter != NULL) {
       accounter->increase_performed();
