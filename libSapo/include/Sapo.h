@@ -28,6 +28,9 @@
 
 #include "ProgressAccounter.h"
 
+/**
+ * @brief The computation orchestrator
+ */
 class Sapo
 {
 public:
@@ -47,11 +50,6 @@ private:
       &vars; //!< variables of the system
   const std::vector<SymbolicAlgebra::Symbol<>>
       &params; //!< parameters of the system
-
-  // TODO: check whether the following method is really needed/usable.
-  std::vector<Bundle *>
-  reachWitDec(Bundle &initSet,
-              int k); // reachability with template decomposition
 
   /**
    * Parameter synthesis w.r.t. an always formula
@@ -155,7 +153,6 @@ public:
    * Constructor that instantiates Sapo
    *
    * @param[in] model model to analyize
-   * @param[in] sapo_opt options to tune sapo
    */
   Sapo(Model *model);
 
@@ -189,7 +186,7 @@ public:
    * @param[in] pSet the current parameter set
    * @param[in] formula is an STL specification for the model
    * @param[in,out] accounter acccounts for the computation progress
-   * @returns refined parameter set
+   * @returns a parameter set refined according with `formula`
    */
   PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
                             const std::shared_ptr<STL::STL> formula,

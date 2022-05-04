@@ -21,7 +21,6 @@
  * Constructor that instantiates Sapo
  *
  * @param[in] model model to analyize
- * @param[in] sapo_opt options to tune sapo
  */
 Sapo::Sapo(Model *model):
     tmode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_presplits(0),
@@ -541,7 +540,8 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
  * @param[in] reachSet bundle representing the current reached set
  * @param[in] pSet the current parameter set
  * @param[in] formula is an STL specification for the model
- * @returns refined parameter set
+ * @param[in,out] accounter acccounts for the computation progress
+ * @returns a parameter set refined according with `formula`
  */
 PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                 const PolytopesUnion &pSet,
