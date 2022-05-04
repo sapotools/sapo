@@ -132,4 +132,27 @@ public:
 };
 
 }
+
+/**
+ * @brief Print a linear system in a JSON stream
+ * 
+ * @param out is the output JSON stream
+ * @param ls is the linear system to be print
+ * @return a reference to the output JSON stream
+ */
+template<typename T>
+JSON::ostream &operator<<(JSON::ostream &out, const std::vector<T> &v)
+{
+  out << "[";
+  for (auto el_it = std::begin(v); el_it != std::end(v); ++el_it) {
+    if (el_it != std::begin(v)) {
+      out << ",";
+    }
+    out << *el_it;
+  }
+  out << "]";
+
+  return out;
+}
+
 #endif // JSONSTREAMER_H_

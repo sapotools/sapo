@@ -16,8 +16,15 @@
 #include "LinearSystem.h"
 #include "SymbolicAlgebra.h"
 
-#define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
+#define MAX_APPROX_ERROR 1e-8 //!< the maximum admitted approximation error
 
+/**
+ * @brief Print a linear system in a stream
+ * 
+ * @param out is the output stream
+ * @param ls is the linear system to be print
+ * @return a reference to the output stream
+ */
 std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
 {
   for (unsigned int row_idx = 0; row_idx < ls.size(); row_idx++) {
@@ -34,6 +41,13 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
   return out;
 }
 
+/**
+ * @brief Print a linear system in a JSON stream
+ * 
+ * @param out is the output JSON stream
+ * @param ls is the linear system to be print
+ * @return a reference to the output JSON stream
+ */
 JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
 {
   out << "{\"A\":" << ls.getA() << ","
@@ -42,16 +56,6 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
   return out;
 }
 
-/**
- * Optimize a linear system
- *
- * @param[in] A template matrix of the system to optimize
- * @param[in] b offset vector of the system to optimize
- * @param[in] obj_fun objective function
- * @param[in] maximize is a Boolean parameter to establish whether
- *        maximize (true) or minimize (false) `obj_fun` over the system
- * @return optimum
- */
 OptimizationResult<double> optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
                                     const LinearAlgebra::Vector<double> &b,
                                     const LinearAlgebra::Vector<double> &obj_fun,
@@ -129,14 +133,6 @@ OptimizationResult<double> optimize(const std::vector<LinearAlgebra::Vector<doub
   return opt_res;
 }
 
-/**
- * Optimize a linear system
- *
- * @param[in] obj_fun objective function
- * @param[in] maximize is a Boolean parameter to establish whether
- *        maximize (true) or minimize (false) `obj_fun` over the system
- * @return optimum
- */
 OptimizationResult<double>
 LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
                        const bool maximize) const
@@ -169,28 +165,10 @@ LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 }
 
 /**
- * Check if if a vector is null, i.e.,
- * it's a vector of zeros (used to detected useless constraints)
+ * Constructor
  *
- * @param[in] line vector to test
- * @return true is the vector is nulle
- */
-bool zeroLine(const LinearAlgebra::Vector<double> &line)
-{
-  bool zeros = true;
-  unsigned int i = 0;
-  while (zeros && i < line.size()) {
-    zeros = zeros && (std::abs(line[i]) < MAX_APPROX_ERROR);
-    i++;
-  }
-  return zeros;
-}
-
-/**
- * Constructor that instantiates a linear system
- *
- * @param[in] A template matrix
- * @param[in] b offset vector
+ * @param[in] A is the matrix 
+ * @param[in] b is the offset vector
  */
 LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
                            const LinearAlgebra::Vector<double> &b)
@@ -202,7 +180,8 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
     this->b = b;
   } else {
     for (unsigned int i = 0; i < A.size(); i++) {
-      if (!this->is_in(A[i], b[i]) && (!zeroLine(A[i]))) {
+      if (!this->is_in(A[i], b[i]) && 
+          (LinearAlgebra::norm_infinity(A[i]) >= MAX_APPROX_ERROR)) {
         this->A.push_back(A[i]);
         this->b.push_back(b[i]);
       }
@@ -211,10 +190,10 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
 }
 
 /**
- * Move constructor that instantiates a linear system
+ * Move constructor
  *
- * @param[in] A template matrix
- * @param[in] b offset vector
+ * @param[in] A is the matrix 
+ * @param[in] b is the offset vector
  */
 LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
                            LinearAlgebra::Vector<double> &&b):
@@ -231,18 +210,18 @@ LinearSystem::LinearSystem(): A(), b() {}
 /**
  * Copy constructor
  *
- * @param[in] orig the original linear system
+ * @param[in] ls is the original linear system
  */
-LinearSystem::LinearSystem(const LinearSystem &orig): A(orig.A), b(orig.b) {}
+LinearSystem::LinearSystem(const LinearSystem &ls): A(ls.A), b(ls.b) {}
 
 /**
  * Swap constructor
  *
- * @param[in] orig the original linear system
+ * @param[in] ls is the linear system
  */
-LinearSystem::LinearSystem(LinearSystem &&orig)
+LinearSystem::LinearSystem(LinearSystem &&ls)
 {
-  swap(*this, orig);
+  swap(*this, ls);
 }
 
 /**
@@ -276,13 +255,6 @@ bool same_constraint(const LinearAlgebra::Vector<double> &A1, const double &b1,
   return true;
 }
 
-/**
- * Check if a constraint belongs to the linear system
- *
- * @param[in] Ai direction
- * @param[in] bi offset
- * @returns true is Ai x <= b is in the linear system
- */
 bool LinearSystem::is_in(const LinearAlgebra::Vector<double> &Ai, const double &bi) const
 {
   for (unsigned int i = 0; i < this->A.size(); i++) {
@@ -293,33 +265,25 @@ bool LinearSystem::is_in(const LinearAlgebra::Vector<double> &Ai, const double &
   return false;
 }
 
-// TODO: remove this method as it uses non-necessary symbolic expressions.
-/**
- * Constructor that instantiates a linear system from a set of symbolic
- * expressions
- *
- * @param[in] vars list of variables appearing in the constraints
- * @param[in] constraints symbolic constraints
- */
 LinearSystem::LinearSystem(
-    const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-    const std::vector<SymbolicAlgebra::Expression<>> &constraints)
+    const std::vector<SymbolicAlgebra::Symbol<>> &x,
+    const std::vector<SymbolicAlgebra::Expression<>> &expressions)
 {
   using namespace SymbolicAlgebra;
-  std::vector<Expression<>> lconstraints = constraints;
+  std::vector<Expression<>> lexpressions = expressions;
   // lconstraints.unique();  // remove multiple copies of the same expression
 
-  for (auto c_it = begin(lconstraints); c_it != end(lconstraints); ++c_it) {
+  for (auto e_it = begin(lexpressions); e_it != end(lexpressions); ++e_it) {
     LinearAlgebra::Vector<double> Ai;
-    Expression<> const_term(*c_it);
+    Expression<> const_term(*e_it);
 
-    for (auto v_it = begin(vars); v_it != end(vars); ++v_it) {
+    for (auto x_it = begin(x); x_it != end(x); ++x_it) {
       // Extract the coefficient of the i-th variable (grade 1)
-      double coeff = (c_it->get_coeff(*v_it, 1)).evaluate();
+      double coeff = (e_it->get_coeff(*x_it, 1)).evaluate();
       Ai.push_back(coeff);
 
       // Project to obtain the constant term
-      const_term = const_term.get_coeff(*v_it, 0);
+      const_term = const_term.get_coeff(*x_it, 0);
     }
 
     double bi = const_term.evaluate();
@@ -362,18 +326,6 @@ const double &LinearSystem::getb(unsigned int i) const
                           "index for the system");
 }
 
-/**
- * Establish whether a linear system has solutions
- *
- * Due to approximation errors, it may return true for some systems
- * having no solution too. However, when it returns false, the linear
- * system certainly has no solution.
- *
- * @param[in] strict_inequality specifies whether the linear system is
- *         a strict inequality (i.e., Ax < b).
- * @return a Boolean value. If the returned value is false, then the
- *       linear system has no solution.
- */
 bool LinearSystem::has_solutions(const bool strict_inequality) const
 {
   if (this->size() == 0) {
@@ -450,21 +402,25 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 }
 
 /**
- * Check whether all the solutions of a linear system satisfy a constraint.
+ * @brief Check whether the solutions of a linear system satisfy a constraint
  *
- * This method establishes whether all the solutions of a linear system
- * satisfy a constraint. Due to approximation errors, it may return
- * false even if this is the case. However, whenever it returns true, the
- * all the solutions of the linear system certainly satisfy the inequality.
- *
- * @param[in] i is the index of the constraint to be checked
- * @return a Boolean value. When some of the solutions of the linear system
- *     do not satisfy the inequality, the returned value is false. When the
- *     method returns true, the constraint is certainly satisfied by any of
- *     the solutions of the system. There are cases in which the constraint
- *     is satisfied by all the solutions and this method returns false.
+ * This method establishes whether all the solutions \f$s\f$ of the linear 
+ * system satisfy a constraint \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$. 
+ * Due to the approximation errors, it may return `false` even if this is 
+ * the case. However, whenever it returns `true`, all the solutions of the 
+ * linear system certainly satisfy the inequality.
+ * 
+ * @param[in] Ai is a value vector
+ * @param[in] bi is a scalar value
+ * @return When some of the solutions \f$s\f$ of the linear system do not 
+ *     satisfy the inequality \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$, 
+ *     the returned value is `false`. When the method returns `true`, 
+ *     the inequality is certainly satisfied by any of the solutions 
+ *     \f$s\f$ of the system. There are cases in which the inequality
+ *     is satisfied by all the solutions and this method returns `false`
  */
-bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, const double bi) const
+bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, 
+                             const double &bi) const
 {
   if (size() == 0)
     return false;
@@ -476,8 +432,8 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, const doub
   OptimizationResult<double> res = this->maximize(Ai);
 
   if (res.status() != GLP_NOFEAS
-      && res.optimum() + MAX_APPROX_ERROR
-             <= bi) { /* This should be max <= bi,
+      && res.optimum() + MAX_APPROX_ERROR <= bi) { 
+                                      /* This should be max <= bi,
                                          however, due to double approximation
                                          errors, testing whether the distance
                                          between max and bi is greater than a
@@ -489,20 +445,6 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, const doub
   return false;
 }
 
-/**
- * Check whether one of the constraints in a linear system is redundant.
- *
- * This method establishes whether the i-th constraint of a linear
- * system is redundant. Due to approximation errors, it may return
- * false even if the constraint is redundant. However, whenever it
- * returns true, the constraint is certainly redundant.
- *
- * @param[in] i is the index of the constraint to be checked
- * @return a Boolean value. When the constraint is non-redundanct, the
- *     returned value is true. When it returns true, the constraint is
- *     certainly redundant. There are cases in which the constraint is
- *     redundant and this method returns false.
- */
 bool LinearSystem::constraint_is_redundant(const unsigned int i) const
 {
   LinearSystem tmp(*this);
