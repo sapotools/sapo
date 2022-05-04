@@ -178,7 +178,7 @@ Vector<T> operator-(const Vector<T> &orig)
  * @tparam T is the scalar value type
  * @param a is the first vector to be compared
  * @param b is the second vector to be compared
- * @return true if and only if the two vectors are the same
+ * @return `true` if and only if the two vectors are the same
  */
 template<typename T>
 bool operator==(const Vector<T> &a, const Vector<T> &b)
@@ -204,7 +204,7 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
  * @tparam T is the scalar value type
  * @param a is the first vector to be compared
  * @param b is the second vector to be compared
- * @return true if and only if the two vectors differ
+ * @return `true` if and only if the two vectors differ
  */
 template<typename T>
 bool operator!=(const Vector<T> &a, const Vector<T> &b)
@@ -653,7 +653,7 @@ public:
  * @tparam T is the type of the scalar values
  * @param v1 is the first vector to be tested
  * @param v2 is the second vector to be tested
- * @return true if and only if the two vectors are linearly dependent
+ * @return `true` if and only if the two vectors are linearly dependent
  */
 template<typename T>
 bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
@@ -1846,7 +1846,7 @@ public:
    * @brief Compare two matrices
    * 
    * @param A is a matrix
-   * @return true if and only if this object and the parameter 
+   * @return `true` if and only if this object and the parameter 
    *         have the same sizes and contains the same values
    */
   bool operator==(const Matrix<T>& A) const
