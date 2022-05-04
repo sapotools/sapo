@@ -1,10 +1,12 @@
 /**
  * @file STL.h
- * STL formula
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief STL formula
  * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef STL_H_
@@ -18,6 +20,12 @@
 
 namespace STL {
 
+/**
+ * @brief STL formula type
+ * 
+ * This enumeration lists the admitted types 
+ * for an STL formula
+ */
 enum formula_type {
   ATOM,
   CONJUNCTION,
@@ -28,6 +36,11 @@ enum formula_type {
   NEGATION
 };
 
+/**
+ * @brief STL formulas
+ * 
+ * This class represents generic STL formulas.
+ */
 class STL
 {
 

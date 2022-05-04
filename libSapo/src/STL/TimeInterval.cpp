@@ -1,9 +1,12 @@
 /**
- * @file TimeInterval.h
- * Temporal interval definition
- *
+ * @file TimeInterval.cpp
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Temporal interval definition
  * @version 0.1
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2021-2022
+ * 
  */
 
 #include "TimeInterval.h"

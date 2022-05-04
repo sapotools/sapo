@@ -1,9 +1,12 @@
 /**
  * @file TimeInterval.h
- * Temporal interval definition
- *
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Temporal interval definition
  * @version 0.1
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2021-2022
+ * 
  */
 
 #ifndef TIMEINTERVAL_H_
@@ -11,11 +14,26 @@
 
 #include <ostream>
 
+/**
+ * @brief Time intervals
+ * 
+ * This class represents time intervals
+ */
 class TimeInterval
 {
-  friend std::ostream &operator<<(std::ostream &os, const TimeInterval &ti)
+  /**
+   * @brief Print a time interval in a stream
+   * 
+   * @param[in] os is the output stream
+   * @param[in] t_itvl is the time interval to be printed
+   * @return a reference to the output stream
+   */
+  friend inline std::ostream &operator<<(std::ostream &os, 
+                                         const TimeInterval &t_itvl)
   {
-    return os << "[" << ti._begin << ", " << ti._end << "]";
+    os << "[" << t_itvl._begin << ", " << t_itvl._end << "]";
+
+    return os;
   }
 
   int _begin;
@@ -125,8 +143,6 @@ public:
     return this->begin() > this->end();
   }
 };
-
-std::ostream &operator<<(std::ostream &os, const TimeInterval &);
 
 /**
  * Checks whether a time interval comes before a time point.

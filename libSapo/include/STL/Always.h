@@ -1,10 +1,12 @@
 /**
  * @file Always.h
- * Always STL formula
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Always STL formula
  * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef ALWAYS_H_

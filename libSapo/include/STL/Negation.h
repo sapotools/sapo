@@ -1,10 +1,12 @@
 /**
  * @file Negation.h
- * Negation STL formula
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief STL Negation
  * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef __NEGATION_H__
