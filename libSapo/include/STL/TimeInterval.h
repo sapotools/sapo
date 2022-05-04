@@ -94,8 +94,8 @@ public:
    * Checks whether a time is strictly included in the time interval
    *
    * @param[in] time is the time point to be compared with this interval
-   * @return true if and only if the provided parameter is strictly included
-   *        in the time interval.
+   * @return `true` if and only if the provided parameter is strictly
+   *         included in the time interval.
    */
   bool strictly_contains(const int time) const
   {
@@ -106,8 +106,8 @@ public:
    * Checks whether a time is included in the time interval
    *
    * @param[in] time is the time point to be compared with this interval
-   * @return true if and only if the provided parameter is included
-   *        in the time interval.
+   * @return `true` if and only if the provided parameter is included
+   *         in the time interval.
    */
   bool contains(const int time) const
   {
@@ -117,8 +117,8 @@ public:
   /**
    * Checks whether the time interval is empty
    *
-   * @return true if and only if the time interval is empty, i.e.,
-   *     the begin of this time interval comes before the end of it.
+   * @return `true` if and only if the time interval is empty, i.e.,
+   *         the begin of this time interval comes before the end of it
    */
   bool is_empty() const
   {
@@ -136,8 +136,8 @@ std::ostream &operator<<(std::ostream &os, const TimeInterval &);
  *
  * @param[in] itvl is the interval to be compared
  * @param[in] time is the time point to be compared
- * @return true if and only if the time point comes after
- * all the times in the interval.
+ * @return `true` if and only if the time point comes after
+ *         all the times in the interval.
  */
 inline bool operator<(const TimeInterval &itvl, const int time)
 {
@@ -152,7 +152,7 @@ inline bool operator<(const TimeInterval &itvl, const int time)
  *
  * @param[in] itvl is the interval to be compared
  * @param[in] time is the time point to be compared
- * @return true if and only if the time point comes before
+ * @return `true` if and only if the time point comes before
  *          all the times in the interval.
  */
 inline bool operator>(const TimeInterval &itvl, const int time)
@@ -168,7 +168,7 @@ inline bool operator>(const TimeInterval &itvl, const int time)
  *
  * @param[in] time is the time point to be compared
  * @param[in] itvl is the interval to be compared
- * @return true if and only if the time point comes before
+ * @return `true` if and only if the time point comes before
  *          all the times in the interval.
  */
 inline bool operator<(const int time, const TimeInterval &itvl)
@@ -184,7 +184,7 @@ inline bool operator<(const int time, const TimeInterval &itvl)
  *
  * @param[in] time is the time point to be compared
  * @param[in] itvl is the interval to be compared
- * @return true if and only if the time point comes after
+ * @return `true` if and only if the time point comes after
  *          all the times in the interval.
  */
 inline bool operator>(const int time, const TimeInterval &itvl)
