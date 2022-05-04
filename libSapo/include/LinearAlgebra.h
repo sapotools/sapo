@@ -210,7 +210,7 @@ bool operator!=(const Vector<T> &a, const Vector<T> &b)
 /**
  * Compute the complementary of a vector of values.
  *
- * @param[in] orig the vector of values to be complementated
+ * @param[in] v the vector of values to be complementated
  * @return A vector containing the complementaries of the parameter values
  */
 template<typename T>
@@ -417,15 +417,15 @@ T operator*(const Vector<T> &v1, const Vector<T> &v2)
  * @brief Compute the Hadamard product of two vectors
  *
  * This method computes the Hadamard product of two vectors
- * \f$v_1 \circ v_\f$, i.e., it returns a vector whose elements
+ * \f$v_1 \circ v_2\f$, i.e., it returns a vector whose elements
  * are obtained by element-wise multiplying of the
  * parameters.
- * \f\f$(v_1 \circ v_2)[i] = v_1[i]*v_2[i\f$$
+ * \f$(v_1 \circ v_2)[i] = v_1[i]*v_2[i]\f$
  *
  * @tparam T any numeric type
  * @param v1 is a vector
  * @param v2 is a vector
- * @return the vector product \f$v1 \circ v\f$
+ * @return the vector product \f$v1 \circ v2\f$
  */
 template<typename T>
 Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
