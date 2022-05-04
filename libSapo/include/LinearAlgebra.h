@@ -21,6 +21,11 @@
 
 namespace LinearAlgebra {
 
+/**
+ * @brief An alias for vector type
+ * 
+ * @tparam T is the scalar value type
+ */
 template<typename T>
 using Vector = std::vector<T>;
 
@@ -86,10 +91,10 @@ inline Vector<double> approx<double>(Vector<double> &&v,
  * @return the given vector approximated up to `decimal` decimal digits
  */
 template<>
-inline Vector<double> approx<double>(const Vector<double> &orig,
+inline Vector<double> approx<double>(const Vector<double> &v,
                                      const unsigned short decimal)
 {
-  return approx<double>(Vector<double>(orig), decimal);
+  return approx<double>(Vector<double>(v), decimal);
 }
 
 /**
@@ -1251,7 +1256,7 @@ Matrix<T> inverse(Matrix<T> &A)
  * @brief Compute the maximum norm of a dense matrix
  *
  * @tparam T is a numeric type supporting the `abs` function
- * @param v is a vector
+ * @param A is a dense matrix
  * @return the maximum norm of the given dense matrix
  */
 template<typename T>
