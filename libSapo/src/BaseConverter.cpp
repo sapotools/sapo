@@ -14,7 +14,7 @@
  * Constructor that instantiates the base converter
  *
  * @param[in] vars list of variables appearing the current polynomial
- * @param[in] polynomial polynomial to convert
+ * @param[in] polynomial polynomial to be converted
  */
 BaseConverter::BaseConverter(
     const std::vector<SymbolicAlgebra::Symbol<>> &vars,
@@ -69,8 +69,7 @@ BaseConverter::BaseConverter(
 }
 
 /**
- * @TODO Constructor that instantiates the base converter for rational
- * polynomial
+ * @brief Constructor for rational polynomial base converters
  *
  * @param[in] vars list of variables appearing the current polynomial
  * @param[in] numerator of the rational polynomial to convert
@@ -818,7 +817,7 @@ void BaseConverter::implicitMaxIndex() const
     long unsigned int j = 0;
     while ((j < coeffs.size()) && (increase[i])) {
       if (multi_index[j][i] > 0) {
-        increase[i] = increase[i] && (coeffs[j] > 0);
+        increase[i] = increase[i] && (coeffs[j].evaluate() > 0);
       }
       j++;
     }
@@ -828,7 +827,7 @@ void BaseConverter::implicitMaxIndex() const
     long unsigned int j = 0;
     while ((j < coeffs.size()) && (decrease[i])) {
       if (multi_index[j][i] > 0) {
-        decrease[i] = decrease[i] && (coeffs[j] < 0);
+        decrease[i] = decrease[i] && (coeffs[j].evaluate() < 0);
       }
       j++;
     }
