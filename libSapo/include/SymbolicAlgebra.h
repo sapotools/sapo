@@ -1,3 +1,13 @@
+/**
+ * @file SymbolicAlgebra.h
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief A simple symbolic algebra module
+ * @version 0.1
+ * @date 2021-12-03
+ * 
+ * @copyright Copyright (c) 2021-2022
+ */
+
 #ifndef SYMBOLIC_ALGEBRA_H_
 #define SYMBOLIC_ALGEBRA_H_
 
@@ -571,19 +581,7 @@ public:
    */
   template<typename T>
   friend bool operator==(const Expression<T> &lhs, const T rhs);
-
-  /**
-   * @brief Check whether an expression is greater than a constant value
-   *
-   * @tparam C is the numeric type of constants
-   * @param lhs is an expression
-   * @param rhs is a constant value
-   * @return `true` if and only if the first parameter is constant and it is
-   *         greater than the second one
-   */
-  template<typename T>
-  friend bool operator>(const Expression<T> &lhs, const T rhs);
-
+ 
   /**
    * @brief Get the sum between two expressions
    *
@@ -3635,150 +3633,6 @@ template<typename C>
 inline bool operator!=(const int lhs, const Expression<C> &rhs)
 {
   return !(lhs == rhs);
-}
-
-/**
- * @brief Check whether an expression is greater than a constant value
- *
- * @tparam C is the numeric type of constants
- * @param lhs is an expression
- * @param rhs is a constant value
- * @return `true` if and only if the first parameter is constant and it is
- *         greater than the second one
- */
-template<typename C>
-inline bool operator>(const Expression<C> &lhs, const C rhs)
-{
-  // reduce the problem to lhs-rhs > 0
-  if (rhs != 0) {
-    return (lhs - rhs) > 0;
-  }
-
-  // get at most one symbols from lhs
-  auto symbols = lhs.get_symbols(1);
-
-  // if lhs has no symbols
-  if (symbols.size() == 0) {
-    // compare its value with 0
-    return lhs.evaluate() > 0;
-  }
-
-  // otherwise, lhs > 0 iff all its even
-  // coefficients are > 0 and those odd are 0
-  auto coeffs = lhs.get_coeffs(*std::begin(symbols));
-
-  for (auto c_it = std::begin(coeffs); c_it != std::end(coeffs); ++c_it) {
-    if ((c_it->first % 2 != 0) && (c_it->second < 0)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * @brief Check whether an expression is greater than a constant value
- *
- * @tparam C is the numeric type of constants
- * @param lhs is an expression
- * @param rhs is a constant value
- * @return `true` if and only if the first parameter is constant and it is
- *         greater than the second one
- */
-template<typename C>
-inline bool operator>(const Expression<C> &lhs, const int rhs)
-{
-  return lhs > static_cast<C>(rhs);
-}
-
-/**
- * @brief Check whether a constant value is greater than an expression
- *
- * @tparam C is the numeric type of constants
- * @param lhs is a constant value
- * @param rhs is an expression
- * @return `true` if and only if the second parameter is a constant
- *         expression and it is lesser than the first one
- */
-template<typename C>
-inline bool operator>(const C lhs, const Expression<C> &rhs)
-{
-  return -rhs > -lhs;
-}
-
-/**
- * @brief Check whether a constant value is greater than an expression
- *
- * @tparam C is the numeric type of constants
- * @param lhs is a constant value
- * @param rhs is an expression
- * @return `true` if and only if the second parameter is a constant
- *         expression and it is lesser than the first one
- */
-template<typename C>
-inline bool operator>(const int lhs, const Expression<C> &rhs)
-{
-  return static_cast<C>(lhs) > rhs;
-}
-
-/**
- * @brief Check whether a constant value is greater than an expression
- *
- * @tparam C is the numeric type of constants
- * @param lhs is an expression
- * @param rhs is a constant value
- * @return `true` if and only if the first parameter is a constant
- *         expression and it is lesser than the second one
- */
-template<typename C>
-inline bool operator<(const Expression<C> &lhs, const C rhs)
-{
-  return rhs > lhs;
-}
-
-/**
- * @brief Check whether a constant value is greater than an expression
- *
- * @tparam C is the numeric type of constants
- * @param lhs is an expression
- * @param rhs is a constant value
- * @return `true` if and only if the first parameter is a constant
- *         expression and it is lesser than the second one
- */
-template<typename C>
-inline bool operator<(const Expression<C> &lhs, const int rhs)
-{
-  return rhs > lhs;
-}
-
-/**
- * @brief Check whether a constant value is lesser than an expression
- *
- * @tparam C is the numeric type of constants
- * @param lhs is a constant value
- * @param rhs is an expression
- * @return `true` if and only if the second parameter is a constant
- *         expression and it is greater than the first one
- */
-template<typename C>
-inline bool operator<(const C lhs, const Expression<C> &rhs)
-{
-  return rhs > lhs;
-}
-
-/**
- * @brief Check whether a constant value is lesser than an expression
- *
- * @tparam C is the numeric type of constants
- * @param lhs is a constant value
- * @param rhs is an expression
- * @return `true` if and only if the second parameter is a constant
- *         expression and it is greater than the first one
- */
-template<typename C>
-inline bool operator<(const int lhs, const Expression<C> &rhs)
-{
-  return rhs > lhs;
 }
 
 /**
