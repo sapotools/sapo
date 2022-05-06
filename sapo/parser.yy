@@ -13,6 +13,8 @@
 	#include <fstream>
 	#include <cmath>
 	
+	#include <LinearAlgebraIO.h>
+
 	#include "locations.h"
 	
 	#include "AbsSynIO.h"
