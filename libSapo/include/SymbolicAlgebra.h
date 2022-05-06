@@ -127,6 +127,22 @@ public:
   Symbol(const Symbol<C> &orig);
 
   /**
+   * @brief Assign a symbol
+   *
+   * @param orig is the symbol to be assigned
+   * @return A reference to the updated object
+   */
+  Symbol<C> &operator=(const Symbol<C> &orig);
+
+  /**
+   * @brief Assign a symbol
+   *
+   * @param orig is the symbol to be assigned
+   * @return A reference to the updated object
+   */
+  Symbol<C> &operator=(Symbol<C> &&orig);
+
+  /**
    * @brief Get the Symbol name
    *
    * @return the symbol name
@@ -157,7 +173,7 @@ public:
     return _symbol_names[id];
   }
 };
-};
+}
 
 /**
  * @brief A specialization of the std::less structure
@@ -417,7 +433,7 @@ public:
    * @param rhs is the expression to be assigned
    * @return A reference to the updated object
    */
-  const Expression<C> &operator=(const Expression<C> &rhs);
+  Expression<C> &operator=(const Expression<C> &rhs);
 
   /**
    * @brief Assign an expression
@@ -425,7 +441,7 @@ public:
    * @param rhs is the expression to be assigned
    * @return A reference to the updated object
    */
-  const Expression<C> &operator=(Expression<C> &&rhs);
+  Expression<C> &operator=(Expression<C> &&rhs);
 
   /**
    * @brief Add an expression to the current one
@@ -3320,7 +3336,7 @@ Expression<C>::~Expression()
 }
 
 template<typename C>
-const Expression<C> &Expression<C>::operator=(const Expression<C> &rhs)
+Expression<C> &Expression<C>::operator=(const Expression<C> &rhs)
 {
   delete _ex;
 
@@ -3330,7 +3346,7 @@ const Expression<C> &Expression<C>::operator=(const Expression<C> &rhs)
 }
 
 template<typename C>
-const Expression<C> &Expression<C>::operator=(Expression<C> &&rhs)
+Expression<C> &Expression<C>::operator=(Expression<C> &&rhs)
 {
   std::swap(_ex, rhs._ex);
 
@@ -4024,6 +4040,22 @@ template<typename C>
 Symbol<C>::Symbol(const Symbol<C> &orig):
     Expression<C>((orig._ex == nullptr ? nullptr : orig._ex->clone()))
 {
+}
+
+template<typename C>
+Symbol<C> &Symbol<C>::operator=(const Symbol<C> &orig)
+{
+  Expression<C>::operator=(orig);
+
+  return *this;
+}
+
+template<typename C>
+Symbol<C> &Symbol<C>::operator=(Symbol<C> &&orig)
+{
+  Expression<C>::operator=(std::move(orig));
+
+  return *this;
 }
 
 }
