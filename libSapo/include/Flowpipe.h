@@ -1,10 +1,13 @@
 /**
  * @file Flowpipe.h
- * Represent and manipulate flowpipes of bundle
- * Used to represent the reachable set of a dynamical system
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate reachability flowpipes
+ * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2016-2022
+ * 
  */
 
 #ifndef FLOWPIPE_H_
@@ -84,7 +87,7 @@ public:
    * Stream a flowpipe
    *
    * @param[in] os is the output stream
-   * @param[in] fs is the flowpipe to be streamed
+   * @param[in] fp is the flowpipe to be streamed
    * @return the output stream
    */
   template<typename OSTREAM>

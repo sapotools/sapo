@@ -640,13 +640,14 @@ public:
   }
 
   /**
-   * @brief Print formatted permutation
-   *
-   * @param os is the output stream
+   * @brief Print a permutation in a stream
+   * 
+   * @param out is the output stream
    * @param P is the permutation to be printed
-   * @return a output stream reference
+   * @return a reference to the output stream
    */
-  friend inline std::ostream &operator<<(std::ostream &os, const Permutation &P);
+  friend inline std::ostream &operator<<(std::ostream &out,
+                                         const Permutation &P);
 };
 
 /**
@@ -1120,15 +1121,15 @@ public:
   }
 
   /**
-   * @brief Print a LUP factorization in a stream
+   * @brief Print a dense LUP factorization in a stream
    * 
-   * @tparam E is the scalar value type
-   * @param os is the output stream
-   * @param F is the factorization to be printed
+   * @tparam E is the type of the scalar values
+   * @param out is the output stream
+   * @param F is the LUP factorization to be printed
    * @return a reference to the output stream
    */
   template<typename E>
-  friend std::ostream &std::operator<<(std::ostream &os,
+  friend std::ostream &std::operator<<(std::ostream &out,
                                        const LUP_Factorization<E> &F);
   /**
    * @brief Compute the rank of a dense matrix
@@ -2095,13 +2096,14 @@ public:
   /**
    * @brief Print a sparse matrix in a stream
    * 
-   * @tparam E is the scalar value type
-   * @param os is the output stream
-   * @param M is the matrix to be printed
+   * @tparam E is the type of the scalar values
+   * @param out is the output stream
+   * @param A is the matrix to be printed
    * @return a reference to the output stream
    */
   template<typename E>
-  friend std::ostream &std::operator<<(std::ostream &os, const Matrix<E> &M);
+  friend std::ostream &std::operator<<(std::ostream &out, 
+                                       const Matrix<E> &A);
 };
 
 /**

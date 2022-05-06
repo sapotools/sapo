@@ -1,10 +1,12 @@
 /**
  * @file Polytope.h
- * Represent and manipulate a linear system
- * It can be used to represent polytopes (reached states, parameters, etc.)
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate linear systems
+ * @version 0.2
+ * @date 2015-10-14
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef LINEARSYSTEM_H_
@@ -189,7 +191,8 @@ public:
    * @param[in] A is the matrix 
    * @param[in] b is the offset vector
    */
-  LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A, const LinearAlgebra::Vector<double> &b);
+  LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
+               const LinearAlgebra::Vector<double> &b);
 
   /**
    * Move constructor
