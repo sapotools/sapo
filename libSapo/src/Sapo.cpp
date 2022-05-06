@@ -22,37 +22,32 @@
  *
  * @param[in] model model to analyize
  */
-Sapo::Sapo(Model *model):
+Sapo::Sapo(const Model& model):
     tmode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_presplits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
-    dyns(model->getDyns()), vars(model->getVars()), params(model->getParams())
+    dyns(model.dynamics()), vars(model.variables()), params(model.parameters()),
+    assumptions(model.assumptions())
 {
 }
 
-/**
- * Reachable set computation
- *
- * @param[in] initSet bundle representing the current reached set
- * @param[in] k time horizon
- * @param[in,out] accounter acccounts for the computation progress
- * @returns the reached flowpipe
- */
-Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
+Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
                      ProgressAccounter *accounter) const
 {
+  init_set.intersect(this->assumptions);
+
   // create current bundles list
-  std::list<Bundle> cbundles = initSet.split(max_bundle_magnitude, 1.0);
+  std::list<Bundle> cbundles = init_set.split(max_bundle_magnitude, 1.0);
 
   // create next bundles list
   std::list<Bundle> nbundles;
 
   // last polytope union in flowpipe
   PolytopesUnion last_step;
-  last_step.add(initSet);
+  last_step.add(init_set);
 
   // create flowpipe
   Flowpipe flowpipe;
-  flowpipe.push_back(initSet);
+  flowpipe.push_back(init_set);
 
 #ifdef WITH_THREADS
   std::mutex mutex;
@@ -65,9 +60,14 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
 #endif
 
   {
+    using namespace LinearAlgebra;
+
     // get the transformed bundle
     Bundle nbundle = bundle.transform(sapo->vars, sapo->dyns,
                                       sapo->tmode); // transform it
+    
+    //guarantee the assumptions
+    nbundle.intersect(sapo->assumptions);
 
     if (sapo->decomp > 0) { // if requested, decompose it
       nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
@@ -145,16 +145,7 @@ Flowpipe Sapo::reach(const Bundle &initSet, unsigned int k,
   return flowpipe;
 }
 
-/**
- * Reachable set computation for parameteric dynamical systems
- *
- * @param[in] initSet bundle representing the current reached set
- * @param[in] pSet the set of parameters
- * @param[in] k time horizon
- * @param[in,out] accounter acccounts for the computation progress
- * @returns the reached flowpipe
- */
-Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
+Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
                      unsigned int k, ProgressAccounter *accounter) const
 {
   using namespace std;
@@ -164,8 +155,10 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
   // reachable by using the parameters in that polytope.
   // This list is stored in an element of the vector cbundles
 
+  init_set.intersect(this->assumptions);
+
   // create current bundle list vector
-  std::list<Bundle> cbundle_list = initSet.split(max_bundle_magnitude, 1.0);
+  std::list<Bundle> cbundle_list = init_set.split(max_bundle_magnitude, 1.0);
   std::vector<std::list<Bundle>> cbundles(num_p_poly, cbundle_list);
 
   // create next bundles list
@@ -173,11 +166,11 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
 
   // last polytope union in flowpipe
   PolytopesUnion last_step;
-  last_step.add(initSet);
+  last_step.add(init_set);
 
   // create flowpipe
   Flowpipe flowpipe;
-  flowpipe.push_back(initSet);
+  flowpipe.push_back(init_set);
 
 #ifdef WITH_THREADS_TEMP_DISABLED
   std::mutex add_mtx;
@@ -199,6 +192,9 @@ Flowpipe Sapo::reach(const Bundle &initSet, const PolytopesUnion &pSet,
       Bundle nbundle
           = b_it->transform(sapo->vars, sapo->params, sapo->dyns, pSet,
                             sapo->tmode); // transform it
+
+      //guarantee the assumptions
+      nbundle.intersect(sapo->assumptions);
 
       if (sapo->decomp > 0) { // if requested, decompose it
         nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
@@ -360,13 +356,14 @@ public:
  * Parameter synthesis
  *
  * @param[in] sapo the Sapo object that performs the computation
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSetList a list of parameter sets
  * @param[in] formula is an STL formula providing the specification
+ * @param[in,out] accounter accounts for the computation progress
  * @returns the list of refined parameter sets
  */
 std::list<PolytopesUnion>
-synthesize_list(const Sapo &sapo, const Bundle &reachSet,
+synthesize_list(const Sapo &sapo, const Bundle &init_set,
                 const std::list<PolytopesUnion> &pSetList,
                 const std::shared_ptr<STL::STL> &formula,
                 ProgressAccounter *accounter)
@@ -376,9 +373,9 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
   std::vector<PolytopesUnion> vect_res(pSetList.size());
 
   auto synthesize_funct
-      = [&vect_res, &sapo, &reachSet, &formula,
+      = [&vect_res, &sapo, &init_set, &formula,
          &accounter](const PolytopesUnion pSet, const unsigned int idx) {
-          vect_res[idx] = sapo.synthesize(reachSet, pSet, formula);
+          vect_res[idx] = sapo.synthesize(init_set, pSet, formula);
 
           if (accounter != NULL) {
             accounter->increase_performed(formula->time_bounds().end());
@@ -421,23 +418,27 @@ synthesize_list(const Sapo &sapo, const Bundle &reachSet,
 /**
  * Parameter synthesis with splits
  *
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSet is the current parameter sets
  * @param[in] formula is an STL formula providing the specification
  * @param[in] max_splits maximum number of splits of the original
  *                       parameter set to identify a non-null solution
  * @param[in] num_of_presplits is number of splits to be performed before
  *                             the computation
- * @param[in,out] accounter acccounts for the computation progress
+ * @param[in,out] accounter accounts for the computation progress
  * @returns the list of refined parameter sets
  */
-std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
+std::list<PolytopesUnion> Sapo::synthesize(Bundle init_set,
                                            const PolytopesUnion &pSet,
                                            const std::shared_ptr<STL::STL> formula,
                                            const unsigned int max_splits,
                                            const unsigned int num_of_presplits,
                                            ProgressAccounter *accounter) const
 {
+  if (this->assumptions.size()>0) {
+    throw std::runtime_error("Assumptions not supported in synthesis yet.");
+  }
+
   std::list<PolytopesUnion> pSetList{pSet};
 
   if (num_of_presplits > 1) {
@@ -449,7 +450,7 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
 
   unsigned int num_of_splits = 0;
   std::list<PolytopesUnion> res
-      = synthesize_list(*this, reachSet, pSetList, formula, accounter);
+      = synthesize_list(*this, init_set, pSetList, formula, accounter);
 
   if (accounter) {
     already_performed_steps = max_time * pSetList.size();
@@ -459,7 +460,7 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
   while (every_set_is_empty(res) && num_of_splits++ < max_splits) {
     pSetList = get_a_finer_covering(pSetList);
 
-    res = synthesize_list(*this, reachSet, pSetList, formula, accounter);
+    res = synthesize_list(*this, init_set, pSetList, formula, accounter);
 
     if (accounter != NULL) {
       already_performed_steps += max_time * pSetList.size();
@@ -477,37 +478,37 @@ std::list<PolytopesUnion> Sapo::synthesize(const Bundle &reachSet,
 /**
  * Parmeter synthesis for conjunctions
  *
- * @param[in] reachSet bundle representing the current reached set
- * @param[in] pSet the current parameter set
+ * @param[in] init_set is the current reached set
+ * @param[in] pSet is the current parameter set
  * @param[in] conj is an STL conjunction providing the specification
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Conjunction> conj) const
 {
   PolytopesUnion Pu1
-      = this->synthesize(reachSet, pSet, conj->get_left_subformula());
+      = this->synthesize(init_set, pSet, conj->get_left_subformula());
   PolytopesUnion Pu2
-      = this->synthesize(reachSet, pSet, conj->get_right_subformula());
+      = this->synthesize(init_set, pSet, conj->get_right_subformula());
   return intersect(Pu1, Pu2);
 }
 
 /**
  * Parmeter synthesis for disjunctions
  *
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSet the current parameter set
  * @param[in] conj is an STL disjunction providing the specification
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Disjunction> disj) const
 {
   PolytopesUnion Pu
-      = this->synthesize(reachSet, pSet, disj->get_left_subformula());
-  Pu.add(this->synthesize(reachSet, pSet, disj->get_right_subformula()));
+      = this->synthesize(init_set, pSet, disj->get_left_subformula());
+  Pu.add(this->synthesize(init_set, pSet, disj->get_right_subformula()));
 
   return Pu;
 }
@@ -515,12 +516,12 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 /**
  * Parmeter synthesis for the eventually fomulas
  *
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSet the current parameter set
  * @param[in] ev is an STL eventually formula providing the specification
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Eventually> ev) const
 {
@@ -531,55 +532,58 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
                                      ev->time_bounds().end(),
                                      ev->get_subformula());
 
-  return this->synthesize(reachSet, pSet, u, 0);
+  return this->synthesize(init_set, pSet, u, 0);
 }
 
 /**
  * Parameter synthesis method
  *
- * @param[in] reachSet bundle representing the current reached set
- * @param[in] pSet the current parameter set
+ * @param[in] init_set is the initial set
+ * @param[in] pSet is the set of parameters
  * @param[in] formula is an STL specification for the model
- * @param[in,out] accounter acccounts for the computation progress
+ * @param[in,out] accounter accounts for the computation progress
  * @returns a parameter set refined according with `formula`
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(Bundle init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::STL> formula,
                                 ProgressAccounter *accounter) const
 {
   (void)accounter;
+  if (this->assumptions.size()>0) {
+    throw std::runtime_error("Assumptions not supported in synthesis yet.");
+  }
 
   switch (formula->get_type()) {
 
   // Atomic predicate
   case STL::ATOM:
-    return synthesize(reachSet, pSet,
+    return synthesize(init_set, pSet,
                       std::dynamic_pointer_cast<STL::Atom>(formula));
 
   // Conjunction
   case STL::CONJUNCTION:
-    return synthesize(reachSet, pSet,
+    return synthesize(init_set, pSet,
                       std::dynamic_pointer_cast<STL::Conjunction>(formula));
 
   // Disjunction
   case STL::DISJUNCTION:
-    return synthesize(reachSet, pSet,
+    return synthesize(init_set, pSet,
                       std::dynamic_pointer_cast<STL::Disjunction>(formula));
 
   // Until
   case STL::UNTIL:
-    return synthesize(reachSet, pSet,
+    return synthesize(init_set, pSet,
                       std::dynamic_pointer_cast<STL::Until>(formula), 0);
 
   // Always
   case STL::ALWAYS:
-    return synthesize(reachSet, pSet,
+    return synthesize(init_set, pSet,
                       std::dynamic_pointer_cast<STL::Always>(formula), 0);
 
   // Eventually
   case STL::EVENTUALLY:
-    return synthesize(reachSet, pSet,
+    return synthesize(init_set, pSet,
                       std::dynamic_pointer_cast<STL::Eventually>(formula));
 
   default:
@@ -590,28 +594,28 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
 /**
  * Parameter synthesis for atomic formulas
  *
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSet the current set of parameters
  * @param[in] sigma STL atomic formula
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Atom> atom) const
 {
-  return reachSet.synthesize(vars, params, dyns, pSet, atom);
+  return init_set.synthesize(vars, params, dyns, pSet, atom);
 }
 
 /**
  * Parameter synthesis for until formulas
  *
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSet the current set of parameters
  * @param[in] formula STL until formula
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Until> formula,
                                 const int time) const
@@ -626,11 +630,12 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   if (t_itvl > time) {
     // Synthesize wrt phi1
     PolytopesUnion P1
-        = this->synthesize(reachSet, pSet, formula->get_left_subformula());
+        = this->synthesize(init_set, pSet, formula->get_left_subformula());
+
     if (P1.is_empty()) {
       return P1; // false until
     } else {
-      return transition_and_synthesis(reachSet, P1, formula, time);
+      return transition_and_synthesis(init_set, P1, formula, time);
     }
   }
 
@@ -638,35 +643,35 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   if (t_itvl.end() > time) {
     // Refine wrt phi1 and phi2
     PolytopesUnion P1
-        = this->synthesize(reachSet, pSet, formula->get_left_subformula());
+        = this->synthesize(init_set, pSet, formula->get_left_subformula());
 
     if (P1.is_empty()) {
-      return this->synthesize(reachSet, pSet, formula->get_right_subformula());
+      return this->synthesize(init_set, pSet, formula->get_right_subformula());
     }
 
     PolytopesUnion result
-        = transition_and_synthesis(reachSet, P1, formula, time);
+        = transition_and_synthesis(init_set, P1, formula, time);
     result.add(
-        this->synthesize(reachSet, pSet, formula->get_right_subformula()));
+        this->synthesize(init_set, pSet, formula->get_right_subformula()));
 
     return result;
   }
 
   // If none of the above condition holds, then it must holds that :
   // 			t_itvl.begin()<=time and t_itvl.end()==time
-  return this->synthesize(reachSet, pSet, formula->get_right_subformula());
+  return this->synthesize(init_set, pSet, formula->get_right_subformula());
 }
 
 /**
  * Parameter synthesis for always formulas
  *
- * @param[in] reachSet bundle representing the current reached set
+ * @param[in] init_set is the initial set
  * @param[in] pSet the current set of parameters
  * @param[in] formula STL always formula
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
+PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Always> formula,
                                 const int time) const
@@ -681,25 +686,24 @@ PolytopesUnion Sapo::synthesize(const Bundle &reachSet,
   // Always interval far
   if (t_itvl > time) {
     // transition and synthesis
-    return transition_and_synthesis(reachSet, pSet, formula, time);
+    return transition_and_synthesis(init_set, pSet, formula, time);
   }
 
   // Inside Always interval
   if (t_itvl.end() > time) {
-    //		std::cout << "Inside interval (a = 0)" << std::endl;
 
     // Refine wrt phi
     PolytopesUnion P
-        = this->synthesize(reachSet, pSet, formula->get_subformula());
+        = this->synthesize(init_set, pSet, formula->get_subformula());
 
     if (P.is_empty()) {
       return P;
     }
 
-    return transition_and_synthesis(reachSet, P, formula, time);
+    return transition_and_synthesis(init_set, P, formula, time);
   }
 
   // If none of the above condition holds, then it must holds that :
   // 			t_itvl.begin()<=time and t_itvl.end()==time
-  return this->synthesize(reachSet, pSet, formula->get_subformula());
+  return this->synthesize(init_set, pSet, formula->get_subformula());
 }

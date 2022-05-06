@@ -1,3 +1,5 @@
+#include <LinearAlgebraIO.h>
+
 #include "InputData.h"
 
 #include <glpk.h>

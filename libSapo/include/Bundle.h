@@ -1,10 +1,13 @@
 /**
  * @file Bundle.h
- * Represent and manipulate bundles of parallelotopes whose intersection
- * represents a polytope
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate bundles of parallelotopes 
+ *        whose intersection represents a polytope
+ * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2016-2022
  */
 
 #ifndef BUNDLE_H_
@@ -19,8 +22,7 @@
 
 #include "STL/Atom.h"
 
-// define the default versor magnitude multiplier for bundle splits
-#define SPLIT_MAGNITUDE_RATIO 0.75
+#define SPLIT_MAGNITUDE_RATIO 0.75 //!< define the default versor magnitude multiplier for bundle splits
 
 /**
  * @brief A class for parallelotope bundles
@@ -38,13 +40,22 @@
 class Bundle
 {
 public:
+  /**
+   * @brief Approach to evaluate the image of a bundle
+   * 
+   * The are two different approches to evalutate the
+   * image of a bundle through a polynomial function:
+   * 1. One-For-One: the boundaries of any parallelotope
+   *                 image in the bundle are evaluated by
+   *                 exclusively considering the original
+   *                 paralletope itself
+   * 2. All-For-One: the boundaries of any parallelotope
+   *                 image in the bundle are evaluated by
+   *                 exploiting all the bundle templates
+   */
   typedef enum {
-    AFO, /* the image of any parallelotope in the bundle will
-          * be over-approximated by using all the templates
-          * of the bundle itself */
-    OFO  /* the image of any parallelotope in the bundle will
-          * be over-approximated by using exclusively the
-          * parallelotope own template */
+    OFO,  /* One-For-One */
+    AFO   /* All-For-One */
   } transfomation_mode;
 
 private:
@@ -52,11 +63,6 @@ private:
   LinearAlgebra::Vector<double> lower_bounds;            //!< direction upper bounds
   LinearAlgebra::Vector<double> upper_bounds;            //!< direction lower bounds
   std::vector<LinearAlgebra::Vector<int>> templates;     //!< templates matrix
-
-  // constraints over directions (assertions)
-  // constrainedDirection[i] * vars <= constraintOffset
-  std::vector<LinearAlgebra::Vector<double>> constraintDirections;
-  LinearAlgebra::Vector<double> constraintOffsets;
 
   /**
    * Compute the edge lengths
@@ -173,7 +179,7 @@ private:
    * @brief Add to the bundle templates for some directions
    *
    * @param missing_template_dirs the indices of the directions whose
-   *            template we are missing
+   *                              template we are missing
    */
   void add_templates_for(std::set<unsigned int> &missing_template_dirs);
 
@@ -181,14 +187,14 @@ public:
   /**
    * @brief A copy constructor
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   Bundle(const Bundle &orig);
 
   /**
    * @brief A move constructor
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   Bundle(Bundle &&orig);
 
@@ -206,23 +212,6 @@ public:
          const std::vector<LinearAlgebra::Vector<int>> &templates);
 
   /**
-   * @brief A constructor
-   *
-   * @param[in] directions is the direction vector
-   * @param[in] lower_bounds is the vector of direction lower bounds
-   * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] templates is the template vector
-   * @param[in] constrDirs directions that are constrained by assumptions
-   * @param[in] constrOffsets offsets of assumptions
-   */
-  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
-         const LinearAlgebra::Vector<double> &lower_bounds,
-         const LinearAlgebra::Vector<double> &upper_bounds,
-         const std::vector<LinearAlgebra::Vector<int>> &templates,
-         const std::vector<LinearAlgebra::Vector<double>> &constrDirs,
-         const LinearAlgebra::Vector<double> &constrOffsets);
-
-  /**
    * @brief A move constructor
    *
    * @param[in] directions is the direction vector
@@ -231,7 +220,8 @@ public:
    * @param[in] templates is the template vector
    */
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-         LinearAlgebra::Vector<double> &&lower_bounds, LinearAlgebra::Vector<double> &&upper_bounds,
+         LinearAlgebra::Vector<double> &&lower_bounds, 
+         LinearAlgebra::Vector<double> &&upper_bounds,
          std::vector<LinearAlgebra::Vector<int>> &&templates);
 
   /**
@@ -386,7 +376,7 @@ public:
    * @brief Get the i-th parallelotope of the bundle
    *
    * @param[in] i is the index of the aimed parallelotope
-   * @returns i-th parallelotope
+   * @returns i-th parallelotope of the bundle
    */
   Parallelotope get_parallelotope(unsigned int i) const;
 
@@ -413,7 +403,7 @@ public:
   /**
    * @brief Set the direction lower bounds
    *
-   * @param upper_bounds is the vector of the direction lower bounds
+   * @param lower_bounds is the vector of the direction lower bounds
    */
   void set_lower_bounds(const LinearAlgebra::Vector<double> &lower_bounds)
   {
@@ -421,7 +411,7 @@ public:
   }
 
   /**
-   * @brief Canonize the current bundle
+   * @brief Get a canonical bundle equivalent to the current one
    *
    * Get the canonical form for this bundle by minimizing the
    * difference between lower and upper bounds over all the
@@ -432,26 +422,50 @@ public:
   Bundle get_canonical() const;
 
   /**
-   * @brief Split a bundle in a list of smaller bundles
+   * @brief Canonize the current bundle
    *
-   * @param max_bundle_magnitude is the maximal edge length of the
-   *        resulting bundles
-   * @param split_magnitude_ratio is the ratio of the `max_bundle_magnitude`
-   *        that is used a maximal magnitude of the bundles in output
-   * @return A list of bundles whose maximal versor magnitude is
-   *        `split_magnitude_ratio`*`max_bundle_magnitude` and whose
-   *        union is the current bundle
+   * Turn this bundle in canonical form by minimizing the
+   * difference between lower and upper bounds over all the
+   * directions.
+   *
+   * @returns a reference to the canonized bundle
    */
-  std::list<Bundle> split(const double max_bundle_magnitude,
-                          const double split_magnitude_ratio
+  Bundle &canonize();
+
+  /**
+   * @brief Split the bundle in smaller sub-bundles
+   * 
+   * This method splits the bundles whose maximal magnitude, 
+   * the maximal lenght of its generators, is greater than 
+   * `max_magnitude` into a list of sub-bundles whose 
+   * maximal magnitude is 
+   * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
+   *
+   * If \f$m\f$ in the maximal magnitude of the input bundle 
+   * and the bundle itself has \f$d\f$ directions,
+   * this method may produces upto
+   * \f$(\frac{m}{\textrm{max_magnitude}})^d\f$ 
+   * sub-bundles.
+   * 
+   * @param[in] max_magnitude is the maximal magnitude that
+   *                          triggers the split
+   * @param[in] split_ratio is the ratio between maximal
+   *                        magnitude of the output bundles and
+   *                        that that triggers the split
+   * @return a list of sub-bundles whose union covers the 
+   *         input bundle
+   */
+  std::list<Bundle> split(const double max_magnitude,
+                          const double split_ratio
                           = SPLIT_MAGNITUDE_RATIO) const;
 
   /**
-   * @brief Decompose the current symbolic polytope
+   * Decompose the current symbolic polytope
    *
    * @param[in] alpha weight parameter in [0,1] for decomposition (0 for
    * distance, 1 for orthogonality)
-   * @param[in] max_iter maximum number of randomly generated templatess
+   * @param[in] max_iters maximum number of randomly generated templates
+   * @todo method does not work; it should be reviewed and fixed
    * @returns new bundle decomposing current symbolic polytope
    */
   Bundle decompose(double alpha, int max_iters);

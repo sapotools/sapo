@@ -1,10 +1,13 @@
 /**
  * @file Bundle.cpp
- * Represent and manipulate bundles of parallelotopes whose intersection
- * represents a polytope
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate bundles of parallelotopes 
+ *        whose intersection represents a polytope
+ * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2016-2022
  */
 
 #include "Bundle.h"
@@ -27,26 +30,19 @@
 
 #include <cmath>
 
+/**
+ * @brief Avoid \f$-0\f$
+ * 
+ * This macro avoids \f$-0\f$ by replacing it by \f$0\f$.
+ */
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
 
-/**
- * Copy constructor that instantiates the bundle
- *
- * @param[in] orig is the model for the new bundle
- */
 Bundle::Bundle(const Bundle &orig):
     directions(orig.directions), lower_bounds(orig.lower_bounds),
-    upper_bounds(orig.upper_bounds), templates(orig.templates),
-    constraintDirections(orig.constraintDirections),
-    constraintOffsets(orig.constraintOffsets)
+    upper_bounds(orig.upper_bounds), templates(orig.templates)
 {
 }
 
-/**
- * Move constructor that instantiates the bundle
- *
- * @param[in, out] orig is the model for the new bundle
- */
 Bundle::Bundle(Bundle &&orig)
 {
   swap(*this, orig);
@@ -58,8 +54,6 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A.upper_bounds, B.upper_bounds);
   std::swap(A.lower_bounds, B.lower_bounds);
   std::swap(A.templates, B.templates);
-  std::swap(A.constraintDirections, B.constraintDirections);
-  std::swap(A.constraintOffsets, B.constraintOffsets);
 }
 
 /**
@@ -75,59 +69,22 @@ double orthProx(LinearAlgebra::Vector<double> v1, LinearAlgebra::Vector<double> 
   return std::abs(LinearAlgebra::angle(v1, v2) - M_PI_2);
 }
 
-/**
- * Constructor
- *
- * @param[in] directions matrix of directions
- * @param[in] lower_bounds lower offsets
- * @param[in] upper_bounds upper offsets
- * @param[in] templates templates matrix
- */
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
                const std::vector<LinearAlgebra::Vector<int>> &templates):
-    Bundle(directions, lower_bounds, upper_bounds, templates, {}, {})
+    directions(directions),
+    lower_bounds(lower_bounds), upper_bounds(upper_bounds),
+    templates(templates)
 {
 }
 
-/**
- * Move constructor
- *
- * @param[in] directions matrix of directions
- * @param[in] lower_bounds lower offsets
- * @param[in] upper_bounds upper offsets
- * @param[in] templates templates matrix
- */
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds, LinearAlgebra::Vector<double> &&upper_bounds,
                std::vector<LinearAlgebra::Vector<int>> &&templates):
     directions(std::move(directions)),
     lower_bounds(std::move(lower_bounds)),
     upper_bounds(std::move(upper_bounds)), templates(std::move(templates))
-{
-}
-
-/**
- * Constructor
- *
- * @param[in] directions matrix of directions
- * @param[in] lower_bounds lower offsets
- * @param[in] upper_bounds upper offsets
- * @param[in] templates templatess matrix
- * @param[in] constrDirs directions that are constrained by assumptions
- * @param[in] constrOffsets offsets of assumptions
- */
-Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
-               const LinearAlgebra::Vector<double> &lower_bounds,
-               const LinearAlgebra::Vector<double> &upper_bounds,
-               const std::vector<LinearAlgebra::Vector<int>> &templates,
-               const std::vector<LinearAlgebra::Vector<double>> &constrDirs,
-               const LinearAlgebra::Vector<double> &constrOffsets):
-    directions(directions),
-    lower_bounds(lower_bounds), upper_bounds(upper_bounds),
-    templates(templates), constraintDirections(constrDirs),
-    constraintOffsets(constrOffsets)
 {
   using namespace std;
 
@@ -185,12 +142,6 @@ Bundle::operator Polytope() const
   return Polytope(std::move(A), std::move(b));
 }
 
-/**
- * Get the i-th parallelotope of the bundle
- *
- * @param[in] i parallelotope index to fetch
- * @returns i-th parallelotope
- */
 Parallelotope Bundle::get_parallelotope(unsigned int i) const
 {
   using namespace std;
@@ -220,42 +171,44 @@ Parallelotope Bundle::get_parallelotope(unsigned int i) const
   return Parallelotope(Lambda, lbound, ubound);
 }
 
-/**
- * Canonize the current bundle pushing the constraints toward the symbolic
- * polytope
- *
- * @returns canonized bundle
- */
 Bundle Bundle::get_canonical() const
+{
+  Bundle res(*this);
+
+  res.canonize();
+
+  return res;
+}
+
+Bundle& Bundle::canonize()
 {
   // get current polytope
   Polytope bund = *this;
-  LinearAlgebra::Vector<double> c_up_offset(this->size()), c_lo_offset(this->size());
   for (unsigned int i = 0; i < this->size(); ++i) {
-    c_up_offset[i] = bund.maximize(this->directions[i]).optimum();
-    c_lo_offset[i] = bund.minimize(this->directions[i]).optimum();
+    lower_bounds[i] = bund.maximize(this->directions[i]).optimum();
+    upper_bounds[i] = bund.minimize(this->directions[i]).optimum();
   }
-  return Bundle(this->directions, c_lo_offset, c_up_offset, templates);
+  return *this;
 }
 
 /**
  * Check whether a vector is permutation of a sorted vector
  *
  * @param[in] v1 first vector
- * @param[in] v2 a sorted vector
+ * @param[in] sorted a sorted vector
  * @returns true is v1 is a permutation of v2
  */
 bool isPermutationOfSorted(std::vector<int> v1,
-                           const std::vector<int> &v2_sorted)
+                           const std::vector<int> &sorted)
 {
-  if (v1.size() != v2_sorted.size()) {
+  if (v1.size() != sorted.size()) {
     return false;
   }
 
   std::sort(std::begin(v1), std::end(v1));
 
   auto v1_it = std::begin(v1);
-  auto v2_it = std::begin(v2_sorted);
+  auto v2_it = std::begin(sorted);
   while (v1_it != std::end(v1)) {
     if (*v1_it != *v2_it) {
       return false;
@@ -286,6 +239,18 @@ bool isPermutation(const std::vector<int> &v1, std::vector<int> v2)
   return isPermutationOfSorted(v1, v2);
 }
 
+/**
+ * @brief Test whether a row is permutation of another row
+ * 
+ * This method test whether the `i`-th row in the matrix `M`
+ * is the permutation of another row in `M`.
+ * 
+ * @tparam T is the scalar type of `M`
+ * @param M is the matrix whose rows must be tested
+ * @param i is the index of the row to be tested
+ * @return `true` if and only if the `i`-th row of `M`
+ *         is the permutation of any other row in `M`
+ */
 template<typename T>
 bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
                                   const unsigned int &i)
@@ -423,11 +388,51 @@ double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
   return maxorth;
 }
 
+/**
+ * @brief A draft horse function to split a bundle
+ * 
+ * This recursive function is a private draft horse to 
+ * split a bundle whose maximal magnitude, the maximal 
+ * lenght of its generators, is greater than 
+ * `max_magnitude`. The bundle is split into a
+ * list of sub-bundles whose maximal magnitude is 
+ * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
+ * Each sub-bundle in the output list is built recursivelly 
+ * by considering one bundle direction per time and:
+ * 1. splitting the direction in the opportune number of 
+ *    chunks, so to satisfy the sub-bundle maximal
+ *    magnitude request;
+ * 2. for each of the chuncks, setting the sub-bundle
+ *    boundaries of the selected direction according 
+ *    with the considered chunck and recursivelly 
+ *    consider the remaining directions.
+ * 
+ * If \f$m\f$ in the maximal magnitude of the input bundle 
+ * and the bundle itself has \f$d\f$ directions,
+ * this method may produces upto
+ * \f$(\frac{m}{\textrm{max_magnitude}})^d\f$ 
+ * sub-bundles.
+ * 
+ * @param[out] res is the list of the resulting sub-bundles
+ * @param[in, out] lower_bounds is the lower boundary vector  
+ *                              of the in-building sub-bundles
+ * @param[in, out] upper_bounds is the upper boundary vector 
+ *                              of the in-building sub-bundles
+ * @param[in] idx is the index of the direction to be split
+ * @param[in] splitting is the to-be-split bundle
+ * @param[in] max_magnitude is the maximal magnitude that
+ *                          triggers the split
+ * @param[in] split_ratio is the ratio between maximal
+ *                        magnitude of the output bundles and
+ *                        that that triggers the split
+ * @return a reference to the list of sub-bundles produced
+ *         splitting the input bundle
+ */
 std::list<Bundle> &
 split_bundle(std::list<Bundle> &res, LinearAlgebra::Vector<double> &lower_bounds,
              LinearAlgebra::Vector<double> &upper_bounds, const unsigned int idx,
-             const Bundle &splitting, const double &max_bundle_magnitude,
-             const double &split_magnitude_ratio, int)
+             const Bundle &splitting, const double &max_magnitude,
+             const double &split_ratio)
 {
   if (idx == splitting.get_directions().size()) {
     res.emplace_back(splitting.get_directions(), lower_bounds, upper_bounds,
@@ -437,18 +442,18 @@ split_bundle(std::list<Bundle> &res, LinearAlgebra::Vector<double> &lower_bounds
   }
 
   if (std::abs(splitting.get_upper_bound(idx) - splitting.get_lower_bound(idx))
-      > max_bundle_magnitude) {
+      > max_magnitude) {
     double lower_bound = splitting.get_lower_bound(idx);
 
     do {
       const double upper_bound = std::min(
-          lower_bound + split_magnitude_ratio * max_bundle_magnitude,
+          lower_bound + split_ratio * max_magnitude,
           splitting.get_upper_bound(idx));
 
       lower_bounds[idx] = lower_bound;
       upper_bounds[idx] = upper_bound;
       split_bundle(res, lower_bounds, upper_bounds, idx + 1, splitting,
-                   max_bundle_magnitude, split_magnitude_ratio, 2);
+                   max_magnitude, split_ratio);
 
       lower_bound = upper_bound;
     } while (splitting.get_upper_bound(idx) != lower_bound);
@@ -456,13 +461,13 @@ split_bundle(std::list<Bundle> &res, LinearAlgebra::Vector<double> &lower_bounds
     lower_bounds[idx] = splitting.get_lower_bound(idx);
     upper_bounds[idx] = splitting.get_upper_bound(idx);
     split_bundle(res, lower_bounds, upper_bounds, idx + 1, splitting,
-                 max_bundle_magnitude, split_magnitude_ratio, 3);
+                 max_magnitude, split_ratio);
   }
   return res;
 }
 
-std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
-                                const double split_magnitude_ratio) const
+std::list<Bundle> Bundle::split(const double max_magnitude,
+                                const double split_ratio) const
 {
   std::list<Bundle> split_list;
 
@@ -470,21 +475,11 @@ std::list<Bundle> Bundle::split(const double max_bundle_magnitude,
   LinearAlgebra::Vector<double> lower_bounds(this->size());
 
   split_bundle(split_list, lower_bounds, upper_bounds, 0, *this,
-               max_bundle_magnitude, split_magnitude_ratio, 3);
+               max_magnitude, split_ratio);
 
   return split_list;
 }
 
-// TODO: the following method probably does not work; it
-//       should be fixed
-/**
- * Decompose the current symbolic polytope
- *
- * @param[in] dec_weight weight parameter in [0,1] for decomposition (0 for
- * distance, 1 for orthogonality)
- * @param[in] max_iter maximum number of randomly generated templates
- * @returns new bundle decomposing current symbolic polytope
- */
 Bundle Bundle::decompose(double dec_weight, int max_iters)
 {
   using namespace std;
@@ -540,37 +535,61 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
   return Bundle(directions, lower_bounds, upper_bounds, bestT);
 }
 
+/**
+ * @brief Replace some variables in expressions by other expressions
+ * 
+ * This function replaces all the occurences of the variable `vars[i]` 
+ * in any expression in `expressions` with `subs[i]`.
+ * 
+ * @param expressions is the vector of expressions whose variable 
+ *                    occurences must be replaced 
+ * @param vars is the vector variables whose occurences must be 
+ *             replaced 
+ * @param subs is the vector of expressions that must replace 
+ *             variable occurences
+ * @return A vector of the containing the input expression 
+ *         in which each occurence of the variables in `vars`
+ *         have been replaced by the expressions in `subs`
+ */
 std::vector<SymbolicAlgebra::Expression<>>
-sub_vars(const std::vector<SymbolicAlgebra::Expression<>> &ex_list,
-         const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-         const std::vector<SymbolicAlgebra::Expression<>> &expressions)
+replace_in(const std::vector<SymbolicAlgebra::Expression<>> &expressions,
+           const std::vector<SymbolicAlgebra::Symbol<>> &vars,
+           const std::vector<SymbolicAlgebra::Expression<>> &subs)
 {
   using namespace SymbolicAlgebra;
 
   Expression<>::replacement_type repl;
 
   for (unsigned int k = 0; k < vars.size(); ++k) {
-    repl[vars[k]] = expressions[k];
+    repl[vars[k]] = subs[k];
   }
 
   std::vector<Expression<>> results;
-  for (auto ex_it = std::begin(ex_list); ex_it != std::end(ex_list); ++ex_it) {
+  for (auto ex_it = std::begin(expressions); ex_it != std::end(expressions); ++ex_it) {
     results.push_back(Expression<>(*ex_it).replace(repl));
   }
 
   return results;
 }
 
+/**
+ * @brief Compute the Bernstein coefficients for a direction
+ * 
+ * @param alpha 
+ * @param f 
+ * @param direction 
+ * @return std::vector<SymbolicAlgebra::Expression<>> 
+ */
 std::vector<SymbolicAlgebra::Expression<>>
 compute_Bern_coeffs(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
                     const std::vector<SymbolicAlgebra::Expression<>> &f,
-                    const LinearAlgebra::Vector<double> &dir_vector)
+                    const LinearAlgebra::Vector<double> &direction)
 {
   SymbolicAlgebra::Expression<> Lfog = 0;
   // upper facets
-  for (unsigned int k = 0; k < dir_vector.size(); k++) {
-    if (dir_vector[k] != 0) {
-      Lfog += dir_vector[k] * f[k];
+  for (unsigned int k = 0; k < direction.size(); k++) {
+    if (direction[k] != 0) {
+      Lfog += direction[k] * f[k];
     }
   }
 
@@ -680,17 +699,15 @@ std::pair<double, double> Bundle::ParamMinMaxCoeffFinder::find_coeffs_itvl(
  *
  * This function build the generator functions of a parallelotope.
  * In particular, it returns the symbolic vector:
- * $$
- * q + ((alpha \circ beta)^T \cdot G)^T
- * $$
- * where $\cdot$ is the row-column product, $\circ$ is the
- * Hadamard product, and $q$, $beta$, and $G$ are the base vector,
- * the vector lengths, the versors matrix of the
- * considered parallelotope $P$, respectively.
+ * \f[q + ((\textrm{alpha} \circ \beta)^T \cdot D)^T\f]
+ * where \f$\circ\f$ is the Hadamard product, and 
+ * \f$q\f$, \f$\beta\f$, and $D$ are the base vector,
+ * the generator lengths vector, the generators matrix 
+ * of the parallelotope \f$P\f$, respectively.
  *
- * @param alpha is a vector of variables.
- * @param P is the considered parallelotope.
- * @return The generator function of `P`.
+ * @param alpha is a vector of variables
+ * @param P is the considered parallelotope
+ * @return The generator function of `P`
  */
 std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
     const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
@@ -723,26 +740,45 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
   return gen_functs;
 }
 
-template<typename COND>
-class CondSyncUpdate
+/**
+ * @brief A container whose accesses are synchronized  
+ * 
+ * The objects of this class store values that can be 
+ * accessed in a syncronized way according to a mutex.
+ * The value themselves are updated exclusively if the 
+ * call `COND::operator()` on the stored value and the 
+ * possible new value, returns `true`. 
+ * 
+ * @tparam COND 
+ */
+template<typename T, typename COND>
+class CondSyncUpdater
 {
 #ifdef WITH_THREADS
-  mutable std::shared_timed_mutex mutex;
+  mutable std::shared_timed_mutex mutex; //!< The mutex that synchronizes the accesses
 #endif
-  double _value;
-  COND _cmp;
+  T _value;  //!< the value stored in the object
+  COND _cmp;      //!< the condition that must be satisfied to update the value
 
 public:
-  CondSyncUpdate()
+  /**
+   * @brief Construct a new Cond Sync Update object
+   */
+  CondSyncUpdater()
   {
     // initialize _value to the minimum wrt the order
-    _value = (_cmp(std::numeric_limits<double>::lowest(),
-                   std::numeric_limits<double>::max())
-                  ? std::numeric_limits<double>::max()
-                  : std::numeric_limits<double>::lowest());
+    _value = (_cmp(-std::numeric_limits<T>::infinity(),
+                    std::numeric_limits<T>::infinity())
+                  ? std::numeric_limits<T>::infinity()
+                  : -std::numeric_limits<T>::infinity());
   }
 
-  inline operator double() const
+  /**
+   * @brief Get the value store in the updater
+   * 
+   * @return the value stored in this object
+   */
+  inline operator T() const
   {
 #ifdef WITH_THREADS
     std::shared_lock<std::shared_timed_mutex> readlock(mutex);
@@ -750,7 +786,16 @@ public:
     return _value;
   }
 
-  void update(const double &value)
+  /**
+   * @brief Update the value if the condition holds
+   * 
+   * This method updates the value stored by the updater
+   * if and only if the call 
+   * `COND::operator()(_value, value)` returns `true`.
+   * @param value is the possible new value contained 
+   *        by the updater
+   */
+  void update(const T &value)
   {
 
 #ifdef WITH_THREADS
@@ -773,7 +818,7 @@ public:
  * @param[in] variables is the vector of variables
  * @param[in] parameters is the vector of parameter
  * @param[in] dynamics is the vector of dynamic law expressions
- * @param[in] pSet is the initial parameter set
+ * @param[in] parameter_set is the initial parameter set
  * @param[in] atom is the specification to be satisfied
  * @return a subset of `pSet` such that the transformation
  *         from the current bundle through the dynamic laws
@@ -802,7 +847,7 @@ Bundle::synthesize(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
         = build_instanciated_generator_functs(alpha, P);
 
     const std::vector<Expression<>> fog
-        = sub_vars(dynamics, variables, genFun);
+        = replace_in(dynamics, variables, genFun);
 
     // compose sigma(f(gamma(x)))
     Expression<>::replacement_type repl;
@@ -844,8 +889,8 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
   using namespace SymbolicAlgebra;
   using namespace LinearAlgebra;
 
-  vector<CondSyncUpdate<std::less<double>>> max_coeffs(this->size());
-  vector<CondSyncUpdate<std::greater<double>>> min_coeffs(this->size());
+  vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(this->size());
+  vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(this->size());
 
   std::vector<Symbol<>> alpha = get_symbol_vector("f", dim());
 
@@ -858,7 +903,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     const std::vector<SymbolicAlgebra::Expression<>> &genFun
         = build_instanciated_generator_functs(alpha, P);
     const std::vector<SymbolicAlgebra::Expression<>> genFun_f
-        = sub_vars(dynamics, variables, genFun);
+        = replace_in(dynamics, variables, genFun);
 
     const std::vector<int> &template_i = bundle->templates[template_num];
 
@@ -882,19 +927,6 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
 
       min_coeffs[dir_b].update(coeff_itvl.first);
       max_coeffs[dir_b].update(coeff_itvl.second);
-
-      // for each asserted direction, check that the new offset
-      // does not violate the constraint
-      for (unsigned assertIndex = 0;
-           assertIndex < bundle->constraintDirections.size(); assertIndex++) {
-        if (bundle->directions[dir_b]
-            == bundle->constraintDirections[assertIndex]) {
-          max_coeffs[dir_b].update(bundle->constraintOffsets[assertIndex]);
-        } else if (bundle->directions[dir_b]
-                   == -bundle->constraintDirections[assertIndex]) {
-          min_coeffs[dir_b].update(-bundle->constraintOffsets[assertIndex]);
-        }
-      }
     }
   };
 
@@ -925,12 +957,10 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res
-      = Bundle(this->directions, lower_bounds, upper_bounds, this->templates,
-               this->constraintDirections, this->constraintOffsets);
+  Bundle res(this->directions, lower_bounds, upper_bounds, this->templates);
 
   if (mode == Bundle::OFO) {
-    return res.get_canonical();
+    res.canonize();
   }
 
   return res;
@@ -988,28 +1018,24 @@ bool isIn(std::vector<int> v, std::vector<LinearAlgebra::Vector<int>> vlist)
   return false;
 }
 
-LinearSystem get_linear_system(const Bundle &A)
-{
-  using namespace LinearAlgebra;
-
-  std::vector<Vector<double>> A_dirs = A.get_directions();
-  A_dirs.reserve(2 * A_dirs.size());
-  for (unsigned int i = 0; i < A_dirs.size(); ++i) {
-    A_dirs.push_back(-A_dirs[i]);
-  }
-
-  Vector<double> A_bounds = A.get_upper_bounds();
-  A_bounds.reserve(2 * A_bounds.size());
-  for (unsigned int i = 0; i < A_bounds.size(); ++i) {
-    A_bounds.push_back(AVOID_NEG_ZERO(-A.get_lower_bound(i)));
-  }
-
-  return LinearSystem(std::move(A_dirs), std::move(A_bounds));
-}
-
+/**
+ * @brief Search for linearly dependent vector in an array 
+ * 
+ * This function search for the index `i` such that the vector 
+ * `A[i]` is linearly dependent to `v`. If `i` does exist, 
+ * then this function returns it. Otherwise, it returns the 
+ * `A`-invalid index `A.size()`.
+ * 
+ * @param v is the query vector
+ * @param A is the array of vectors among which the linear 
+ *        dependent vector is searched
+ * @return if there exists a non-empty set of `i` such that
+ *         `A[i]` and `v` are linear dependent, the minimum
+ *         value in such a set. Otherwise, `A.size()`
+ */
 unsigned int
-get_a_linearly_dependent_row_in(const LinearAlgebra::Vector<double> &v,
-                                const std::vector<LinearAlgebra::Vector<double>> &A)
+get_a_linearly_dependent_in(const LinearAlgebra::Vector<double> &v,
+                            const std::vector<LinearAlgebra::Vector<double>> &A)
 {
   for (unsigned int i = 0; i < A.size(); ++i) {
     if (LinearAlgebra::are_linearly_dependent(v, A[i])) {
@@ -1019,12 +1045,35 @@ get_a_linearly_dependent_row_in(const LinearAlgebra::Vector<double> &v,
   return A.size();
 }
 
-bool require_copy(const LinearAlgebra::Vector<int> &bundle_template,
-                  const std::vector<unsigned int> &new_ids,
-                  const unsigned int old_size)
+/**
+ * @brief Test whether a template direction have been placed before
+ *        a index threshold  
+ * 
+ * During the intersection of two bundles we have to decide whether 
+ * which templates are contained by both of them to avoid to add 
+ * twice the same template to the resulting bundle. This is done 
+ * by verifing that all the directions of the second bundle have 
+ * been mapped to directions of the intersection bundle that lay 
+ * before the number of directions of the first bundle.
+ * 
+ * @param bundle_template is the template of the second bundle 
+ *                        whose presence in the first bundle must 
+ *                        be tested
+ * @param new_indices are the indices in the intersection 
+ *                    bundle of the second bundle directions
+ * @param first_bundle_size is the number of directions in the 
+ *                          first bundle
+ * @return `false` if and only if some of the indices of the 
+ *         `bundle_template` directions have been mapped by 
+ *         `new_indices` in an index greater or equal to 
+ *         `first_bundle_size`
+ */
+bool copy_required(const LinearAlgebra::Vector<int> &bundle_template,
+                   const std::vector<unsigned int> &new_indices,
+                   const unsigned int first_bundle_size)
 {
   for (auto &id: bundle_template) {
-    if (new_ids[id] >= old_size) {
+    if (new_indices[id] >= first_bundle_size) {
       return true;
     }
   }
@@ -1032,16 +1081,6 @@ bool require_copy(const LinearAlgebra::Vector<int> &bundle_template,
   return false;
 }
 
-/**
- * @brief Get the intersection between two bundles
- *
- * This method intersects the current object and another bundle.
- * The result is stored in the current object and a reference
- * to it is returned.
- *
- * @param A is the intersecting bundle.
- * @return a reference to the updated object.
- */
 Bundle &Bundle::intersect(const Bundle &A)
 {
   unsigned int old_size = this->size();
@@ -1050,7 +1089,7 @@ Bundle &Bundle::intersect(const Bundle &A)
   // for each direction in A
   for (unsigned int i = 0; i < A.size(); ++i) {
     const LinearAlgebra::Vector<double> &A_dir = A.directions[i];
-    new_ids[i] = get_a_linearly_dependent_row_in(A_dir, this->directions);
+    new_ids[i] = get_a_linearly_dependent_in(A_dir, this->directions);
 
     // if the direction is not present in this object
     if (new_ids[i] == this->size()) {
@@ -1075,14 +1114,18 @@ Bundle &Bundle::intersect(const Bundle &A)
     }
   }
 
-  // copy missing templates
+  // check whether some of the templates must be copied
   for (unsigned int i = 0; i < A.templates.size(); ++i) {
     const std::vector<int> &A_template = A.templates[i];
-    if (require_copy(A_template, new_ids, old_size)) {
+    if (copy_required(A_template, new_ids, old_size)) {
+
+      // if this is the case, copy and update the template indices
       std::vector<int> t_copy(A_template);
       for (unsigned int j = 0; j < t_copy.size(); ++j) {
         t_copy[j] = new_ids[t_copy[j]];
       }
+
+      // add the new template to the intesected bundle
       this->templates.push_back(t_copy);
     }
   }
@@ -1090,27 +1133,21 @@ Bundle &Bundle::intersect(const Bundle &A)
   return *this;
 }
 
-/**
- * @brief Add to the bundle templates for some directions
- *
- * @param missing_template_dirs the indices of the directions whose
- *            template we are missing
- */
 void Bundle::add_templates_for(
-    std::set<unsigned int> &missing_template_directions)
+    std::set<unsigned int> &to_be_copied_directions)
 {
   using namespace LinearAlgebra;
   using namespace LinearAlgebra::Dense;
 
-  while (!missing_template_directions.empty()) {
+  while (!to_be_copied_directions.empty()) {
     // fill T with all the bundle directions starting
     // from those not included in a template
     Matrix<double> T = this->directions;
-    Vector<int> row_pos;
-    std::iota(std::begin(row_pos), std::end(row_pos), 1);
+    Vector<int> row_pos(T.size());
+    std::iota(std::begin(row_pos), std::end(row_pos), 0);
 
     unsigned int j = 0;
-    for (unsigned int i: missing_template_directions) {
+    for (unsigned int i: to_be_copied_directions) {
       std::swap(T[i], T[j]);
       std::swap(row_pos[i], row_pos[j]);
       ++j;
@@ -1121,14 +1158,14 @@ void Bundle::add_templates_for(
     // to discover them
     auto fP = LUP_Factorization<double>(T).P();
     row_pos = fP(row_pos);
-    Vector<int> new_temp(this->dim());
+    Vector<int> new_template(this->dim());
 
-    std::copy(std::begin(row_pos), std::begin(row_pos) + new_temp.size(),
-              std::begin(new_temp));
+    std::copy(std::begin(row_pos), std::begin(row_pos) + new_template.size(),
+              std::begin(new_template));
 
-    this->templates.push_back(new_temp);
-    for (int i: new_temp) {
-      missing_template_directions.erase((unsigned int)i);
+    this->templates.push_back(new_template);
+    for (int i: new_template) {
+      to_be_copied_directions.erase((unsigned int)i);
     }
   }
 }
@@ -1141,8 +1178,8 @@ void Bundle::add_templates_for(
  * The result is stored in the current object and a reference to it
  * is returned.
  *
- * @param ls is the intersecting bundle.
- * @return a reference to the updated object.
+ * @param ls is the intersecting linear system
+ * @return a reference to the updated object
  */
 Bundle &Bundle::intersect(const LinearSystem &ls)
 {
@@ -1157,17 +1194,15 @@ Bundle &Bundle::intersect(const LinearSystem &ls)
   for (unsigned int i = 0; i < A.size(); ++i) {
     const LinearAlgebra::Vector<double> &A_row = A[i];
 
-    new_ids[i] = get_a_linearly_dependent_row_in(A_row, this->directions);
+    new_ids[i] = get_a_linearly_dependent_in(A_row, this->directions);
 
     // if the direction is not present in this object
     if (new_ids[i] == this->size()) {
       // compute a non-influent lower bound for the row
-      LinearSystem this_ls = get_linear_system(*this);
-
-      double lower_bound = this_ls.minimize(A_row).optimum();
+      double lower_bound = ((Polytope)*this).minimize(A_row).optimum();
 
       // add the direction and the corresponding boundaries
-      outside_templates.insert(this->directions.size());
+      outside_templates.insert(new_ids[i]);
       this->directions.push_back(A_row);
       this->lower_bounds.push_back(lower_bound);
       this->upper_bounds.push_back(ls.getb(i));
@@ -1176,9 +1211,18 @@ Bundle &Bundle::intersect(const LinearSystem &ls)
       const unsigned int &new_i = new_ids[i];
       const double dep_coeff = this->directions[new_i] / A_row;
 
-      // if necessary, decrease the upper bound
-      this->upper_bounds[new_i]
-          = std::min(this->upper_bounds[new_i], ls.getb(i) * dep_coeff);
+      auto b_rescaled = ls.getb(i) * dep_coeff;
+      if (dep_coeff>0) {
+        // if necessary, decrease the upper bound
+        if (this->upper_bounds[new_i] > b_rescaled) {
+          this->upper_bounds[new_i] = b_rescaled;
+        }
+      } else {
+        // or increase the lower bound
+        if (this->lower_bounds[new_i] < b_rescaled) {
+          this->lower_bounds[new_i] = b_rescaled;
+        }
+      }
     }
   }
 

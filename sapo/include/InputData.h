@@ -4,6 +4,13 @@
 #include <vector>
 #include <algorithm>
 
+
+#include <STL/STL.h>
+#include <STL/Conjunction.h>
+
+#include <LinearSystem.h>
+#include <LinearAlgebra.h>
+
 #include "AbsSynIO.h"
 
 #include "types.h"
@@ -12,12 +19,6 @@
 #include "Constant.h"
 #include "Definition.h"
 #include "Direction.h"
-
-#include "STL.h"
-#include "Conjunction.h"
-
-#include "LinearSystem.h"
-#include "LinearAlgebra.h"
 
 namespace AbsSyn
 {
@@ -227,14 +228,17 @@ public:
   {
     return spec != NULL;
   }
+
   void addSpec(std::shared_ptr<STL::STL> f)
   {
-    if (spec == NULL)
+    if (spec == NULL) {
       spec = f;
-    else
+    } else {
       spec = std::make_shared<STL::Conjunction>(spec, f);
+    }
   }
-  const std::shared_ptr<STL::STL> getSpec() const
+
+  const std::shared_ptr<STL::STL> specification() const
   {
     return spec;
   }
