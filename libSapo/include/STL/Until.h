@@ -104,6 +104,13 @@ public:
   }
 
   /**
+   * @brief Get the formula variables
+   * 
+   * @return the set of formula variables
+   */
+  std::set<SymbolicAlgebra::Symbol<>> get_variables() const;
+
+  /**
    * @brief Get the formula time bounds 
    * 
    * @return the time interval affecting the formula sematics

@@ -106,6 +106,16 @@ public:
   }
 
   /**
+   * @brief Get the formula variables
+   * 
+   * @return the set of formula variables
+   */
+  inline std::set<SymbolicAlgebra::Symbol<>> get_variables() const
+  {
+    return _expr.get_symbols();
+  }
+
+  /**
    * @brief Destroy the STL atomic formula
    */
   ~Atom();

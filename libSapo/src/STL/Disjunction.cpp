@@ -11,7 +11,7 @@
 
 #include "Disjunction.h"
 
-#include <iostream>
+#include <algorithm>
 
 namespace STL
 {
@@ -44,6 +44,21 @@ Disjunction::Disjunction(const std::shared_ptr<STL> left,
 std::ostream &Disjunction::print(std::ostream &os) const
 {
   return os << "(" << *_left << ") || (" << *_right << ")";
+}
+
+/**
+ * @brief Get the formula variables
+ * 
+ * @return the set of formula variables
+ */
+std::set<SymbolicAlgebra::Symbol<>> Disjunction::get_variables() const
+{
+  auto variables = _left->get_variables();
+  auto right_vars = _right->get_variables();
+
+  variables.insert(std::begin(right_vars), std::end(right_vars));
+
+  return variables;
 }
 
 /**

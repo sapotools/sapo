@@ -16,6 +16,7 @@
 #include <string>
 #include <memory>
 
+#include "SymbolicAlgebra.h"
 #include "TimeInterval.h"
 
 namespace STL {
@@ -89,7 +90,14 @@ public:
    * 
    * @return The equivalent STL formula in PNF
    */
-  const virtual std::shared_ptr<STL> get_PNF() const = 0;
+  virtual const std::shared_ptr<STL> get_PNF() const = 0;
+
+  /**
+   * @brief Get the formula variables
+   * 
+   * @return the set of formula variables
+   */
+  virtual std::set<SymbolicAlgebra::Symbol<>> get_variables() const = 0;
 
   /**
    * @brief Get the formula time bounds 

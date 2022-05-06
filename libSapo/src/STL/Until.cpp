@@ -11,6 +11,7 @@
 
 #include "Until.h"
 
+#include <algorithm>
 namespace STL
 {
 
@@ -31,6 +32,21 @@ Until::Until(const std::shared_ptr<STL> left,
              const std::shared_ptr<STL> right):
     STL(UNTIL), _left(left), _right(right), _t_itvl(begin, end)
 {
+}
+
+/**
+ * @brief Get the formula variables
+ * 
+ * @return the set of formula variables
+ */
+std::set<SymbolicAlgebra::Symbol<>> Until::get_variables() const
+{
+  auto variables = _left->get_variables();
+  auto right_vars = _right->get_variables();
+
+  variables.insert(std::begin(right_vars), std::end(right_vars));
+
+  return variables;
 }
 
 /**
