@@ -1,9 +1,11 @@
 /**
  * @file LinearAlgebra.h
- * Contains linear algebra classes and functions code
- *
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Contains linear algebra classes and functions code
  * @version 0.1
+ * @date 2021-11-20
+ * 
+ * @copyright Copyright (c) 2021-2022
  */
 
 #ifndef LINEAR_ALGEBRA_H
@@ -644,7 +646,7 @@ public:
    * @param P is the permutation to be printed
    * @return a output stream reference
    */
-  friend std::ostream &operator<<(std::ostream &os, const Permutation &P);
+  friend inline std::ostream &operator<<(std::ostream &os, const Permutation &P);
 };
 
 /**

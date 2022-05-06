@@ -1,9 +1,11 @@
 /**
- * @file LinearAlgebra.h
- * Contains linear algebra classes and functions code
- *
+ * @file LinearAlgebraIO.h
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Contains linear algebra print functions
  * @version 0.1
+ * @date 2021-11-26
+ * 
+ * @copyright Copyright (c) 2021-2022
  */
 
 #ifndef LINEAR_ALGEBRA_IO_H
@@ -82,7 +84,7 @@ std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const LinearAlgebra::Permutation &P)
+inline std::ostream &operator<<(std::ostream &os, const LinearAlgebra::Permutation &P)
 {
   os << "Permutation[";
   for (auto it = P.begin(); it != P.end(); ++it) {
