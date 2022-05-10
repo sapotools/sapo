@@ -12,12 +12,13 @@
 
 std::vector<SymbolicAlgebra::Symbol<>>
 get_symbol_vector(const std::string &basename,
-                  const unsigned int number_of_symbols)
+                  const size_t size)
 {
   using namespace SymbolicAlgebra;
 
   std::vector<Symbol<>> symbol_vector;
-  for (unsigned int i = 0; i < number_of_symbols; ++i) {
+  symbol_vector.reserve(size);
+  for (unsigned int i = 0; i < size; ++i) {
     std::ostringstream oss;
     oss << basename << i;
 

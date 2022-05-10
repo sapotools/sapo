@@ -76,13 +76,13 @@ void print_variables_and_parameters(OSTREAM &os, const Model& model)
 {
   using OF = OutputFormatter<OSTREAM>;
 
-  os << OF::field_header("variables");
+  os << OF::field_begin("variables");
   print_symbol_vector(os, model.variables());
-  os << OF::field_footer();
+  os << OF::field_end();
   if (model.parameters().size() != 0) {
-    os << OF::field_separator() << OF::field_header("parameters");
+    os << OF::field_separator() << OF::field_begin("parameters");
     print_symbol_vector(os, model.parameters());
-    os << OF::field_footer();
+    os << OF::field_end();
   }
 }
 
@@ -94,10 +94,10 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator() << OF::field_header("data");
+  os << OF::field_separator() << OF::field_begin("data");
 
   os << OF::list_begin() << OF::object_header()
-     << OF::field_header("flowpipe");
+     << OF::field_begin("flowpipe");
 
   ProgressAccounter *accounter = NULL;
   if (display_progress) {
@@ -117,8 +117,8 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
                      sapo.time_horizon, accounter);
   }
 
-  os << OF::field_footer() << OF::object_footer() << OF::list_end()
-     << OF::field_footer() << OF::object_footer();
+  os << OF::field_end() << OF::object_footer() << OF::list_end()
+     << OF::field_end() << OF::object_footer();
 
   if (display_progress) {
     delete accounter;
@@ -134,7 +134,7 @@ void output_synthesis(OSTREAM &os, const Model& model,
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator() << OF::field_header("data");
+  os << OF::field_separator() << OF::field_begin("data");
 
   if (every_set_is_empty(synth_params)) {
     os << OF::empty_list();
@@ -149,17 +149,17 @@ void output_synthesis(OSTREAM &os, const Model& model,
           os << OF::list_separator();
         }
         not_first = true;
-        os << OF::object_header() << OF::field_header("parameter set") << *p_it
-           << OF::field_footer() << OF::field_separator()
-           << OF::field_header("flowpipe") << flowpipes[params_idx++]
-           << OF::field_footer() << OF::object_footer();
+        os << OF::object_header() << OF::field_begin("parameter set") << *p_it
+           << OF::field_end() << OF::field_separator()
+           << OF::field_begin("flowpipe") << flowpipes[params_idx++]
+           << OF::field_end() << OF::object_footer();
       } else {
         ++params_idx;
       }
     }
     os << OF::list_end();
   }
-  os << OF::field_footer() << OF::object_footer();
+  os << OF::field_end() << OF::object_footer();
 }
 
 unsigned int get_max_steps(const Sapo &sapo, const Model& model)

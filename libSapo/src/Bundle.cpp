@@ -26,7 +26,7 @@
 
 #include "LinearAlgebra.h"
 
-#define _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES //!< This macro enables the use of cmath constants
 
 #include <cmath>
 
@@ -721,14 +721,14 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
     gen_functs.push_back(*it);
   }
 
-  const std::vector<Vector<double>> &versors = P.versors();
+  const std::vector<Vector<double>> &generators = P.generators();
 
-  for (unsigned int i = 0; i < versors.size(); i++) {
+  for (unsigned int i = 0; i < generators.size(); i++) {
     // some of the non-null rows of the generator matrix
     // correspond to 0-length dimensions in degenerous
     // parallelotopes and must be avoided
     if (P.lengths()[i] != 0) {
-      Vector<double> vector = P.lengths()[i] * versors[i];
+      Vector<double> vector = P.lengths()[i] * generators[i];
       for (unsigned int j = 0; j < vector.size(); j++) {
         if (vector[j] != 0) {
           gen_functs[j] += alpha[i] * vector[j];

@@ -18,16 +18,8 @@
 
 using namespace std;
 
-/**
- * Constructor that instantiates an empty set
- */
 PolytopesUnion::PolytopesUnion() {}
 
-/**
- * Constructor that instantiates a singleton
- *
- * @param[in] P is a polytope
- */
 PolytopesUnion::PolytopesUnion(const Polytope &P)
 {
   if (!P.is_empty()) {
@@ -36,12 +28,6 @@ PolytopesUnion::PolytopesUnion(const Polytope &P)
     this->back().simplify();
   }
 }
-
-/**
- * Constructor that instantiates a singleton
- *
- * @param[in] P is a polytope
- */
 
 PolytopesUnion::PolytopesUnion(Polytope &&P)
 {
@@ -146,11 +132,6 @@ bool PolytopesUnion::contains(const Polytope &P)
 #endif // WITH_THREADS
 }
 
-/**
- * Add a polytope to the set
- *
- * @param[in] P is the polytope to be added
- */
 PolytopesUnion &PolytopesUnion::add(const Polytope &P)
 {
   if (size() != 0 && (front().dim() != P.dim())) {
@@ -182,11 +163,6 @@ PolytopesUnion &PolytopesUnion::add(const Polytope &P)
   return *this;
 }
 
-/**
- * Add a polytope to the set
- *
- * @param[in] ls polytope to be added
- */
 PolytopesUnion &PolytopesUnion::add(Polytope &&P)
 {
   if (size() != 0 && (front().dim() != P.dim())) {
@@ -283,14 +259,6 @@ PolytopesUnion &PolytopesUnion::simplify()
   return *this;
 }
 
-/**
- * Compute the intersection of two polytopes
- *
- * @param[in] A is a polytope
- * @param[in] B is a polytope
- * @return the polytopes union representing the intersection
- *     of the two parameters.
- */
 PolytopesUnion intersect(const PolytopesUnion &A, const PolytopesUnion &B)
 {
   PolytopesUnion result;
@@ -308,14 +276,6 @@ PolytopesUnion intersect(const PolytopesUnion &A, const PolytopesUnion &B)
   return result;
 }
 
-/**
- * Compute the intersection between a polytopes unions and a polytope
- *
- * @param[in] A is a polytopes union
- * @param[in] B is a polytope
- * @return the polytopes union that represents the set of values satisfying
- * both the parameters
- */
 PolytopesUnion intersect(const PolytopesUnion &A, const Polytope &B)
 {
   PolytopesUnion result;
@@ -331,12 +291,6 @@ PolytopesUnion intersect(const PolytopesUnion &A, const Polytope &B)
   return result;
 }
 
-/**
- * Union of polytopes unions
- *
- * @param[in] Pu the polytopes union to be adjoint
- * @returns a reference to the updated union.
- */
 PolytopesUnion &PolytopesUnion::add(const PolytopesUnion &Pu)
 {
   for (auto it = std::cbegin(Pu); it != std::cend(Pu); ++it) {
@@ -351,12 +305,6 @@ PolytopesUnion unite(const PolytopesUnion &A, const PolytopesUnion &B)
   return PolytopesUnion(A).add(B);
 }
 
-/**
- * Union of polytopes unions
- *
- * @param[in] Pu the polytopes union to be adjoint
- * @returns a reference to the updated union.
- */
 PolytopesUnion &PolytopesUnion::add(PolytopesUnion &&Pu)
 {
   for (auto it = std::begin(Pu); it != std::end(Pu); ++it) {
@@ -366,13 +314,6 @@ PolytopesUnion &PolytopesUnion::add(PolytopesUnion &&Pu)
   return *this;
 }
 
-/**
- * Compute the union of two polytopes
- *
- * @param[in] A is a polytope
- * @param[in] B is a polytope
- * @return the union of the two polytopes.
- */
 PolytopesUnion unite(const Polytope &A, const Polytope &B)
 {
   PolytopesUnion result(A);
@@ -424,24 +365,6 @@ bool PolytopesUnion::is_empty() const
   }
 
   return true;
-}
-
-/**
- * Print the polytope in Matlab format (for plotregion script)
- *
- * @param[in] os is the output stream
- * @param[in] color color of the polytope to plot
- */
-void PolytopesUnion::plotRegion(std::ostream &os, const char color) const
-{
-  for (auto it = std::begin(*this); it != std::end(*this); ++it) {
-    it->plotRegion(os, color);
-  }
-}
-
-PolytopesUnion::~PolytopesUnion()
-{
-  // TODO Auto-generated destructor stub
 }
 
 bool every_set_is_empty(const std::list<PolytopesUnion> &ps_list)

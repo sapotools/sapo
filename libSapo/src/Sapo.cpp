@@ -276,6 +276,19 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
   return flowpipe;
 }
 
+/**
+ * @brief Get every a finer covering of a set
+ * 
+ * This method takes a list of polytope unions and splits 
+ * each of its objects in `num_of_polytope_splits` polytope
+ * unions that cover the original sets.
+ * 
+ * @param orig is a list of poytope unions
+ * @param num_of_polytope_splits is the number of splits to 
+ *        be performed
+ * @return a list of polytopes unions that cover the  
+ *         region covered `orig`
+ */
 std::list<PolytopesUnion>
 get_a_finer_covering(const std::list<PolytopesUnion> &orig,
                      const unsigned int num_of_polytope_splits

@@ -11,8 +11,6 @@
 
 #include "LinearAlgebra.h"
 
-#define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
-
 using namespace std;
 
 /**
@@ -45,43 +43,18 @@ bool Polytope::contains(const Polytope &P) const
   return true;
 }
 
-template<typename T>
-bool are_independent(const std::vector<T> &v1, const std::vector<T> &v2)
-{
-  if (v1.size() != v2.size()) {
-    return true;
-  }
-
-  if (v1.size() == 0) {
-    return false;
-  }
-
-  unsigned int fnz_v1(0);
-  while (fnz_v1 < v1.size() && v1[fnz_v1] == 0)
-    fnz_v1++;
-
-  unsigned int fnz_v2(0);
-  while (fnz_v2 < v2.size() && v2[fnz_v2] == 0)
-    fnz_v2++;
-
-  if (fnz_v1 != fnz_v2) {
-    return true;
-  }
-
-  for (unsigned int i = 1; i < v1.size(); ++i) {
-    if (v1[fnz_v1] * v2[i]
-        != v2[fnz_v2] * v1[i]) { // this is to avoid numerical errors,
-                                 // but it can produce overflows
-      return true;
-    }
-  }
-
-  return false;
-}
-
+/**
+ * @brief Get a set of linear independent rows in a matrix
+ * 
+ * @param A is the matrix whose linear independent rows must be found
+ * @return a vector containing the indices of linear independent
+ *         rows in the matrix `A`
+ */
 std::vector<unsigned int>
-get_a_polytope_base(const std::vector<std::vector<double>> &A)
+get_a_polytope_base(const LinearAlgebra::Dense::Matrix<double> &A)
 {
+  using namespace LinearAlgebra;
+
   if (A.size() == 0) {
     return std::vector<unsigned int>();
   }
@@ -93,7 +66,7 @@ get_a_polytope_base(const std::vector<std::vector<double>> &A)
     bool indep_from_base = true;
     auto b_it = std::begin(base);
     while (indep_from_base && b_it != std::end(base)) {
-      indep_from_base = are_independent(A[row_idx], A[*b_it]);
+      indep_from_base = !are_linearly_dependent(A[row_idx], A[*b_it]);
       ++b_it;
     }
 
@@ -106,8 +79,15 @@ get_a_polytope_base(const std::vector<std::vector<double>> &A)
   return base;
 }
 
-inline std::vector<bool>
-get_a_polytope_base_bit_vector(const std::vector<std::vector<double>> &A)
+/**
+ * @brief Get the bit-vector of a set of linear independent rows in a matrix
+ * 
+ * @param A is the matrix whose linear independent rows must be found
+ * @return a Boolean vector such that the indices of all the `true` 
+ *         values correspond to a linearly independent set in `A`
+ */
+std::vector<bool>
+get_a_polytope_base_bit_vector(const LinearAlgebra::Dense::Matrix<double> &A)
 {
   std::vector<unsigned int> base = get_a_polytope_base(A);
 

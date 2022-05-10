@@ -11,6 +11,15 @@
 
 #include "LinearSystem.h"
 
+/**
+ * @brief A polytope representation class
+ * 
+ * Polytopes are bounded convex sets representabled 
+ * by a linear system \f[A \cdot x \leq b\f]. 
+ * This class extends the `LinearSystem` class and 
+ * provides some set-based methods and functions 
+ * such as `is_empty` or `intersect`.
+ */
 class Polytope : public LinearSystem
 {
 

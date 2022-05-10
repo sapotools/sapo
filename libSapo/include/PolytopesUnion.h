@@ -15,12 +15,22 @@
 #include "Polytope.h"
 #include "OutputFormatter.h"
 
-#define MINIMIZE_LS_SET_REPRESENTATION true
-
+/**
+ * @brief Unions of polytopes
+ * 
+ * This class represents unions of polytopes.
+ */
 class PolytopesUnion : private std::vector<Polytope>
 {
 public:
+  /**
+   * @brief A constant iterator alias
+   */
   using const_iterator = std::vector<Polytope>::const_iterator;
+
+  /**
+   * @brief A iterator alias
+   */
   using iterator = std::vector<Polytope>::iterator;
 
   /**
@@ -84,7 +94,7 @@ public:
   /**
    * Add a polytope to the union
    *
-   * @param[in] P polytope to be added
+   * @param[in] P is the polytope to be added
    * @return a reference to the new polytopes union
    */
   PolytopesUnion &add(Polytope &&P);
@@ -157,21 +167,41 @@ public:
    */
   unsigned int dim() const;
 
+  /**
+   * @brief The begin iterator
+   * 
+   * @return the begin iterator
+   */
   iterator begin()
   {
     return std::vector<Polytope>::begin();
   }
 
+  /**
+   * @brief The end iterator
+   * 
+   * @return the end iterator
+   */
   iterator end()
   {
     return std::vector<Polytope>::end();
   }
 
+  /**
+   * @brief The constant begin iterator
+   * 
+   * @return the constant begin iterator
+   */
   const_iterator begin() const
   {
     return std::vector<Polytope>::begin();
   }
 
+  /**
+   * @brief The constant end iterator
+   * 
+   * @return the constant end iterator
+   */
   const_iterator end() const
   {
     return std::vector<Polytope>::end();
@@ -185,20 +215,12 @@ public:
   bool is_empty() const;
 
   /**
-   * Print the polytopes union in Matlab format (for plotregion script)
-   *
-   * @param[in] os is the output stream
-   * @param[in] color color of the polytope to plot
-   */
-  void plotRegion(std::ostream &os = std::cout, const char color = ' ') const;
-
-  /**
    * Compute the intersection of two polytopes unions
    *
    * @param[in] A is a polytopes union
    * @param[in] B is a polytopes union
    * @return the polytopes union representing the intersection of the
-   * parameters.
+   *         parameters
    */
   friend PolytopesUnion intersect(const PolytopesUnion &A,
                                   const PolytopesUnion &B);
@@ -209,11 +231,9 @@ public:
    * @param[in] A is a polytopes union
    * @param[in] B is a polytope
    * @return the polytopes union representing the intersection of the
-   * parameters.
+   *         parameters
    */
   friend PolytopesUnion intersect(const PolytopesUnion &A, const Polytope &B);
-
-  ~PolytopesUnion();
 };
 
 /**
@@ -265,6 +285,14 @@ PolytopesUnion unite(const Polytope &A, const Polytope &B);
  */
 bool every_set_is_empty(const std::list<PolytopesUnion> &ps_list);
 
+/**
+ * @brief Print a polytope union in a stream
+ * 
+ * @tparam OSTREAM is the output stream type
+ * @param os is the output stream
+ * @param Pu is the polytope union to be printed
+ * @return a reference to the output stream
+ */
 template<typename OSTREAM>
 OSTREAM &operator<<(OSTREAM &os, const PolytopesUnion &Pu)
 {
