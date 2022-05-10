@@ -830,16 +830,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
                                           << inv << " != " << correct << " " << (inv-correct));   
     }
 
-    /*
     std::vector<Matrix<T>> test_errs{
-        //{{0,2,4},{6,8,10},{12,14,16}},
+        {{0,2,4},{6,8,10},{12,14,16}},
         {{0,1,2},{3,4,5},{6,7,8}},
         {{0,0,0},{0,0,0},{0,0,0}},
-        //{{0,1,2},{3,4,5},{1,1,1}},
+        {{0,1,2},{3,4,5},{1,1,1}},
     };
     for (auto test_it = std::begin(test_errs); test_it != std::end(test_errs); ++test_it) {
         LinearAlgebra::Sparse::Matrix<T> A(*test_it);
         BOOST_REQUIRE_THROW(inverse(A), std::domain_error);
     }
-    */
 }

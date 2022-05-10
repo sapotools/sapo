@@ -2245,18 +2245,24 @@ class LUP_Factorization
   {
     std::vector<T> x(b.size());
 
+    unsigned int i=0;
     for (auto row_it = std::begin(_L._matrix); row_it != std::end(_L._matrix);
-         ++row_it) {
-      const T &diag_value = std::rbegin(row_it->second)->second;
-      if (diag_value == 0) {
-        throw std::domain_error("The linear system is underdetermined.");
+         ++row_it, ++i) {
+     if (std::begin(row_it->second)==std::end(row_it->second) ||   
+            row_it->first != i) {
+          throw std::domain_error("The linear system is underdetermined.");
       }
       T value = b[row_it->first];
       for (auto elem_it = ++std::rbegin(row_it->second);
            elem_it != std::rend(row_it->second); ++elem_it) {
         value -= elem_it->second * x[elem_it->first];
       }
+      const T &diag_value = std::rbegin(row_it->second)->second;
       x[row_it->first] = value / diag_value;
+    }
+
+    if (i != _L.num_of_cols()) {
+      throw std::domain_error("The linear system is underdetermined.");
     }
 
     return x;
@@ -2272,18 +2278,25 @@ class LUP_Factorization
   {
     std::vector<T> x(b.size());
 
+    unsigned int i=_U.num_of_rows();
     for (auto row_it = std::rbegin(_U._matrix);
-         row_it != std::rend(_U._matrix); ++row_it) {
-      const T &diag_value = std::begin(row_it->second)->second;
-      if (diag_value == 0) {
-        throw std::domain_error("The linear system is underdetermined.");
+         row_it != std::rend(_U._matrix); ++row_it, --i) {
+
+      if (std::begin(row_it->second)==std::end(row_it->second) ||   
+            row_it->first != i-1) {
+          throw std::domain_error("The linear system is underdetermined.");
       }
       T value = b[row_it->first];
       for (auto elem_it = ++std::begin(row_it->second);
            elem_it != std::end(row_it->second); ++elem_it) {
         value -= elem_it->second * x[elem_it->first];
       }
+      const T &diag_value = std::begin(row_it->second)->second;
       x[row_it->first] = value / diag_value;
+    }
+
+    if (i != 0) {
+      throw std::domain_error("The linear system is underdetermined.");
     }
 
     return x;
