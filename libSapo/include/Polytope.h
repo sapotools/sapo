@@ -45,6 +45,7 @@ public:
    *
    * @param[in] A template matrix
    * @param[in] b offset vector
+   * @todo Test polytope closeness
    */
   Polytope(const std::vector<std::vector<double>> &A,
            const std::vector<double> &b):
@@ -68,6 +69,7 @@ public:
    *
    * @param[in] vars list of variables appearing in the constraints
    * @param[in] constraints symbolic constraints
+   * @todo Test polytope closeness
    */
   Polytope(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
            const std::vector<SymbolicAlgebra::Expression<>> &constraints):
@@ -158,7 +160,7 @@ public:
    *  This method splits a polytope in a list of polytopes such
    *  that their set union equals the original polytope. Each
    *  polytope in the original list is split in
-   *  $2^\textrm{num_of_splits}$ polytopes at most.
+   *  \f$2^\textrm{num_of_splits}\f$ polytopes at most.
    *
    * @param num_of_splits is the number of splits to performed.
    * @return A list of polytopes such that their union equals
@@ -183,12 +185,14 @@ public:
    */
   double bounding_box_volume() const;
 
-  void plotRegion(std::ostream &os = std::cout, const char color = ' ') const;
-
-  void plotRegionT(std::ostream &os, const double t) const;
-  void plotRegion(std::ostream &os, const std::vector<int> &rows,
-                  const std::vector<int> &cols) const;
-
+  /**
+   * @brief Swap two polytopes
+   * 
+   * This method swaps two polytope objects.
+   * 
+   * @param P1 is a polytope
+   * @param P2 is a polytope
+   */
   friend void swap(Polytope &P1, Polytope &P2);
 
   /**
