@@ -22,14 +22,11 @@
  */
 class Parallelotope
 {
-  using Vector = std::vector<double>;
-  using Matrix = std::vector<Vector>;
-
 private:
-  Matrix _versors; //!< versors
+  std::vector<LinearAlgebra::Vector<double>> _generators; //!< generators
 
-  std::vector<double> _base_vertex; //!< base vertex
-  std::vector<double> _lengths;     //!< tensors original lengths
+  LinearAlgebra::Vector<double> _base_vertex; //!< base vertex
+  std::vector<double> _lengths;               //!< tensors original lengths
 
 public:
   /**
@@ -39,8 +36,9 @@ public:
    * @param[in] lower_bound is the lower bound offsets of the parallelotope
    * @param[in] upper_bound is the upper bound offsets of the parallelotope
    */
-  Parallelotope(const Matrix &directions, const Vector &lower_bound,
-                const Vector &upper_bound);
+  Parallelotope(const std::vector<LinearAlgebra::Vector<double>> &directions, 
+                const LinearAlgebra::Vector<double> &lower_bound,
+                const LinearAlgebra::Vector<double> &upper_bound);
 
   /**
    * Get the parallelotope dimension
@@ -49,7 +47,7 @@ public:
    */
   unsigned int dim() const
   {
-    return (_versors.size() == 0 ? 0 : _versors.front().size());
+    return (_generators.size() == 0 ? 0 : _generators.front().size());
   }
 
   // TODO: test the following method
@@ -60,24 +58,44 @@ public:
    */
   operator Polytope() const;
 
-  const std::vector<double> &base_vertex() const
+  /**
+   * @brief Get the base vertex
+   * 
+   * @return a reference to the base vertex
+   */
+  const LinearAlgebra::Vector<double> &base_vertex() const
   {
     return this->_base_vertex;
   }
 
+  /**
+   * @brief Get the generator lengths
+   * 
+   * @return a reference to the generator lengths
+   */
   const std::vector<double> &lengths() const
   {
     return this->_lengths;
   }
 
-  // TODO: this method does not return versors. Why is it
-  //       called in this way? Are we assuming that the
-  //       returned values are versors?
-  const Matrix &versors() const
+  /**
+   * @brief Get the parallelotope generators
+   * 
+   * @return a reference to the parallelotope generators
+   */
+  const std::vector<LinearAlgebra::Vector<double>> &generators() const
   {
-    return this->_versors;
+    return this->_generators;
   }
 
+  /**
+   * @brief Swap two parallelotope
+   * 
+   * This method swap two parallelotope objects.
+   * 
+   * @param A is a parallelotope
+   * @param B is a parallelotope
+   */
   friend void swap(Parallelotope &A, Parallelotope &B);
 };
 

@@ -19,9 +19,10 @@
  * @param[in] lower_bound is the lower bound offsets of the parallelotope
  * @param[in] upper_bound is the upper bound offsets of the parallelotope
  */
-Parallelotope::Parallelotope(const Matrix &directions,
-                             const Vector &lower_bound,
-                             const Vector &upper_bound)
+Parallelotope::Parallelotope(
+            const std::vector<LinearAlgebra::Vector<double>> &directions, 
+            const LinearAlgebra::Vector<double> &lower_bound,
+            const LinearAlgebra::Vector<double> &upper_bound)
 {
   using namespace LinearAlgebra;
 
@@ -63,7 +64,7 @@ Parallelotope::Parallelotope(const Matrix &directions,
     // The approximation below improves performances
     // TODO: set the approximation dynamically, possibly
     //       by using SIL input.
-    _versors.push_back(approx(tensor / length, 11));
+    _generators.push_back(approx(tensor / length, 11));
   }
 }
 
@@ -152,12 +153,12 @@ Parallelotope::operator Polytope() const
     for (unsigned int j = 0; j < dim; j++) { // for all the generators u
       if (i != j) {
         if (_lengths[j] != 0) {
-          pts.push_back(pts.front() + _lengths[j] * this->_versors[j]);
+          pts.push_back(pts.front() + _lengths[j] * this->_generators[j]);
         } else {
           // these are fake points to define one hypeplane in
           // degenerous parallelotypes, for instance, when one
           // of the variables admits one single value.
-          pts.push_back(pts.front() + this->_versors[j]);
+          pts.push_back(pts.front() + this->_generators[j]);
         }
       }
     }
@@ -170,18 +171,18 @@ Parallelotope::operator Polytope() const
     std::list<std::vector<double>> pts;
 
     // add base vertex
-    pts.push_back(_base_vertex + _lengths[i] * _versors[i]);
+    pts.push_back(_base_vertex + _lengths[i] * _generators[i]);
 
     for (unsigned int j = 0; j < dim; j++) {
       // for all the generators u
       if (i != j) {
         if (_lengths[j] != 0) {
-          pts.push_back(pts.front() + _lengths[j] * this->_versors[j]);
+          pts.push_back(pts.front() + _lengths[j] * this->_generators[j]);
         } else {
           // these are fake points to define one hypeplane in
           // degenerous parallelotypes, for instance, when one
           // of the variables admits one single value.
-          pts.push_back(pts.front() + this->_versors[j]);
+          pts.push_back(pts.front() + this->_generators[j]);
         }
       }
     }
@@ -220,7 +221,7 @@ Parallelotope::operator Polytope() const
 
 void swap(Parallelotope &A, Parallelotope &B)
 {
-  std::swap(A._versors, B._versors);
+  std::swap(A._generators, B._generators);
   std::swap(A._base_vertex, B._base_vertex);
   std::swap(A._lengths, B._lengths);
 }
