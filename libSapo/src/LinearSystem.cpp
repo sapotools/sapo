@@ -332,14 +332,28 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
     return true;
   }
 
-  LinearAlgebra::Vector<double> obj_fun(dim(), 0);
-  obj_fun[1] = 0;
+  if (!strict_inequality) {
+    OptimizationResult<double> res = maximize(A[0]);
 
-  OptimizationResult<double> res = maximize(obj_fun);
+    return res.status() == GLP_OPT || res.status() == GLP_UNBND;
+  }
 
-  return ((res.status() != GLP_NOFEAS) && (res.status() != GLP_INFEAS)
-          && ((res.optimum() <= MAX_APPROX_ERROR)
-              || (!strict_inequality && (res.optimum() < MAX_APPROX_ERROR))));
+  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
+    OptimizationResult<double> res = maximize(*row_it);
+    if ((res.status() == GLP_NOFEAS) || (res.status() == GLP_INFEAS)) {
+      return false;
+    }
+    OptimizationResult<double> res2 = minimize(*row_it);
+    if ((res2.status() == GLP_NOFEAS) || (res2.status() == GLP_INFEAS)) {
+      return false;
+    }
+
+    if (res.optimum()==res2.optimum()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
