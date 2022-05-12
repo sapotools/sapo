@@ -124,7 +124,6 @@ public:
     return !this->has_solutions(strict_inequality);
   }
 
-
   /**
    * Check whether one polytope contains another polytope.
    *
@@ -207,5 +206,32 @@ inline void swap(Polytope &P1, Polytope &P2)
   swap(*(static_cast<LinearSystem *>(&P1)),
        *(static_cast<LinearSystem *>(&P2)));
 }
+
+/**
+ * @brief Test whether two polytope are the same one
+ * 
+ * @param P1 is the first polytope
+ * @param P2 is the second polytope
+ * @return `true` if and only if the two polytopes
+ *         represent the same set
+ */
+inline bool operator==(const Polytope& P1, const Polytope& P2)
+{
+  return P1.contains(P2) && P2.contains(P1);
+}
+
+/**
+ * @brief Test whether two polytope differ
+ * 
+ * @param P1 is the first polytope
+ * @param P2 is the second polytope
+ * @return `true` if and only if the two polytopes
+ *         represent different sets
+ */
+inline bool operator!=(const Polytope& P1, const Polytope& P2)
+{
+  return !(P1==P2);
+}
+
 
 #endif /* LINEARSYSTEM_H_ */

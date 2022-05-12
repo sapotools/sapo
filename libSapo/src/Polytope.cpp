@@ -25,6 +25,9 @@ using namespace std;
  */
 bool Polytope::contains(const Polytope &P) const
 {
+  if (P.is_empty()) {
+    return true;
+  }
 
   for (unsigned int i = 0; i < this->size(); i++) {
     if (!P.satisfies(this->_A[i], this->_b[i])) {
