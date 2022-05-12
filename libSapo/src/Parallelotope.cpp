@@ -60,11 +60,7 @@ Parallelotope::Parallelotope(
     }
 
     // compute and store the corresponding versor
-
-    // The approximation below improves performances
-    // TODO: set the approximation dynamically, possibly
-    //       by using SIL input.
-    _generators.push_back(approx(tensor / length, 11));
+    _generators.push_back(tensor / length);
   }
 }
 
