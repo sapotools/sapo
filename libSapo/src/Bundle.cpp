@@ -1187,7 +1187,7 @@ Bundle &Bundle::intersect(const LinearSystem &ls)
   using namespace LinearAlgebra::Dense;
 
   std::set<unsigned int> outside_templates;
-  const Matrix<double> &A = ls.getA();
+  const Matrix<double> &A = ls.A();
 
   std::vector<unsigned int> new_ids(A.size());
   // for each row in the linear system

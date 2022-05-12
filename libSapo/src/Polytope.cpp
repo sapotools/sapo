@@ -17,25 +17,17 @@ using namespace std;
  * Check whether one polytope contains another polytope.
  *
  * This method establishes whether the current Polytope fully
- * contains another polytope. Due to the approximation errors,
- * the method may return false even if this is the case.
- * However, whenever it returns true, the current object
- * certaintly contains the polytope.
+ * contains another polytope.
  *
  * @param[in] P is the polytope that are compared to the current
  *     object.
- * @return a Boolean value. When the current object does not
- *     contain the parameter, the retured value is false. When
- *     the method returns true, the current polytope contains
- *     the parameter. There are cases in which the current
- *     object contains the parameter and, still, this method
- *     returns false.
+ * @return `true` if and only if this polytope contains `P`
  */
 bool Polytope::contains(const Polytope &P) const
 {
 
   for (unsigned int i = 0; i < this->size(); i++) {
-    if (!P.satisfies(this->A[i], this->b[i])) {
+    if (!P.satisfies(this->_A[i], this->_b[i])) {
       return false;
     }
   }
@@ -109,7 +101,7 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
 {
   using namespace LinearAlgebra;
   
-  if (this->A.size() == cidx) {
+  if (this->_A.size() == cidx) {
     Polytope ls(A, b);
     ls.simplify();
 
@@ -118,15 +110,15 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
   }
 
   if (bvect_base[cidx]) {
-    A.push_back(this->A[cidx]);
-    b.push_back(this->b[cidx]);
+    A.push_back(this->_A[cidx]);
+    b.push_back(this->_b[cidx]);
 
     try {
-      const double min_value = minimize(this->A[cidx]).optimum();
+      const double min_value = minimize(this->_A[cidx]).optimum();
 
-      A.push_back(-this->A[cidx]);
+      A.push_back(-this->_A[cidx]);
       if (num_of_splits > 0) {
-        const double avg_value = (this->b[cidx] + min_value) / 2;
+        const double avg_value = (this->_b[cidx] + min_value) / 2;
         b.push_back(-avg_value);
 
         split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits - 1);
@@ -161,7 +153,7 @@ std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
 {
   std::list<Polytope> result;
 
-  std::vector<bool> bvect_base = get_a_polytope_base_bit_vector(this->A);
+  std::vector<bool> bvect_base = get_a_polytope_base_bit_vector(this->_A);
 
   std::vector<std::vector<double>> A;
   std::vector<double> b;
@@ -182,9 +174,9 @@ std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
 Polytope &Polytope::intersect_with(const Polytope &P)
 {
   for (unsigned int i = 0; i < P.size(); i++) {
-    if (!this->satisfies(P.A[i], P.b[i])) {
-      (this->A).push_back(P.A[i]);
-      (this->b).push_back(P.b[i]);
+    if (!this->satisfies(P._A[i], P._b[i])) {
+      (this->_A).push_back(P._A[i]);
+      (this->_b).push_back(P._b[i]);
     }
   }
 
@@ -193,7 +185,7 @@ Polytope &Polytope::intersect_with(const Polytope &P)
 
 Polytope intersect(const Polytope &P1, const Polytope &P2)
 {
-  Polytope result(P1.A, P1.b);
+  Polytope result(P1._A, P1._b);
 
   result.intersect_with(P2);
 

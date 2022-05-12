@@ -116,8 +116,8 @@ class LinearSystem
 {
 
 protected:
-  std::vector<LinearAlgebra::Vector<double>> A; //!< the matrix \f$A\f$
-  LinearAlgebra::Vector<double> b;              //!< the vector \f$b\f$
+  std::vector<LinearAlgebra::Vector<double>> _A; //!< the matrix \f$A\f$
+  LinearAlgebra::Vector<double> _b;              //!< the vector \f$b\f$
 
   /**
    * Check if a constraint belongs to the linear system
@@ -133,19 +133,12 @@ protected:
    * @brief Check whether the solutions of a linear system satisfy a constraint
    *
    * This method establishes whether all the solutions \f$s\f$ of the linear 
-   * system satisfy a constraint \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$. 
-   * Due to the approximation errors, it may return `false` even if this is 
-   * the case. However, whenever it returns `true`, all the solutions of the 
-   * linear system certainly satisfy the inequality.
+   * system satisfy a constraint \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$.
    * 
    * @param[in] Ai is a value vector
    * @param[in] bi is a scalar value
-   * @return When some of the solutions \f$s\f$ of the linear system do not 
-   *     satisfy the inequality \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$, 
-   *     the returned value is `false`. When the method returns `true`, 
-   *     the inequality is certainly satisfied by any of the solutions 
-   *     \f$s\f$ of the system. There are cases in which the inequality
-   *     is satisfied by all the solutions and this method returns `false`
+   * @return `true` if and only if \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$
+   *         for any the solution \f$s\f$ of the linear system
    */
   bool satisfies(const LinearAlgebra::Vector<double> &Ai, const double& bi) const;
 
@@ -153,15 +146,10 @@ protected:
    * Check whether one of the constraints in a linear system is redundant.
    *
    * This method establishes whether the i-th constraint of a linear
-   * system is redundant. Due to approximation errors, it may return
-   * `false` even if the constraint is redundant. However, whenever it
-   * returns `true`, the constraint is certainly redundant.
+   * system is redundant.
    *
    * @param[in] i is the index of the constraint to be checked
-   * @return a Boolean value. When the constraint is non-redundanct, the
-   *     returned value is true. When it returns `true`, the constraint is
-   *     certainly redundant. There are cases in which the constraint is
-   *     redundant and this method returns `false`.
+   * @return `true` if and only if the `i`-th constraint is redundant
    */
   bool constraint_is_redundant(const unsigned int i) const;
 
@@ -200,7 +188,8 @@ public:
    * @param[in] A is the matrix 
    * @param[in] b is the offset vector
    */
-  LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A, LinearAlgebra::Vector<double> &&b);
+  LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A, 
+               LinearAlgebra::Vector<double> &&b);
 
   /**
    * Constructor from a set of symbolic expressions
@@ -230,8 +219,8 @@ public:
    */
   LinearSystem &operator=(const LinearSystem &orig)
   {
-    A = orig.A;
-    b = orig.b;
+    _A = orig._A;
+    _b = orig._b;
 
     return *this;
   }
@@ -241,9 +230,9 @@ public:
    *
    * @return template matrix
    */
-  const std::vector<LinearAlgebra::Vector<double>> &getA() const
+  const std::vector<LinearAlgebra::Vector<double>> &A() const
   {
-    return this->A;
+    return this->_A;
   }
 
   /**
@@ -251,9 +240,9 @@ public:
    *
    * @return offset vector
    */
-  const LinearAlgebra::Vector<double> &getb() const
+  const LinearAlgebra::Vector<double> &b() const
   {
-    return this->b;
+    return this->_b;
   }
 
   /**
@@ -284,8 +273,9 @@ public:
  *        (`false`) over the system
    * @return optimum
    */
-  OptimizationResult<double> optimize(const LinearAlgebra::Vector<double> &obj_fun,
-                                      const bool maximize) const;
+  OptimizationResult<double>
+  optimize(const LinearAlgebra::Vector<double> &obj_fun,
+           const bool maximize) const;
 
   /**
    * Minimize the linear system
@@ -293,7 +283,8 @@ public:
    * @param[in] obj_fun objective function
    * @return minimum
    */
-  OptimizationResult<double> minimize(const LinearAlgebra::Vector<double> &obj_fun) const;
+  OptimizationResult<double>
+  minimize(const LinearAlgebra::Vector<double> &obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -301,7 +292,8 @@ public:
    * @param[in] obj_fun objective function
    * @return maximum
    */
-  OptimizationResult<double> maximize(const LinearAlgebra::Vector<double> &obj_fun) const;
+  OptimizationResult<double>
+  maximize(const LinearAlgebra::Vector<double> &obj_fun) const;
 
   /**
    * Minimize the linear system
@@ -330,33 +322,28 @@ public:
   /**
    * Establish whether a linear system has solutions
    *
-   * Due to approximation errors, it may return `true` for some systems
-   * having no solution too. However, when it returns `false`, the 
-   * linear system certainly has no solution.
-   *
    * @param[in] strict_inequality specifies whether the linear system is
    *         a strict inequality (i.e., \f$Ax < b\f$)
-   * @return a Boolean value. If the returned value is false, then the
-   *       linear system has no solution
+   * @return `true` if and only if the linear system has solutions
    */
   bool has_solutions(const bool strict_inequality = false) const;
 
   /**
-   * Remove redundant constraints from a linear system.
+   * Remove redundant constraints from a linear system
    *
    * This method removes redundant constraints from the system. The order
    * of the non-redundant constraints can be shuffled after the call.
    *
    * @return A reference to this object after removing all the redundant
-   * constraints.
+   *         constraints
    */
   LinearSystem &simplify();
 
   /**
-   * Create a new object and remove its redundant constraints.
+   * Create a new object and remove its redundant constraints
    *
    * @return a copy of this object after all the redundant constraints of
-   *     the former have been removed.
+   *         the former have been removed
    */
   LinearSystem get_simplified() const;
 
@@ -369,7 +356,7 @@ public:
       return 0;
     }
 
-    return this->A[0].size();
+    return this->_A[0].size();
   }
 
   /**
@@ -377,7 +364,7 @@ public:
    */
   unsigned int size() const
   {
-    return this->b.size();
+    return this->_b.size();
   }
 
   /**
@@ -388,8 +375,8 @@ public:
    */
   friend inline void swap(LinearSystem &ls_1, LinearSystem &ls_2)
   {
-    std::swap(ls_1.A, ls_2.A);
-    std::swap(ls_1.b, ls_2.b);
+    std::swap(ls_1._A, ls_2._A);
+    std::swap(ls_1._b, ls_2._b);
   }
 };
 

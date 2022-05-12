@@ -16,8 +16,6 @@
 #include "LinearSystem.h"
 #include "SymbolicAlgebra.h"
 
-#define MAX_APPROX_ERROR 1e-8 //!< the maximum admitted approximation error
-
 /**
  * @brief Print a linear system in a stream
  * 
@@ -50,8 +48,8 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
  */
 JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
 {
-  out << "{\"A\":" << ls.getA() << ","
-      << "\"b\":" << ls.getb() << "}";
+  out << "{\"A\":" << ls.A() << ","
+      << "\"b\":" << ls.b() << "}";
 
   return out;
 }
@@ -137,7 +135,7 @@ OptimizationResult<double>
 LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
                        const bool maximize) const
 {
-  return ::optimize(this->A, this->b, obj_fun, maximize);
+  return ::optimize(this->_A, this->_b, obj_fun, maximize);
 }
 
 /**
@@ -149,7 +147,7 @@ LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
 OptimizationResult<double>
 LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
-  return ::optimize(this->A, this->b, obj_fun, false);
+  return ::optimize(this->_A, this->_b, obj_fun, false);
 }
 
 /**
@@ -161,7 +159,7 @@ LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 OptimizationResult<double>
 LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
-  return ::optimize(this->A, this->b, obj_fun, true);
+  return ::optimize(this->_A, this->_b, obj_fun, true);
 }
 
 /**
@@ -176,14 +174,14 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
   bool smart_insert = false;
 
   if (!smart_insert) {
-    this->A = A;
-    this->b = b;
+    this->_A = A;
+    this->_b = b;
   } else {
     for (unsigned int i = 0; i < A.size(); i++) {
       if (!this->is_in(A[i], b[i]) && 
-          (LinearAlgebra::norm_infinity(A[i]) >= MAX_APPROX_ERROR)) {
-        this->A.push_back(A[i]);
-        this->b.push_back(b[i]);
+          (LinearAlgebra::norm_infinity(A[i]) >= 0)) {
+        this->_A.push_back(A[i]);
+        this->_b.push_back(b[i]);
       }
     }
   }
@@ -197,22 +195,22 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
  */
 LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
                            LinearAlgebra::Vector<double> &&b):
-    A(std::move(A)),
-    b(std::move(b))
+    _A(std::move(A)),
+    _b(std::move(b))
 {
 }
 
 /**
  * Constructor that instantiates an empty linear system
  */
-LinearSystem::LinearSystem(): A(), b() {}
+LinearSystem::LinearSystem(): _A(), _b() {}
 
 /**
  * Copy constructor
  *
  * @param[in] ls is the original linear system
  */
-LinearSystem::LinearSystem(const LinearSystem &ls): A(ls.A), b(ls.b) {}
+LinearSystem::LinearSystem(const LinearSystem &ls): _A(ls._A), _b(ls._b) {}
 
 /**
  * Swap constructor
@@ -231,23 +229,21 @@ LinearSystem::LinearSystem(LinearSystem &&ls)
  * @param b1 constant coefficient of the first equation
  * @param A2 non-constant coefficient of the second equation
  * @param b2 constant coefficient of the second equation
- * @param approx admitted approximation
  * @return whether the two linear equations are the same
  */
 bool same_constraint(const LinearAlgebra::Vector<double> &A1, const double &b1,
-                     const LinearAlgebra::Vector<double> &A2, const double &b2,
-                     const double approx = 0)
+                     const LinearAlgebra::Vector<double> &A2, const double &b2)
 {
   if (A1.size() != A2.size()) {
     return false;
   }
 
-  if (std::abs(b1 - b2) > approx) {
+  if (b1 != b2) {
     return false;
   }
 
   for (unsigned int i = 0; i < A1.size(); ++i) {
-    if (std::abs(A1[i] - A2[i]) > approx) {
+    if (A1[i] != A2[i]) {
       return false;
     }
   }
@@ -257,8 +253,8 @@ bool same_constraint(const LinearAlgebra::Vector<double> &A1, const double &b1,
 
 bool LinearSystem::is_in(const LinearAlgebra::Vector<double> &Ai, const double &bi) const
 {
-  for (unsigned int i = 0; i < this->A.size(); i++) {
-    if (same_constraint(this->A[i], this->b[i], Ai, bi)) {
+  for (unsigned int i = 0; i < this->_A.size(); i++) {
+    if (same_constraint(this->_A[i], this->_b[i], Ai, bi)) {
       return true;
     }
   }
@@ -289,8 +285,8 @@ LinearSystem::LinearSystem(
     double bi = const_term.evaluate();
 
     if (!this->is_in(Ai, -bi)) {
-      this->A.push_back(Ai);
-      this->b.push_back(-bi);
+      this->_A.push_back(Ai);
+      this->_b.push_back(-bi);
     }
   }
 }
@@ -304,8 +300,8 @@ LinearSystem::LinearSystem(
  */
 const double &LinearSystem::getA(unsigned int i, unsigned int j) const
 {
-  if (i < this->A.size() && j < this->A[j].size()) {
-    return this->A[i][j];
+  if (i < this->_A.size() && j < this->_A[j].size()) {
+    return this->_A[i][j];
   }
   throw std::domain_error("LinearSystem::getA: i and j must be valid "
                           "indices for the system matrix A");
@@ -319,8 +315,8 @@ const double &LinearSystem::getA(unsigned int i, unsigned int j) const
  */
 const double &LinearSystem::getb(unsigned int i) const
 {
-  if (i < this->b.size()) {
-    return this->b[i];
+  if (i < this->_b.size()) {
+    return this->_b[i];
   }
   throw std::domain_error("LinearSystem::getb: i must be a valid "
                           "index for the system");
@@ -333,12 +329,12 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
   }
 
   if (!strict_inequality) {
-    OptimizationResult<double> res = maximize(A[0]);
+    OptimizationResult<double> res = maximize(_A[0]);
 
     return res.status() == GLP_OPT || res.status() == GLP_UNBND;
   }
 
-  for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
+  for (auto row_it = std::begin(_A); row_it != std::end(_A); ++row_it) {
     OptimizationResult<double> res = maximize(*row_it);
     if ((res.status() == GLP_NOFEAS) || (res.status() == GLP_INFEAS)) {
       return false;
@@ -425,40 +421,22 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
  * @brief Check whether the solutions of a linear system satisfy a constraint
  *
  * This method establishes whether all the solutions \f$s\f$ of the linear 
- * system satisfy a constraint \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$. 
- * Due to the approximation errors, it may return `false` even if this is 
- * the case. However, whenever it returns `true`, all the solutions of the 
- * linear system certainly satisfy the inequality.
+ * system satisfy a constraint \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$.
  * 
  * @param[in] Ai is a value vector
  * @param[in] bi is a scalar value
- * @return When some of the solutions \f$s\f$ of the linear system do not 
- *     satisfy the inequality \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$, 
- *     the returned value is `false`. When the method returns `true`, 
- *     the inequality is certainly satisfied by any of the solutions 
- *     \f$s\f$ of the system. There are cases in which the inequality
- *     is satisfied by all the solutions and this method returns `false`
+ * @return `true` if and only if \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$
+ *         for any the solution \f$s\f$ of the linear system
  */
 bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, 
                              const double &bi) const
 {
-  if (size() == 0)
+  if (size() == 0) {
     return false;
-
-  if (is_in(Ai, bi)) {
-    return true;
   }
 
   OptimizationResult<double> res = this->maximize(Ai);
-
-  if (res.status() != GLP_NOFEAS
-      && res.optimum() + MAX_APPROX_ERROR <= bi) { 
-                                      /* This should be max <= bi,
-                                         however, due to double approximation
-                                         errors, testing whether the distance
-                                         between max and bi is greater than a
-                                         fixed positive approximation constant
-                                         is more conservative */
+  if (res.status() == GLP_OPT && res.optimum() <= bi) { 
     return true;
   }
 
@@ -472,28 +450,28 @@ bool LinearSystem::constraint_is_redundant(const unsigned int i) const
   double bi(0);
 
   // replace the i-th constraint with the empty constraint
-  std::swap(Ai, tmp.A[i]);
-  std::swap(bi, tmp.b[i]);
+  std::swap(Ai, tmp._A[i]);
+  std::swap(bi, tmp._b[i]);
 
   // check whether the i-th constraint is redundant
   bool result(tmp.satisfies(Ai, bi));
 
   // reinsert the i-th into the system
-  std::swap(Ai, tmp.A[i]);
-  std::swap(bi, tmp.b[i]);
+  std::swap(Ai, tmp._A[i]);
+  std::swap(bi, tmp._b[i]);
 
   return result;
 }
 
 /**
- * Remove redundant constraints from a linear system.
+ * Remove redundant constraints from a linear system
  *
  * This method removes redundant constraints from the system.
  * The order of the non-redundant constraints can be shuffled after
  * the call.
  *
  * @return A reference to this object after removing all the
- *         redundant constraints.
+ *         redundant constraints
  */
 LinearSystem &LinearSystem::simplify()
 {
@@ -508,8 +486,8 @@ LinearSystem &LinearSystem::simplify()
     // if it is redundant
     if (constraint_is_redundant(i)) {
       // swap it with the last non-reduntant constraint
-      std::swap(A[i], A[last_non_redundant]);
-      std::swap(b[i], b[last_non_redundant]);
+      std::swap(_A[i], _A[last_non_redundant]);
+      std::swap(_b[i], _b[last_non_redundant]);
 
       // decrease the number of the non-reduntant constraints
       last_non_redundant--;
@@ -527,8 +505,8 @@ LinearSystem &LinearSystem::simplify()
   }
 
   // remove the redundant constraints that are at the end of the system
-  A.resize(last_non_redundant + 1);
-  b.resize(last_non_redundant + 1);
+  _A.resize(last_non_redundant + 1);
+  _b.resize(last_non_redundant + 1);
 
   return *this;
 }

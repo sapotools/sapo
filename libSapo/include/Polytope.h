@@ -115,37 +115,25 @@ public:
   /**
    * Establish whether a polytope is empty
    *
-   * Due to approximation errors, it may return false for some empty
-   * polytopes too. However, when it returns true, the polytope is certainly
-   * empty.
-   *
    * @param[in] strict_inequality specifies whether the polytope is
    *         defined by a strict inequality (i.e., Ax < b).
-   * @return a Boolean value. If the returned value is true, then the
-   *       polytope is empty.
+   * @return `true` if and only if the polytope is empty
    */
   bool is_empty(const bool strict_inequality = false) const
   {
     return !this->has_solutions(strict_inequality);
   }
 
+
   /**
    * Check whether one polytope contains another polytope.
    *
    * This method establishes whether the current Polytope fully
-   * contains another polytope. Due to the approximation errors,
-   * the method may return false even if this is the case.
-   * However, whenever it returns true, the current object
-   * certaintly contains the polytope.
+   * contains another polytope.
    *
    * @param[in] P is the polytope that are compared to the current
    *     object.
-   * @return a Boolean value. When the current object does not
-   *     contain the parameter, the retured value is false. When
-   *     the method returns true, the current polytope contains
-   *     the parameter. There are cases in which the current
-   *     object contains the parameter and, still, this method
-   *     returns false.
+   * @return `true` if and only if this polytope contains `P`
    */
   bool contains(const Polytope &P) const;
 
@@ -160,7 +148,7 @@ public:
    */
   inline std::list<Polytope> split() const
   {
-    return this->split(this->A.size());
+    return this->split(this->_A.size());
   }
 
   /**
