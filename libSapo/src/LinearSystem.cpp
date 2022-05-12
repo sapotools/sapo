@@ -374,6 +374,9 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
+    if (obj_fun.degree(*s_it)>1) {
+      throw std::domain_error("Non-linear objective function is not supported yet.");
+    }
     double coeff = (obj_fun.get_coeff(*s_it, 1)).evaluate();
 
     obj_fun_coeffs.push_back(coeff);
@@ -404,6 +407,9 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
+    if (obj_fun.degree(*s_it)>1) {
+      throw std::domain_error("Non-linear objective function is not supported yet.");
+    }
     const double coeff = obj_fun.get_coeff(*s_it, 1).evaluate();
     obj_fun_coeffs.push_back(coeff);
     const_term = const_term.get_coeff(*s_it, 0);
