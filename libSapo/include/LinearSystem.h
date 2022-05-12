@@ -127,7 +127,7 @@ protected:
    * @returns `true` if and only if \f$\textrm{Ai} \cdot x \leq \textrm{bi}\f$ 
    *          is one of the rows of the linear system
    */
-  bool is_in(const LinearAlgebra::Vector<double> &Ai, const double &bi) const;
+  bool contains(const LinearAlgebra::Vector<double> &Ai, const double &bi) const;
 
   /**
    * @brief Check whether the solutions of a linear system satisfy a constraint
@@ -252,7 +252,7 @@ public:
    * @param[in] j column index
    * @return (i,j) element
    */
-  const double &getA(const unsigned int i, const unsigned int j) const;
+  const double &A(const unsigned int i, const unsigned int j) const;
 
   /**
    * Return the i-th element of the offset vector
@@ -260,7 +260,7 @@ public:
    * @param[in] i column index
    * @return i-th element
    */
-  const double &getb(const unsigned int i) const;
+  const double &b(const unsigned int i) const;
 
   // optimization functions
 

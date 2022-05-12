@@ -146,8 +146,6 @@ BOOST_AUTO_TEST_CASE(test_unfeasable_linear_systems)
                         << "GLP_NOFEAS was expected.");
 }
 
-
-
 BOOST_AUTO_TEST_CASE(test_has_solutions_linear_systems)
 {
     using namespace LinearAlgebra;

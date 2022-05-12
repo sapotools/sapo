@@ -31,9 +31,9 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
     }
 
     for (unsigned int col_idx = 0; col_idx < ls.dim(); col_idx++) {
-      out << ls.getA(row_idx, col_idx) << " ";
+      out << ls.A(row_idx, col_idx) << " ";
     }
-    out << "<= " << ls.getb(row_idx);
+    out << "<= " << ls.b(row_idx);
   }
 
   return out;
@@ -178,8 +178,8 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
     this->_b = b;
   } else {
     for (unsigned int i = 0; i < A.size(); i++) {
-      if (!this->is_in(A[i], b[i]) && 
-          (LinearAlgebra::norm_infinity(A[i]) >= 0)) {
+      if ((LinearAlgebra::norm_infinity(A[i]) > 0) &&
+          !this->satisfies(A[i], b[i])) {
         this->_A.push_back(A[i]);
         this->_b.push_back(b[i]);
       }
@@ -251,7 +251,7 @@ bool same_constraint(const LinearAlgebra::Vector<double> &A1, const double &b1,
   return true;
 }
 
-bool LinearSystem::is_in(const LinearAlgebra::Vector<double> &Ai, const double &bi) const
+bool LinearSystem::contains(const LinearAlgebra::Vector<double> &Ai, const double &bi) const
 {
   for (unsigned int i = 0; i < this->_A.size(); i++) {
     if (same_constraint(this->_A[i], this->_b[i], Ai, bi)) {
@@ -274,6 +274,11 @@ LinearSystem::LinearSystem(
     Expression<> const_term(*e_it);
 
     for (auto x_it = begin(x); x_it != end(x); ++x_it) {
+      if (e_it->degree(*x_it)>1) {
+        throw std::domain_error("Non-linear expression cannot be mapped "
+                                "in a linear system.");
+      }
+
       // Extract the coefficient of the i-th variable (grade 1)
       double coeff = (e_it->get_coeff(*x_it, 1)).evaluate();
       Ai.push_back(coeff);
@@ -284,7 +289,7 @@ LinearSystem::LinearSystem(
 
     double bi = const_term.evaluate();
 
-    if (!this->is_in(Ai, -bi)) {
+    if (!this->contains(Ai, -bi)) {
       this->_A.push_back(Ai);
       this->_b.push_back(-bi);
     }
@@ -298,7 +303,7 @@ LinearSystem::LinearSystem(
  * @param[in] j column index
  * @return (i,j) element
  */
-const double &LinearSystem::getA(unsigned int i, unsigned int j) const
+const double &LinearSystem::A(unsigned int i, unsigned int j) const
 {
   if (i < this->_A.size() && j < this->_A[j].size()) {
     return this->_A[i][j];
@@ -313,7 +318,7 @@ const double &LinearSystem::getA(unsigned int i, unsigned int j) const
  * @param[in] i column index
  * @return i-th element
  */
-const double &LinearSystem::getb(unsigned int i) const
+const double &LinearSystem::b(unsigned int i) const
 {
   if (i < this->_b.size()) {
     return this->_b[i];

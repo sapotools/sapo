@@ -1205,13 +1205,13 @@ Bundle &Bundle::intersect(const LinearSystem &ls)
       outside_templates.insert(new_ids[i]);
       this->directions.push_back(A_row);
       this->lower_bounds.push_back(lower_bound);
-      this->upper_bounds.push_back(ls.getb(i));
+      this->upper_bounds.push_back(ls.b(i));
     } else {
       // compute the dependency coefficent
       const unsigned int &new_i = new_ids[i];
       const double dep_coeff = this->directions[new_i] / A_row;
 
-      auto b_rescaled = ls.getb(i) * dep_coeff;
+      auto b_rescaled = ls.b(i) * dep_coeff;
       if (dep_coeff>0) {
         // if necessary, decrease the upper bound
         if (this->upper_bounds[new_i] > b_rescaled) {
