@@ -5,7 +5,7 @@ if(${Boost_unit_test_framework_FOUND})
     link_directories(${Boost_LIBRARY_DIRS})
 
     set(LIBSAPO_TESTS linear_algebra symbolic_algebra linear_systems
-                    polytope)
+                    polytope parallelotope)
     foreach(TEST ${LIBSAPO_TESTS})
         ADD_EXECUTABLE( test_${TEST} ${TEST}.cpp )
         target_link_libraries(test_${TEST} Sapo ${Boost_LIBRARIES})
