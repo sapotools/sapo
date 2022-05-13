@@ -579,7 +579,19 @@ public:
    * @return a reference to the output stream
    */
   friend inline std::ostream &operator<<(std::ostream &out,
-                                         const Permutation &P);
+                                         const Permutation &P)
+  {
+    out << "Permutation[";
+    for (auto it = P.begin(); it != P.end(); ++it) {
+      if (it != P.begin()) {
+        out << ",";
+      }
+      out << it->second << "->" << it->first;
+    }
+    out << "]";
+
+    return out;
+  }
 };
 
 /**

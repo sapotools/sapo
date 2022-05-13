@@ -118,29 +118,6 @@ std::ostream &operator<<(std::ostream &out,
 }
 
 /**
- * @brief Print a permutation in a stream
- * 
- * @param out is the output stream
- * @param P is the permutation to be printed
- * @return a reference to the output stream
- */
-inline 
-std::ostream &operator<<(std::ostream &out, 
-                        const LinearAlgebra::Permutation &P)
-{
-  out << "Permutation[";
-  for (auto it = P.begin(); it != P.end(); ++it) {
-    if (it != P.begin()) {
-      out << ",";
-    }
-    out << it->second << "->" << it->first;
-  }
-  out << "]";
-
-  return out;
-}
-
-/**
  * @brief Print a sparse LUP factorization in a stream
  * 
  * @tparam T is the type of the scalar values
