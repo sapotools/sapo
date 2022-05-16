@@ -14,31 +14,6 @@
 using namespace std;
 
 /**
- * Check whether one polytope contains another polytope.
- *
- * This method establishes whether the current Polytope fully
- * contains another polytope.
- *
- * @param[in] P is the polytope that are compared to the current
- *     object.
- * @return `true` if and only if this polytope contains `P`
- */
-bool Polytope::contains(const Polytope &P) const
-{
-  if (P.is_empty()) {
-    return true;
-  }
-
-  for (unsigned int i = 0; i < this->size(); i++) {
-    if (!P.satisfies(this->_A[i], this->_b[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
  * @brief Get a set of linear independent rows in a matrix
  * 
  * @param A is the matrix whose linear independent rows must be found
