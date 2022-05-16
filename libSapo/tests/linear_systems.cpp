@@ -182,3 +182,57 @@ BOOST_AUTO_TEST_CASE(test_has_solutions_linear_systems)
     // Test non-empty interior
     BOOST_CHECK(ls.has_solutions());
 }
+
+BOOST_AUTO_TEST_CASE(test_simplify_linear_systems)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1},
+        {-1,0,0},
+        {0,-1,0},
+        {0,0,-1}
+    };
+
+    Matrix<double> B = {
+        {1,0,0},
+        {1,0,0},
+        {1,0,0},
+        {0,1,0},
+        {0,0,1},
+        {-1,0,0},
+        {0,-1,0},
+        {0,0,-1}
+    };
+
+
+    Matrix<double> C = {
+        {1,0,0},
+        {1,1,0},
+        {0,1,0},
+        {0,0,1},
+        {-1,0,0},
+        {0,-1,0},
+        {0,0,-1},
+        {-1,0,-1}
+    };
+
+    LinearSystem ls1(A,{1,2,3,3,2,1}),
+                 ls2(B,{1,2,7,2,3,3,2,1}),
+                 ls3(C,{1,7,2,3,3,2,1,7});
+
+    BOOST_CHECK(ls1.get_simplified()==ls1);
+    BOOST_CHECK(ls2.get_simplified()==ls1);
+    BOOST_CHECK(ls3.get_simplified()==ls1);
+
+    ls1.simplify();
+    ls2.simplify();
+    ls3.simplify();
+
+    BOOST_CHECK(LinearSystem(A,{1,2,3,3,2,1})==ls1);
+    BOOST_CHECK(ls2==ls1);
+    BOOST_CHECK(ls3==ls1);
+}

@@ -12,6 +12,7 @@
 #include <glpk.h>
 #include <limits>
 #include <cmath>
+#include <sstream>
 
 #include "LinearSystem.h"
 #include "SymbolicAlgebra.h"
@@ -171,6 +172,15 @@ LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
                            const LinearAlgebra::Vector<double> &b)
 {
+  if (A.size()!=b.size()) {
+    std::ostringstream oss;
+
+    oss << "The matrix A and the vector b are expected to "
+        << "have the same size: they are " << A.size() 
+        << " and " << b.size() << ", respectively.";
+    throw std::domain_error(oss.str());
+  }
+
   bool smart_insert = false;
 
   if (!smart_insert) {
@@ -198,19 +208,29 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
     _A(std::move(A)),
     _b(std::move(b))
 {
+  if (_A.size()!=_b.size()) {
+    std::ostringstream oss;
+
+    oss << "The matrix A and the vector b are expected to "
+        << "have the same size: they are " << _A.size() 
+        << " and " << _b.size() << ", respectively.";
+    throw std::domain_error(oss.str());
+  }
 }
 
 /**
  * Constructor that instantiates an empty linear system
  */
-LinearSystem::LinearSystem(): _A(), _b() {}
+LinearSystem::LinearSystem(): _A(), _b() 
+{}
 
 /**
  * Copy constructor
  *
  * @param[in] ls is the original linear system
  */
-LinearSystem::LinearSystem(const LinearSystem &ls): _A(ls._A), _b(ls._b) {}
+LinearSystem::LinearSystem(const LinearSystem &ls): _A(ls._A), _b(ls._b) 
+{}
 
 /**
  * Swap constructor
@@ -336,7 +356,8 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
   if (!strict_inequality) {
     OptimizationResult<double> res = maximize(_A[0]);
 
-    return res.status() == GLP_OPT || res.status() == GLP_UNBND;
+    return (res.status() == GLP_OPT || res.status() == GLP_UNBND 
+            || res.status() == GLP_FEAS);
   }
 
   for (auto row_it = std::begin(_A); row_it != std::end(_A); ++row_it) {
@@ -441,7 +462,8 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai,
   }
 
   OptimizationResult<double> res = this->maximize(Ai);
-  if (res.status() == GLP_OPT && res.optimum() <= bi) { 
+  if ((res.status() == GLP_OPT || res.status() == GLP_FEAS) 
+      && res.optimum() <= bi) {
     return true;
   }
 
