@@ -317,8 +317,6 @@ public:
   maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
            const SymbolicAlgebra::Expression<> &obj_fun) const;
 
-  // testing methods
-
   /**
    * Establish whether a linear system has solutions
    *
@@ -327,6 +325,15 @@ public:
    * @return `true` if and only if the linear system has solutions
    */
   bool has_solutions(const bool strict_inequality = false) const;
+
+  /**
+   * @brief Check whether all the solutions are also solutions for another system
+   * 
+   * @param ls is the considered linear system
+   * @return `true` if and only if the solutions of the current object are 
+   *         also solutions for `ls`
+   */
+  bool satisfies(const LinearSystem& ls) const;
 
   /**
    * Remove redundant constraints from a linear system
@@ -379,6 +386,33 @@ public:
     std::swap(ls_1._b, ls_2._b);
   }
 };
+
+
+/**
+ * @brief Test whether two linear systems are the same one
+ * 
+ * @param P1 is the first linear system
+ * @param P2 is the second linear system
+ * @return `true` if and only if the solution sets of two linear systems
+ *         are the same set
+ */
+inline bool operator==(const LinearSystem& P1, const LinearSystem& P2)
+{
+  return P1.satisfies(P2) && P2.satisfies(P1);
+}
+
+/**
+ * @brief Test whether two linear systems differ
+ * 
+ * @param P1 is the first linear system
+ * @param P2 is the second linear system
+ * @return `true` if and only if the solution sets of two 
+ *         linear systems differ
+ */
+inline bool operator!=(const LinearSystem& P1, const LinearSystem& P2)
+{
+  return !(P1==P2);
+}
 
 /**
  * @brief Print a linear system in a stream

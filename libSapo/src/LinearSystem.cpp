@@ -448,6 +448,21 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai,
   return false;
 }
 
+bool LinearSystem::satisfies(const LinearSystem& ls) const
+{
+  if (!this->has_solutions()) {
+    return true;
+  }
+
+  for (unsigned int i = 0; i < ls.size(); i++) {
+    if (!this->satisfies(ls._A[i], ls._b[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool LinearSystem::constraint_is_redundant(const unsigned int i) const
 {
   LinearSystem tmp(*this);
