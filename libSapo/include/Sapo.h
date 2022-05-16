@@ -78,7 +78,7 @@ private:
                                               this->tmode);
 
       //guarantee the assumptions
-      reached_set.intersect(this->assumptions);
+      reached_set.intersect_with(this->assumptions);
 
       result.add(synthesize(reached_set, pSet, formula, time + 1));
     }

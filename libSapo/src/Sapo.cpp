@@ -33,7 +33,7 @@ Sapo::Sapo(const Model& model):
 Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
                      ProgressAccounter *accounter) const
 {
-  init_set.intersect(this->assumptions);
+  init_set.intersect_with(this->assumptions);
 
   // create current bundles list
   std::list<Bundle> cbundles = init_set.split(max_bundle_magnitude, 1.0);
@@ -67,7 +67,7 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
                                       sapo->tmode); // transform it
     
     //guarantee the assumptions
-    nbundle.intersect(sapo->assumptions);
+    nbundle.intersect_with(sapo->assumptions);
 
     if (sapo->decomp > 0) { // if requested, decompose it
       nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
@@ -155,7 +155,7 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
   // reachable by using the parameters in that polytope.
   // This list is stored in an element of the vector cbundles
 
-  init_set.intersect(this->assumptions);
+  init_set.intersect_with(this->assumptions);
 
   // create current bundle list vector
   std::list<Bundle> cbundle_list = init_set.split(max_bundle_magnitude, 1.0);
@@ -194,7 +194,7 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
                             sapo->tmode); // transform it
 
       //guarantee the assumptions
-      nbundle.intersect(sapo->assumptions);
+      nbundle.intersect_with(sapo->assumptions);
 
       if (sapo->decomp > 0) { // if requested, decompose it
         nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);

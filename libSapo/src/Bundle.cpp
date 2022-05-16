@@ -1081,7 +1081,7 @@ bool copy_required(const LinearAlgebra::Vector<int> &bundle_template,
   return false;
 }
 
-Bundle &Bundle::intersect(const Bundle &A)
+Bundle &Bundle::intersect_with(const Bundle &A)
 {
   unsigned int old_size = this->size();
   std::vector<unsigned int> new_ids(A.size());
@@ -1181,7 +1181,7 @@ void Bundle::add_templates_for(
  * @param ls is the intersecting linear system
  * @return a reference to the updated object
  */
-Bundle &Bundle::intersect(const LinearSystem &ls)
+Bundle &Bundle::intersect_with(const LinearSystem &ls)
 {
   using namespace LinearAlgebra;
   using namespace LinearAlgebra::Dense;

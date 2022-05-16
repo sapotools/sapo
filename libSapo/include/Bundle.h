@@ -234,7 +234,7 @@ public:
    * @param A is the intersecting bundle
    * @return a reference to the updated object
    */
-  Bundle &intersect(const Bundle &A);
+  Bundle &intersect_with(const Bundle &A);
 
   /**
    * @brief Get the intersection between this bundle and a linear set
@@ -247,7 +247,7 @@ public:
    * @param ls is the intersecting linear system
    * @return a reference to the updated object
    */
-  Bundle &intersect(const LinearSystem &ls);
+  Bundle &intersect_with(const LinearSystem &ls);
 
   /**
    * @brief Get the dimension of the bundle space
@@ -552,5 +552,22 @@ public:
  * @param B is the second bundle to be swapped
  */
 void swap(Bundle &A, Bundle &B);
+
+/**
+ * @brief Get the intersection between two bundles
+ * 
+ * @param b1 is a bundle
+ * @param b2 is a bundle
+ * @return A bundle representing the intersection between 
+ *         the bundles `b1` and `b2`
+ */
+inline Bundle intersect(const Bundle& b1, const Bundle& b2)
+{
+  Bundle res(b1);
+
+  res.intersect_with(b2);
+
+  return res;
+}
 
 #endif /* BUNDLE_H_ */
