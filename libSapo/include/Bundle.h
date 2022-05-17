@@ -59,10 +59,10 @@ public:
   } transfomation_mode;
 
 private:
-  std::vector<LinearAlgebra::Vector<double>> directions; //!< the vector of directions
-  LinearAlgebra::Vector<double> lower_bounds;            //!< direction upper bounds
-  LinearAlgebra::Vector<double> upper_bounds;            //!< direction lower bounds
-  std::vector<LinearAlgebra::Vector<unsigned int>> templates;     //!< templates matrix
+  std::vector<LinearAlgebra::Vector<double>> _directions; //!< the vector of directions
+  LinearAlgebra::Vector<double> _lower_bounds;            //!< direction upper bounds
+  LinearAlgebra::Vector<double> _upper_bounds;            //!< direction lower bounds
+  std::vector<LinearAlgebra::Vector<unsigned int>> _templates;     //!< templates matrix
 
   /**
    * Compute the edge lengths
@@ -225,29 +225,20 @@ public:
          std::vector<LinearAlgebra::Vector<unsigned int>> &&templates);
 
   /**
-   * @brief Get the intersection between two bundles
-   *
-   * This method intersects the current object and another bundle.
-   * The result is stored in the current object and a reference
-   * to it is returned.
-   *
-   * @param A is the intersecting bundle
+   * @brief Assignment operator
+   * 
+   * @param orig is the original object to be copied
    * @return a reference to the updated object
    */
-  Bundle &intersect_with(const Bundle &A);
+  Bundle &operator=(const Bundle &orig);
 
   /**
-   * @brief Get the intersection between this bundle and a linear set
-   *
-   * This method intersects the current instance of the `Bundle` class
-   * and a possible unbounded linear set provided as a `LinearSystem`.
-   * The result is stored in the current object and a reference to it
-   * is returned.
-   *
-   * @param ls is the intersecting linear system
+   * @brief Assignment operator
+   * 
+   * @param orig is the original object to be copied
    * @return a reference to the updated object
    */
-  Bundle &intersect_with(const LinearSystem &ls);
+  Bundle &operator=(Bundle &&orig);
 
   /**
    * @brief Get the dimension of the bundle space
@@ -256,7 +247,7 @@ public:
    */
   unsigned int dim() const
   {
-    return (directions.size() == 0 ? 0 : directions.front().size());
+    return (_directions.size() == 0 ? 0 : _directions.front().size());
   }
 
   /**
@@ -266,7 +257,7 @@ public:
    */
   unsigned int num_of_templates() const
   {
-    return templates.size();
+    return _templates.size();
   }
 
   /**
@@ -276,7 +267,7 @@ public:
    */
   unsigned int size() const
   {
-    return this->directions.size();
+    return _directions.size();
   }
 
   /**
@@ -284,9 +275,9 @@ public:
    *
    * @return a reference to the template vector
    */
-  const std::vector<LinearAlgebra::Vector<unsigned int>> &get_templates() const
+  const std::vector<LinearAlgebra::Vector<unsigned int>> &templates() const
   {
-    return this->templates;
+    return _templates;
   }
 
   /**
@@ -297,7 +288,7 @@ public:
    */
   const LinearAlgebra::Vector<unsigned int> &get_template(unsigned int i) const
   {
-    return this->templates[i];
+    return _templates[i];
   }
 
   /**
@@ -305,9 +296,9 @@ public:
    *
    * @return a reference to the vector of directions
    */
-  const std::vector<LinearAlgebra::Vector<double>> &get_directions() const
+  const std::vector<LinearAlgebra::Vector<double>> &directions() const
   {
-    return this->directions;
+    return _directions;
   }
 
   /**
@@ -318,7 +309,7 @@ public:
    */
   const LinearAlgebra::Vector<double> &get_direction(unsigned int i) const
   {
-    return this->directions[i];
+    return _directions[i];
   }
 
   /**
@@ -330,7 +321,7 @@ public:
    */
   const double &get_upper_bound(unsigned int i) const
   {
-    return this->upper_bounds[i];
+    return _upper_bounds[i];
   }
 
   /**
@@ -342,7 +333,7 @@ public:
    */
   const double &get_lower_bound(unsigned int i) const
   {
-    return this->lower_bounds[i];
+    return _lower_bounds[i];
   }
 
   /**
@@ -350,9 +341,9 @@ public:
    *
    * @return a reference to the direction upper bounds
    */
-  const std::vector<double> &get_upper_bounds() const
+  const std::vector<double> &upper_bounds() const
   {
-    return this->upper_bounds;
+    return _upper_bounds;
   }
 
   /**
@@ -360,9 +351,9 @@ public:
    *
    * @return a reference to the direction lower bounds
    */
-  const std::vector<double> &get_lower_bounds() const
+  const std::vector<double> &lower_bounds() const
   {
-    return this->lower_bounds;
+    return _lower_bounds;
   }
 
   /**
@@ -379,36 +370,6 @@ public:
    * @returns i-th parallelotope of the bundle
    */
   Parallelotope get_parallelotope(unsigned int i) const;
-
-  /**
-   * @brief Set the bundle templates
-   *
-   * @param[in] templates is the new template vector
-   */
-  void set_templates(const std::vector<LinearAlgebra::Vector<unsigned int>> &templates)
-  {
-    this->templates = templates;
-  }
-
-  /**
-   * @brief Set the direction upper bounds
-   *
-   * @param upper_bounds is the vector of the direction upper bounds
-   */
-  void set_upper_bounds(const LinearAlgebra::Vector<double> &upper_bounds)
-  {
-    this->upper_bounds = upper_bounds;
-  }
-
-  /**
-   * @brief Set the direction lower bounds
-   *
-   * @param lower_bounds is the vector of the direction lower bounds
-   */
-  void set_lower_bounds(const LinearAlgebra::Vector<double> &lower_bounds)
-  {
-    this->lower_bounds = lower_bounds;
-  }
 
   /**
    * @brief Get a canonical bundle equivalent to the current one
@@ -534,11 +495,29 @@ public:
              const std::shared_ptr<STL::Atom> atom) const;
 
   /**
-   * @brief Copy operator
+   * @brief Get the intersection between two bundles
    *
+   * This method intersects the current object and another bundle.
+   * The result is stored in the current object and a reference
+   * to it is returned.
+   *
+   * @param A is the intersecting bundle
    * @return a reference to the updated object
    */
-  Bundle &operator=(Bundle &&);
+  Bundle &intersect_with(const Bundle &A);
+
+  /**
+   * @brief Get the intersection between this bundle and a linear set
+   *
+   * This method intersects the current instance of the `Bundle` class
+   * and a possible unbounded linear set provided as a `LinearSystem`.
+   * The result is stored in the current object and a reference to it
+   * is returned.
+   *
+   * @param ls is the intersecting linear system
+   * @return a reference to the updated object
+   */
+  Bundle &intersect_with(const LinearSystem &ls);
 
   virtual ~Bundle();
 
