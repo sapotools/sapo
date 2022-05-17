@@ -82,6 +82,20 @@ BOOST_AUTO_TEST_CASE(test_linear_systems)
     }
 }
 
+BOOST_AUTO_TEST_CASE(test_linear_systems_error)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0,0},
+        {0,1,0}
+    };
+
+    BOOST_REQUIRE_THROW(LinearSystem(A, {1}), std::domain_error);
+    BOOST_REQUIRE_THROW(LinearSystem(A, {1,2,3}), std::domain_error);
+}
+
 BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems)
 {
     using namespace LinearAlgebra;

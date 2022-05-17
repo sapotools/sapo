@@ -22,11 +22,23 @@ BOOST_AUTO_TEST_CASE(test_polytope)
         {0,0,-1}
     };
 
-    Vector<double> b = {1,2,3,3,2,1};
- 
     Polytope p;
 
-    p = Polytope(A,b);
+    p = Polytope(A,{1,2,3,3,2,1});
+}
+
+BOOST_AUTO_TEST_CASE(test_polytope_error)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0,0},
+        {0,1,0}
+    };
+
+    BOOST_REQUIRE_THROW(Polytope(A, {1}), std::domain_error);
+    BOOST_REQUIRE_THROW(Polytope(A, {1,2,3}), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_is_empty_polytope)
