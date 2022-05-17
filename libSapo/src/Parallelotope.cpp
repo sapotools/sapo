@@ -11,6 +11,7 @@
 #include "LinearAlgebra.h"
 
 #include <cmath>
+#include <sstream>
 
 /**
  * Constructor
@@ -25,6 +26,24 @@ Parallelotope::Parallelotope(
             const LinearAlgebra::Vector<double> &upper_bound)
 {
   using namespace LinearAlgebra;
+
+  if (lower_bound.size() != upper_bound.size()) {
+    std::ostringstream oss;
+
+    oss << "The lower and upper bounds vectors must "
+        << "have the same dimension: they are " << lower_bound.size() 
+        << " and " << upper_bound.size() << ", respectively.";
+    throw std::domain_error(oss.str());
+  }
+
+  if (lower_bound.size() != directions.size()) {
+    std::ostringstream oss;
+
+    oss << "The lower bounds vector and the direction vector must "
+        << "have the same dimension: they are " << lower_bound.size() 
+        << " and " << directions.size() << ", respectively.";
+    throw std::domain_error(oss.str());
+  }
 
   const Sparse::Matrix<double> dmatrix(directions);
   Sparse::LUP_Factorization<double> factorization(dmatrix);

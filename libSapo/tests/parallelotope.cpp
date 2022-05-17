@@ -7,7 +7,6 @@
 #include <sstream>
 
 #include "Parallelotope.h"
-#include "LinearAlgebraIO.h"
 
 BOOST_AUTO_TEST_CASE(test_parallelotope)
 {
@@ -56,4 +55,22 @@ BOOST_AUTO_TEST_CASE(test_parallelotope)
 
     BOOST_CHECK((Polytope)p2!=Polytope(Bp, {1,5,3,4,-1,-1}));
     BOOST_CHECK((Polytope)p1!=(Polytope)p2);
+}
+
+BOOST_AUTO_TEST_CASE(test_parallelotope_error)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0},
+        {0,1}
+    };
+
+    BOOST_REQUIRE_THROW(Parallelotope(A, {-3}, {1}), std::domain_error);
+    BOOST_REQUIRE_THROW(Parallelotope(A, {-3}, {1,2}), std::domain_error);
+    BOOST_REQUIRE_THROW(Parallelotope(A, {-3,-2}, {1}), std::domain_error);
+    BOOST_REQUIRE_THROW(Parallelotope(A, {-3,-2,2}, {1,2}), std::domain_error);
+    BOOST_REQUIRE_THROW(Parallelotope(A, {-3,-2}, {1,2,5}), std::domain_error);
+    BOOST_REQUIRE_THROW(Parallelotope(A, {-3,-2,2}, {1,2,5}), std::domain_error);
 }
