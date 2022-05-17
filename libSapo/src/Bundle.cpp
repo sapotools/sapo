@@ -77,6 +77,33 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
     lower_bounds(lower_bounds), upper_bounds(upper_bounds),
     templates(templates)
 {
+  if (directions.size() == 0) {
+    throw std::domain_error("Bundle::Bundle: directions must be non empty");
+  }
+  if (directions.size() != upper_bounds.size()) {
+    throw std::domain_error("Bundle::Bundle: directions and upper_bounds "
+                            "must have the same size");
+  }
+  if (directions.size() != lower_bounds.size()) {
+    throw std::domain_error("Bundle::Bundle: directions and lower_bounds "
+                            "must have the same size");
+  }
+  if (templates.size() == 0) {
+    throw std::domain_error("Bundle::Bundle: templates must be non empty");
+  }
+
+  for (auto t_it = std::begin(templates); t_it != std::end(templates); ++t_it) {
+    if (t_it->size() != this->dim()) {
+      throw std::domain_error("Bundle::Bundle: templates must have "
+                              "as many columns as directions");
+    }
+    for (auto d_it = std::begin(*t_it); d_it != std::end(*t_it); ++d_it) {
+      if (*d_it>=directions.size()) {
+        throw std::domain_error("Bundle::Bundle: templates must contains "
+                                "as values indices of the directions vector");
+      }
+    }
+  }
 }
 
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
@@ -99,15 +126,21 @@ Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
     throw std::domain_error("Bundle::Bundle: directions and lower_bounds "
                             "must have the same size");
   }
-  if (templates.size() > 0) {
-    for (unsigned int i = 0; i < templates.size(); i++) {
-      if (templates[i].size() != this->dim()) {
-        throw std::domain_error("Bundle::Bundle: templates must have "
-                                "as many columns as directions");
+  if (templates.size() == 0) {
+    throw std::domain_error("Bundle::Bundle: templates must be non empty");
+  }
+
+  for (auto t_it = std::begin(templates); t_it != std::end(templates); ++t_it) {
+    if (t_it->size() != this->dim()) {
+      throw std::domain_error("Bundle::Bundle: templates must have "
+                              "as many columns as directions");
+    }
+    for (auto d_it = std::begin(*t_it); d_it != std::end(*t_it); ++d_it) {
+      if (*d_it>=directions.size()) {
+        throw std::domain_error("Bundle::Bundle: templates must contains "
+                                "as values indices of the directions vector");
       }
     }
-  } else {
-    throw std::domain_error("Bundle::Bundle: templates must be non empty");
   }
 }
 
