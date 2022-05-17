@@ -72,7 +72,7 @@ double orthProx(LinearAlgebra::Vector<double> v1, LinearAlgebra::Vector<double> 
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
-               const std::vector<LinearAlgebra::Vector<int>> &templates):
+               const std::vector<LinearAlgebra::Vector<unsigned int>> &templates):
     directions(directions),
     lower_bounds(lower_bounds), upper_bounds(upper_bounds),
     templates(templates)
@@ -81,7 +81,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
 
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds, LinearAlgebra::Vector<double> &&upper_bounds,
-               std::vector<LinearAlgebra::Vector<int>> &&templates):
+               std::vector<LinearAlgebra::Vector<unsigned int>> &&templates):
     directions(std::move(directions)),
     lower_bounds(std::move(lower_bounds)),
     upper_bounds(std::move(upper_bounds)), templates(std::move(templates))
@@ -154,7 +154,7 @@ Parallelotope Bundle::get_parallelotope(unsigned int i) const
   vector<double> lbound, ubound;
   vector<LinearAlgebra::Vector<double>> Lambda;
 
-  vector<int>::const_iterator it = std::begin(this->templates[i]);
+  vector<unsigned int>::const_iterator it = std::begin(this->templates[i]);
   // upper facets
   for (unsigned int j = 0; j < this->dim(); j++) {
     const int idx = *it;
@@ -198,8 +198,8 @@ Bundle& Bundle::canonize()
  * @param[in] sorted a sorted vector
  * @returns true is v1 is a permutation of v2
  */
-bool isPermutationOfSorted(std::vector<int> v1,
-                           const std::vector<int> &sorted)
+bool isPermutationOfSorted(std::vector<unsigned int> v1,
+                           const std::vector<unsigned int> &sorted)
 {
   if (v1.size() != sorted.size()) {
     return false;
@@ -228,7 +228,7 @@ bool isPermutationOfSorted(std::vector<int> v1,
  * @param[in] v2 second vector
  * @returns true is v1 is a permutation of v2
  */
-bool isPermutation(const std::vector<int> &v1, std::vector<int> v2)
+bool isPermutation(const std::vector<unsigned int> &v1, std::vector<unsigned int> v2)
 {
   if (v1.size() != v2.size()) {
     return false;
@@ -300,7 +300,7 @@ double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double maxOffsetDist(const std::vector<int> &dirsIdx,
+double maxOffsetDist(const std::vector<unsigned int> &dirsIdx,
                      const LinearAlgebra::Vector<double> &dists)
 {
 
@@ -318,7 +318,7 @@ double maxOffsetDist(const std::vector<int> &dirsIdx,
  * @param[in] dists pre-computed distances
  * @returns distance accumulation
  */
-double maxOffsetDist(const std::vector<LinearAlgebra::Vector<int>> &T,
+double maxOffsetDist(const std::vector<LinearAlgebra::Vector<unsigned int>> &T,
                      const LinearAlgebra::Vector<double> &dists)
 {
   double maxdist = std::numeric_limits<double>::lowest();
@@ -359,7 +359,7 @@ double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
  * @returns maximum orthogonal proximity
  */
 double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
-                   const std::vector<int> &dirsIdx)
+                   const std::vector<unsigned int> &dirsIdx)
 {
   double maxProx = 0;
   for (unsigned int i = 0; i < dirsIdx.size(); i++) {
@@ -379,7 +379,7 @@ double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
  * @returns maximum orthogonal proximity
  */
 double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
-                   const std::vector<LinearAlgebra::Vector<int>> &T)
+                   const std::vector<LinearAlgebra::Vector<unsigned int>> &T)
 {
   double maxorth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
@@ -488,16 +488,16 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
   vector<double> offDists = this->edge_lengths();
 
   // get current template and try to improve it
-  vector<Vector<int>> curT = this->templates;
+  vector<Vector<unsigned int>> curT = this->templates;
 
   // get current template and try to improve it
-  vector<Vector<int>> bestT = this->templates;
+  vector<Vector<unsigned int>> bestT = this->templates;
   int temp_card = this->templates.size();
 
   int i = 0;
   while (i < max_iters) {
 
-    vector<Vector<int>> tmpT = curT;
+    vector<Vector<unsigned int>> tmpT = curT;
 
     // generate random coordinates to swap
     unsigned int i1 = rand() % temp_card;
@@ -905,7 +905,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     const std::vector<SymbolicAlgebra::Expression<>> genFun_f
         = replace_in(dynamics, variables, genFun);
 
-    const std::vector<int> &template_i = bundle->templates[template_num];
+    const std::vector<unsigned int> &template_i = bundle->templates[template_num];
 
     unsigned int dir_b;
 
@@ -1008,7 +1008,7 @@ bool isIn(int n, std::vector<int> v)
  * @param[in] vlist set of vectors in which to look for
  * @returns true is v belongs to vlist
  */
-bool isIn(std::vector<int> v, std::vector<LinearAlgebra::Vector<int>> vlist)
+bool isIn(std::vector<unsigned int> v, std::vector<LinearAlgebra::Vector<unsigned int>> vlist)
 {
   for (unsigned int i = 0; i < vlist.size(); i++) {
     if (isPermutation(v, vlist[i])) {
@@ -1068,7 +1068,7 @@ get_a_linearly_dependent_in(const LinearAlgebra::Vector<double> &v,
  *         `new_indices` in an index greater or equal to 
  *         `first_bundle_size`
  */
-bool copy_required(const LinearAlgebra::Vector<int> &bundle_template,
+bool copy_required(const LinearAlgebra::Vector<unsigned int> &bundle_template,
                    const std::vector<unsigned int> &new_indices,
                    const unsigned int first_bundle_size)
 {
@@ -1116,11 +1116,11 @@ Bundle &Bundle::intersect_with(const Bundle &A)
 
   // check whether some of the templates must be copied
   for (unsigned int i = 0; i < A.templates.size(); ++i) {
-    const std::vector<int> &A_template = A.templates[i];
+    const std::vector<unsigned int> &A_template = A.templates[i];
     if (copy_required(A_template, new_ids, old_size)) {
 
       // if this is the case, copy and update the template indices
-      std::vector<int> t_copy(A_template);
+      std::vector<unsigned int> t_copy(A_template);
       for (unsigned int j = 0; j < t_copy.size(); ++j) {
         t_copy[j] = new_ids[t_copy[j]];
       }
@@ -1158,7 +1158,7 @@ void Bundle::add_templates_for(
     // to discover them
     auto fP = LUP_Factorization<double>(T).P();
     row_pos = fP(row_pos);
-    Vector<int> new_template(this->dim());
+    Vector<unsigned int> new_template(this->dim());
 
     std::copy(std::begin(row_pos), std::begin(row_pos) + new_template.size(),
               std::begin(new_template));

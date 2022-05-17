@@ -396,7 +396,7 @@ void InputData::addVarDirectionConstraint(Direction *d)
   return this->addDirectionConstraint(d, true);
 }
 
-int InputData::findDirectionPos(const std::string &name) const
+unsigned int InputData::findDirectionPos(const std::string &name) const
 {
   for (unsigned i = 0; i < directions.size(); i++) {
     if (directions[i]->getName() == name) {

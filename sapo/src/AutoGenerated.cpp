@@ -49,7 +49,7 @@ void oldTemplateConstraints(glp_prob **lp,
                             const std::vector<std::vector<double>> A,
                             const std::vector<std::vector<double>> C,
                             unsigned *startingIndex,
-                            std::vector<std::vector<int>> oldTemplate,
+                            const std::vector<std::vector<unsigned int>> &oldTemplate,
                             unsigned Pn);
 
 // adds to lp the constraints that each parallelotope has linearly independent
@@ -71,13 +71,13 @@ double findDirectionBound(std::vector<std::vector<double>> A,
 
 void trim_unused_directions(std::vector<std::vector<double>> &directions,
                             std::vector<double> &LB, std::vector<double> &UB,
-                            std::vector<std::vector<int>> &template_matrix)
+                            std::vector<std::vector<unsigned int>> &template_matrix)
 {
   /* init new_pos by assigning 1 to any useful direction and
    * 0 to those not mentioned by any template */
   std::vector<int> new_pos(directions.size(), 0);
-  for (const std::vector<int> &T: template_matrix) {
-    for (const int &dir: T) {
+  for (const std::vector<unsigned int> &T: template_matrix) {
+    for (const unsigned int &dir: T) {
       new_pos[dir] = 1;
     }
   }
@@ -111,8 +111,8 @@ void trim_unused_directions(std::vector<std::vector<double>> &directions,
   UB.resize(num_of_directions);
 
   /* re-map the template matrix */
-  for (std::vector<int> &T: template_matrix) {
-    for (int &dir: T) {
+  for (std::vector<unsigned int> &T: template_matrix) {
+    for (unsigned int &dir: T) {
       dir = new_pos[dir] - 1;
     }
   }
@@ -142,10 +142,10 @@ void trim_unused_directions(std::vector<std::vector<double>> &directions,
  * The objective function is simply the sum of all variables, since we are
  * interested in satisfiability and not in optimization
  */
-std::vector<std::vector<int>>
+std::vector<std::vector<unsigned int>>
 computeTemplate(const std::vector<std::vector<double>> A,
                 const std::vector<std::vector<double>> C,
-                const std::vector<std::vector<int>> oldTemplate)
+                const std::vector<std::vector<unsigned int>> oldTemplate)
 {
   std::vector<bool> dirCovered(A.size(), false);
   for (unsigned i = 0; i < oldTemplate.size(); i++) {
@@ -212,7 +212,7 @@ computeTemplate(const std::vector<std::vector<double>> A,
   glp_simplex(lp, &lp_param);
   //	glp_intopt(lp, &ilp_param);
 
-  std::vector<std::vector<int>> T(Pn, std::vector<int>{});
+  std::vector<std::vector<unsigned int>> T(Pn, std::vector<unsigned int>{});
   for (unsigned P = 0; P < Pn; P++) {
     for (unsigned d = 0; d < m + c; d++) {
       if (glp_get_col_prim(lp, map_paral(d, P, Pn) + 1) == 1) {
@@ -243,7 +243,7 @@ Bundle getBundle(const InputData &id)
     UB.push_back(id.getDirection(i)->getUB());
     LB.push_back(id.getDirection(i)->getLB());
   }
-  std::vector<std::vector<int>> template_matrix = id.getTemplate();
+  std::vector<std::vector<unsigned int>> template_matrix = id.getTemplate();
 
   /* if users have specified at least one template, ... */
   if (template_matrix.size() > 0) {
@@ -256,7 +256,7 @@ Bundle getBundle(const InputData &id)
     trim_unused_directions(directions, LB, UB, template_matrix);
   }
 
-  std::vector<std::vector<int>> templ
+  std::vector<std::vector<unsigned int>> templ
       = computeTemplate(directions, {}, template_matrix);
 
   return Bundle(directions, LB, UB, templ);
@@ -679,7 +679,7 @@ void oldTemplateConstraints(glp_prob **lp,
                             const std::vector<std::vector<double>> A,
                             const std::vector<std::vector<double>> C,
                             unsigned *startingIndex,
-                            std::vector<std::vector<int>> oldTemplate,
+                            const std::vector<std::vector<unsigned int>> &oldTemplate,
                             unsigned Pn)
 {
   unsigned m = A.size(); // dirs num = rows of A

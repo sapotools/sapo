@@ -253,15 +253,16 @@ public:
   {
     return directions;
   }
-  const Direction *getDirection(unsigned i) const
+  const Direction *getDirection(const unsigned int& i) const
   {
     return directions[i];
   }
-  bool isBounded(int d) const
+  bool isBounded(const unsigned int &d) const
   {
     return directions[d]->hasLB() && directions[d]->hasUB();
   }
-  int findDirectionPos(const std::string &name) const;
+
+  unsigned int findDirectionPos(const std::string &name) const;
 
   unsigned templateRows() const
   {
@@ -271,11 +272,11 @@ public:
   {
     return templateMatrix[0].size();
   }
-  void setTemplate(std::vector<std::vector<int>> m)
+  void setTemplate(const std::vector<std::vector<unsigned int>> &m)
   {
     templateMatrix = m;
   }
-  const std::vector<std::vector<int>> &getTemplate() const
+  const std::vector<std::vector<unsigned int>> &getTemplate() const
   {
     return templateMatrix;
   }
@@ -402,7 +403,7 @@ protected:
 
   std::vector<Direction *> directions;
 
-  std::vector<std::vector<int>> templateMatrix;
+  std::vector<std::vector<unsigned int>> templateMatrix;
 
   std::vector<Direction *> paramDirections;
 

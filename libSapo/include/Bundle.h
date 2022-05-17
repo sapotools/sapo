@@ -62,7 +62,7 @@ private:
   std::vector<LinearAlgebra::Vector<double>> directions; //!< the vector of directions
   LinearAlgebra::Vector<double> lower_bounds;            //!< direction upper bounds
   LinearAlgebra::Vector<double> upper_bounds;            //!< direction lower bounds
-  std::vector<LinearAlgebra::Vector<int>> templates;     //!< templates matrix
+  std::vector<LinearAlgebra::Vector<unsigned int>> templates;     //!< templates matrix
 
   /**
    * Compute the edge lengths
@@ -209,7 +209,7 @@ public:
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
-         const std::vector<LinearAlgebra::Vector<int>> &templates);
+         const std::vector<LinearAlgebra::Vector<unsigned int>> &templates);
 
   /**
    * @brief A move constructor
@@ -222,7 +222,7 @@ public:
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds, 
          LinearAlgebra::Vector<double> &&upper_bounds,
-         std::vector<LinearAlgebra::Vector<int>> &&templates);
+         std::vector<LinearAlgebra::Vector<unsigned int>> &&templates);
 
   /**
    * @brief Get the intersection between two bundles
@@ -284,7 +284,7 @@ public:
    *
    * @return a reference to the template vector
    */
-  const std::vector<LinearAlgebra::Vector<int>> &get_templates() const
+  const std::vector<LinearAlgebra::Vector<unsigned int>> &get_templates() const
   {
     return this->templates;
   }
@@ -295,7 +295,7 @@ public:
    * @param i is the index of the aimed template
    * @return a reference to the i-th template
    */
-  const LinearAlgebra::Vector<int> &get_template(unsigned int i) const
+  const LinearAlgebra::Vector<unsigned int> &get_template(unsigned int i) const
   {
     return this->templates[i];
   }
@@ -385,7 +385,7 @@ public:
    *
    * @param[in] templates is the new template vector
    */
-  void set_templates(const std::vector<LinearAlgebra::Vector<int>> &templates)
+  void set_templates(const std::vector<LinearAlgebra::Vector<unsigned int>> &templates)
   {
     this->templates = templates;
   }

@@ -134,6 +134,7 @@
 ;
 
 %token <std::string> IDENT
+%token <unsigned int> NATURAL
 %token <int> INTEGER
 %token <double> DOUBLE
 
@@ -156,8 +157,8 @@
 %nterm <double> number
 %nterm <std::vector<std::string>> identList
 %nterm <SymbolicAlgebra::Expression<>> expr
-%nterm <std::vector<int>> matrixRow
-%nterm <std::vector<std::vector<int>>> rowList
+%nterm <std::vector<unsigned int>> matrixRow
+%nterm <std::vector<std::vector<unsigned int>>> rowList
 %nterm <std::shared_ptr<STL::STL> > formula
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> direction
@@ -225,7 +226,7 @@ header			: PROB ":" problemType ";"
 						{
 							MISSING_SC(@3);
 						}
-						| ITER ":" INTEGER ";"
+						| ITER ":" NATURAL ";"
 						{
 							if (drv.data.isIterationSet()) {
 								WARNING(@$, "Iteration number already defined");
@@ -233,11 +234,11 @@ header			: PROB ":" problemType ";"
 								drv.data.setIterations($3);
 							}
 						}
-						| ITER ":" INTEGER error
+						| ITER ":" NATURAL error
 						{
 							MISSING_SC(@3);
 						}
-						| PSPLITS ":" INTEGER ";"
+						| PSPLITS ":" NATURAL ";"
 						{
 							if (drv.data.getMaxParameterSplits() > 0) {
 								WARNING(@$, "The maximum number of parameter splits has been already defined");
@@ -245,7 +246,7 @@ header			: PROB ":" problemType ";"
 								drv.data.setMaxParameterSplits($3);
 							}
 						}
-						| PSPLITS ":" INTEGER error
+						| PSPLITS ":" NATURAL error
 						{
 							MISSING_SC(@3);
 						}
@@ -674,10 +675,10 @@ template		: TEMPL "=" "{" rowList "}" ";"
 							ERROR(@2, "Error in definition of template");
 						}
 
-rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
+rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<unsigned int>>{$2}; }
 						| "{" matrixRow error
 						{
-							ERROR(@2, "Missing \"}\""); $$ = std::vector<std::vector<int>>{$2};
+							ERROR(@2, "Missing \"}\""); $$ = std::vector<std::vector<unsigned int>>{$2};
 						}
 						| rowList "," "{" matrixRow "}" { $1.push_back($4); $$ = $1; }
 						| rowList "," "{" matrixRow error
@@ -712,18 +713,18 @@ matrixRow	: matrixRow "," IDENT
 							$$ = {drv.data.findDirectionPos($1)};
 						}
 					}
-					| matrixRow "," INTEGER
+					| matrixRow "," NATURAL
 					{
-						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum()) {
+						if ($3 >= drv.data.getDirectionsNum()) {
 							ERROR(@3, "Unknown direction " + std::to_string($3));
 						}
 						
 						$1.push_back($3);
 						$$ = $1;
 					}
-					| INTEGER
+					| NATURAL
 					{
-						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum()) {
+						if ($1 >= drv.data.getDirectionsNum()) {
 							ERROR(@1, "Unknown direction " + std::to_string($1));
 						}
 						
@@ -881,7 +882,7 @@ doubleInterval	: "[" expr "," expr "]"
 								}
 
 number		: DOUBLE { $$ = $1; }
-					| INTEGER { $$ = (double) $1; }
+				| NATURAL { $$ = (double) $1; }
 
 expr		: number	{ $$ = $1; }
 				| "+" expr { $$ = $2; }
@@ -1040,14 +1041,14 @@ option	: TRANS transType ";"
 					
 					drv.data.setAlpha($2);
 				}
-				| COMPOSE INTEGER ";"
+				| COMPOSE NATURAL ";"
 				{
 					if ($2 < 1) {
 						yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
 					}
 					drv.data.setDynamicDegree($2);
 				}
-				| COMPOSE INTEGER error
+				| COMPOSE NATURAL error
 				{
 					MISSING_SC(@2);
 					if ($2 < 1) {
