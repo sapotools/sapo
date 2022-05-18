@@ -173,7 +173,7 @@ private:
   Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
                    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
                    const MinMaxCoeffFinder *max_finder,
-                   Bundle::transfomation_mode mode) const;
+                   Bundle::transfomation_mode mode=Bundle::AFO) const;
 
   /**
    * @brief Add to the bundle templates for some directions
@@ -223,6 +223,37 @@ public:
          LinearAlgebra::Vector<double> &&lower_bounds, 
          LinearAlgebra::Vector<double> &&upper_bounds,
          std::vector<LinearAlgebra::Vector<unsigned int>> &&templates);
+
+
+  /**
+   * @brief A constructor
+   *
+   * Whenever the templates are not specified at all, we assume that 
+   * all the directions are relevants and the templates are computed
+   * automatically.
+   * 
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
+   */
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+         const LinearAlgebra::Vector<double> &lower_bounds,
+         const LinearAlgebra::Vector<double> &upper_bounds);
+
+  /**
+   * @brief A move constructor
+   *
+   * Whenever the templates are not specified at all, we assume that 
+   * all the directions are relevants and the templates are computed
+   * automatically.
+   *
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
+   */
+  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+         LinearAlgebra::Vector<double> &&lower_bounds, 
+         LinearAlgebra::Vector<double> &&upper_bounds);
 
   /**
    * @brief Assignment operator
@@ -442,7 +473,7 @@ public:
   inline Bundle
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            transfomation_mode mode) const
+            transfomation_mode mode=Bundle::AFO) const
   {
     MinMaxCoeffFinder max_finder;
 
@@ -463,7 +494,8 @@ public:
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            const Polytope &parameter_set, transfomation_mode mode) const
+            const Polytope &parameter_set, 
+            transfomation_mode mode=Bundle::AFO) const
   {
     ParamMinMaxCoeffFinder max_finder(parameters, parameter_set);
 

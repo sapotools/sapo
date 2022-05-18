@@ -173,6 +173,67 @@ Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
   }
 }
 
+
+Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+               const LinearAlgebra::Vector<double> &lower_bounds,
+               const LinearAlgebra::Vector<double> &upper_bounds):
+    _directions(directions),
+    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds),
+    _templates()
+{
+  if (directions.size() == 0) {
+    throw std::domain_error("Bundle::Bundle: directions must be non empty");
+  }
+  if (directions.size() != upper_bounds.size()) {
+    throw std::domain_error("Bundle::Bundle: directions and upper_bounds "
+                            "must have the same size");
+  }
+  if (directions.size() != lower_bounds.size()) {
+    throw std::domain_error("Bundle::Bundle: directions and lower_bounds "
+                            "must have the same size");
+  }
+
+  // add missing templates
+  std::set<unsigned int> missing;
+
+  for (unsigned int i=0; i<_directions.size(); ++i) {
+    missing.insert(i);
+  }
+
+  add_templates_for(missing);
+}
+
+Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+               LinearAlgebra::Vector<double> &&lower_bounds, 
+               LinearAlgebra::Vector<double> &&upper_bounds):
+    _directions(std::move(directions)),
+    _lower_bounds(std::move(lower_bounds)),
+    _upper_bounds(std::move(upper_bounds)), _templates()
+{
+  using namespace std;
+
+  if (_directions.size() == 0) {
+    throw std::domain_error("Bundle::Bundle: directions must be non empty");
+  }
+  if (_directions.size() != _upper_bounds.size()) {
+    throw std::domain_error("Bundle::Bundle: directions and upper_bounds "
+                            "must have the same size");
+  }
+  if (_directions.size() != _lower_bounds.size()) {
+    throw std::domain_error("Bundle::Bundle: directions and lower_bounds "
+                            "must have the same size");
+  }
+  
+  // add missing templates
+  std::set<unsigned int> missing;
+
+  for (unsigned int i=0; i<_directions.size(); ++i) {
+    missing.insert(i);
+  }
+
+  add_templates_for(missing);
+}
+
 /**
  * @brief Copy operator
  * 
@@ -285,8 +346,8 @@ Bundle& Bundle::canonize()
   // get current polytope
   Polytope bund = *this;
   for (unsigned int i = 0; i < this->size(); ++i) {
-    _lower_bounds[i] = bund.maximize(this->_directions[i]).optimum();
-    _upper_bounds[i] = bund.minimize(this->_directions[i]).optimum();
+    _lower_bounds[i] = bund.minimize(this->_directions[i]).optimum();
+    _upper_bounds[i] = bund.maximize(this->_directions[i]).optimum();
   }
   return *this;
 }
@@ -1262,7 +1323,8 @@ void Bundle::add_templates_for(
     row_pos = fP(row_pos);
     Vector<unsigned int> new_template(this->dim());
 
-    std::copy(std::begin(row_pos), std::begin(row_pos) + new_template.size(),
+    std::copy(std::begin(row_pos),
+              std::begin(row_pos) + new_template.size(),
               std::begin(new_template));
 
     this->_templates.push_back(new_template);
