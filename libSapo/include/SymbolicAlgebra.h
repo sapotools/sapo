@@ -3044,6 +3044,74 @@ public:
 /**
  * @brief A class to represent symbols
  *
+ * @tparam C is the type of expression numeric constants
+ */
+template<typename C>
+class symbol_type;
+
+} // end of low_level namespace 
+
+/**
+ * @brief Exception raised when a symbol is evaluated
+ */
+class symbol_evaluation_error : public std::exception
+{
+private:
+  std::string _symbol_name;  //!< The name of the evaluated symbol
+public:
+  /**
+   * @brief Constructor
+   * 
+   * @tparam C is the type of expression numeric constants
+   * @param symbol is the symbol that has been evaluated
+   */
+  template<typename C>
+  explicit symbol_evaluation_error(const Symbol<C>& symbol):
+    _symbol_name(symbol.get_name())
+  {}
+
+  /**
+   * @brief Constructor
+   * 
+   * @tparam C is the type of expression numeric constants
+   * @param symbol is the symbol that has been evaluated
+   */
+  template<typename C>
+  explicit symbol_evaluation_error(const low_level::symbol_type<C>& symbol):
+    _symbol_name(Symbol<C>::get_symbol_name(symbol.get_id()))
+  {}
+
+  /**
+   * @brief Get the name of the evaluated symbol
+   * 
+   * @return the name of the evaluated symbol
+   */
+  inline const std::string &get_symbol_name() const noexcept
+  {
+    return _symbol_name;
+  }
+
+  /**
+   * @brief Destroy the symbol evaluation error
+   */
+  virtual ~symbol_evaluation_error() noexcept {}
+
+  /**
+   * @brief Return the error message
+   * 
+   * @return the error message
+   */
+  virtual const char* what() const noexcept {
+      return "Symbols cannot be evaluated";
+  }
+};
+
+namespace low_level 
+{
+
+/**
+ * @brief A class to represent symbols
+ *
  * @tparam C is the type of numeric constants
  */
 template<typename C>
@@ -3185,7 +3253,7 @@ public:
    */
   C evaluate() const
   {
-    throw std::runtime_error("Symbols cannot be evaluated");
+    throw symbol_evaluation_error(*this);
   }
 
   /**
