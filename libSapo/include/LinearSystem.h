@@ -357,7 +357,7 @@ public:
   /**
    * Return the number of variables
    */
-  unsigned int dim() const
+  inline unsigned int dim() const
   {
     if (size() == 0) {
       return 0;
@@ -369,7 +369,7 @@ public:
   /**
    * Return the number of inequalities
    */
-  unsigned int size() const
+  inline unsigned int size() const
   {
     return this->_b.size();
   }
@@ -386,7 +386,6 @@ public:
     std::swap(ls_1._b, ls_2._b);
   }
 };
-
 
 /**
  * @brief Test whether two linear systems are the same one
