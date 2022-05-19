@@ -11,6 +11,15 @@
 
 #include "LinearSystem.h"
 
+/**
+ * @brief A polytope representation class
+ * 
+ * Polytopes are bounded convex sets representabled 
+ * by a linear system \f[A \cdot x \leq b\f]. 
+ * This class extends the `LinearSystem` class and 
+ * provides some set-based methods and functions 
+ * such as `is_empty` or `intersect`.
+ */
 class Polytope : public LinearSystem
 {
 
@@ -45,6 +54,7 @@ public:
    *
    * @param[in] A template matrix
    * @param[in] b offset vector
+   * @todo Test polytope closeness
    */
   Polytope(const std::vector<std::vector<double>> &A,
            const std::vector<double> &b):
@@ -68,6 +78,7 @@ public:
    *
    * @param[in] vars list of variables appearing in the constraints
    * @param[in] constraints symbolic constraints
+   * @todo Test polytope closeness
    */
   Polytope(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
            const std::vector<SymbolicAlgebra::Expression<>> &constraints):
@@ -104,14 +115,9 @@ public:
   /**
    * Establish whether a polytope is empty
    *
-   * Due to approximation errors, it may return false for some empty
-   * polytopes too. However, when it returns true, the polytope is certainly
-   * empty.
-   *
    * @param[in] strict_inequality specifies whether the polytope is
    *         defined by a strict inequality (i.e., Ax < b).
-   * @return a Boolean value. If the returned value is true, then the
-   *       polytope is empty.
+   * @return `true` if and only if the polytope is empty
    */
   bool is_empty(const bool strict_inequality = false) const
   {
@@ -122,21 +128,27 @@ public:
    * Check whether one polytope contains another polytope.
    *
    * This method establishes whether the current Polytope fully
-   * contains another polytope. Due to the approximation errors,
-   * the method may return false even if this is the case.
-   * However, whenever it returns true, the current object
-   * certaintly contains the polytope.
+   * contains another polytope.
    *
    * @param[in] P is the polytope that are compared to the current
    *     object.
-   * @return a Boolean value. When the current object does not
-   *     contain the parameter, the retured value is false. When
-   *     the method returns true, the current polytope contains
-   *     the parameter. There are cases in which the current
-   *     object contains the parameter and, still, this method
-   *     returns false.
+   * @return `true` if and only if this polytope contains `P`
    */
-  bool contains(const Polytope &P) const;
+  inline bool contains(const Polytope &P) const
+  {
+    return P.satisfies(*this);
+  }
+
+  /**
+   * @brief Expand the polytope 
+   * 
+   * This method expands the polytope so that each of its boundaries
+   * is moved by a value `epsilon`.
+   * 
+   * @param epsilon is the aimed expansion 
+   * @return a reference to the updated polytope
+   */
+  Polytope &expand_by(const double epsilon);
 
   /**
    *  Split a polytope in a list of polytopes.
@@ -149,7 +161,7 @@ public:
    */
   inline std::list<Polytope> split() const
   {
-    return this->split(this->A.size());
+    return this->split(this->_A.size());
   }
 
   /**
@@ -158,7 +170,7 @@ public:
    *  This method splits a polytope in a list of polytopes such
    *  that their set union equals the original polytope. Each
    *  polytope in the original list is split in
-   *  $2^\textrm{num_of_splits}$ polytopes at most.
+   *  \f$2^\textrm{num_of_splits}\f$ polytopes at most.
    *
    * @param num_of_splits is the number of splits to performed.
    * @return A list of polytopes such that their union equals
@@ -183,13 +195,19 @@ public:
    */
   double bounding_box_volume() const;
 
-  void plotRegion(std::ostream &os = std::cout, const char color = ' ') const;
-
-  void plotRegionT(std::ostream &os, const double t) const;
-  void plotRegion(std::ostream &os, const std::vector<int> &rows,
-                  const std::vector<int> &cols) const;
-
-  friend void swap(Polytope &P1, Polytope &P2);
+  /**
+   * @brief Swap two polytopes
+   * 
+   * This method swaps two polytope objects.
+   * 
+   * @param P1 is a polytope
+   * @param P2 is a polytope
+   */
+  friend inline void swap(Polytope &P1, Polytope &P2)
+  {
+    swap(*(static_cast<LinearSystem *>(&P1)),
+        *(static_cast<LinearSystem *>(&P2)));
+  }
 
   /**
    * Compute the intersection of two polytopes
@@ -201,10 +219,25 @@ public:
   friend Polytope intersect(const Polytope &P1, const Polytope &P2);
 };
 
-inline void swap(Polytope &P1, Polytope &P2)
+/**
+ * @brief Get the expansion of a linear set 
+ * 
+ * This method expands a linear set so that each of its boundaries
+ * is moved by a value `epsilon`.
+ * 
+ * @tparam SET_TYPE is the linear set type
+ * @param S is the set to be expanded
+ * @param epsilon is the aimed expansion 
+ * @return an expanded version of `S`
+ */
+template<typename SET_TYPE>
+SET_TYPE expand(const SET_TYPE& S, const double epsilon)
 {
-  swap(*(static_cast<LinearSystem *>(&P1)),
-       *(static_cast<LinearSystem *>(&P2)));
+  SET_TYPE expS(S);
+
+  expS.expand_by(epsilon);
+
+  return expS;
 }
 
 #endif /* LINEARSYSTEM_H_ */

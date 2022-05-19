@@ -16,7 +16,7 @@ whitespace	[ \t\r\n]
 
 digit				[0-9]
 natural			{digit}+
-double			(({natural})\.{natural})
+double			([-]?({natural})\.{natural})
 
 letter			[a-zA-Z]
 
@@ -112,7 +112,7 @@ U			return yy::parser::make_UNTIL(loc);
 ";"			return yy::parser::make_SEMICOLON(loc);
 ","			return yy::parser::make_COMMA(loc);
 
-{natural}		return yy::parser::make_INTEGER(std::stoi(yytext), loc);
+{natural}		return yy::parser::make_NATURAL(std::stoi(yytext), loc);
 
 {double}		return yy::parser::make_DOUBLE(std::stof(yytext), loc);
 

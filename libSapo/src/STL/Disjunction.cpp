@@ -1,43 +1,83 @@
 /**
  * @file Disjunction.cpp
- * Disjunction STL formula
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Disjunction STL formula
+ * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #include "Disjunction.h"
 
-#include <iostream>
+#include <algorithm>
+
+namespace STL
+{
 
 /**
- * Constructor that instantiates a Disjunction STL formula (f1 /\ f2)
+ * @brief A constructor for STL dicjunction formulas
+ * 
+ * This constructor creates an object of the type 
+ * Disjunction to represent the STL formula 
+ * \f$\textrm{left} \lor \textrm{right}\f$.
  *
- * @param[in] f1 left disjunct
- * @param[in] f2 right disjunct
+ * @param[in] left is the left-side disjunction subformula
+ * @param[in] right is the right-side disjunction subformula
  */
-Disjunction::Disjunction(const std::shared_ptr<STL> f1,
-                         const std::shared_ptr<STL> f2):
-    STL(DISJUNCTION),
-    f1(f1), f2(f2)
+Disjunction::Disjunction(const std::shared_ptr<STL> left,
+                         const std::shared_ptr<STL> right):
+    STL(DISJUNCTION), _left(left), _right(right)
 {
 }
 
 /**
- * Print the formula
+ * @brief Print the STL formula in a stream
+ * 
+ * This method is publicly wrapped by the function
+ * `operator<<(std::ostream&, const STL::STL &)`.
+ * 
+ * @param os is the output stream
+ * @return a reference to the output stream
  */
 std::ostream &Disjunction::print(std::ostream &os) const
 {
-  return os << "(" << *f1 << ") || (" << *f2 << ")";
+  return os << "(" << *_left << ") || (" << *_right << ")";
 }
 
+/**
+ * @brief Get the formula variables
+ * 
+ * @return the set of formula variables
+ */
+std::set<SymbolicAlgebra::Symbol<>> Disjunction::get_variables() const
+{
+  auto variables = _left->get_variables();
+  auto right_vars = _right->get_variables();
+
+  variables.insert(std::begin(right_vars), std::end(right_vars));
+
+  return variables;
+}
+
+/**
+ * @brief Get the formula time bounds 
+ * 
+ * @return the time interval affecting the formula sematics
+ */
 TimeInterval Disjunction::time_bounds() const
 {
-  const TimeInterval ti1 = f1->time_bounds();
-  const TimeInterval ti2 = f2->time_bounds();
+  const TimeInterval ti1 = _left->time_bounds();
+  const TimeInterval ti2 = _right->time_bounds();
 
   return TimeInterval(std::min(ti1.begin(), ti2.begin()),
                       std::max(ti1.end(), ti2.end()));
 }
 
+/**
+ * @brief Destroy the STL disjunction formula
+ */
 Disjunction::~Disjunction() {}
+
+}

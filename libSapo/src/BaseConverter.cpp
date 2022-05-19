@@ -14,7 +14,7 @@
  * Constructor that instantiates the base converter
  *
  * @param[in] vars list of variables appearing the current polynomial
- * @param[in] polynomial polynomial to convert
+ * @param[in] polynomial polynomial to be converted
  */
 BaseConverter::BaseConverter(
     const std::vector<SymbolicAlgebra::Symbol<>> &vars,
@@ -69,8 +69,7 @@ BaseConverter::BaseConverter(
 }
 
 /**
- * @TODO Constructor that instantiates the base converter for rational
- * polynomial
+ * @brief Constructor for rational polynomial base converters
  *
  * @param[in] vars list of variables appearing the current polynomial
  * @param[in] numerator of the rational polynomial to convert
@@ -78,10 +77,10 @@ BaseConverter::BaseConverter(
  */
 BaseConverter::BaseConverter(
     const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-    const SymbolicAlgebra::Expression<> &num,
-    const SymbolicAlgebra::Expression<> &denom):
+    const SymbolicAlgebra::Expression<> &numerator,
+    const SymbolicAlgebra::Expression<> &denominator):
     vars(vars),
-    num(num), denom(denom)
+    num(numerator), denom(denominator)
 {
 }
 
@@ -300,44 +299,6 @@ std::vector<SymbolicAlgebra::Expression<>> BaseConverter::getBernCoeffs() const
 
   return bern_coeffs;
 }
-
-/**
- * @TODO Compute the list of Bernstein coefficients of the rational polynomial
- *
- * @returns list of rational Bernstein coefficients
- */
-/*
-GiNaC::lst BaseConverter::getRationalBernCoeffs() const
-{
-  using namespace std;
-
-  GiNaC::lst bern_coeffs;
-
-  cout << "Degrees: ";
-  vector<unsigned int> degs;
-  for (unsigned int i = 0; i < this->vars.nops(); i++) {
-    degs.push_back(max(this->num.degree(this->vars[i]),
-                       this->denom.degree(this->vars[i])));
-    cout << degs[i] << ", ";
-  }
-
-  GiNaC::lst num_bern_coeffs
-      = BaseConverter(this->vars, this->num, degs).getBernCoeffs();
-  GiNaC::lst denom_bern_coeffs
-      = BaseConverter(this->vars, this->denom, degs).getBernCoeffs();
-
-  for (long unsigned int i = 0; i < num_bern_coeffs.nops(); i++) {
-    if (denom_bern_coeffs[i] != 0) { // skip negative denominators
-      bern_coeffs.append(num_bern_coeffs[i] / denom_bern_coeffs[i]);
-    }
-  }
-
-  // eliminate duplicates
-  bern_coeffs.unique();
-  cout << "(Total points:" << bern_coeffs.nops() << ")\n";
-  return bern_coeffs;
-}
-*/
 
 /**
  * Compute the list of multi-indices of the current polynomial
@@ -818,7 +779,7 @@ void BaseConverter::implicitMaxIndex() const
     long unsigned int j = 0;
     while ((j < coeffs.size()) && (increase[i])) {
       if (multi_index[j][i] > 0) {
-        increase[i] = increase[i] && (coeffs[j] > 0);
+        increase[i] = increase[i] && (coeffs[j].evaluate() > 0);
       }
       j++;
     }
@@ -828,7 +789,7 @@ void BaseConverter::implicitMaxIndex() const
     long unsigned int j = 0;
     while ((j < coeffs.size()) && (decrease[i])) {
       if (multi_index[j][i] > 0) {
-        decrease[i] = decrease[i] && (coeffs[j] < 0);
+        decrease[i] = decrease[i] && (coeffs[j].evaluate() < 0);
       }
       j++;
     }

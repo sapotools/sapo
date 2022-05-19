@@ -1,3 +1,5 @@
+#include <LinearAlgebraIO.h>
+
 #include "InputData.h"
 
 #include <glpk.h>
@@ -394,7 +396,7 @@ void InputData::addVarDirectionConstraint(Direction *d)
   return this->addDirectionConstraint(d, true);
 }
 
-int InputData::findDirectionPos(const std::string &name) const
+unsigned int InputData::findDirectionPos(const std::string &name) const
 {
   for (unsigned i = 0; i < directions.size(); i++) {
     if (directions[i]->getName() == name) {
@@ -432,6 +434,8 @@ LinearSystem
 getConstraintsSystem(const std::vector<Direction *> &constraints,
                      const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
 {
+  using namespace LinearAlgebra;
+
   vector<vector<T>> A{};
   vector<T> b{};
 
@@ -467,6 +471,8 @@ void optimizeConstraintsBoundaries(
     std::vector<Direction *> &constraints,
     const std::vector<SymbolicAlgebra::Symbol<>> &symbols)
 {
+  using namespace LinearAlgebra;
+
   // get the linear system associated to the constraint set
   LinearSystem constrSystem = getConstraintsSystem(constraints, symbols);
 
@@ -607,7 +613,7 @@ bool InputData::check()
             var_symbols));
       }
 
-      if (DenseLinearAlgebra::rank(M) != templateMatrix[i].size()) {
+      if (LinearAlgebra::Dense::rank(M) != templateMatrix[i].size()) {
         // directions are dependent, parallelotope is not bounded
         cerr << "Template row " << templateMatrix[i]
              << " defines an unbounded parallelotope" << endl;

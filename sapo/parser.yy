@@ -13,6 +13,8 @@
 	#include <fstream>
 	#include <cmath>
 	
+	#include <LinearAlgebraIO.h>
+
 	#include "locations.h"
 	
 	#include "AbsSynIO.h"
@@ -132,6 +134,7 @@
 ;
 
 %token <std::string> IDENT
+%token <unsigned int> NATURAL
 %token <int> INTEGER
 %token <double> DOUBLE
 
@@ -154,9 +157,9 @@
 %nterm <double> number
 %nterm <std::vector<std::string>> identList
 %nterm <SymbolicAlgebra::Expression<>> expr
-%nterm <std::vector<int>> matrixRow
-%nterm <std::vector<std::vector<int>>> rowList
-%nterm <std::shared_ptr<STL> > formula
+%nterm <std::vector<unsigned int>> matrixRow
+%nterm <std::vector<std::vector<unsigned int>>> rowList
+%nterm <std::shared_ptr<STL::STL> > formula
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> direction
 %nterm <AbsSyn::Direction::Type> directionType
@@ -223,7 +226,7 @@ header			: PROB ":" problemType ";"
 						{
 							MISSING_SC(@3);
 						}
-						| ITER ":" INTEGER ";"
+						| ITER ":" NATURAL ";"
 						{
 							if (drv.data.isIterationSet()) {
 								WARNING(@$, "Iteration number already defined");
@@ -231,11 +234,11 @@ header			: PROB ":" problemType ";"
 								drv.data.setIterations($3);
 							}
 						}
-						| ITER ":" INTEGER error
+						| ITER ":" NATURAL error
 						{
 							MISSING_SC(@3);
 						}
-						| PSPLITS ":" INTEGER ";"
+						| PSPLITS ":" NATURAL ";"
 						{
 							if (drv.data.getMaxParameterSplits() > 0) {
 								WARNING(@$, "The maximum number of parameter splits has been already defined");
@@ -243,7 +246,7 @@ header			: PROB ":" problemType ";"
 								drv.data.setMaxParameterSplits($3);
 							}
 						}
-						| PSPLITS ":" INTEGER error
+						| PSPLITS ":" NATURAL error
 						{
 							MISSING_SC(@3);
 						}
@@ -407,7 +410,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
-								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate<double>()));
+								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate()));
 							}
 						}
 						| CONST IDENT "=" expr error
@@ -422,7 +425,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								ERROR(@2, "Symbol '" + $2 + "' already defined");
 							} else {
 								SymbolicAlgebra::Symbol<> s($2);
-								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate<double>()));
+								drv.data.addConstant(new AbsSyn::Constant(s, $4.evaluate()));
 							}
 						}
 						| DEFINE IDENT "=" expr ";"
@@ -472,12 +475,12 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 						| SPEC ":" formula ";"
 						{
-							std::shared_ptr<STL> f;
+							std::shared_ptr<STL::STL> f;
 							try {
-								f = $3->simplify();
+								f = $3->get_PNF();
 							} catch (std::logic_error &e) {
 								ERROR(@3, "Negations of UNTIL are not allowed");
-								f = std::make_shared<Atom>(0);
+								f = std::make_shared<STL::Atom>(0);
 							}
 							
 							$3.reset();
@@ -672,10 +675,10 @@ template		: TEMPL "=" "{" rowList "}" ";"
 							ERROR(@2, "Error in definition of template");
 						}
 
-rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<int>>{$2}; }
+rowList			: "{" matrixRow "}" { $$ = std::vector<std::vector<unsigned int>>{$2}; }
 						| "{" matrixRow error
 						{
-							ERROR(@2, "Missing \"}\""); $$ = std::vector<std::vector<int>>{$2};
+							ERROR(@2, "Missing \"}\""); $$ = std::vector<std::vector<unsigned int>>{$2};
 						}
 						| rowList "," "{" matrixRow "}" { $1.push_back($4); $$ = $1; }
 						| rowList "," "{" matrixRow error
@@ -710,18 +713,18 @@ matrixRow	: matrixRow "," IDENT
 							$$ = {drv.data.findDirectionPos($1)};
 						}
 					}
-					| matrixRow "," INTEGER
+					| matrixRow "," NATURAL
 					{
-						if ($3 < 0 || (unsigned int)$3 >= drv.data.getDirectionsNum()) {
+						if ($3 >= drv.data.getDirectionsNum()) {
 							ERROR(@3, "Unknown direction " + std::to_string($3));
 						}
 						
 						$1.push_back($3);
 						$$ = $1;
 					}
-					| INTEGER
+					| NATURAL
 					{
-						if ($1 < 0 || (unsigned int)$1 >= drv.data.getDirectionsNum()) {
+						if ($1 >= drv.data.getDirectionsNum()) {
 							ERROR(@1, "Unknown direction " + std::to_string($1));
 						}
 						
@@ -814,14 +817,14 @@ intInterval			: "[" expr "," expr "]"
 										ERROR(@2, "Intervals require numeric expressions");
 										x1 = 0;
 									} else {
-										x1 = $2.evaluate<double>();
+										x1 = $2.evaluate();
 									}
 									
 									if (!AbsSyn::isNumeric($4)) {
 										ERROR(@4, "Intervals require numeric expressions");
 										x2 = 1;
 									} else {
-										x2 = $4.evaluate<double>();
+										x2 = $4.evaluate();
 									}
 									
 									if ((int) x1 != x1) {
@@ -854,14 +857,14 @@ doubleInterval	: "[" expr "," expr "]"
 										ERROR(@2, "Intervals require numeric expressions");
 										x1 = 0;
 									} else {
-										x1 = $2.evaluate<double>();
+										x1 = $2.evaluate();
 									}
 									
 									if (!AbsSyn::isNumeric($4)) {
 										ERROR(@4, "Intervals require numeric expressions");
 										x2 = 1;
 									} else {
-										x2 = $4.evaluate<double>();
+										x2 = $4.evaluate();
 									}
 									
 									if (x2 < x1) {
@@ -879,7 +882,7 @@ doubleInterval	: "[" expr "," expr "]"
 								}
 
 number		: DOUBLE { $$ = $1; }
-					| INTEGER { $$ = (double) $1; }
+				| NATURAL { $$ = (double) $1; }
 
 expr		: number	{ $$ = $1; }
 				| "+" expr { $$ = $2; }
@@ -905,7 +908,7 @@ expr		: number	{ $$ = $1; }
 						ERROR(@3, "Exponent must be numeric");
 						val = 1;
 					} else {
-						val = $3.evaluate<double>();
+						val = $3.evaluate();
 					}
 					
 					if (val != (int) val) {
@@ -946,28 +949,28 @@ expr		: number	{ $$ = $1; }
 					$$ = $2;
 				}
 
-formula	: expr ">" expr { $$ = std::make_shared<Atom>($3 - $1); }
-				| expr ">=" expr { $$ = std::make_shared<Atom>($3 - $1); }
-				| expr "<" expr { $$ = std::make_shared<Atom>($1 - $3); }
-				| expr "<=" expr { $$ = std::make_shared<Atom>($1 - $3); }
+formula	: expr ">" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
+				| expr ">=" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
+				| expr "<" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
+				| expr "<=" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
 				| expr "=" expr
 				{
-					std::shared_ptr<STL> f1 = std::make_shared<Atom>($1 - $3);
-					std::shared_ptr<STL> f2 = std::make_shared<Atom>($3 - $1);
-					$$ = std::make_shared<Conjunction>(f1, f2);
+					std::shared_ptr<STL::STL> f1 = std::make_shared<STL::Atom>($1 - $3);
+					std::shared_ptr<STL::STL> f2 = std::make_shared<STL::Atom>($3 - $1);
+					$$ = std::make_shared<STL::Conjunction>(f1, f2);
 				}
-				| formula AND formula		{ $$ = std::make_shared<Conjunction>($1, $3); }
-				| formula OR formula		{ $$ = std::make_shared<Disjunction>($1, $3); }
-				| NOT formula									{ $$ = std::make_shared<Negation>($2); }
+				| formula AND formula		{ $$ = std::make_shared<STL::Conjunction>($1, $3); }
+				| formula OR formula		{ $$ = std::make_shared<STL::Disjunction>($1, $3); }
+				| NOT formula									{ $$ = std::make_shared<STL::Negation>($2); }
 				| "(" formula ")" { $$ = $2; }
 				| "(" formula error
 				{
 					ERROR(@2, "Missing \"(\"");
 					$$ = $2;
 				}
-				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<Always>($2.first, $2.second, $3); }
-				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<Eventually>($2.first, $2.second, $3); }
-				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<Until>($1, $3.first, $3.second, $4); }
+				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<STL::Always>($2.first, $2.second, $3); }
+				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<STL::Eventually>($2.first, $2.second, $3); }
+				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<STL::Until>($1, $3.first, $3.second, $4); }
 
 footer	: OPT option {}
 				| OPT error ";"
@@ -1038,14 +1041,14 @@ option	: TRANS transType ";"
 					
 					drv.data.setAlpha($2);
 				}
-				| COMPOSE INTEGER ";"
+				| COMPOSE NATURAL ";"
 				{
 					if ($2 < 1) {
 						yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
 					}
 					drv.data.setDynamicDegree($2);
 				}
-				| COMPOSE INTEGER error
+				| COMPOSE NATURAL error
 				{
 					MISSING_SC(@2);
 					if ($2 < 1) {

@@ -1,10 +1,13 @@
 /**
  * @file Flowpipe.h
- * Represent and manipulate flowpipes of bundle
- * Used to represent the reachable set of a dynamical system
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate reachability flowpipes
+ * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2016-2022
+ * 
  */
 
 #ifndef FLOWPIPE_H_
@@ -16,12 +19,14 @@
 #include "PolytopesUnion.h"
 #include "OutputFormatter.h"
 
-class Flowpipe
+/**
+ * @brief A representation for reachability flowpipe
+ * 
+ * This class represents reachability flowpipe as 
+ * a sequence of polytope union.
+ */
+class Flowpipe: public std::vector<PolytopesUnion>
 {
-
-private:
-  std::vector<std::vector<double>> v_templates;
-  std::vector<PolytopesUnion> flowpipe; // flowpipe
 
 public:
   /**
@@ -29,21 +34,8 @@ public:
    */
   Flowpipe();
 
-  /**
-   * An empty flowpipe with variable templates constructor
-   */
-  Flowpipe(const std::vector<std::vector<double>> &variable_templates);
-
   const PolytopesUnion &
   get(const unsigned int i) const; // get i-th PolytopesUnion
-
-  /**
-   * Append a polytope to the flowpipe
-   *
-   * @param[in] P is the polytopes union to be appended
-   * @return a reference to the new flowpipe
-   */
-  Flowpipe &append(const Polytope &P);
 
   /**
    * Append a polytopes union to the flowpipe
@@ -51,7 +43,25 @@ public:
    * @param[in] Pu is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  Flowpipe &append(const PolytopesUnion &Pu);
+  inline Flowpipe &push_back(const PolytopesUnion &Pu)
+  {
+    std::vector<PolytopesUnion>::push_back(Pu);
+
+    return *this;
+  }
+
+  /**
+   * Append a polytopes union to the flowpipe
+   *
+   * @param[in] Pu is the polytopes union to be appended
+   * @return a reference to the new flowpipe
+   */
+  inline Flowpipe &push_back(PolytopesUnion &&Pu)
+  {
+    std::vector<PolytopesUnion>::push_back(std::move(Pu));
+
+    return *this;
+  }
 
   /**
    * Append a bundle to the flowpipe
@@ -59,11 +69,11 @@ public:
    * @param[in] bundle bundle to be appended
    * @return a reference to the new flowpipe
    */
-  Flowpipe &append(const Bundle &bundle);
-
-  std::size_t size() const
+  inline Flowpipe &push_back(const Bundle &bundle)
   {
-    return this->flowpipe.size();
+    this->emplace(this->end(), bundle);
+
+    return *this;
   }
 
   /**
@@ -74,27 +84,10 @@ public:
   unsigned int dim() const;
 
   /**
-   * Print the flowpipe in Matlab format (for plotregion script)
-   *
-   * @param[in] os is the output stream
-   * @param[in] color color of the polytope to plot
-   */
-  void plotRegion(std::ostream &os = std::cout, const char color = ' ') const;
-
-  void plotProj(std::ostream &os, const unsigned int var,
-                const double time_step, const char color) const;
-
-  friend void swap(Flowpipe &A, Flowpipe &B)
-  {
-    swap(A.flowpipe, B.flowpipe);
-    swap(A.v_templates, B.v_templates);
-  }
-
-  /**
    * Stream a flowpipe
    *
    * @param[in] os is the output stream
-   * @param[in] fs is the flowpipe to be streamed
+   * @param[in] fp is the flowpipe to be streamed
    * @return the output stream
    */
   template<typename OSTREAM>
@@ -103,9 +96,8 @@ public:
     using OF = OutputFormatter<OSTREAM>;
 
     os << OF::sequence_begin();
-    for (auto it = std::cbegin(fp.flowpipe); it != std::cend(fp.flowpipe);
-         ++it) {
-      if (it != std::cbegin(fp.flowpipe)) {
+    for (auto it = std::cbegin(fp); it != std::cend(fp); ++it) {
+      if (it != std::cbegin(fp)) {
         os << OF::sequence_separator();
       }
       os << *it;
@@ -114,8 +106,6 @@ public:
 
     return os;
   }
-
-  ~Flowpipe() {}
 };
 
 #endif /* BUNDLE_H_ */

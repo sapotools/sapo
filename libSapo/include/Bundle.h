@@ -1,10 +1,13 @@
 /**
  * @file Bundle.h
- * Represent and manipulate bundles of parallelotopes whose intersection
- * represents a polytope
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
- * @version 0.1
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate bundles of parallelotopes 
+ *        whose intersection represents a polytope
+ * @version 0.2
+ * @date 2022-05-04
+ * 
+ * @copyright Copyright (c) 2016-2022
  */
 
 #ifndef BUNDLE_H_
@@ -19,31 +22,47 @@
 
 #include "STL/Atom.h"
 
-// define the default versor magnitude multiplier for bundle splits
-#define SPLIT_MAGNITUDE_RATIO 0.75
+#define SPLIT_MAGNITUDE_RATIO 0.75 //!< define the default versor magnitude multiplier for bundle splits
 
+/**
+ * @brief A class for parallelotope bundles
+ * 
+ * A paralletope bundle represents the intersection between 
+ * different non-singular parallelotopes. 
+ * This class stores all of the parallelotope directions/axes 
+ * in one single array and constraints each of them between 
+ * an upper and a lower bound. 
+ * The original parallelotopes can be rebuild by using the 
+ * a array of templates. Each template is a Natural-valued 
+ * array corresponding to a parallelotope. It stores which 
+ * directions are involved in the corresponding paralletope. 
+ */ 
 class Bundle
 {
 public:
+  /**
+   * @brief Approach to evaluate the image of a bundle
+   * 
+   * The are two different approches to evalutate the
+   * image of a bundle through a polynomial function:
+   * 1. One-For-One: the boundaries of any parallelotope
+   *                 image in the bundle are evaluated by
+   *                 exclusively considering the original
+   *                 paralletope itself
+   * 2. All-For-One: the boundaries of any parallelotope
+   *                 image in the bundle are evaluated by
+   *                 exploiting all the bundle templates
+   */
   typedef enum {
-    AFO, /* the image of any parallelotope in the bundle will
-          * be over-approximated by using all the templates
-          * of the bundle itself */
-    OFO  /* the image of any parallelotope in the bundle will
-          * be over-approximated by using exclusively the
-          * parallelotope own template */
+    OFO,  /* One-For-One */
+    AFO   /* All-For-One */
   } transfomation_mode;
 
 private:
-  std::vector<Vector<double>> directions; //!< the vector of directions
-  Vector<double> lower_bounds;            //!< direction upper bounds
-  Vector<double> upper_bounds;            //!< direction lower bounds
-  std::vector<Vector<int>> templates;     //!< templates matrix
-
-  // constraints over directions (assertions)
-  // constrainedDirection[i] * vars <= constraintOffset
-  std::vector<Vector<double>> constraintDirections;
-  Vector<double> constraintOffsets;
+  std::vector<LinearAlgebra::Vector<double>> _directions; //!< the vector of directions
+  LinearAlgebra::Vector<double> _lower_bounds;            //!< direction upper bounds
+  LinearAlgebra::Vector<double> _upper_bounds;            //!< direction lower bounds
+  std::vector<LinearAlgebra::Vector<unsigned int>> _templates;     //!< templates matrix
 
   /**
    * Compute the edge lengths
@@ -53,7 +72,7 @@ private:
    *
    * @returns the vector of the edge lengths
    */
-  Vector<double> edge_lengths();
+  LinearAlgebra::Vector<double> edge_lengths();
 
   /**
    * @brief A class to find the minimum and the maximum Bernstein coefficients
@@ -154,13 +173,13 @@ private:
   Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
                    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
                    const MinMaxCoeffFinder *max_finder,
-                   Bundle::transfomation_mode mode) const;
+                   Bundle::transfomation_mode mode=Bundle::AFO) const;
 
   /**
    * @brief Add to the bundle templates for some directions
    *
    * @param missing_template_dirs the indices of the directions whose
-   *            template we are missing
+   *                              template we are missing
    */
   void add_templates_for(std::set<unsigned int> &missing_template_dirs);
 
@@ -168,14 +187,14 @@ public:
   /**
    * @brief A copy constructor
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   Bundle(const Bundle &orig);
 
   /**
    * @brief A move constructor
    *
-   * @param orig is the model for the new object.
+   * @param orig is the model for the new object
    */
   Bundle(Bundle &&orig);
 
@@ -187,27 +206,10 @@ public:
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the template vector
    */
-  Bundle(const std::vector<Vector<double>> &directions,
-         const Vector<double> &lower_bounds,
-         const Vector<double> &upper_bounds,
-         const std::vector<Vector<int>> &templates);
-
-  /**
-   * @brief A constructor
-   *
-   * @param[in] directions is the direction vector
-   * @param[in] lower_bounds is the vector of direction lower bounds
-   * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] templates is the template vector
-   * @param[in] constrDirs directions that are constrained by assumptions
-   * @param[in] constrOffsets offsets of assumptions
-   */
-  Bundle(const std::vector<Vector<double>> &directions,
-         const Vector<double> &lower_bounds,
-         const Vector<double> &upper_bounds,
-         const std::vector<Vector<int>> &templates,
-         const std::vector<Vector<double>> &constrDirs,
-         const Vector<double> &constrOffsets);
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+         const LinearAlgebra::Vector<double> &lower_bounds,
+         const LinearAlgebra::Vector<double> &upper_bounds,
+         const std::vector<LinearAlgebra::Vector<unsigned int>> &templates);
 
   /**
    * @brief A move constructor
@@ -217,34 +219,57 @@ public:
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the template vector
    */
-  Bundle(std::vector<Vector<double>> &&directions,
-         Vector<double> &&lower_bounds, Vector<double> &&upper_bounds,
-         std::vector<Vector<int>> &&templates);
+  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+         LinearAlgebra::Vector<double> &&lower_bounds, 
+         LinearAlgebra::Vector<double> &&upper_bounds,
+         std::vector<LinearAlgebra::Vector<unsigned int>> &&templates);
+
 
   /**
-   * @brief Get the intersection between two bundles
+   * @brief A constructor
    *
-   * This method intersects the current object and another bundle.
-   * The result is stored in the current object and a reference
-   * to it is returned.
-   *
-   * @param A is the intersecting bundle
-   * @return a reference to the updated object
+   * Whenever the templates are not specified at all, we assume that 
+   * all the directions are relevants and the templates are computed
+   * automatically.
+   * 
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
    */
-  Bundle &intersect(const Bundle &A);
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+         const LinearAlgebra::Vector<double> &lower_bounds,
+         const LinearAlgebra::Vector<double> &upper_bounds);
 
   /**
-   * @brief Get the intersection between this bundle and a linear set
+   * @brief A move constructor
    *
-   * This method intersects the current instance of the `Bundle` class
-   * and a possible unbounded linear set provided as a `LinearSystem`.
-   * The result is stored in the current object and a reference to it
-   * is returned.
+   * Whenever the templates are not specified at all, we assume that 
+   * all the directions are relevants and the templates are computed
+   * automatically.
    *
-   * @param ls is the intersecting linear system
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
+   */
+  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+         LinearAlgebra::Vector<double> &&lower_bounds, 
+         LinearAlgebra::Vector<double> &&upper_bounds);
+
+  /**
+   * @brief Assignment operator
+   * 
+   * @param orig is the original object to be copied
    * @return a reference to the updated object
    */
-  Bundle &intersect(const LinearSystem &ls);
+  Bundle &operator=(const Bundle &orig);
+
+  /**
+   * @brief Assignment operator
+   * 
+   * @param orig is the original object to be copied
+   * @return a reference to the updated object
+   */
+  Bundle &operator=(Bundle &&orig);
 
   /**
    * @brief Get the dimension of the bundle space
@@ -253,7 +278,7 @@ public:
    */
   unsigned int dim() const
   {
-    return (directions.size() == 0 ? 0 : directions.front().size());
+    return (_directions.size() == 0 ? 0 : _directions.front().size());
   }
 
   /**
@@ -263,7 +288,7 @@ public:
    */
   unsigned int num_of_templates() const
   {
-    return templates.size();
+    return _templates.size();
   }
 
   /**
@@ -273,7 +298,7 @@ public:
    */
   unsigned int size() const
   {
-    return this->directions.size();
+    return _directions.size();
   }
 
   /**
@@ -281,9 +306,9 @@ public:
    *
    * @return a reference to the template vector
    */
-  const std::vector<Vector<int>> &get_templates() const
+  const std::vector<LinearAlgebra::Vector<unsigned int>> &templates() const
   {
-    return this->templates;
+    return _templates;
   }
 
   /**
@@ -292,9 +317,9 @@ public:
    * @param i is the index of the aimed template
    * @return a reference to the i-th template
    */
-  const Vector<int> &get_template(unsigned int i) const
+  const LinearAlgebra::Vector<unsigned int> &get_template(unsigned int i) const
   {
-    return this->templates[i];
+    return _templates[i];
   }
 
   /**
@@ -302,9 +327,9 @@ public:
    *
    * @return a reference to the vector of directions
    */
-  const std::vector<Vector<double>> &get_directions() const
+  const std::vector<LinearAlgebra::Vector<double>> &directions() const
   {
-    return this->directions;
+    return _directions;
   }
 
   /**
@@ -313,9 +338,9 @@ public:
    * @param i is the index of the aimed direction
    * @return  a reference to the i-th direction in the bundle
    */
-  const Vector<double> &get_direction(unsigned int i) const
+  const LinearAlgebra::Vector<double> &get_direction(unsigned int i) const
   {
-    return this->directions[i];
+    return _directions[i];
   }
 
   /**
@@ -327,7 +352,7 @@ public:
    */
   const double &get_upper_bound(unsigned int i) const
   {
-    return this->upper_bounds[i];
+    return _upper_bounds[i];
   }
 
   /**
@@ -339,7 +364,7 @@ public:
    */
   const double &get_lower_bound(unsigned int i) const
   {
-    return this->lower_bounds[i];
+    return _lower_bounds[i];
   }
 
   /**
@@ -347,9 +372,9 @@ public:
    *
    * @return a reference to the direction upper bounds
    */
-  const std::vector<double> &get_upper_bounds() const
+  const std::vector<double> &upper_bounds() const
   {
-    return this->upper_bounds;
+    return _upper_bounds;
   }
 
   /**
@@ -357,9 +382,9 @@ public:
    *
    * @return a reference to the direction lower bounds
    */
-  const std::vector<double> &get_lower_bounds() const
+  const std::vector<double> &lower_bounds() const
   {
-    return this->lower_bounds;
+    return _lower_bounds;
   }
 
   /**
@@ -373,42 +398,12 @@ public:
    * @brief Get the i-th parallelotope of the bundle
    *
    * @param[in] i is the index of the aimed parallelotope
-   * @returns i-th parallelotope
+   * @returns i-th parallelotope of the bundle
    */
   Parallelotope get_parallelotope(unsigned int i) const;
 
   /**
-   * @brief Set the bundle templates
-   *
-   * @param[in] templates is the new template vector
-   */
-  void set_templates(const std::vector<Vector<int>> &templates)
-  {
-    this->templates = templates;
-  }
-
-  /**
-   * @brief Set the direction upper bounds
-   *
-   * @param upper_bounds is the vector of the direction upper bounds
-   */
-  void set_upper_bounds(const Vector<double> &upper_bounds)
-  {
-    this->upper_bounds = upper_bounds;
-  }
-
-  /**
-   * @brief Set the direction lower bounds
-   *
-   * @param upper_bounds is the vector of the direction lower bounds
-   */
-  void set_lower_bounds(const Vector<double> &lower_bounds)
-  {
-    this->lower_bounds = lower_bounds;
-  }
-
-  /**
-   * @brief Canonize the current bundle
+   * @brief Get a canonical bundle equivalent to the current one
    *
    * Get the canonical form for this bundle by minimizing the
    * difference between lower and upper bounds over all the
@@ -419,26 +414,50 @@ public:
   Bundle get_canonical() const;
 
   /**
-   * @brief Split a bundle in a list of smaller bundles
+   * @brief Canonize the current bundle
    *
-   * @param max_bundle_magnitude is the maximal edge length of the
-   *        resulting bundles
-   * @param split_magnitude_ratio is the ratio of the `max_bundle_magnitude`
-   *        that is used a maximal magnitude of the bundles in output
-   * @return A list of bundles whose maximal versor magnitude is
-   *        `split_magnitude_ratio`*`max_bundle_magnitude` and whose
-   *        union is the current bundle
+   * Turn this bundle in canonical form by minimizing the
+   * difference between lower and upper bounds over all the
+   * directions.
+   *
+   * @returns a reference to the canonized bundle
    */
-  std::list<Bundle> split(const double max_bundle_magnitude,
-                          const double split_magnitude_ratio
+  Bundle &canonize();
+
+  /**
+   * @brief Split the bundle in smaller sub-bundles
+   * 
+   * This method splits the bundles whose maximal magnitude, 
+   * the maximal lenght of its generators, is greater than 
+   * `max_magnitude` into a list of sub-bundles whose 
+   * maximal magnitude is 
+   * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
+   *
+   * If \f$m\f$ in the maximal magnitude of the input bundle 
+   * and the bundle itself has \f$d\f$ directions,
+   * this method may produces upto
+   * \f$(\frac{m}{\textrm{max_magnitude}})^d\f$ 
+   * sub-bundles.
+   * 
+   * @param[in] max_magnitude is the maximal magnitude that
+   *                          triggers the split
+   * @param[in] split_ratio is the ratio between maximal
+   *                        magnitude of the output bundles and
+   *                        that that triggers the split
+   * @return a list of sub-bundles whose union covers the 
+   *         input bundle
+   */
+  std::list<Bundle> split(const double max_magnitude,
+                          const double split_ratio
                           = SPLIT_MAGNITUDE_RATIO) const;
 
   /**
-   * @brief Decompose the current symbolic polytope
+   * Decompose the current symbolic polytope
    *
    * @param[in] alpha weight parameter in [0,1] for decomposition (0 for
    * distance, 1 for orthogonality)
-   * @param[in] max_iter maximum number of randomly generated templatess
+   * @param[in] max_iters maximum number of randomly generated templates
+   * @todo method does not work; it should be reviewed and fixed
    * @returns new bundle decomposing current symbolic polytope
    */
   Bundle decompose(double alpha, int max_iters);
@@ -454,7 +473,7 @@ public:
   inline Bundle
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            transfomation_mode mode) const
+            transfomation_mode mode=Bundle::AFO) const
   {
     MinMaxCoeffFinder max_finder;
 
@@ -475,7 +494,8 @@ public:
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            const Polytope &parameter_set, transfomation_mode mode) const
+            const Polytope &parameter_set, 
+            transfomation_mode mode=Bundle::AFO) const
   {
     ParamMinMaxCoeffFinder max_finder(parameters, parameter_set);
 
@@ -486,7 +506,7 @@ public:
    * @brief Perform the parametric synthesis for an atom
    *
    * This method computes a set of parameters such that the
-   * transformation from the current bundle satisfy the
+   * transformation from the current bundle satisfies the
    * provided atom.
    *
    * @param[in] variables is the vector of variables
@@ -504,14 +524,43 @@ public:
              const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
              const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
              const PolytopesUnion &parameter_set,
-             const std::shared_ptr<Atom> atom) const;
+             const std::shared_ptr<STL::Atom> atom) const;
 
   /**
-   * @brief Copy operator
+   * @brief Get the intersection between two bundles
    *
+   * This method intersects the current object and another bundle.
+   * The result is stored in the current object and a reference
+   * to it is returned.
+   *
+   * @param A is the intersecting bundle
    * @return a reference to the updated object
    */
-  Bundle &operator=(Bundle &&);
+  Bundle &intersect_with(const Bundle &A);
+
+  /**
+   * @brief Get the intersection between this bundle and a linear set
+   *
+   * This method intersects the current instance of the `Bundle` class
+   * and a possible unbounded linear set provided as a `LinearSystem`.
+   * The result is stored in the current object and a reference to it
+   * is returned.
+   *
+   * @param ls is the intersecting linear system
+   * @return a reference to the updated object
+   */
+  Bundle &intersect_with(const LinearSystem &ls);
+
+  /**
+   * @brief Expand the bundle 
+   * 
+   * This method expands the bundle so that each of its boundaries
+   * is moved by a value `epsilon`.
+   * 
+   * @param epsilon is the aimed expansion 
+   * @return a reference to the updated bundle
+   */
+  Bundle &expand_by(const double epsilon);
 
   virtual ~Bundle();
 
@@ -525,5 +574,22 @@ public:
  * @param B is the second bundle to be swapped
  */
 void swap(Bundle &A, Bundle &B);
+
+/**
+ * @brief Get the intersection between two bundles
+ * 
+ * @param b1 is a bundle
+ * @param b2 is a bundle
+ * @return A bundle representing the intersection between 
+ *         the bundles `b1` and `b2`
+ */
+inline Bundle intersect(const Bundle& b1, const Bundle& b2)
+{
+  Bundle res(b1);
+
+  res.intersect_with(b2);
+
+  return res;
+}
 
 #endif /* BUNDLE_H_ */

@@ -11,77 +11,20 @@
 
 #include "LinearAlgebra.h"
 
-#define MAX_APPROX_ERROR 1e-8 // necessary for double comparison
-
 using namespace std;
 
 /**
- * Check whether one polytope contains another polytope.
- *
- * This method establishes whether the current Polytope fully
- * contains another polytope. Due to the approximation errors,
- * the method may return false even if this is the case.
- * However, whenever it returns true, the current object
- * certaintly contains the polytope.
- *
- * @param[in] P is the polytope that are compared to the current
- *     object.
- * @return a Boolean value. When the current object does not
- *     contain the parameter, the retured value is false. When
- *     the method returns true, the current polytope contains
- *     the parameter. There are cases in which the current
- *     object contains the parameter and, still, this method
- *     returns false.
+ * @brief Get a set of linear independent rows in a matrix
+ * 
+ * @param A is the matrix whose linear independent rows must be found
+ * @return a vector containing the indices of linear independent
+ *         rows in the matrix `A`
  */
-bool Polytope::contains(const Polytope &P) const
-{
-
-  for (unsigned int i = 0; i < this->size(); i++) {
-    if (!P.satisfies(this->A[i], this->b[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-template<typename T>
-bool are_independent(const std::vector<T> &v1, const std::vector<T> &v2)
-{
-  if (v1.size() != v2.size()) {
-    return true;
-  }
-
-  if (v1.size() == 0) {
-    return false;
-  }
-
-  unsigned int fnz_v1(0);
-  while (fnz_v1 < v1.size() && v1[fnz_v1] == 0)
-    fnz_v1++;
-
-  unsigned int fnz_v2(0);
-  while (fnz_v2 < v2.size() && v2[fnz_v2] == 0)
-    fnz_v2++;
-
-  if (fnz_v1 != fnz_v2) {
-    return true;
-  }
-
-  for (unsigned int i = 1; i < v1.size(); ++i) {
-    if (v1[fnz_v1] * v2[i]
-        != v2[fnz_v2] * v1[i]) { // this is to avoid numerical errors,
-                                 // but it can produce overflows
-      return true;
-    }
-  }
-
-  return false;
-}
-
 std::vector<unsigned int>
-get_a_polytope_base(const std::vector<std::vector<double>> &A)
+get_a_polytope_base(const LinearAlgebra::Dense::Matrix<double> &A)
 {
+  using namespace LinearAlgebra;
+
   if (A.size() == 0) {
     return std::vector<unsigned int>();
   }
@@ -93,7 +36,7 @@ get_a_polytope_base(const std::vector<std::vector<double>> &A)
     bool indep_from_base = true;
     auto b_it = std::begin(base);
     while (indep_from_base && b_it != std::end(base)) {
-      indep_from_base = are_independent(A[row_idx], A[*b_it]);
+      indep_from_base = !are_linearly_dependent(A[row_idx], A[*b_it]);
       ++b_it;
     }
 
@@ -106,8 +49,15 @@ get_a_polytope_base(const std::vector<std::vector<double>> &A)
   return base;
 }
 
-inline std::vector<bool>
-get_a_polytope_base_bit_vector(const std::vector<std::vector<double>> &A)
+/**
+ * @brief Get the bit-vector of a set of linear independent rows in a matrix
+ * 
+ * @param A is the matrix whose linear independent rows must be found
+ * @return a Boolean vector such that the indices of all the `true` 
+ *         values correspond to a linearly independent set in `A`
+ */
+std::vector<bool>
+get_a_polytope_base_bit_vector(const LinearAlgebra::Dense::Matrix<double> &A)
 {
   std::vector<unsigned int> base = get_a_polytope_base(A);
 
@@ -127,7 +77,9 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
                                     std::vector<double> &b,
                                     const unsigned int num_of_splits) const
 {
-  if (this->A.size() == cidx) {
+  using namespace LinearAlgebra;
+  
+  if (this->_A.size() == cidx) {
     Polytope ls(A, b);
     ls.simplify();
 
@@ -136,15 +88,15 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
   }
 
   if (bvect_base[cidx]) {
-    A.push_back(this->A[cidx]);
-    b.push_back(this->b[cidx]);
+    A.push_back(this->_A[cidx]);
+    b.push_back(this->_b[cidx]);
 
     try {
-      const double min_value = minimize(this->A[cidx]).optimum();
+      const double min_value = minimize(this->_A[cidx]).optimum();
 
-      A.push_back(-this->A[cidx]);
+      A.push_back(-this->_A[cidx]);
       if (num_of_splits > 0) {
-        const double avg_value = (this->b[cidx] + min_value) / 2;
+        const double avg_value = (this->_b[cidx] + min_value) / 2;
         b.push_back(-avg_value);
 
         split(bvect_base, cidx + 1, tmp_covering, A, b, num_of_splits - 1);
@@ -179,7 +131,7 @@ std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
 {
   std::list<Polytope> result;
 
-  std::vector<bool> bvect_base = get_a_polytope_base_bit_vector(this->A);
+  std::vector<bool> bvect_base = get_a_polytope_base_bit_vector(this->_A);
 
   std::vector<std::vector<double>> A;
   std::vector<double> b;
@@ -200,10 +152,19 @@ std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
 Polytope &Polytope::intersect_with(const Polytope &P)
 {
   for (unsigned int i = 0; i < P.size(); i++) {
-    if (!this->satisfies(P.A[i], P.b[i])) {
-      (this->A).push_back(P.A[i]);
-      (this->b).push_back(P.b[i]);
+    if (!this->satisfies(P._A[i], P._b[i])) {
+      (this->_A).push_back(P._A[i]);
+      (this->_b).push_back(P._b[i]);
     }
+  }
+
+  return *this;
+}
+
+Polytope &Polytope::expand_by(const double epsilon)
+{
+  for (auto b_it = std::begin(_b); b_it != std::end(_b); ++b_it) {
+    *b_it += epsilon;
   }
 
   return *this;
@@ -211,7 +172,7 @@ Polytope &Polytope::intersect_with(const Polytope &P)
 
 Polytope intersect(const Polytope &P1, const Polytope &P2)
 {
-  Polytope result(P1.A, P1.b);
+  Polytope result(P1._A, P1._b);
 
   result.intersect_with(P2);
 
@@ -239,102 +200,4 @@ double Polytope::bounding_box_volume() const
   }
 
   return vol;
-}
-
-/**
- * Print the polytope in Matlab format (for plotregion script)
- *
- * @param[in] os is the output stream
- * @param[in] color color of the polytope to plot
- */
-void Polytope::plotRegion(std::ostream &os, const char color) const
-{
-
-  if (this->dim() > 3) {
-    std::domain_error("Polytope::plotRegion : maximum 3d sets are allowed");
-  }
-
-  os << "Ab = [" << std::endl;
-  for (unsigned i = 0; i < A.size(); i++) {
-    for (auto el = std::begin(A[i]); el != std::end(A[i]); ++el) {
-      os << *el << " ";
-    }
-    os << " " << this->b[i] << ";" << std::endl;
-  }
-  os << "];" << std::endl;
-  os << "plotregion(-Ab(:,1:" << this->A[0].size() << "),-Ab(:,"
-     << this->A[0].size() + 1 << "),[],[],";
-
-  if (color == ' ') {
-    os << "color";
-  } else {
-    os << color;
-  }
-  os << ");" << std::endl;
-}
-
-/**
- * Print the 2d polytope in Matlab format (for plotregion script) over
- * time
- *
- * @param[in] os is the output stream
- * @param[in] t thickness of the set to plot
- */
-void Polytope::plotRegionT(std::ostream &os, const double t) const
-{
-  if (this->dim() > 2) {
-    std::domain_error("Polytope::plotRegionT : maximum 2d sets are allowed");
-  }
-
-  os << "Ab = [" << std::endl;
-  os << " 1 ";
-  for (unsigned int j = 0; j < this->A[0].size(); j++) {
-    os << " 0 ";
-  }
-  os << t << ";" << std::endl;
-  os << " -1 ";
-  for (unsigned int j = 0; j < this->A[0].size(); j++) {
-    os << " 0 ";
-  }
-  os << -t << ";" << std::endl;
-
-  for (unsigned i = 0; i < A.size(); i++) {
-    os << " 0 ";
-    for (auto el = std::begin(A[i]); el != std::end(A[i]); ++el) {
-      os << *el << " ";
-    }
-    os << this->b[i] << ";" << std::endl;
-  }
-
-  os << "];" << std::endl;
-  os << "plotregion(-Ab(:,1:3),-Ab(:,4),[],[],color);" << std::endl;
-}
-
-/**
- * Print the specified projections in Matlab format (for plotregion script)
- * into a file
- *
- * @param[in] os is the output stream
- * @param[in] rows rows to be plot
- * @param[in] cols colors of the plots
- */
-void Polytope::plotRegion(std::ostream &os, const vector<int> &rows,
-                          const vector<int> &cols) const
-{
-
-  if (cols.size() > 3) {
-    std::domain_error(
-        "Polytope::plotRegion : cols maximum 3d sets are allowed");
-  }
-
-  os << "Ab = [" << std::endl;
-  for (auto r_it = std::begin(rows); r_it != std::end(rows); ++r_it) {
-    for (auto c_it = std::begin(cols); c_it != std::end(cols); ++c_it) {
-      os << this->A[*r_it][*c_it] << " ";
-    }
-    os << " " << this->b[*r_it] << ";" << std::endl;
-  }
-  os << "];" << std::endl;
-  os << "plotregion(-Ab(:,1:" << cols.size() << "),-Ab(:," << cols.size() + 1
-     << "),[],[],color);" << std::endl;
 }

@@ -4,6 +4,13 @@
 #include <vector>
 #include <algorithm>
 
+
+#include <STL/STL.h>
+#include <STL/Conjunction.h>
+
+#include <LinearSystem.h>
+#include <LinearAlgebra.h>
+
 #include "AbsSynIO.h"
 
 #include "types.h"
@@ -12,12 +19,6 @@
 #include "Constant.h"
 #include "Definition.h"
 #include "Direction.h"
-
-#include "STL.h"
-#include "Conjunction.h"
-
-#include "LinearSystem.h"
-#include "LinearAlgebra.h"
 
 namespace AbsSyn
 {
@@ -227,14 +228,17 @@ public:
   {
     return spec != NULL;
   }
-  void addSpec(std::shared_ptr<STL> f)
+
+  void addSpec(std::shared_ptr<STL::STL> f)
   {
-    if (spec == NULL)
+    if (spec == NULL) {
       spec = f;
-    else
-      spec = std::make_shared<Conjunction>(spec, f);
+    } else {
+      spec = std::make_shared<STL::Conjunction>(spec, f);
+    }
   }
-  const std::shared_ptr<STL> getSpec() const
+
+  const std::shared_ptr<STL::STL> specification() const
   {
     return spec;
   }
@@ -249,15 +253,16 @@ public:
   {
     return directions;
   }
-  const Direction *getDirection(unsigned i) const
+  const Direction *getDirection(const unsigned int& i) const
   {
     return directions[i];
   }
-  bool isBounded(int d) const
+  bool isBounded(const unsigned int &d) const
   {
     return directions[d]->hasLB() && directions[d]->hasUB();
   }
-  int findDirectionPos(const std::string &name) const;
+
+  unsigned int findDirectionPos(const std::string &name) const;
 
   unsigned templateRows() const
   {
@@ -267,11 +272,11 @@ public:
   {
     return templateMatrix[0].size();
   }
-  void setTemplate(std::vector<std::vector<int>> m)
+  void setTemplate(const std::vector<std::vector<unsigned int>> &m)
   {
     templateMatrix = m;
   }
-  const std::vector<std::vector<int>> &getTemplate() const
+  const std::vector<std::vector<unsigned int>> &getTemplate() const
   {
     return templateMatrix;
   }
@@ -394,11 +399,11 @@ protected:
 
   std::vector<Direction *> assumptions;
 
-  std::shared_ptr<STL> spec;
+  std::shared_ptr<STL::STL> spec;
 
   std::vector<Direction *> directions;
 
-  std::vector<std::vector<int>> templateMatrix;
+  std::vector<std::vector<unsigned int>> templateMatrix;
 
   std::vector<Direction *> paramDirections;
 

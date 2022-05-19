@@ -15,6 +15,12 @@
 #include <mutex>
 #include <shared_mutex>
 
+/**
+ * @brief A class to account computation progress
+ * 
+ * The objects of this class take care of accounting 
+ * the progress of a Sapo computation.
+ */
 class ProgressAccounter
 {
 protected:
@@ -136,6 +142,9 @@ public:
   virtual ~ProgressAccounter() {}
 };
 
+/**
+ * @brief A progress bar accounter
+ */
 class ProgressBar : private ProgressAccounter
 {
   const unsigned int _num_of_bar_dots; //!< number of dots in the progress bar

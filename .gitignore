@@ -14,6 +14,8 @@ cmake_install.cmake
 include/*
 install_manifest.txt
 libSapo.*
+libSapo/doc
+libSapo/tests/test_*
 libSapo/src/Version.cpp
 sapo/*.err
 sapo/*.out

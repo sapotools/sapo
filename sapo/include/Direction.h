@@ -32,7 +32,7 @@ public:
   {
     lhs += rhs;
 
-    const double const_term = rhs.evaluate<double>();
+    const double const_term = rhs.evaluate();
     LB += const_term;
     UB += const_term;
   }
@@ -53,7 +53,7 @@ public:
     rhs = -lhs.get_constant_term();
     lhs += rhs;
 
-    const double rhs_value = rhs.evaluate<double>();
+    const double rhs_value = rhs.evaluate();
 
     switch (type) {
     case Type::LE:
