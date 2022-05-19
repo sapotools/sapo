@@ -140,6 +140,17 @@ public:
   }
 
   /**
+   * @brief Expand the polytope 
+   * 
+   * This method expands the polytope so that each of its boundaries
+   * is moved by a value `epsilon`.
+   * 
+   * @param epsilon is the aimed expansion 
+   * @return a reference to the updated polytope
+   */
+  Polytope &expand_by(const double epsilon);
+
+  /**
    *  Split a polytope in a list of polytopes.
    *
    *  This method splits a polytope in a list of polytopes such
@@ -192,7 +203,11 @@ public:
    * @param P1 is a polytope
    * @param P2 is a polytope
    */
-  friend void swap(Polytope &P1, Polytope &P2);
+  friend inline void swap(Polytope &P1, Polytope &P2)
+  {
+    swap(*(static_cast<LinearSystem *>(&P1)),
+        *(static_cast<LinearSystem *>(&P2)));
+  }
 
   /**
    * Compute the intersection of two polytopes
@@ -204,11 +219,25 @@ public:
   friend Polytope intersect(const Polytope &P1, const Polytope &P2);
 };
 
-inline void swap(Polytope &P1, Polytope &P2)
+/**
+ * @brief Get the expansion of a linear set 
+ * 
+ * This method expands a linear set so that each of its boundaries
+ * is moved by a value `epsilon`.
+ * 
+ * @tparam SET_TYPE is the linear set type
+ * @param S is the set to be expanded
+ * @param epsilon is the aimed expansion 
+ * @return an expanded version of `S`
+ */
+template<typename SET_TYPE>
+SET_TYPE expand(const SET_TYPE& S, const double epsilon)
 {
-  swap(*(static_cast<LinearSystem *>(&P1)),
-       *(static_cast<LinearSystem *>(&P2)));
-}
+  SET_TYPE expS(S);
 
+  expS.expand_by(epsilon);
+
+  return expS;
+}
 
 #endif /* LINEARSYSTEM_H_ */

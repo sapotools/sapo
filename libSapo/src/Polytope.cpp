@@ -161,6 +161,15 @@ Polytope &Polytope::intersect_with(const Polytope &P)
   return *this;
 }
 
+Polytope &Polytope::expand_by(const double epsilon)
+{
+  for (auto b_it = std::begin(_b); b_it != std::end(_b); ++b_it) {
+    *b_it += epsilon;
+  }
+
+  return *this;
+}
+
 Polytope intersect(const Polytope &P1, const Polytope &P2)
 {
   Polytope result(P1._A, P1._b);
