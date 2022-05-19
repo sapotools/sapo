@@ -551,6 +551,17 @@ public:
    */
   Bundle &intersect_with(const LinearSystem &ls);
 
+  /**
+   * @brief Expand the bundle 
+   * 
+   * This method expands the bundle so that each of its boundaries
+   * is moved by a value `epsilon`.
+   * 
+   * @param epsilon is the aimed expansion 
+   * @return a reference to the updated bundle
+   */
+  Bundle &expand_by(const double epsilon);
+
   virtual ~Bundle();
 
   friend void swap(Bundle &A, Bundle &B);

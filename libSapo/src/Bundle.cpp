@@ -1091,6 +1091,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     }
   };
 
+  try {
 #ifdef WITH_THREADS
   ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
@@ -1109,6 +1110,12 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     refine_coeff_itvl(this, i);
   }
 #endif // WITH_THREADS
+  } catch (SymbolicAlgebra::symbol_evaluation_error &e) {
+    std::ostringstream oss;
+
+    oss << "The symbol \""<< e.get_symbol_name() << "\" is unknown";
+    throw std::domain_error(oss.str());
+  }
 
   LinearAlgebra::Vector<double> lower_bounds, upper_bounds;
   for (auto it = std::begin(max_coeffs); it != std::end(max_coeffs); ++it) {
@@ -1396,7 +1403,21 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   return *this;
 }
 
+Bundle &Bundle::expand_by(const double epsilon)
+{
+  for (auto b_it = std::begin(_lower_bounds); 
+       b_it != std::end(_lower_bounds); ++b_it) {
+    *b_it -= epsilon;
+  }
+
+  for (auto b_it = std::begin(_upper_bounds); 
+       b_it != std::end(_upper_bounds); ++b_it) {
+    *b_it += epsilon;
+  }
+
+  return *this;
+}
+
 Bundle::~Bundle()
 {
-  // TODO Auto-generated destructor stub
 }
