@@ -130,7 +130,7 @@ void trim_unused_directions(std::vector<std::vector<double>> &directions,
  * parallelotope j.
  *
  * We add four families of constraints:
- *  - we bound each varaible to be in [0, 1]
+ *  - we bound each variable to be in [0, 1]
  *  - we require that each parallelotope has the correct number of directions
  *  - we require that each variable v of the dynamical system is covered in
  * each parallelotope
