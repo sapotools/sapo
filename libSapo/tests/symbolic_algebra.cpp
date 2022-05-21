@@ -171,10 +171,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_symbols_in_expr, T, test_types)
 
     for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
         auto exp_symbols = t_it->first.get_symbols();
-        bool beval = (exp_symbols == t_it->second);
+        bool b_eval = (exp_symbols == t_it->second);
         std::ostringstream ss;
         ss << t_it->first << " != " << t_it->second;
-        BOOST_REQUIRE_MESSAGE(beval, ss.str());
+        BOOST_REQUIRE_MESSAGE(b_eval, ss.str());
     }
 }
 
@@ -205,11 +205,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_expr_coeffs, T, test_types)
     for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
         for (auto s_it = std::begin(t_it->second); s_it != std::end(t_it->second); ++s_it) {
             auto coeffs = t_it->first.get_coeffs((*s_it).first);
-            bool beval = are_equivalent(coeffs,(*s_it).second);
+            bool b_eval = are_equivalent(coeffs,(*s_it).second);
             std::ostringstream ss;
             ss << "("<< t_it->first << ").get_coeffs("<< (*s_it).first << ") = " << coeffs 
                << " != " << (*s_it).second;
-            BOOST_REQUIRE_MESSAGE(beval, ss.str());
+            BOOST_REQUIRE_MESSAGE(b_eval, ss.str());
         }
     }
 }
@@ -233,9 +233,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_equivalence, T, test_types)
     };
 
     for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
-        bool beval = are_equivalent(t_it->first.second,t_it->first.first)==t_it->second;
+        bool b_eval = are_equivalent(t_it->first.second,t_it->first.first)==t_it->second;
         std::ostringstream ss;
         ss << t_it->first.first << (t_it->second ? " != ": " == ") << t_it->first.second;
-        BOOST_REQUIRE_MESSAGE(beval, ss.str());
+        BOOST_REQUIRE_MESSAGE(b_eval, ss.str());
     }
 }

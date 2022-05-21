@@ -66,7 +66,7 @@ class Expression;
 /**
  * @brief A class to represent algebraic symbols
  *
- * This class represents algebraic symbols. It univocally
+ * This class represents algebraic symbols. It uniquely
  * associates any symbol name to an identifier.
  *
  * @tparam C is the type of numeric constants
@@ -285,9 +285,9 @@ public:
   Expression(const Expression<C> &orig);
 
   /**
-   * @brief Replace symbol occurences by using expressions
+   * @brief Replace symbol occurrences by using expressions
    *
-   * This method replaces any occurence of the symbols in the domain
+   * This method replaces any occurrence of the symbols in the domain
    * of `replacement` with the corresponding expressions. This method
    * updates this object.
    *
@@ -321,13 +321,13 @@ public:
   /**
    * @brief Get the coefficient of a term having a given degree
    *
-   * @param symb is the symbol whose term coefficient is aimed
+   * @param symbol is the symbol whose term coefficient is aimed
    * @param degree is the degree of the aimed term
-   * @return The coefficient of the term `symb^{degree}`
+   * @return The coefficient of the term \f$\texrm{symbol}^\textrm{degree}\f$
    */
-  inline Expression<C> get_coeff(const Symbol<C> &symb, const int degree) const
+  inline Expression<C> get_coeff(const Symbol<C> &symbol, const int degree) const
   {
-    return Expression<C>(_ex->get_coeff(symb.get_id(), degree));
+    return Expression<C>(_ex->get_coeff(symbol.get_id(), degree));
   }
 
   /**
@@ -352,13 +352,13 @@ public:
   /**
    * @brief Get the degree of a symbol
    *
-   * @param symb is the symbol whose degree is aimed
+   * @param symbol is the symbol whose degree is aimed
    * @return the degree of the parameter in the expression
    */
-  inline int degree(const Symbol<C> &symb) const
+  inline int degree(const Symbol<C> &symbol) const
   {
     return _ex->degree(
-        ((const low_level::symbol_type<C> *)(symb._ex))->get_id());
+        ((const low_level::symbol_type<C> *)(symbol._ex))->get_id());
   }
 
   /**
@@ -578,7 +578,7 @@ public:
   /**
    * @brief Complement the expression
    *
-   * @return the complementar expression
+   * @return the complement expression
    */
   Expression<C> operator-() const
   {
@@ -586,7 +586,7 @@ public:
   }
 
   /**
-   * @brief Check whether an expression is sematically equivalent to a constant
+   * @brief Check whether an expression is semantically equivalent to a constant
    * value
    *
    * @tparam C is the numeric type of constants
@@ -636,7 +636,7 @@ public:
    *
    * @tparam T is the type of the constant values in the expression
    * @param lhs is the dividend expression
-   * @param rhs is the divisior expression
+   * @param rhs is the divisor expression
    * @return the expression that represents `lhs`/`rhs`
    */
   template<typename T>
@@ -651,7 +651,7 @@ public:
    *
    * @tparam T is the type of the constant values in the expression
    * @param lhs is the dividend expression
-   * @param rhs is the divisior expression
+   * @param rhs is the divisor expression
    * @return the expression that represents `lhs`/`rhs`
    */
   template<typename T>
@@ -691,7 +691,7 @@ public:
   /**
    * @brief Get the multiplication between two expressions
    *
-   * This method builds an expression that represents the mutiplication
+   * This method builds an expression that represents the multiplication
    * between two expressions.
    *
    * @tparam T is the type of the constant values in the expression
@@ -711,7 +711,7 @@ public:
    *
    * @tparam T is the type of the constant values in the expression
    * @param lhs is the dividend expression
-   * @param rhs is the divisior expression
+   * @param rhs is the divisor expression
    * @return the expression that represents `lhs`/`rhs`
    */
   template<typename T>
@@ -751,7 +751,7 @@ public:
   /**
    * @brief Get the multiplication between two expressions
    *
-   * This method builds an expression that represents the mutiplication
+   * This method builds an expression that represents the multiplication
    * between two expressions.
    *
    * @tparam T is the type of the constant values in the expression
@@ -771,7 +771,7 @@ public:
    *
    * @tparam T is the type of the constant values in the expression
    * @param lhs is the dividend expression
-   * @param rhs is the divisior expression
+   * @param rhs is the divisor expression
    * @return the expression that represents `lhs`/`rhs`
    */
   template<typename T>
@@ -991,7 +991,7 @@ public:
   /**
    * @brief Get the multiplication between two expressions
    *
-   * This method builds an expression that represents the mutiplication
+   * This method builds an expression that represents the multiplication
    * between two expressions.
    *
    * @tparam T is the type of the constant values in the expression
@@ -1010,7 +1010,7 @@ public:
    *
    * @tparam T is the type of the constant values in the expression
    * @param lhs is the dividend expression
-   * @param rhs is the divisior expression
+   * @param rhs is the divisor expression
    * @return the expression that represents `lhs`/`rhs`
    */
   template<typename T>
@@ -1311,7 +1311,7 @@ public:
   }
 
   /**
-   * @brief Divide the current expression by a costant value
+   * @brief Divide the current expression by a constant value
    *
    * This method builds an expression that represents the division
    * of the current object by the parameter. The original
@@ -1332,7 +1332,7 @@ public:
   /**
    * @brief Complement the expression
    *
-   * @return the complementar expression
+   * @return the complement expression
    */
   virtual base_expression_type<C> *complement() = 0;
 
@@ -1406,9 +1406,9 @@ public:
   virtual bool has_symbols() const = 0;
 
   /**
-   * @brief Replace symbol occurences by using expressions
+   * @brief Replace symbol occurrences by using expressions
    *
-   * This method replaces any occurence of the symbols whose ids are in
+   * This method replaces any occurrence of the symbols whose ids are in
    * the domain of `replacement` with a clone of the corresponding expressions.
    * This method updates this object.
    *
@@ -1729,7 +1729,7 @@ public:
   }
 
   /**
-   * @brief Divide the current expression by a costant value
+   * @brief Divide the current expression by a constant value
    *
    * This method builds an expression that represents the division
    * of the current object by the parameter. The original
@@ -1750,7 +1750,7 @@ public:
   /**
    * @brief Complement the expression
    *
-   * @return the complementar expression
+   * @return the complement expression
    */
   low_level::base_expression_type<C> *complement()
   {
@@ -1760,9 +1760,9 @@ public:
   }
 
   /**
-   * @brief Replace symbol occurences by using expressions
+   * @brief Replace symbol occurrences by using expressions
    *
-   * This method replaces any occurence of the symbols whose ids are in
+   * This method replaces any occurrence of the symbols whose ids are in
    * the domain of `replacement` with a clone of the corresponding expressions.
    * This method updates this object.
    *
@@ -2074,7 +2074,7 @@ public:
   /**
    * @brief Complement the expression
    *
-   * @return the complementar expression
+   * @return the complement expression
    */
   low_level::base_expression_type<C> *complement()
   {
@@ -2210,9 +2210,9 @@ public:
   }
 
   /**
-   * @brief Replace symbol occurences by using expressions
+   * @brief Replace symbol occurrences by using expressions
    *
-   * This method replaces any occurence of the symbols whose ids are in
+   * This method replaces any occurrence of the symbols whose ids are in
    * the domain of `replacement` with a clone of the corresponding expressions.
    * This method updates this object.
    *
@@ -2642,7 +2642,7 @@ public:
   }
 
   /**
-   * @brief Divide the current expression by a costant value
+   * @brief Divide the current expression by a constant value
    *
    * This method builds an expression that represents the division
    * of the current object by the parameter. The original
@@ -2663,7 +2663,7 @@ public:
   /**
    * @brief Complement the expression
    *
-   * @return the complementar expression
+   * @return the complement expression
    */
   low_level::base_expression_type<C> *complement()
   {
@@ -2786,9 +2786,9 @@ public:
   }
 
   /**
-   * @brief Replace symbol occurences by using expressions
+   * @brief Replace symbol occurrences by using expressions
    *
-   * This method replaces any occurence of the symbols whose ids are in
+   * This method replaces any occurrence of the symbols whose ids are in
    * the domain of `replacement` with a clone of the corresponding expressions.
    * This method updates this object.
    *
@@ -3164,7 +3164,7 @@ public:
   /**
    * @brief Complement the expression
    *
-   * @return the complementar expression
+   * @return the complement expression
    */
   low_level::base_expression_type<C> *complement()
   {
@@ -3223,9 +3223,9 @@ public:
   }
 
   /**
-   * @brief Replace symbol occurences by using expressions
+   * @brief Replace symbol occurrences by using expressions
    *
-   * This method replaces any occurence of the symbols whose ids are in
+   * This method replaces any occurrence of the symbols whose ids are in
    * the domain of `replacement` with a clone of the corresponding expressions.
    * This method updates this object.
    *
@@ -3570,7 +3570,7 @@ bool are_equivalent(const Expression<C> &lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Check whether an expression is sematically equivalent to a constant
+ * @brief Check whether an expression is semantically equivalent to a constant
  *
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
@@ -3585,7 +3585,7 @@ inline bool are_equivalent(const Expression<C> &lhs, const C &rhs)
 }
 
 /**
- * @brief Check whether an expression is sematically equivalent to a constant
+ * @brief Check whether an expression is semantically equivalent to a constant
  *
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
@@ -3600,7 +3600,7 @@ inline bool are_equivalent(const C &lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Check whether an expression is sematically equivalent to a constant
+ * @brief Check whether an expression is semantically equivalent to a constant
  *
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
@@ -3615,7 +3615,7 @@ inline bool operator==(const Expression<C> &lhs, const C rhs)
 }
 
 /**
- * @brief Check whether an expression is sematically equivalent to a constant
+ * @brief Check whether an expression is semantically equivalent to a constant
  *
  * @tparam C is the numeric type of constants
  * @param lhs is an expression
@@ -3630,7 +3630,7 @@ inline bool operator==(const Expression<C> &lhs, const int rhs)
 }
 
 /**
- * @brief Check whether an expression is sematically equivalent to a constant
+ * @brief Check whether an expression is semantically equivalent to a constant
  *
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
@@ -3645,7 +3645,7 @@ inline bool operator==(const C lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Check whether an expression is sematically equivalent to a constant
+ * @brief Check whether an expression is semantically equivalent to a constant
  *
  * @tparam C is the numeric type of constants
  * @param lhs is a constant value
@@ -3896,7 +3896,7 @@ Expression<C> operator-(Expression<C> &&lhs, Expression<C> &&rhs)
 }
 
 /**
- * @brief Mutiply two expressions
+ * @brief Multiply two expressions
  *
  * This method builds an expression that represents the multiplication of the
  * two expressions passed as parameters.
@@ -3917,7 +3917,7 @@ Expression<C> operator*(const Expression<C> &lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Mutiply two expressions
+ * @brief Multiply two expressions
  *
  * This method builds an expression that represents the multiplication of the
  * two expressions passed as parameters.
@@ -3939,7 +3939,7 @@ Expression<C> operator*(Expression<C> &&lhs, const Expression<C> &rhs)
 }
 
 /**
- * @brief Mutiply two expressions
+ * @brief Multiply two expressions
  *
  * This method builds an expression that represents the multiplication of the
  * two expressions passed as parameters.
@@ -3961,7 +3961,7 @@ Expression<C> operator*(const Expression<C> &lhs, Expression<C> &&rhs)
 }
 
 /**
- * @brief Mutiply two expressions
+ * @brief Multiply two expressions
  *
  * This method builds an expression that represents the multiplication of the
  * two expressions passed as parameters.
@@ -4092,15 +4092,15 @@ Symbol<C>::Symbol(const std::string &name): Expression<C>(nullptr)
     throw std::domain_error("Symbols must have a non-null name");
   }
 
-  auto found_symb = _declared_symbols.find(name);
+  auto found_symbol = _declared_symbols.find(name);
 
-  if (found_symb == std::end(_declared_symbols)) {
-    SymbolIdType symb_id = _symbol_names.size();
+  if (found_symbol == std::end(_declared_symbols)) {
+    SymbolIdType symbol_id = _symbol_names.size();
     _symbol_names.push_back(name);
-    _declared_symbols[name] = symb_id;
-    this->_ex = new low_level::symbol_type<C>(symb_id);
+    _declared_symbols[name] = symbol_id;
+    this->_ex = new low_level::symbol_type<C>(symbol_id);
   } else {
-    this->_ex = new low_level::symbol_type<C>(found_symb->second);
+    this->_ex = new low_level::symbol_type<C>(found_symbol->second);
   }
 }
 

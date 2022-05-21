@@ -25,13 +25,13 @@ class TimeInterval
    * @brief Print a time interval in a stream
    * 
    * @param[in] os is the output stream
-   * @param[in] t_itvl is the time interval to be printed
+   * @param[in] t_interval is the time interval to be printed
    * @return a reference to the output stream
    */
   friend inline std::ostream &operator<<(std::ostream &os, 
-                                         const TimeInterval &t_itvl)
+                                         const TimeInterval &t_interval)
   {
-    os << "[" << t_itvl._begin << ", " << t_itvl._end << "]";
+    os << "[" << t_interval._begin << ", " << t_interval._end << "]";
 
     return os;
   }
@@ -41,7 +41,7 @@ class TimeInterval
 
 public:
   /**
-   * Constructor for the time inteval [0,0]
+   * Constructor for the time interval [0,0]
    */
   TimeInterval();
   /**
@@ -52,7 +52,7 @@ public:
   TimeInterval(const TimeInterval &orig);
 
   /**
-   * Constructor for singleton time intevals.
+   * Constructor for singleton time intervals.
    *
    * This constructor builds an object that represents the time interval [time,
    * time], where time is the method parameter.
@@ -62,7 +62,7 @@ public:
   TimeInterval(const int time);
 
   /**
-   * Constructor for time intevals.
+   * Constructor for time intervals.
    *
    * This constructor builds an object that represents the time interval
    * [begin, end], where begin and end are the method parameters.
@@ -150,14 +150,14 @@ public:
  * This method verifies whether all the points in a time interval
  * come before a specified time.
  *
- * @param[in] itvl is the interval to be compared
+ * @param[in] t_interval is the interval to be compared
  * @param[in] time is the time point to be compared
  * @return `true` if and only if the time point comes after
  *         all the times in the interval.
  */
-inline bool operator<(const TimeInterval &itvl, const int time)
+inline bool operator<(const TimeInterval &t_interval, const int time)
 {
-  return itvl.end() < time;
+  return t_interval.end() < time;
 }
 
 /**
@@ -166,14 +166,14 @@ inline bool operator<(const TimeInterval &itvl, const int time)
  * This method verifies whether all the points in a time interval
  * come after a specified time.
  *
- * @param[in] itvl is the interval to be compared
+ * @param[in] t_interval is the interval to be compared
  * @param[in] time is the time point to be compared
  * @return `true` if and only if the time point comes before
  *          all the times in the interval.
  */
-inline bool operator>(const TimeInterval &itvl, const int time)
+inline bool operator>(const TimeInterval &t_interval, const int time)
 {
-  return itvl.begin() > time;
+  return t_interval.begin() > time;
 }
 
 /**
@@ -183,13 +183,13 @@ inline bool operator>(const TimeInterval &itvl, const int time)
  * the points in a time interval.
  *
  * @param[in] time is the time point to be compared
- * @param[in] itvl is the interval to be compared
+ * @param[in] t_interval is the interval to be compared
  * @return `true` if and only if the time point comes before
  *          all the times in the interval.
  */
-inline bool operator<(const int time, const TimeInterval &itvl)
+inline bool operator<(const int time, const TimeInterval &t_interval)
 {
-  return itvl > time;
+  return t_interval > time;
 }
 
 /**
@@ -199,13 +199,13 @@ inline bool operator<(const int time, const TimeInterval &itvl)
  * the points in a time interval.
  *
  * @param[in] time is the time point to be compared
- * @param[in] itvl is the interval to be compared
+ * @param[in] t_interval is the interval to be compared
  * @return `true` if and only if the time point comes after
  *          all the times in the interval.
  */
-inline bool operator>(const int time, const TimeInterval &itvl)
+inline bool operator>(const int time, const TimeInterval &t_interval)
 {
-  return itvl < time;
+  return t_interval < time;
 }
 
 #endif // TIMEINTERVAL_H_

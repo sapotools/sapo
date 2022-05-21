@@ -22,8 +22,8 @@ namespace STL
  * Conjunction to represent the STL formula 
  * \f$\textrm{left} \land \textrm{right}\f$.
  *
- * @param[in] left is the left-side conjunction subformula
- * @param[in] right is the right-side conjunction subformula
+ * @param[in] left is the left-side conjunction sub-formula
+ * @param[in] right is the right-side conjunction sub-formula
  */
 Conjunction::Conjunction(const std::shared_ptr<STL> left,
                          const std::shared_ptr<STL> right):

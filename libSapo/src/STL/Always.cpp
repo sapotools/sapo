@@ -21,7 +21,7 @@ namespace STL
  * 
  * This constructor creates an object of the type 
  * Always to represent the STL formula 
- * \f$G_{[\texrm{begin}, \textrm{end}]} \textrm{formula}\f$.
+ * \f$G_{[\textrm{begin}, \textrm{end}]} \textrm{formula}\f$.
  *
  * @param[in] begin is the begin of temporal interval
  * @param[in] end is the end of temporal interval
@@ -29,7 +29,7 @@ namespace STL
  */
 Always::Always(const int begin, const int end,
                const std::shared_ptr<STL> formula):
-    STL(ALWAYS), _subformula(formula), _t_itvl(begin, end)
+    STL(ALWAYS), _subformula(formula), _t_interval(begin, end)
 {
 }
 
@@ -44,7 +44,7 @@ Always::Always(const int begin, const int end,
  */
 std::ostream &Always::print(std::ostream &os) const
 {
-  os << "G " << this->_t_itvl << " (" 
+  os << "G " << this->_t_interval << " (" 
      << *(this->_subformula) << ")";
 
   return os;

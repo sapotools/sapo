@@ -17,14 +17,14 @@ namespace STL
 {
 
 /**
- * @brief A constructor for STL dicjunction formulas
+ * @brief A constructor for STL disjunction formulas
  * 
  * This constructor creates an object of the type 
  * Disjunction to represent the STL formula 
  * \f$\textrm{left} \lor \textrm{right}\f$.
  *
- * @param[in] left is the left-side disjunction subformula
- * @param[in] right is the right-side disjunction subformula
+ * @param[in] left is the left-side disjunction sub-formula
+ * @param[in] right is the right-side disjunction sub-formula
  */
 Disjunction::Disjunction(const std::shared_ptr<STL> left,
                          const std::shared_ptr<STL> right):

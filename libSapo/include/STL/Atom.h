@@ -29,7 +29,7 @@ namespace STL
 class Atom : public STL
 {
 private:
-  static unsigned int _num_of_atoms;    //!< Number of instanciated atoms
+  static unsigned int _num_of_atoms;    //!< Number of instantiated atoms
 
   SymbolicAlgebra::Expression<> _expr;  //!< Atom expression
   unsigned int _id;                     //!< Atom identifier
@@ -62,7 +62,7 @@ public:
   /**
    * @brief Get the atom formula expression
    * 
-   * Every atomic fomula has the form 
+   * Every atomic formula has the form 
    * \f$\textrm{expression} \geq 0\f$. This method 
    * returns the formula expression.
    * 

@@ -34,22 +34,22 @@
 class Sapo
 {
 public:
-  Bundle::transfomation_mode tmode; //!< transformation mode (OFO or AFO)
+  Bundle::transformation_mode t_mode; //!< transformation mode (OFO or AFO)
   double decomp_weight;             //!< decomposition weight
   unsigned int decomp; //!< number of decompositions (0: none, >0: yes)
   std::string plot;    //!< the name of the file were to plot the reach set
   unsigned int time_horizon;     //!< the computation time horizon
   unsigned int max_param_splits; //!< maximum number of splits in synthesis
-  unsigned int num_of_presplits; //!< number of presplits in synthesis
+  unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis
   double max_bundle_magnitude; //!< maximum versor magnitude for single bundle
 
 private:
   const std::vector<SymbolicAlgebra::Expression<>>
-      &dyns; //!< dynamics of the system
+      &_dynamics; //!< dynamics of the system
   const std::vector<SymbolicAlgebra::Symbol<>>
-      &vars; //!< variables of the system
+      &_variables; //!< variables of the system
   const std::vector<SymbolicAlgebra::Symbol<>>
-      &params; //!< parameters of the system
+      &_parameters; //!< parameters of the system
 
   const LinearSystem assumptions;
 
@@ -73,9 +73,9 @@ private:
  
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle reached_set = init_set.transform(this->vars, this->params,
-                                              this->dyns, *p_it,
-                                              this->tmode);
+      Bundle reached_set = init_set.transform(this->_variables, this->_parameters,
+                                              this->_dynamics, *p_it,
+                                              this->t_mode);
 
       //guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
@@ -98,7 +98,7 @@ private:
                             const std::shared_ptr<STL::Atom> formula) const;
 
   /**
-   * Parmeter synthesis for conjunctions
+   * Parameter synthesis for conjunctions
    *
    * @param[in] init_set is the initial set
    * @param[in] pSet the current parameter set
@@ -109,7 +109,7 @@ private:
                             const std::shared_ptr<STL::Conjunction> formula) const;
 
   /**
-   * Parmeter synthesis for disjunctions
+   * Parameter synthesis for disjunctions
    *
    * @param[in] init_set is the initial set
    * @param[in] pSet the current parameter set
@@ -145,7 +145,7 @@ private:
                             const std::shared_ptr<STL::Always> formula,
                             const int time) const;
   /**
-   * Parmeter synthesis for the eventually fomulas
+   * Parameter synthesis for the eventually formulas
    *
    * @param[in] init_set is the initial set
    * @param[in] pSet the current parameter set
@@ -160,7 +160,7 @@ public:
   /**
    * Constructor that instantiates Sapo
    *
-   * @param[in] model model to analyize
+   * @param[in] model model to analyze
    */
   Sapo(const Model& model);
 
@@ -176,7 +176,7 @@ public:
                  ProgressAccounter *accounter = NULL) const;
 
   /**
-   * Reachable set computation for parameteric dynamical systems
+   * Reachable set computation for parametric dynamical systems
    *
    * @param[in] init_set is the initial set
    * @param[in] pSet is the set of parameters
@@ -208,7 +208,7 @@ public:
    * @param[in] formula is an STL formula providing the specification
    * @param[in] max_splits maximum number of splits of the original
    *                       parameter set to identify a non-null solution
-   * @param[in] num_of_presplits is number of splits to be performed before
+   * @param[in] num_of_pre_splits is number of splits to be performed before
    *                             the computation
    * @param[in,out] accounter accounts for the computation progress
    * @returns the list of refined parameter sets
@@ -216,7 +216,7 @@ public:
   std::list<PolytopesUnion>
   synthesize(Bundle init_set, const PolytopesUnion &pSet,
              const std::shared_ptr<STL::STL> formula, const unsigned int max_splits,
-             const unsigned int num_of_presplits = 0,
+             const unsigned int num_of_pre_splits = 0,
              ProgressAccounter *accounter = NULL) const;
 };
 

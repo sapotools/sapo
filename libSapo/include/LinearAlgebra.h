@@ -93,8 +93,8 @@ T norm_infinity(const Vector<T> &v)
 /**
  * Compute the complementary of a vector of values.
  *
- * @param[in] orig the vector of values to be complementated
- * @return A vector containing the complementaries of the parameter values
+ * @param[in] orig the vector of values to be complemented
+ * @return A vector containing the complement of the parameter values
  */
 template<typename T>
 Vector<T> operator-(const Vector<T> &orig)
@@ -149,8 +149,8 @@ bool operator!=(const Vector<T> &a, const Vector<T> &b)
 /**
  * Compute the complementary of a vector of values.
  *
- * @param[in] v the vector of values to be complementated
- * @return A vector containing the complementaries of the parameter values
+ * @param[in] v the vector of values to be complemented
+ * @return A vector containing the complement of the parameter values
  */
 template<typename T>
 Vector<T> operator-(Vector<T> &&v)
@@ -474,7 +474,7 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
 }
 
 /**
- * @brief A class to represent pemutations
+ * @brief A class to represent permutations
  *
  * Permutation are square matrices whose row and column
  * sums are one. However, storing a permutation for
@@ -673,7 +673,7 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
     if (non_zero_idx == v1.size()) {
       if (v1[i] != 0 || v2[i] != 0) {
         if (v1[i] == 0 || v2[i] == 0) {
-          throw std::domain_error("The two vectors are not linealy dependent.");
+          throw std::domain_error("The two vectors are not linearly dependent.");
         }
 
         // set the first non-zero index
@@ -683,13 +683,13 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
 
       if ((v1[i] == 0 && v2[i] != 0)||(v1[i] != 0 && v2[i] == 0)||
           (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx])) {
-        throw std::domain_error("The two vectors are not linealy dependent.");
+        throw std::domain_error("The two vectors are not linearly dependent.");
       }
     }
   }
 
   if (non_zero_idx==v1.size()) {
-    throw std::domain_error("The two vectors are not linealy dependent.");
+    throw std::domain_error("The two vectors are not linearly dependent.");
   }
 
   return v1[non_zero_idx] / v2[non_zero_idx];
@@ -864,7 +864,7 @@ class LUP_Factorization
 
       const T &diag_value = row[j];
       if (diag_value == 0) {
-        throw std::domain_error("The linear system is underdetermined.");
+        throw std::domain_error("The linear system is undetermined.");
       }
       for (unsigned int i = j + 1; i < row.size(); ++i) {
         value -= row[i] * x[i];
@@ -1181,7 +1181,7 @@ Matrix<T> inverse(Matrix<T> &A)
     throw std::domain_error("Inverse of a 0x0-matrix not supported");
   }
   
-  Matrix<T> Ainv;
+  Matrix<T> A_inv;
 
   // Compute the factorization
   LUP_Factorization<T> fact(A);
@@ -1189,11 +1189,11 @@ Matrix<T> inverse(Matrix<T> &A)
 
   for (unsigned int i=0; i<A.size(); ++i) {
     vi[i] = 1;
-    Ainv.push_back(fact.solve(vi));
+    A_inv.push_back(fact.solve(vi));
     vi[i] = 0;
   }
 
-  return transpose(Ainv);
+  return transpose(A_inv);
 }
 
 }
@@ -2131,9 +2131,9 @@ class LUP_Factorization
    * @param non_zero_below_diag is the vector such that
    *     `non_zero_below_diag[i]` is the set of row indexes `j`
    *     greater than `i` and having non-zero value in column `i`.
-   * @param row_idx is the index of the row that must be swaped down
+   * @param row_idx is the index of the row that must be swapped down
    */
-  void swap_with_the_leastest_non_zero_row_in_column(
+  void swap_with_the_least_non_zero_row_in_column(
       std::vector<std::set<unsigned int>> &non_zero_below_diag,
       const unsigned int &row_idx)
   {
@@ -2158,7 +2158,7 @@ class LUP_Factorization
       }
     }
   
-    // otherwise swap the current row and the row of the leastest row having a
+    // otherwise swap the current row and the row of the least row having a
     // non-empty value in this column
     std::swap(_U._matrix[row_idx], _U._matrix[new_row_idx]);
     std::swap(_L._matrix[row_idx], _L._matrix[new_row_idx]);
@@ -2194,7 +2194,7 @@ class LUP_Factorization
          ++row_it, ++i) {
      if (std::begin(row_it->second)==std::end(row_it->second) ||   
             row_it->first != i) {
-          throw std::domain_error("The linear system is underdetermined.");
+          throw std::domain_error("The linear system is undetermined.");
       }
       T value = b[row_it->first];
       for (auto elem_it = ++std::rbegin(row_it->second);
@@ -2206,7 +2206,7 @@ class LUP_Factorization
     }
 
     if (i != _L.num_of_cols()) {
-      throw std::domain_error("The linear system is underdetermined.");
+      throw std::domain_error("The linear system is undetermined.");
     }
 
     return x;
@@ -2228,7 +2228,7 @@ class LUP_Factorization
 
       if (std::begin(row_it->second)==std::end(row_it->second) ||   
             row_it->first != i-1) {
-          throw std::domain_error("The linear system is underdetermined.");
+          throw std::domain_error("The linear system is undetermined.");
       }
       T value = b[row_it->first];
       for (auto elem_it = ++std::begin(row_it->second);
@@ -2240,7 +2240,7 @@ class LUP_Factorization
     }
 
     if (i != 0) {
-      throw std::domain_error("The linear system is underdetermined.");
+      throw std::domain_error("The linear system is undetermined.");
     }
 
     return x;
@@ -2294,7 +2294,7 @@ public:
 
         // swap the current row with the row below whose new 
         // diagonal element is the nearest to 1 different from 0
-        swap_with_the_leastest_non_zero_row_in_column(non_zero_below_diag,
+        swap_with_the_least_non_zero_row_in_column(non_zero_below_diag,
                                                       row_idx);
 
         diag_elem = _U._matrix[row_it->first].find(row_idx);
@@ -2348,7 +2348,7 @@ public:
                 // remove the row from the set of non-zero rows in column if
                 // necessary
                 if (elem_it->first != row_idx) {
-                  // postponing row_idx remova to avoid messing up the iterator
+                  // postponing row_idx removal to avoid messing up the iterator
                   // on it
                   non_zero_below_diag[elem_it->first].erase(*nz_row_it);
                 }
@@ -2549,7 +2549,7 @@ Matrix<T> inverse(Matrix<T> &A)
     throw std::domain_error("Inverse of a 0x0-matrix not supported");
   }
   
-  Matrix<T> Ainv;
+  Matrix<T> A_inv;
 
   // Compute the factorization
   LUP_Factorization<T> fact(A);
@@ -2557,11 +2557,11 @@ Matrix<T> inverse(Matrix<T> &A)
 
   for (unsigned int i=0; i<A.num_of_rows(); ++i) {
     vi[i] = 1;
-    Ainv.add_row(fact.solve(vi));
+    A_inv.add_row(fact.solve(vi));
     vi[i] = 0;
   }
 
-  return transpose(Ainv);
+  return transpose(A_inv);
 }
 
 }

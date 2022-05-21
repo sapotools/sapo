@@ -436,20 +436,20 @@ bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
  *
  * @param[in] vIdx index of the reference vector
  * @param[in] dirsIdx indexes of vectors to be considered
- * @param[in] dists pre-computed distances
+ * @param[in] distances pre-computed distances
  * @returns distance accumulation
  */
 double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
-                     const LinearAlgebra::Vector<double> &dists)
+                     const LinearAlgebra::Vector<double> &distances)
 {
 
   if (dirsIdx.empty()) {
     return 0;
   }
 
-  double dist = dists[vIdx];
+  double dist = distances[vIdx];
   for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    dist = dist * dists[dirsIdx[i]];
+    dist = dist * distances[dirsIdx[i]];
   }
   return dist;
 }
@@ -458,16 +458,16 @@ double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
  * Maximum distance accumulation of a set of vectors
  *
  * @param[in] dirsIdx indexes of vectors to be considered
- * @param[in] dists pre-computed distances
+ * @param[in] distances pre-computed distances
  * @returns distance accumulation
  */
 double maxOffsetDist(const std::vector<unsigned int> &dirsIdx,
-                     const LinearAlgebra::Vector<double> &dists)
+                     const LinearAlgebra::Vector<double> &distances)
 {
 
   double dist = 1;
   for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    dist = dist * dists[dirsIdx[i]];
+    dist = dist * distances[dirsIdx[i]];
   }
   return dist;
 }
@@ -476,17 +476,17 @@ double maxOffsetDist(const std::vector<unsigned int> &dirsIdx,
  * Maximum distance accumulation of matrix
  *
  * @param[in] T matrix from which fetch the vectors
- * @param[in] dists pre-computed distances
+ * @param[in] distances pre-computed distances
  * @returns distance accumulation
  */
 double maxOffsetDist(const std::vector<LinearAlgebra::Vector<unsigned int>> &T,
-                     const LinearAlgebra::Vector<double> &dists)
+                     const LinearAlgebra::Vector<double> &distances)
 {
-  double maxdist = std::numeric_limits<double>::lowest();
+  double max_dist = std::numeric_limits<double>::lowest();
   for (unsigned int i = 0; i < T.size(); i++) {
-    maxdist = std::max(maxdist, maxOffsetDist(T[i], dists));
+    max_dist = std::max(max_dist, maxOffsetDist(T[i], distances));
   }
-  return maxdist;
+  return max_dist;
 }
 
 /**
@@ -542,11 +542,11 @@ double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
 double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
                    const std::vector<LinearAlgebra::Vector<unsigned int>> &T)
 {
-  double maxorth = std::numeric_limits<double>::lowest();
+  double max_orth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
-    maxorth = std::max(maxorth, maxOrthProx(directions, *T_it));
+    max_orth = std::max(max_orth, maxOrthProx(directions, *T_it));
   }
-  return maxorth;
+  return max_orth;
 }
 
 /**
@@ -554,18 +554,18 @@ double maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
  * 
  * This recursive function is a private draft horse to 
  * split a bundle whose maximal magnitude, the maximal 
- * lenght of its generators, is greater than 
+ * length of its generators, is greater than 
  * `max_magnitude`. The bundle is split into a
  * list of sub-bundles whose maximal magnitude is 
  * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
- * Each sub-bundle in the output list is built recursivelly 
+ * Each sub-bundle in the output list is built recursively 
  * by considering one bundle direction per time and:
  * 1. splitting the direction in the opportune number of 
  *    chunks, so to satisfy the sub-bundle maximal
  *    magnitude request;
- * 2. for each of the chuncks, setting the sub-bundle
+ * 2. for each of the chunks, setting the sub-bundle
  *    boundaries of the selected direction according 
- *    with the considered chunck and recursivelly 
+ *    with the considered chunk and recursively 
  *    consider the remaining directions.
  * 
  * If \f$m\f$ in the maximal magnitude of the input bundle 
@@ -646,7 +646,7 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
   using namespace std;
   using namespace LinearAlgebra;
 
-  vector<double> offDists = this->edge_lengths();
+  vector<double> off_distances = this->edge_lengths();
 
   // get current template and try to improve it
   vector<Vector<unsigned int>> curT = this->_templates;
@@ -677,9 +677,9 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
       try {
         fact.solve(Vector<double>(this->dim(), 0));
 
-        double w1 = dec_weight * maxOffsetDist(tmpT, offDists)
+        double w1 = dec_weight * maxOffsetDist(tmpT, off_distances)
                     + (1 - dec_weight) * maxOrthProx(this->_directions, tmpT);
-        double w2 = dec_weight * maxOffsetDist(bestT, offDists)
+        double w2 = dec_weight * maxOffsetDist(bestT, off_distances)
                     + (1 - dec_weight) * maxOrthProx(this->_directions, bestT);
 
         if (w1 < w2) {
@@ -699,17 +699,17 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
 /**
  * @brief Replace some variables in expressions by other expressions
  * 
- * This function replaces all the occurences of the variable `vars[i]` 
+ * This function replaces all the occurrences of the variable `vars[i]` 
  * in any expression in `expressions` with `subs[i]`.
  * 
  * @param expressions is the vector of expressions whose variable 
- *                    occurences must be replaced 
- * @param vars is the vector variables whose occurences must be 
+ *                    occurrences must be replaced 
+ * @param vars is the vector variables whose occurrences must be 
  *             replaced 
  * @param subs is the vector of expressions that must replace 
- *             variable occurences
+ *             variable occurrences
  * @return A vector of the containing the input expression 
- *         in which each occurence of the variables in `vars`
+ *         in which each occurrence of the variables in `vars`
  *         have been replaced by the expressions in `subs`
  */
 std::vector<SymbolicAlgebra::Expression<>>
@@ -870,7 +870,7 @@ std::pair<double, double> Bundle::ParamMinMaxCoeffFinder::find_coeffs_itvl(
  * @param P is the considered parallelotope
  * @return The generator function of `P`
  */
-std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
+std::vector<SymbolicAlgebra::Expression<>> build_instantiated_generator_functs(
     const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
     const Parallelotope &P)
 {
@@ -886,7 +886,7 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
 
   for (unsigned int i = 0; i < generators.size(); i++) {
     // some of the non-null rows of the generator matrix
-    // correspond to 0-length dimensions in degenerous
+    // correspond to 0-length dimensions in degenerate
     // parallelotopes and must be avoided
     if (P.lengths()[i] != 0) {
       Vector<double> vector = P.lengths()[i] * generators[i];
@@ -905,7 +905,7 @@ std::vector<SymbolicAlgebra::Expression<>> build_instanciated_generator_functs(
  * @brief A container whose accesses are synchronized  
  * 
  * The objects of this class store values that can be 
- * accessed in a syncronized way according to a mutex.
+ * accessed in a synchronized way according to a mutex.
  * The value themselves are updated exclusively if the 
  * call `COND::operator()` on the stored value and the 
  * possible new value, returns `true`. 
@@ -918,8 +918,8 @@ class CondSyncUpdater
 #ifdef WITH_THREADS
   mutable std::shared_timed_mutex mutex; //!< The mutex that synchronizes the accesses
 #endif
-  T _value;  //!< the value stored in the object
-  COND _cmp;      //!< the condition that must be satisfied to update the value
+  T _value;   //!< the value stored in the object
+  COND _cmp;  //!< the condition that must be satisfied to update the value
 
 public:
   /**
@@ -1005,7 +1005,7 @@ Bundle::synthesize(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
 
     Parallelotope P = this->get_parallelotope(i);
     std::vector<Expression<>> genFun
-        = build_instanciated_generator_functs(alpha, P);
+        = build_instantiated_generator_functs(alpha, P);
 
     const std::vector<Expression<>> fog
         = replace_in(dynamics, variables, genFun);
@@ -1043,7 +1043,7 @@ Bundle
 Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
                   const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
                   const Bundle::MinMaxCoeffFinder *max_finder,
-                  Bundle::transfomation_mode mode) const
+                  Bundle::transformation_mode mode) const
 {
 
   using namespace std;
@@ -1062,18 +1062,18 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     Parallelotope P = bundle->get_parallelotope(template_num);
 
     const std::vector<SymbolicAlgebra::Expression<>> &genFun
-        = build_instanciated_generator_functs(alpha, P);
+        = build_instantiated_generator_functs(alpha, P);
     const std::vector<SymbolicAlgebra::Expression<>> genFun_f
         = replace_in(dynamics, variables, genFun);
 
-    const std::vector<unsigned int> &template_i = bundle->_templates[template_num];
+    const std::vector<unsigned int> &template_i = bundle->get_template(template_num);
 
     unsigned int dir_b;
 
     // for each direction
     const size_t num_of_dirs
         = (mode == Bundle::OFO ? template_i.size()
-                               : bundle->_directions.size());
+                               : bundle->size());
 
     for (unsigned int j = 0; j < num_of_dirs; j++) {
       if (mode == Bundle::OFO) {
@@ -1082,7 +1082,7 @@ Bundle::transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
         dir_b = j;
       }
       std::vector<SymbolicAlgebra::Expression<>> bernCoeffs
-          = compute_Bern_coeffs(alpha, genFun_f, bundle->_directions[dir_b]);
+          = compute_Bern_coeffs(alpha, genFun_f, bundle->get_direction(dir_b));
 
       auto coeff_itvl = max_finder->find_coeffs_itvl(bernCoeffs);
 
@@ -1220,7 +1220,7 @@ get_a_linearly_dependent_in(const LinearAlgebra::Vector<double> &v,
  * During the intersection of two bundles we have to decide whether 
  * which templates are contained by both of them to avoid to add 
  * twice the same template to the resulting bundle. This is done 
- * by verifing that all the directions of the second bundle have 
+ * by verifying that all the directions of the second bundle have 
  * been mapped to directions of the intersection bundle that lay 
  * before the number of directions of the first bundle.
  * 
@@ -1270,7 +1270,7 @@ Bundle &Bundle::intersect_with(const Bundle &A)
       this->_upper_bounds.push_back(A._upper_bounds[i]);
     } else { // if the direction is already included in this object
 
-      // compute the dependency coefficent
+      // compute the dependency coefficient
       const unsigned int &new_i = new_ids[i];
       const double dep_coeff = this->_directions[new_i] / A_dir;
 
@@ -1295,7 +1295,7 @@ Bundle &Bundle::intersect_with(const Bundle &A)
         t_copy[j] = new_ids[t_copy[j]];
       }
 
-      // add the new template to the intesected bundle
+      // add the new template to the intersected bundle
       this->_templates.push_back(t_copy);
     }
   }
@@ -1378,7 +1378,7 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
       this->_lower_bounds.push_back(lower_bound);
       this->_upper_bounds.push_back(ls.b(i));
     } else {
-      // compute the dependency coefficent
+      // compute the dependency coefficient
       const unsigned int &new_i = new_ids[i];
       const double dep_coeff = this->_directions[new_i] / A_row;
 

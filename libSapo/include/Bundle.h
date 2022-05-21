@@ -27,7 +27,7 @@
 /**
  * @brief A class for parallelotope bundles
  * 
- * A paralletope bundle represents the intersection between 
+ * A parallelotope bundle represents the intersection between 
  * different non-singular parallelotopes. 
  * This class stores all of the parallelotope directions/axes 
  * in one single array and constraints each of them between 
@@ -35,7 +35,7 @@
  * The original parallelotopes can be rebuild by using the 
  * a array of templates. Each template is a Natural-valued 
  * array corresponding to a parallelotope. It stores which 
- * directions are involved in the corresponding paralletope. 
+ * directions are involved in the corresponding parallelotope. 
  */ 
 class Bundle
 {
@@ -43,12 +43,12 @@ public:
   /**
    * @brief Approach to evaluate the image of a bundle
    * 
-   * The are two different approches to evalutate the
+   * The are two different approaches to evaluate the
    * image of a bundle through a polynomial function:
    * 1. One-For-One: the boundaries of any parallelotope
    *                 image in the bundle are evaluated by
    *                 exclusively considering the original
-   *                 paralletope itself
+   *                 parallelotope itself
    * 2. All-For-One: the boundaries of any parallelotope
    *                 image in the bundle are evaluated by
    *                 exploiting all the bundle templates
@@ -56,7 +56,7 @@ public:
   typedef enum {
     OFO,  /* One-For-One */
     AFO   /* All-For-One */
-  } transfomation_mode;
+  } transformation_mode;
 
 private:
   std::vector<LinearAlgebra::Vector<double>> _directions; //!< the vector of directions
@@ -173,7 +173,7 @@ private:
   Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
                    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
                    const MinMaxCoeffFinder *max_finder,
-                   Bundle::transfomation_mode mode=Bundle::AFO) const;
+                   Bundle::transformation_mode mode=Bundle::AFO) const;
 
   /**
    * @brief Add to the bundle templates for some directions
@@ -229,7 +229,7 @@ public:
    * @brief A constructor
    *
    * Whenever the templates are not specified at all, we assume that 
-   * all the directions are relevants and the templates are computed
+   * all the directions are relevant and the templates are computed
    * automatically.
    * 
    * @param[in] directions is the direction vector
@@ -244,7 +244,7 @@ public:
    * @brief A move constructor
    *
    * Whenever the templates are not specified at all, we assume that 
-   * all the directions are relevants and the templates are computed
+   * all the directions are relevant and the templates are computed
    * automatically.
    *
    * @param[in] directions is the direction vector
@@ -312,7 +312,7 @@ public:
   }
 
   /**
-   * @brief Get the i-th templatein the bundle
+   * @brief Get the i-th template in the bundle
    *
    * @param i is the index of the aimed template
    * @return a reference to the i-th template
@@ -428,7 +428,7 @@ public:
    * @brief Split the bundle in smaller sub-bundles
    * 
    * This method splits the bundles whose maximal magnitude, 
-   * the maximal lenght of its generators, is greater than 
+   * the maximal length of its generators, is greater than 
    * `max_magnitude` into a list of sub-bundles whose 
    * maximal magnitude is 
    * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
@@ -473,7 +473,7 @@ public:
   inline Bundle
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            transfomation_mode mode=Bundle::AFO) const
+            transformation_mode mode=Bundle::AFO) const
   {
     MinMaxCoeffFinder max_finder;
 
@@ -495,7 +495,7 @@ public:
             const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
             const Polytope &parameter_set, 
-            transfomation_mode mode=Bundle::AFO) const
+            transformation_mode mode=Bundle::AFO) const
   {
     ParamMinMaxCoeffFinder max_finder(parameters, parameter_set);
 

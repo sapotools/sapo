@@ -282,7 +282,7 @@ BaseConverter::bernCoeff(const std::vector<unsigned int> &mi) const
 }
 
 /**
- * Compute the list of Bernstein coeffcients of the current polynomial
+ * Compute the list of Bernstein coefficients of the current polynomial
  *
  * @returns list of Bernstein coefficients
  */
@@ -377,7 +377,7 @@ void BaseConverter::split(unsigned int direction, double split_point) const
  *
  * @param[in] v vector with elements to multiply
  * @param[in] a beginning of the interval
- * @param[in] b end of the intevral
+ * @param[in] b end of the interval
  * @returns product v[a]v[a+1]...v[b]
  */
 unsigned int prod(const std::vector<unsigned int> &v, const unsigned int &a,
@@ -447,16 +447,16 @@ std::vector<unsigned int> shift(const std::vector<unsigned int> &v)
  * Convert an nd matrix into a 2d one
  *
  * @param[in] a matrix to convert
- * @param[in] degs dimensions of the matrix
+ * @param[in] dim is the dimension of the matrix
  * @returns 2d converted matrix
  */
 std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
-                              const std::vector<unsigned int> &degs)
+                              const std::vector<unsigned int> &dim)
 {
   using namespace std;
 
-  if (a.size() != degs.size()) {
-    throw std::domain_error("BaseConverter::n2t: a and degs must have "
+  if (a.size() != dim.size()) {
+    throw std::domain_error("BaseConverter::n2t: a and dim must have "
                             "the same sizes");
   }
 
@@ -466,7 +466,7 @@ std::vector<unsigned int> n2t(const std::vector<unsigned int> &a,
     b[1] = a[1];
 
     for (unsigned int i = 2; i < a.size(); i++) {
-      b[1] = b[1] + (a[i] * prod(degs, 1, i));
+      b[1] = b[1] + (a[i] * prod(dim, 1, i));
     }
   } else {
     b[1] = 0;
@@ -493,51 +493,51 @@ inline unsigned int first_transp(const unsigned int &b_1,
  * @param[in] b_0 is the first component of the nd coordinate to be transposed
  * @param[in] b_1 is the second component of the nd coordinate to be transposed
  * @param[in] deg_1 dimensions of the second_component
- * @param[in] degs_prod product of the dimensions (prod(degs))
+ * @param[in] dim_prod product of the dimensions (prod(dim))
  * @returns the second component of the transposed coordinate
  */
 inline unsigned int second_transp(const unsigned int &b_0,
                                   const unsigned int &b_1,
                                   const unsigned int &deg_1,
-                                  const unsigned int &degs_prod)
+                                  const unsigned int &dim_prod)
 {
-  return ((b_1 - (b_1 % deg_1)) / deg_1) + b_0 * degs_prod;
+  return ((b_1 - (b_1 % deg_1)) / deg_1) + b_0 * dim_prod;
 }
 
 /**
  * Transpose an nd coordinate
  *
  * @param[in] b nd coordinate to transpose
- * @param[in] degs dimensions of the coordinate
- * @param[in] degs_prod product of the dimensions (prod(degs))
+ * @param[in] dim dimensions of the coordinate
+ * @param[in] dim_prod product of the dimensions (prod(dim))
  * @returns transposed coordinate
  */
 inline std::vector<unsigned int> transp(const std::vector<unsigned int> &b,
-                                        const std::vector<unsigned int> &degs,
-                                        const unsigned int &degs_prod)
+                                        const std::vector<unsigned int> &dim,
+                                        const unsigned int &dim_prod)
 {
   return std::vector<unsigned int>{
-      first_transp(b[1], degs[1]),
-      second_transp(b[0], b[1], degs[1], degs_prod)};
+      first_transp(b[1], dim[1]),
+      second_transp(b[0], b[1], dim[1], dim_prod)};
 }
 
 /**
  * Convert a 2d matrix into a nd one
  *
  * @param[in] c matrix to convert
- * @param[in] degs dimensions of the matrix
+ * @param[in] dim dimensions of the matrix
  * @returns nd converted matrix
  */
 std::vector<unsigned int> t2n(const std::vector<unsigned int> &c,
-                              const std::vector<unsigned int> &degs)
+                              const std::vector<unsigned int> &dim)
 {
 
-  std::vector<unsigned int> a(degs.size(), 0);
+  std::vector<unsigned int> a(dim.size(), 0);
 
-  a[degs.size() - 1] = floor(c[1] / prod(degs, 1, degs.size() - 1));
+  a[dim.size() - 1] = floor(c[1] / prod(dim, 1, dim.size() - 1));
   unsigned int c_value = c[1];
-  for (unsigned int i = degs.size() - 1; i > 0; i--) {
-    unsigned int div = prod(degs, 1, i);
+  for (unsigned int i = dim.size() - 1; i > 0; i--) {
+    unsigned int div = prod(dim, 1, i);
     a[i] = floor(c_value / div);
     c_value = c_value % div;
   }
@@ -550,34 +550,34 @@ std::vector<unsigned int> t2n(const std::vector<unsigned int> &c,
  * Transpose an 2d coordinate
  *
  * @param[in] b 2d coordinate to transpose
- * @param[in] degs dimensions of the coordinate
+ * @param[in] dim dimensions of the coordinate
  * @returns transposed coordinate
  */
 std::vector<unsigned int> transp_naive(const std::vector<unsigned int> &b,
-                                       const std::vector<unsigned int> &degs)
+                                       const std::vector<unsigned int> &dim)
 {
 
-  return n2t(shift(t2n(b, degs)), shift(degs));
+  return n2t(shift(t2n(b, dim)), shift(dim));
 }
 
 /**
  * Transpose an 2d matrix
  *
  * @param[in] M matrix to transpose
- * @param[in] degs dimensions of the matrix
+ * @param[in] dim dimensions of the matrix
  * @returns transposed matrix
  */
 std::vector<std::vector<SymbolicAlgebra::Expression<>>>
 transp(const std::vector<std::vector<SymbolicAlgebra::Expression<>>> &M,
-       const std::vector<unsigned int> &degs)
+       const std::vector<unsigned int> &dim)
 {
   using namespace std;
   using namespace SymbolicAlgebra;
 
-  const unsigned int prod_degs2n = prod(degs, 2, degs.size());
+  const unsigned int prod_dim2n = prod(dim, 2, dim.size());
 
-  const unsigned int rows_t = (degs.size()>1 ? degs[1]: 1);
-  const unsigned int cols_t = prod(degs, 2, degs.size()) * degs[0];
+  const unsigned int rows_t = (dim.size()>1 ? dim[1]: 1);
+  const unsigned int cols_t = prod(dim, 2, dim.size()) * dim[0];
 
   vector<vector<Expression<>>> M_transp(rows_t,
                                         vector<Expression<>>(cols_t, 0.0));
@@ -587,7 +587,7 @@ transp(const std::vector<std::vector<SymbolicAlgebra::Expression<>>> &M,
     for (unsigned int j = 0; j < M_row.size(); j++) {
       if (M_row[j] != 0) {
         const unsigned int ij_t_0 = first_transp(j, rows_t);
-        const unsigned int ij_t_1 = second_transp(i, j, rows_t, prod_degs2n);
+        const unsigned int ij_t_1 = second_transp(i, j, rows_t, prod_dim2n);
 
         M_transp[ij_t_0][ij_t_1] = M_row[j];
       }
@@ -626,7 +626,7 @@ genUtilde(const unsigned int &n)
 }
 
 /**
- * Compute the list of Bernstein coeffcients with improved matrix method
+ * Compute the list of Bernstein coefficients with improved matrix method
  *
  * @returns list of Bernstein coefficients
  */
@@ -727,18 +727,18 @@ BaseConverter::compressZeroCoeffs() const
   using namespace SymbolicAlgebra;
 
   vector<Expression<>> comp_coeffs;
-  vector<vector<unsigned int>> comp_degs;
+  vector<vector<unsigned int>> comp_dim;
   pair<vector<Expression<>>, vector<vector<unsigned int>>> compression;
 
   for (unsigned int i = 0; i < this->coeffs.size(); i++) {
     if (this->coeffs[i] != 0) {
       comp_coeffs.push_back(this->coeffs[i]);
-      comp_degs.push_back(pos2multi_index(i));
+      comp_dim.push_back(pos2multi_index(i));
     }
   }
 
   compression.first = comp_coeffs;
-  compression.second = comp_degs;
+  compression.second = comp_dim;
   return compression;
 }
 

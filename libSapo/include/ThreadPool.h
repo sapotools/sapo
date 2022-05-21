@@ -33,7 +33,7 @@ protected:
   public:
     unsigned int running;  //!< The number of running tasks in the batch
     unsigned int in_queue; //!< The number of batch tasks in the queue
-    std::condition_variable waiting_end; //!< Testifing the batch conclusion
+    std::condition_variable waiting_end; //!< Testifying the batch conclusion
 
     /**
      * @brief Constructor
@@ -41,7 +41,7 @@ protected:
     BatchInfo(): running(0), in_queue(0) {}
 
     /**
-     * @brief Copy constructur
+     * @brief Copy constructor
      *
      * @param[in] orig is the model for the new object
      */

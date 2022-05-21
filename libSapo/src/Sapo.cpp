@@ -20,12 +20,13 @@
 /**
  * Constructor that instantiates Sapo
  *
- * @param[in] model model to analyize
+ * @param[in] model model to analyze
  */
 Sapo::Sapo(const Model& model):
-    tmode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_presplits(0),
+    t_mode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_pre_splits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
-    dyns(model.dynamics()), vars(model.variables()), params(model.parameters()),
+    _dynamics(model.dynamics()), _variables(model.variables()), 
+    _parameters(model.parameters()),
     assumptions(model.assumptions())
 {
 }
@@ -63,8 +64,8 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
     using namespace LinearAlgebra;
 
     // get the transformed bundle
-    Bundle nbundle = bundle.transform(sapo->vars, sapo->dyns,
-                                      sapo->tmode); // transform it
+    Bundle nbundle = bundle.transform(sapo->_variables, sapo->_dynamics,
+                                      sapo->t_mode); // transform it
     
     //guarantee the assumptions
     nbundle.intersect_with(sapo->assumptions);
@@ -190,8 +191,8 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
          b_it != std::cend(cbundles[pos]); ++b_it) {
       // get the transformed bundle
       Bundle nbundle
-          = b_it->transform(sapo->vars, sapo->params, sapo->dyns, pSet,
-                            sapo->tmode); // transform it
+          = b_it->transform(sapo->_variables, sapo->_parameters, sapo->_dynamics, pSet,
+                            sapo->t_mode); // transform it
 
       //guarantee the assumptions
       nbundle.intersect_with(sapo->assumptions);
@@ -303,7 +304,7 @@ get_a_finer_covering(const std::list<PolytopesUnion> &orig,
 
       // nothing to add to the resulting list
       break;
-    case 1: // the polytopes union contains exacly one polytope
+    case 1: // the polytopes union contains exactly one polytope
     {       // then, split it by using Polytope::get_a_finer_covering();
 
       std::list<Polytope> f_cov
@@ -436,7 +437,7 @@ synthesize_list(const Sapo &sapo, const Bundle &init_set,
  * @param[in] formula is an STL formula providing the specification
  * @param[in] max_splits maximum number of splits of the original
  *                       parameter set to identify a non-null solution
- * @param[in] num_of_presplits is number of splits to be performed before
+ * @param[in] num_of_pre_splits is number of splits to be performed before
  *                             the computation
  * @param[in,out] accounter accounts for the computation progress
  * @returns the list of refined parameter sets
@@ -445,7 +446,7 @@ std::list<PolytopesUnion> Sapo::synthesize(Bundle init_set,
                                            const PolytopesUnion &pSet,
                                            const std::shared_ptr<STL::STL> formula,
                                            const unsigned int max_splits,
-                                           const unsigned int num_of_presplits,
+                                           const unsigned int num_of_pre_splits,
                                            ProgressAccounter *accounter) const
 {
   if (this->assumptions.size()>0) {
@@ -454,8 +455,8 @@ std::list<PolytopesUnion> Sapo::synthesize(Bundle init_set,
 
   std::list<PolytopesUnion> pSetList{pSet};
 
-  if (num_of_presplits > 1) {
-    pSetList = get_a_finer_covering(pSetList, num_of_presplits);
+  if (num_of_pre_splits > 1) {
+    pSetList = get_a_finer_covering(pSetList, num_of_pre_splits);
   }
 
   const unsigned int max_time = formula->time_bounds().end();
@@ -489,7 +490,7 @@ std::list<PolytopesUnion> Sapo::synthesize(Bundle init_set,
 }
 
 /**
- * Parmeter synthesis for conjunctions
+ * Parameter synthesis for conjunctions
  *
  * @param[in] init_set is the current reached set
  * @param[in] pSet is the current parameter set
@@ -508,7 +509,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
 }
 
 /**
- * Parmeter synthesis for disjunctions
+ * Parameter synthesis for disjunctions
  *
  * @param[in] init_set is the initial set
  * @param[in] pSet the current parameter set
@@ -527,7 +528,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
 }
 
 /**
- * Parmeter synthesis for the eventually fomulas
+ * Parameter synthesis for the eventually formulas
  *
  * @param[in] init_set is the initial set
  * @param[in] pSet the current parameter set
@@ -616,7 +617,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Atom> atom) const
 {
-  return init_set.synthesize(vars, params, dyns, pSet, atom);
+  return init_set.synthesize(_variables, _parameters, _dynamics, pSet, atom);
 }
 
 /**
@@ -633,14 +634,14 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const std::shared_ptr<STL::Until> formula,
                                 const int time) const
 {
-  const TimeInterval &t_itvl = formula->time_bounds();
+  const TimeInterval &t_interval = formula->time_bounds();
 
   // Base case
-  if (t_itvl.is_empty())
+  if (t_interval.is_empty())
     return PolytopesUnion();
 
   // Until interval far
-  if (t_itvl > time) {
+  if (t_interval > time) {
     // Synthesize wrt phi1
     PolytopesUnion P1
         = this->synthesize(init_set, pSet, formula->get_left_subformula());
@@ -653,7 +654,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
   }
 
   // Inside until interval
-  if (t_itvl.end() > time) {
+  if (t_interval.end() > time) {
     // Refine wrt phi1 and phi2
     PolytopesUnion P1
         = this->synthesize(init_set, pSet, formula->get_left_subformula());
@@ -671,7 +672,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
   }
 
   // If none of the above condition holds, then it must holds that :
-  // 			t_itvl.begin()<=time and t_itvl.end()==time
+  // 			t_interval.begin()<=time and t_interval.end()==time
   return this->synthesize(init_set, pSet, formula->get_right_subformula());
 }
 
@@ -689,21 +690,21 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const std::shared_ptr<STL::Always> formula,
                                 const int time) const
 {
-  const TimeInterval &t_itvl = formula->time_bounds();
+  const TimeInterval &t_interval = formula->time_bounds();
 
   // Base case
-  if (t_itvl.is_empty()) {
+  if (t_interval.is_empty()) {
     return PolytopesUnion();
   }
 
   // Always interval far
-  if (t_itvl > time) {
+  if (t_interval > time) {
     // transition and synthesis
     return transition_and_synthesis(init_set, pSet, formula, time);
   }
 
   // Inside Always interval
-  if (t_itvl.end() > time) {
+  if (t_interval.end() > time) {
 
     // Refine wrt phi
     PolytopesUnion P
@@ -717,6 +718,6 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
   }
 
   // If none of the above condition holds, then it must holds that :
-  // 			t_itvl.begin()<=time and t_itvl.end()==time
+  // 			t_interval.begin()<=time and t_interval.end()==time
   return this->synthesize(init_set, pSet, formula->get_subformula());
 }

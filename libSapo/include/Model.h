@@ -1,6 +1,6 @@
 /**
  * @file Model.h
- * Represent a discrete-time (eventually parameteric) dynamical system
+ * Represent a discrete-time (eventually parametric) dynamical system
  *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @version 0.1
@@ -29,7 +29,7 @@ class Model
 protected:
   std::vector<SymbolicAlgebra::Symbol<>> _vars;     //!< Variables
   std::vector<SymbolicAlgebra::Symbol<>> _params;   //!< Parameters
-  std::vector<SymbolicAlgebra::Expression<>> _dyns; //!< Dynamic laws
+  std::vector<SymbolicAlgebra::Expression<>> _dynamics; //!< Dynamic laws
 
   std::shared_ptr<Bundle> _init_set; //!< Initial set
   PolytopesUnion _param_set;  //!< Parameter set
@@ -43,30 +43,30 @@ protected:
 public:
 
   /**
-   * @brief Construtor
+   * @brief Constructor
    * 
-   * @param vars is the vector of the variables
-   * @param dyns is the vector of the dynamic laws
+   * @param variables is the vector of the variables
+   * @param dynamics is the vector of the dynamic laws
    * @param init_set is the initial set 
    * @param name is the model name
    */
-  Model(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-        const std::vector<SymbolicAlgebra::Expression<>> &dyns,
+  Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+        const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
         const Bundle &init_set, const std::string name = "Unknown");
 
   /**
    * @brief Constructor
    * 
-   * @param vars is the vector of the variables
-   * @param params is the vector of the parameter
-   * @param dyns is the vector of the dynamic laws
+   * @param variables is the vector of the variables
+   * @param parameters is the vector of the parameter
+   * @param dynamics is the vector of the dynamic laws
    * @param init_set is the initial set 
    * @param param_set is the set of the parameter
    * @param name is the model name
    */
-  Model(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-        const std::vector<SymbolicAlgebra::Symbol<>> &params,
-        const std::vector<SymbolicAlgebra::Expression<>> &dyns,
+  Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+        const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
+        const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
         const Bundle &init_set, const PolytopesUnion &param_set,
         const std::string name = "Unknown");
 
@@ -107,7 +107,7 @@ public:
    */
   inline const std::vector<SymbolicAlgebra::Expression<>> &dynamics() const
   {
-    return this->_dyns;
+    return this->_dynamics;
   }
 
   /**

@@ -22,15 +22,15 @@ namespace STL
  * Until to represent the STL formula 
  * \f$\textrm{left} U_{[\textrm{begin},\textrm{end}]} \textrm{right}\f$.
  *
- * @param[in] left is the left subformula
+ * @param[in] left is the left sub-formula
  * @param[in] begin is the begin of temporal interval
  * @param[in] end is the end of temporal interval
- * @param[in] right is the right subformula
+ * @param[in] right is the right sub-formula
  */
 Until::Until(const std::shared_ptr<STL> left,
              const int begin, const int end,
              const std::shared_ptr<STL> right):
-    STL(UNTIL), _left(left), _right(right), _t_itvl(begin, end)
+    STL(UNTIL), _left(left), _right(right), _t_interval(begin, end)
 {
 }
 
@@ -61,7 +61,7 @@ std::set<SymbolicAlgebra::Symbol<>> Until::get_variables() const
 std::ostream &Until::print(std::ostream &os) const
 {
   return os << "(" << *_left << ") U " 
-            << _t_itvl << " (" << *_right << ")";
+            << _t_interval << " (" << *_right << ")";
 }
 
 /**

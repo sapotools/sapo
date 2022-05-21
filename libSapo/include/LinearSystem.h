@@ -76,7 +76,7 @@ public:
   /**
    * @brief Assignment operator
    * 
-   * @param orig is the orginal optimization result
+   * @param orig is the original optimization result
    * @return a reference to the updated object
    */
   OptimizationResult<T> &operator=(const OptimizationResult<T> &orig)
@@ -212,7 +212,7 @@ public:
                const std::vector<SymbolicAlgebra::Expression<>> &expressions);
 
   /**
-   * Deep assignament method
+   * Deep assignment method
    *
    * @param[in] orig is the original model of the linear system
    * @return a reference to the modified object

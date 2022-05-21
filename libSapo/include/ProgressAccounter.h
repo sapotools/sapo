@@ -150,7 +150,7 @@ class ProgressBar : private ProgressAccounter
   const unsigned int _num_of_bar_dots; //!< number of dots in the progress bar
   unsigned int _represented_steps;     //!< number of already represented_steps
   std::ostream &_bstream;              //!< output stream for the progress bar
-  std::string _preamble;               //!< bar output preable
+  std::string _preamble;               //!< bar output preamble
 
   /**
    * @brief Increase the number of performed steps

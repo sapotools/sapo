@@ -27,20 +27,20 @@ using namespace std;
 #define BAR_LENGTH 50
 
 Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
-               const unsigned int num_of_presplits)
+               const unsigned int num_of_pre_splits)
 {
   Sapo sapo(model);
 
-  sapo.tmode = (data.getTransValue() == AbsSyn::transType::OFO ? Bundle::OFO
+  sapo.t_mode = (data.getTransValue() == AbsSyn::transType::OFO ? Bundle::OFO
                                                                : Bundle::AFO);
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();
   sapo.max_param_splits = data.getMaxParameterSplits();
   if (data.isPreSplitsSet()) {
-    sapo.num_of_presplits = num_of_presplits;
+    sapo.num_of_pre_splits = num_of_pre_splits;
   } else {
-    sapo.num_of_presplits = 0;
+    sapo.num_of_pre_splits = 0;
   }
   sapo.max_bundle_magnitude = data.getMaxVersorMagnitude();
 
@@ -194,7 +194,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
   // Synthesize parameters
   std::list<PolytopesUnion> synth_params = sapo.synthesize(
       *(model.initial_set()), model.parameter_set(), model.specification(),
-      sapo.max_param_splits, sapo.num_of_presplits, accounter);
+      sapo.max_param_splits, sapo.num_of_pre_splits, accounter);
 
   if (display_progress) {
     accounter->increase_performed_to(

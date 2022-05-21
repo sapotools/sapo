@@ -21,7 +21,7 @@ namespace STL
  * 
  * This constructor creates an object of the type 
  * Eventually to represent the STL formula 
- * \f$F_{[\texrm{begin}, \textrm{end}]} \textrm{formula}\f$.
+ * \f$F_{[\textrm{begin}, \textrm{end}]} \textrm{formula}\f$.
  *
  * @param[in] begin is the begin of temporal interval
  * @param[in] end is the end of temporal interval
@@ -29,7 +29,7 @@ namespace STL
  */
 Eventually::Eventually(const int begin, const int end,
                        const std::shared_ptr<STL> formula):
-    STL(EVENTUALLY), _subformula(formula), _t_itvl(begin, end)
+    STL(EVENTUALLY), _subformula(formula), _t_interval(begin, end)
 {
 }
 
@@ -44,7 +44,7 @@ Eventually::Eventually(const int begin, const int end,
  */
 std::ostream &Eventually::print(std::ostream &os) const
 {
-  return os << "F " << this->_t_itvl << " (" << *_subformula << ")";
+  return os << "F " << this->_t_interval << " (" << *_subformula << ")";
 }
 
 /**

@@ -29,8 +29,8 @@ class Conjunction : public STL
 {
 
 private:
-  const std::shared_ptr<STL> _left;   //!< left-side conjunction subformula
-  const std::shared_ptr<STL> _right;  //!< right-side conjunction subformula
+  const std::shared_ptr<STL> _left;   //!< left-side conjunction sub-formula
+  const std::shared_ptr<STL> _right;  //!< right-side conjunction sub-formula
 
 protected:
 
@@ -53,16 +53,16 @@ public:
    * Conjunction to represent the STL formula 
    * \f$\textrm{left} \land \textrm{right}\f$.
    *
-   * @param[in] left is the left-side conjunction subformula
-   * @param[in] right is the right-side conjunction subformula
+   * @param[in] left is the left-side conjunction sub-formula
+   * @param[in] right is the right-side conjunction sub-formula
    */
   Conjunction(const std::shared_ptr<STL> left,
               const std::shared_ptr<STL> right);
 
   /**
-   * @brief Get the left-side conjunction subformula
+   * @brief Get the left-side conjunction sub-formula
    * 
-   * @return the left-side conjunction subformula
+   * @return the left-side conjunction sub-formula
    */
   inline const std::shared_ptr<STL> get_left_subformula() const
   {
@@ -70,9 +70,9 @@ public:
   }
 
   /**
-   * @brief Get the right-side conjunction subformula
+   * @brief Get the right-side conjunction sub-formula
    * 
-   * @return the right-side conjunction subformula
+   * @return the right-side conjunction sub-formula
    */
   inline const std::shared_ptr<STL> get_right_subformula() const
   {

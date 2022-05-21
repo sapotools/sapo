@@ -28,8 +28,8 @@ namespace STL
 class Eventually : public STL
 {
 private:
-  const std::shared_ptr<STL> _subformula; //!< eventually subformula
-  TimeInterval _t_itvl;                   //!< temporal formula bounds
+  const std::shared_ptr<STL> _subformula; //!< eventually sub-formula
+  TimeInterval _t_interval;                   //!< temporal formula bounds
 
 protected:
 
@@ -50,7 +50,7 @@ public:
    * 
    * This constructor creates an object of the type 
    * Eventually to represent the STL formula 
-   * \f$F_{[\texrm{begin}, \textrm{end}]} \textrm{formula}\f$.
+   * \f$F_{[\textrm{begin}, \textrm{end}]} \textrm{formula}\f$.
    *
    * @param[in] begin is the begin of temporal interval
    * @param[in] end is the end of temporal interval
@@ -60,9 +60,9 @@ public:
              const std::shared_ptr<STL> formula);
 
   /**
-   * @brief Get the eventually subformula
+   * @brief Get the eventually sub-formula
    * 
-   * @return the eventually subformula
+   * @return the eventually sub-formula
    */
   inline const std::shared_ptr<STL> get_subformula() const
   {
@@ -84,7 +84,7 @@ public:
    */
   inline const std::shared_ptr<STL> get_PNF() const
   {
-    return std::make_shared<Eventually>(_t_itvl.begin(), _t_itvl.end(),
+    return std::make_shared<Eventually>(_t_interval.begin(), _t_interval.end(),
                                         _subformula->get_PNF());
   }
 
@@ -105,7 +105,7 @@ public:
    */
   inline TimeInterval time_bounds() const
   {
-    return _t_itvl;
+    return _t_interval;
   }
 
   /**

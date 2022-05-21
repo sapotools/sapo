@@ -31,7 +31,7 @@ class Negation : public STL
 {
 
 private:
-  const std::shared_ptr<STL> _subformula; //!< negation subformula
+  const std::shared_ptr<STL> _subformula; //!< negation sub-formula
 
 protected:
 

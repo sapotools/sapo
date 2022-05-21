@@ -29,9 +29,9 @@ class Until : public STL
 {
 
 private:
-  const std::shared_ptr<STL> _left;   //!< left-side until subformula
-  const std::shared_ptr<STL> _right;  //!< right-side until subformula
-  TimeInterval _t_itvl;               //!< temporal formula bounds
+  const std::shared_ptr<STL> _left;   //!< left-side until sub-formula
+  const std::shared_ptr<STL> _right;  //!< right-side until sub-formula
+  TimeInterval _t_interval;               //!< temporal formula bounds
 
 protected:
 
@@ -55,19 +55,19 @@ public:
    * Until to represent the STL formula 
    * \f$\textrm{left} U_{[\textrm{begin},\textrm{end}]} \textrm{right}\f$.
    *
-   * @param[in] left  is the left subformula
+   * @param[in] left  is the left sub-formula
    * @param[in] begin is the begin of temporal interval
    * @param[in] end is the end of temporal interval
-   * @param[in] right  is the right subformula
+   * @param[in] right  is the right sub-formula
    */
   Until(const std::shared_ptr<STL> left, 
         const int begin, const int end,
         const std::shared_ptr<STL> right);
 
   /**
-   * @brief Get the left-side until subformula
+   * @brief Get the left-side until sub-formula
    * 
-   * @return the left-side until subformula
+   * @return the left-side until sub-formula
    */
   inline const std::shared_ptr<STL> get_left_subformula() const
   {
@@ -75,9 +75,9 @@ public:
   }
 
   /**
-   * @brief Get the right-side until subformula
+   * @brief Get the right-side until sub-formula
    * 
-   * @return the right-side until subformula
+   * @return the right-side until sub-formula
    */
   inline const std::shared_ptr<STL> get_right_subformula() const
   {
@@ -99,8 +99,8 @@ public:
    */
   inline const std::shared_ptr<STL> get_PNF() const
   {
-    return std::make_shared<Until>(_left->get_PNF(), _t_itvl.begin(),
-                                   _t_itvl.end(), _right->get_PNF());
+    return std::make_shared<Until>(_left->get_PNF(), _t_interval.begin(),
+                                   _t_interval.end(), _right->get_PNF());
   }
 
   /**
@@ -117,7 +117,7 @@ public:
    */
   inline TimeInterval time_bounds() const
   {
-    return _t_itvl;
+    return _t_interval;
   }
 
   /**

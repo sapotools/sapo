@@ -28,8 +28,8 @@ class Disjunction : public STL
 {
 
 private:
-  const std::shared_ptr<STL> _left;   //!< left-side dicjunction subformula
-  const std::shared_ptr<STL> _right;  //!< right-side dicjunction subformula
+  const std::shared_ptr<STL> _left;   //!< left-side disjunction sub-formula
+  const std::shared_ptr<STL> _right;  //!< right-side disjunction sub-formula
 
 protected:
 
@@ -46,22 +46,22 @@ protected:
 
 public:
   /**
-   * @brief A constructor for STL dicjunction formulas
+   * @brief A constructor for STL disjunction formulas
    * 
    * This constructor creates an object of the type 
    * Disjunction to represent the STL formula 
    * \f$\textrm{left} \lor \textrm{right}\f$.
    *
-   * @param[in] left is the left-side disjunction subformula
-   * @param[in] right is the right-side disjunction subformula
+   * @param[in] left is the left-side disjunction sub-formula
+   * @param[in] right is the right-side disjunction sub-formula
    */
   Disjunction(const std::shared_ptr<STL> left,
               const std::shared_ptr<STL> right);
 
   /**
-   * @brief Get the left-side disjunction subformula
+   * @brief Get the left-side disjunction sub-formula
    * 
-   * @return the left-side disjunction subformula
+   * @return the left-side disjunction sub-formula
    */
   inline const std::shared_ptr<STL> get_left_subformula() const
   {
@@ -69,9 +69,9 @@ public:
   }
 
   /**
-   * @brief Get the right-side disjunction subformula
+   * @brief Get the right-side disjunction sub-formula
    * 
-   * @return the right-side disjunction subformula
+   * @return the right-side disjunction sub-formula
    */
   inline const std::shared_ptr<STL> get_right_subformula() const
   {

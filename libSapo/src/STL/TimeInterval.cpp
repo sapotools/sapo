@@ -12,7 +12,7 @@
 #include "TimeInterval.h"
 
 /**
- * Constructor for the time inteval [0,0]
+ * Constructor for the time interval [0,0]
  */
 TimeInterval::TimeInterval(): _begin(0), _end(0) {}
 
@@ -27,7 +27,7 @@ TimeInterval::TimeInterval(const TimeInterval &orig):
 }
 
 /**
- * Constructor for singleton time intevals.
+ * Constructor for singleton time intervals.
  *
  * This constructor builds an object that represents the time interval [time,
  * time], where time is the method parameter.
@@ -37,7 +37,7 @@ TimeInterval::TimeInterval(const TimeInterval &orig):
 TimeInterval::TimeInterval(const int time): _begin(time), _end(time) {}
 
 /**
- * Constructor for time intevals.
+ * Constructor for time intervals.
  *
  * This constructor builds an object that represents the time interval [begin,
  * end], where begin and end are the method parameters.

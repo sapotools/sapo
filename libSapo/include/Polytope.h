@@ -14,7 +14,7 @@
 /**
  * @brief A polytope representation class
  * 
- * Polytopes are bounded convex sets representabled 
+ * Polytopes are bounded convex sets representable 
  * by a linear system \f[A \cdot x \leq b\f]. 
  * This class extends the `LinearSystem` class and 
  * provides some set-based methods and functions 
