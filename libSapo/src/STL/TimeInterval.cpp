@@ -4,9 +4,9 @@
  * @brief Temporal interval definition
  * @version 0.1
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2021-2022
- * 
+ *
  */
 
 #include "TimeInterval.h"

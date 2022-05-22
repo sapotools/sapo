@@ -5,7 +5,7 @@
  * @brief Eventually STL formula
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2015-2022
  */
 
@@ -18,9 +18,9 @@ namespace STL
 
 /**
  * @brief A constructor for STL eventually formulas
- * 
- * This constructor creates an object of the type 
- * Eventually to represent the STL formula 
+ *
+ * This constructor creates an object of the type
+ * Eventually to represent the STL formula
  * \f$F_{[\textrm{begin}, \textrm{end}]} \textrm{formula}\f$.
  *
  * @param[in] begin is the begin of temporal interval
@@ -29,16 +29,17 @@ namespace STL
  */
 Eventually::Eventually(const int begin, const int end,
                        const std::shared_ptr<STL> formula):
-    STL(EVENTUALLY), _subformula(formula), _t_interval(begin, end)
+    STL(EVENTUALLY),
+    _subformula(formula), _t_interval(begin, end)
 {
 }
 
 /**
  * @brief Print the STL formula in a stream
- * 
+ *
  * This method is publicly wrapped by the function
  * `operator<<(std::ostream&, const STL::STL &)`.
- * 
+ *
  * @param os is the output stream
  * @return a reference to the output stream
  */

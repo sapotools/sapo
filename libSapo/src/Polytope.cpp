@@ -15,7 +15,7 @@ using namespace std;
 
 /**
  * @brief Get a set of linear independent rows in a matrix
- * 
+ *
  * @param A is the matrix whose linear independent rows must be found
  * @return a vector containing the indices of linear independent
  *         rows in the matrix `A`
@@ -51,9 +51,9 @@ get_a_polytope_base(const LinearAlgebra::Dense::Matrix<double> &A)
 
 /**
  * @brief Get the bit-vector of a set of linear independent rows in a matrix
- * 
+ *
  * @param A is the matrix whose linear independent rows must be found
- * @return a Boolean vector such that the indices of all the `true` 
+ * @return a Boolean vector such that the indices of all the `true`
  *         values correspond to a linearly independent set in `A`
  */
 std::vector<bool>
@@ -78,7 +78,7 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
                                     const unsigned int num_of_splits) const
 {
   using namespace LinearAlgebra;
-  
+
   if (this->_A.size() == cidx) {
     Polytope ls(A, b);
     ls.simplify();

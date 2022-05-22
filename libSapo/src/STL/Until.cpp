@@ -5,7 +5,7 @@
  * @brief Until STL formula
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2015-2022
  */
 
@@ -17,9 +17,9 @@ namespace STL
 
 /**
  * @brief A constructor for STL until formulas
- * 
- * This constructor creates an object of the type 
- * Until to represent the STL formula 
+ *
+ * This constructor creates an object of the type
+ * Until to represent the STL formula
  * \f$\textrm{left} U_{[\textrm{begin},\textrm{end}]} \textrm{right}\f$.
  *
  * @param[in] left is the left sub-formula
@@ -27,16 +27,16 @@ namespace STL
  * @param[in] end is the end of temporal interval
  * @param[in] right is the right sub-formula
  */
-Until::Until(const std::shared_ptr<STL> left,
-             const int begin, const int end,
+Until::Until(const std::shared_ptr<STL> left, const int begin, const int end,
              const std::shared_ptr<STL> right):
-    STL(UNTIL), _left(left), _right(right), _t_interval(begin, end)
+    STL(UNTIL),
+    _left(left), _right(right), _t_interval(begin, end)
 {
 }
 
 /**
  * @brief Get the formula variables
- * 
+ *
  * @return the set of formula variables
  */
 std::set<SymbolicAlgebra::Symbol<>> Until::get_variables() const
@@ -51,17 +51,17 @@ std::set<SymbolicAlgebra::Symbol<>> Until::get_variables() const
 
 /**
  * @brief Print the STL formula in a stream
- * 
+ *
  * This method is publicly wrapped by the function
  * `operator<<(std::ostream&, const STL::STL &)`.
- * 
+ *
  * @param os is the output stream
  * @return a reference to the output stream
  */
 std::ostream &Until::print(std::ostream &os) const
 {
-  return os << "(" << *_left << ") U " 
-            << _t_interval << " (" << *_right << ")";
+  return os << "(" << *_left << ") U " << _t_interval << " (" << *_right
+            << ")";
 }
 
 /**

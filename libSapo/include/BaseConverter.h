@@ -15,8 +15,8 @@
 
 /**
  * @brief A base converter for polynomials
- * 
- * This class converts polynomials from their canonical base 
+ *
+ * This class converts polynomials from their canonical base
  * to Bernstein base.
  */
 class BaseConverter

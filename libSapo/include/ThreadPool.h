@@ -18,7 +18,7 @@ class ThreadPool
 public:
   /**
    * @brief The type of batch identifiers
-   * 
+   *
    */
   typedef unsigned int BatchId;
 
@@ -66,8 +66,8 @@ protected:
 
   /**
    * @brief The task type
-   * 
-   * Every task is a function associated to a batch 
+   *
+   * Every task is a function associated to a batch
    * identifier.
    */
   typedef std::pair<std::function<void()>, BatchId> Task;

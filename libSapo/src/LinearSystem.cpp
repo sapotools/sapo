@@ -19,7 +19,7 @@
 
 /**
  * @brief Print a linear system in a stream
- * 
+ *
  * @param out is the output stream
  * @param ls is the linear system to be print
  * @return a reference to the output stream
@@ -42,7 +42,7 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
 
 /**
  * @brief Print a linear system in a JSON stream
- * 
+ *
  * @param out is the output JSON stream
  * @param ls is the linear system to be print
  * @return a reference to the output JSON stream
@@ -55,10 +55,10 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
   return out;
 }
 
-OptimizationResult<double> optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
-                                    const LinearAlgebra::Vector<double> &b,
-                                    const LinearAlgebra::Vector<double> &obj_fun,
-                                    const bool maximize)
+OptimizationResult<double>
+optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
+         const LinearAlgebra::Vector<double> &b,
+         const LinearAlgebra::Vector<double> &obj_fun, const bool maximize)
 {
   unsigned int num_rows = A.size();
   unsigned int num_cols = obj_fun.size();
@@ -166,18 +166,18 @@ LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 /**
  * Constructor
  *
- * @param[in] A is the matrix 
+ * @param[in] A is the matrix
  * @param[in] b is the offset vector
  */
 LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
                            const LinearAlgebra::Vector<double> &b)
 {
-  if (A.size()!=b.size()) {
+  if (A.size() != b.size()) {
     std::ostringstream oss;
 
     oss << "The matrix A and the vector b are expected to "
-        << "have the same size: they are " << A.size() 
-        << " and " << b.size() << ", respectively.";
+        << "have the same size: they are " << A.size() << " and " << b.size()
+        << ", respectively.";
     throw std::domain_error(oss.str());
   }
 
@@ -188,8 +188,8 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
     this->_b = b;
   } else {
     for (unsigned int i = 0; i < A.size(); i++) {
-      if ((LinearAlgebra::norm_infinity(A[i]) > 0) &&
-          !this->satisfies(A[i], b[i])) {
+      if ((LinearAlgebra::norm_infinity(A[i]) > 0)
+          && !this->satisfies(A[i], b[i])) {
         this->_A.push_back(A[i]);
         this->_b.push_back(b[i]);
       }
@@ -200,7 +200,7 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
 /**
  * Move constructor
  *
- * @param[in] A is the matrix 
+ * @param[in] A is the matrix
  * @param[in] b is the offset vector
  */
 LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
@@ -208,12 +208,12 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
     _A(std::move(A)),
     _b(std::move(b))
 {
-  if (_A.size()!=_b.size()) {
+  if (_A.size() != _b.size()) {
     std::ostringstream oss;
 
     oss << "The matrix A and the vector b are expected to "
-        << "have the same size: they are " << _A.size() 
-        << " and " << _b.size() << ", respectively.";
+        << "have the same size: they are " << _A.size() << " and " << _b.size()
+        << ", respectively.";
     throw std::domain_error(oss.str());
   }
 }
@@ -221,16 +221,14 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
 /**
  * Constructor that instantiates an empty linear system
  */
-LinearSystem::LinearSystem(): _A(), _b() 
-{}
+LinearSystem::LinearSystem(): _A(), _b() {}
 
 /**
  * Copy constructor
  *
  * @param[in] ls is the original linear system
  */
-LinearSystem::LinearSystem(const LinearSystem &ls): _A(ls._A), _b(ls._b) 
-{}
+LinearSystem::LinearSystem(const LinearSystem &ls): _A(ls._A), _b(ls._b) {}
 
 /**
  * Swap constructor
@@ -271,7 +269,8 @@ bool same_constraint(const LinearAlgebra::Vector<double> &A1, const double &b1,
   return true;
 }
 
-bool LinearSystem::contains(const LinearAlgebra::Vector<double> &Ai, const double &bi) const
+bool LinearSystem::contains(const LinearAlgebra::Vector<double> &Ai,
+                            const double &bi) const
 {
   for (unsigned int i = 0; i < this->_A.size(); i++) {
     if (same_constraint(this->_A[i], this->_b[i], Ai, bi)) {
@@ -294,7 +293,7 @@ LinearSystem::LinearSystem(
     Expression<> const_term(*e_it);
 
     for (auto x_it = begin(x); x_it != end(x); ++x_it) {
-      if (e_it->degree(*x_it)>1) {
+      if (e_it->degree(*x_it) > 1) {
         throw std::domain_error("Non-linear expression cannot be mapped "
                                 "in a linear system.");
       }
@@ -356,7 +355,7 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
   if (!strict_inequality) {
     OptimizationResult<double> res = maximize(_A[0]);
 
-    return (res.status() == GLP_OPT || res.status() == GLP_UNBND 
+    return (res.status() == GLP_OPT || res.status() == GLP_UNBND
             || res.status() == GLP_FEAS);
   }
 
@@ -370,7 +369,7 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
       return false;
     }
 
-    if (res.optimum()==res2.optimum()) {
+    if (res.optimum() == res2.optimum()) {
       return false;
     }
   }
@@ -396,8 +395,9 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
-    if (obj_fun.degree(*s_it)>1) {
-      throw std::domain_error("Non-linear objective function is not supported yet.");
+    if (obj_fun.degree(*s_it) > 1) {
+      throw std::domain_error(
+          "Non-linear objective function is not supported yet.");
     }
     double coeff = (obj_fun.get_coeff(*s_it, 1)).evaluate();
 
@@ -429,8 +429,9 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
-    if (obj_fun.degree(*s_it)>1) {
-      throw std::domain_error("Non-linear objective function is not supported yet.");
+    if (obj_fun.degree(*s_it) > 1) {
+      throw std::domain_error(
+          "Non-linear objective function is not supported yet.");
     }
     const double coeff = obj_fun.get_coeff(*s_it, 1).evaluate();
     obj_fun_coeffs.push_back(coeff);
@@ -446,15 +447,15 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
 /**
  * @brief Check whether the solutions of a linear system satisfy a constraint
  *
- * This method establishes whether all the solutions \f$s\f$ of the linear 
+ * This method establishes whether all the solutions \f$s\f$ of the linear
  * system satisfy a constraint \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$.
- * 
+ *
  * @param[in] Ai is a value vector
  * @param[in] bi is a scalar value
  * @return `true` if and only if \f$\textrm{Ai} \cdot s \leq \textrm{bi}\f$
  *         for any the solution \f$s\f$ of the linear system
  */
-bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai, 
+bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai,
                              const double &bi) const
 {
   if (size() == 0) {
@@ -462,7 +463,7 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai,
   }
 
   OptimizationResult<double> res = this->maximize(Ai);
-  if ((res.status() == GLP_OPT || res.status() == GLP_FEAS) 
+  if ((res.status() == GLP_OPT || res.status() == GLP_FEAS)
       && res.optimum() <= bi) {
     return true;
   }
@@ -470,7 +471,7 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai,
   return false;
 }
 
-bool LinearSystem::satisfies(const LinearSystem& ls) const
+bool LinearSystem::satisfies(const LinearSystem &ls) const
 {
   if (!this->has_solutions()) {
     return true;

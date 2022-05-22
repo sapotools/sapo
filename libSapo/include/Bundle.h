@@ -2,11 +2,11 @@
  * @file Bundle.h
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
- * @brief Represent and manipulate bundles of parallelotopes 
+ * @brief Represent and manipulate bundles of parallelotopes
  *        whose intersection represents a polytope
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2016-2022
  */
 
@@ -22,27 +22,28 @@
 
 #include "STL/Atom.h"
 
-#define SPLIT_MAGNITUDE_RATIO 0.75 //!< define the default versor magnitude multiplier for bundle splits
+#define SPLIT_MAGNITUDE_RATIO                                                 \
+  0.75 //!< define the default versor magnitude multiplier for bundle splits
 
 /**
  * @brief A class for parallelotope bundles
- * 
- * A parallelotope bundle represents the intersection between 
- * different non-singular parallelotopes. 
- * This class stores all of the parallelotope directions/axes 
- * in one single array and constraints each of them between 
- * an upper and a lower bound. 
- * The original parallelotopes can be rebuild by using the 
- * a array of templates. Each template is a Natural-valued 
- * array corresponding to a parallelotope. It stores which 
- * directions are involved in the corresponding parallelotope. 
- */ 
+ *
+ * A parallelotope bundle represents the intersection between
+ * different non-singular parallelotopes.
+ * This class stores all of the parallelotope directions/axes
+ * in one single array and constraints each of them between
+ * an upper and a lower bound.
+ * The original parallelotopes can be rebuild by using the
+ * a array of templates. Each template is a Natural-valued
+ * array corresponding to a parallelotope. It stores which
+ * directions are involved in the corresponding parallelotope.
+ */
 class Bundle
 {
 public:
   /**
    * @brief Approach to evaluate the image of a bundle
-   * 
+   *
    * The are two different approaches to evaluate the
    * image of a bundle through a polynomial function:
    * 1. One-For-One: the boundaries of any parallelotope
@@ -54,15 +55,17 @@ public:
    *                 exploiting all the bundle templates
    */
   typedef enum {
-    OFO,  /* One-For-One */
-    AFO   /* All-For-One */
+    OFO, /* One-For-One */
+    AFO  /* All-For-One */
   } transformation_mode;
 
 private:
-  std::vector<LinearAlgebra::Vector<double>> _directions; //!< the vector of directions
-  LinearAlgebra::Vector<double> _lower_bounds;            //!< direction upper bounds
-  LinearAlgebra::Vector<double> _upper_bounds;            //!< direction lower bounds
-  std::vector<LinearAlgebra::Vector<unsigned int>> _templates;     //!< templates matrix
+  std::vector<LinearAlgebra::Vector<double>>
+      _directions;                             //!< the vector of directions
+  LinearAlgebra::Vector<double> _lower_bounds; //!< direction upper bounds
+  LinearAlgebra::Vector<double> _upper_bounds; //!< direction lower bounds
+  std::vector<LinearAlgebra::Vector<unsigned int>>
+      _templates; //!< templates matrix
 
   /**
    * Compute the edge lengths
@@ -173,13 +176,13 @@ private:
   Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
                    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
                    const MinMaxCoeffFinder *max_finder,
-                   Bundle::transformation_mode mode=Bundle::AFO) const;
+                   Bundle::transformation_mode mode = Bundle::AFO) const;
 
   /**
    * @brief Add to the bundle templates for some directions
    *
    * @param missing_template_dirs the indices of the directions whose
-   *                              template we are missing
+   *                              templates we are missing
    */
   void add_templates_for(std::set<unsigned int> &missing_template_dirs);
 
@@ -220,18 +223,17 @@ public:
    * @param[in] templates is the template vector
    */
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-         LinearAlgebra::Vector<double> &&lower_bounds, 
+         LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds,
          std::vector<LinearAlgebra::Vector<unsigned int>> &&templates);
-
 
   /**
    * @brief A constructor
    *
-   * Whenever the templates are not specified at all, we assume that 
+   * Whenever the templates are not specified at all, we assume that
    * all the directions are relevant and the templates are computed
    * automatically.
-   * 
+   *
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
@@ -243,7 +245,7 @@ public:
   /**
    * @brief A move constructor
    *
-   * Whenever the templates are not specified at all, we assume that 
+   * Whenever the templates are not specified at all, we assume that
    * all the directions are relevant and the templates are computed
    * automatically.
    *
@@ -252,12 +254,12 @@ public:
    * @param[in] upper_bounds is the vector of direction upper bounds
    */
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-         LinearAlgebra::Vector<double> &&lower_bounds, 
+         LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds);
 
   /**
    * @brief Assignment operator
-   * 
+   *
    * @param orig is the original object to be copied
    * @return a reference to the updated object
    */
@@ -265,7 +267,7 @@ public:
 
   /**
    * @brief Assignment operator
-   * 
+   *
    * @param orig is the original object to be copied
    * @return a reference to the updated object
    */
@@ -426,25 +428,25 @@ public:
 
   /**
    * @brief Split the bundle in smaller sub-bundles
-   * 
-   * This method splits the bundles whose maximal magnitude, 
-   * the maximal length of its generators, is greater than 
-   * `max_magnitude` into a list of sub-bundles whose 
-   * maximal magnitude is 
+   *
+   * This method splits the bundles whose maximal magnitude,
+   * the maximal length of its generators, is greater than
+   * `max_magnitude` into a list of sub-bundles whose
+   * maximal magnitude is
    * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
    *
-   * If \f$m\f$ in the maximal magnitude of the input bundle 
+   * If \f$m\f$ in the maximal magnitude of the input bundle
    * and the bundle itself has \f$d\f$ directions,
    * this method may produces upto
-   * \f$(\frac{m}{\textrm{max_magnitude}})^d\f$ 
+   * \f$(\frac{m}{\textrm{max_magnitude}})^d\f$
    * sub-bundles.
-   * 
+   *
    * @param[in] max_magnitude is the maximal magnitude that
    *                          triggers the split
    * @param[in] split_ratio is the ratio between maximal
    *                        magnitude of the output bundles and
    *                        that that triggers the split
-   * @return a list of sub-bundles whose union covers the 
+   * @return a list of sub-bundles whose union covers the
    *         input bundle
    */
   std::list<Bundle> split(const double max_magnitude,
@@ -473,7 +475,7 @@ public:
   inline Bundle
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            transformation_mode mode=Bundle::AFO) const
+            transformation_mode mode = Bundle::AFO) const
   {
     MinMaxCoeffFinder max_finder;
 
@@ -494,8 +496,8 @@ public:
   transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
             const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            const Polytope &parameter_set, 
-            transformation_mode mode=Bundle::AFO) const
+            const Polytope &parameter_set,
+            transformation_mode mode = Bundle::AFO) const
   {
     ParamMinMaxCoeffFinder max_finder(parameters, parameter_set);
 
@@ -552,12 +554,12 @@ public:
   Bundle &intersect_with(const LinearSystem &ls);
 
   /**
-   * @brief Expand the bundle 
-   * 
+   * @brief Expand the bundle
+   *
    * This method expands the bundle so that each of its boundaries
    * is moved by a value `epsilon`.
-   * 
-   * @param epsilon is the aimed expansion 
+   *
+   * @param epsilon is the aimed expansion
    * @return a reference to the updated bundle
    */
   Bundle &expand_by(const double epsilon);
@@ -577,13 +579,13 @@ void swap(Bundle &A, Bundle &B);
 
 /**
  * @brief Get the intersection between two bundles
- * 
+ *
  * @param b1 is a bundle
  * @param b2 is a bundle
- * @return A bundle representing the intersection between 
+ * @return A bundle representing the intersection between
  *         the bundles `b1` and `b2`
  */
-inline Bundle intersect(const Bundle& b1, const Bundle& b2)
+inline Bundle intersect(const Bundle &b1, const Bundle &b2)
 {
   Bundle res(b1);
 

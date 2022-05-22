@@ -4,7 +4,7 @@
  * @brief Contains linear algebra print functions
  * @version 0.1
  * @date 2021-11-26
- * 
+ *
  * @copyright Copyright (c) 2021-2022
  */
 
@@ -20,7 +20,7 @@ namespace std
 
 /**
  * @brief Print a vector in a stream
- * 
+ *
  * @tparam T is the type of the scalar values
  * @param out is the output stream
  * @param v is the vector to be printed
@@ -43,7 +43,7 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
 
 /**
  * @brief Print a set in a stream
- * 
+ *
  * @tparam T is the type of the set values
  * @param out is the output stream
  * @param s is the set to be printed
@@ -66,7 +66,7 @@ std::ostream &operator<<(std::ostream &out, const std::set<T> &s)
 
 /**
  * @brief Print a dense matrix in a stream
- * 
+ *
  * @tparam T is the type of the scalar values
  * @param out is the output stream
  * @param A is the matrix to be printed
@@ -89,7 +89,7 @@ std::ostream &operator<<(std::ostream &out,
 
 /**
  * @brief Print a sparse matrix in a stream
- * 
+ *
  * @tparam T is the type of the scalar values
  * @param out is the output stream
  * @param A is the matrix to be printed
@@ -99,7 +99,8 @@ template<typename T>
 std::ostream &operator<<(std::ostream &out,
                          const LinearAlgebra::Sparse::Matrix<T> &A)
 {
-  out << "[ #rows: " << A.num_of_rows() << " #cols: " << A.num_of_cols() << " ";
+  out << "[ #rows: " << A.num_of_rows() << " #cols: " << A.num_of_cols()
+      << " ";
   for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
        ++row_it) {
     out << std::endl << " row " << row_it->first << ": [";
@@ -119,7 +120,7 @@ std::ostream &operator<<(std::ostream &out,
 
 /**
  * @brief Print a sparse LUP factorization in a stream
- * 
+ *
  * @tparam T is the type of the scalar values
  * @param out is the output stream
  * @param F is the LUP factorization to be printed
@@ -139,7 +140,7 @@ std::ostream &operator<<(std::ostream &out,
 
 /**
  * @brief Print a dense LUP factorization in a stream
- * 
+ *
  * @tparam T is the type of the scalar values
  * @param out is the output stream
  * @param F is the LUP factorization to be printed

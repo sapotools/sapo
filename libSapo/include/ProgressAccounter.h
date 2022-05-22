@@ -17,8 +17,8 @@
 
 /**
  * @brief A class to account computation progress
- * 
- * The objects of this class take care of accounting 
+ *
+ * The objects of this class take care of accounting
  * the progress of a Sapo computation.
  */
 class ProgressAccounter

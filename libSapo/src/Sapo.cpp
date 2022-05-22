@@ -22,12 +22,11 @@
  *
  * @param[in] model model to analyze
  */
-Sapo::Sapo(const Model& model):
+Sapo::Sapo(const Model &model):
     t_mode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_pre_splits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
-    _dynamics(model.dynamics()), _variables(model.variables()), 
-    _parameters(model.parameters()),
-    assumptions(model.assumptions())
+    _dynamics(model.dynamics()), _variables(model.variables()),
+    _parameters(model.parameters()), assumptions(model.assumptions())
 {
 }
 
@@ -66,8 +65,8 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
     // get the transformed bundle
     Bundle nbundle = bundle.transform(sapo->_variables, sapo->_dynamics,
                                       sapo->t_mode); // transform it
-    
-    //guarantee the assumptions
+
+    // guarantee the assumptions
     nbundle.intersect_with(sapo->assumptions);
 
     if (sapo->decomp > 0) { // if requested, decompose it
@@ -190,11 +189,11 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
     for (auto b_it = std::cbegin(cbundles[pos]);
          b_it != std::cend(cbundles[pos]); ++b_it) {
       // get the transformed bundle
-      Bundle nbundle
-          = b_it->transform(sapo->_variables, sapo->_parameters, sapo->_dynamics, pSet,
-                            sapo->t_mode); // transform it
+      Bundle nbundle = b_it->transform(sapo->_variables, sapo->_parameters,
+                                       sapo->_dynamics, pSet,
+                                       sapo->t_mode); // transform it
 
-      //guarantee the assumptions
+      // guarantee the assumptions
       nbundle.intersect_with(sapo->assumptions);
 
       if (sapo->decomp > 0) { // if requested, decompose it
@@ -279,15 +278,15 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
 
 /**
  * @brief Get every a finer covering of a set
- * 
- * This method takes a list of polytope unions and splits 
+ *
+ * This method takes a list of polytope unions and splits
  * each of its objects in `num_of_polytope_splits` polytope
  * unions that cover the original sets.
- * 
+ *
  * @param orig is a list of poytope unions
- * @param num_of_polytope_splits is the number of splits to 
+ * @param num_of_polytope_splits is the number of splits to
  *        be performed
- * @return a list of polytopes unions that cover the  
+ * @return a list of polytopes unions that cover the
  *         region covered `orig`
  */
 std::list<PolytopesUnion>
@@ -442,14 +441,12 @@ synthesize_list(const Sapo &sapo, const Bundle &init_set,
  * @param[in,out] accounter accounts for the computation progress
  * @returns the list of refined parameter sets
  */
-std::list<PolytopesUnion> Sapo::synthesize(Bundle init_set,
-                                           const PolytopesUnion &pSet,
-                                           const std::shared_ptr<STL::STL> formula,
-                                           const unsigned int max_splits,
-                                           const unsigned int num_of_pre_splits,
-                                           ProgressAccounter *accounter) const
+std::list<PolytopesUnion> Sapo::synthesize(
+    Bundle init_set, const PolytopesUnion &pSet,
+    const std::shared_ptr<STL::STL> formula, const unsigned int max_splits,
+    const unsigned int num_of_pre_splits, ProgressAccounter *accounter) const
 {
-  if (this->assumptions.size()>0) {
+  if (this->assumptions.size() > 0) {
     throw std::runtime_error("Assumptions not supported in synthesis yet.");
   }
 
@@ -497,9 +494,9 @@ std::list<PolytopesUnion> Sapo::synthesize(Bundle init_set,
  * @param[in] conj is an STL conjunction providing the specification
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &init_set,
-                                const PolytopesUnion &pSet,
-                                const std::shared_ptr<STL::Conjunction> conj) const
+PolytopesUnion
+Sapo::synthesize(const Bundle &init_set, const PolytopesUnion &pSet,
+                 const std::shared_ptr<STL::Conjunction> conj) const
 {
   PolytopesUnion Pu1
       = this->synthesize(init_set, pSet, conj->get_left_subformula());
@@ -516,9 +513,9 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
  * @param[in] conj is an STL disjunction providing the specification
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &init_set,
-                                const PolytopesUnion &pSet,
-                                const std::shared_ptr<STL::Disjunction> disj) const
+PolytopesUnion
+Sapo::synthesize(const Bundle &init_set, const PolytopesUnion &pSet,
+                 const std::shared_ptr<STL::Disjunction> disj) const
 {
   PolytopesUnion Pu
       = this->synthesize(init_set, pSet, disj->get_left_subformula());
@@ -535,16 +532,15 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
  * @param[in] ev is an STL eventually formula providing the specification
  * @returns refined parameter set
  */
-PolytopesUnion Sapo::synthesize(const Bundle &init_set,
-                                const PolytopesUnion &pSet,
-                                const std::shared_ptr<STL::Eventually> ev) const
+PolytopesUnion
+Sapo::synthesize(const Bundle &init_set, const PolytopesUnion &pSet,
+                 const std::shared_ptr<STL::Eventually> ev) const
 {
   std::shared_ptr<STL::Atom> true_atom = std::make_shared<STL::Atom>(-1);
 
-  std::shared_ptr<STL::Until> u
-      = std::make_shared<STL::Until>(true_atom, ev->time_bounds().begin(),
-                                     ev->time_bounds().end(),
-                                     ev->get_subformula());
+  std::shared_ptr<STL::Until> u = std::make_shared<STL::Until>(
+      true_atom, ev->time_bounds().begin(), ev->time_bounds().end(),
+      ev->get_subformula());
 
   return this->synthesize(init_set, pSet, u, 0);
 }
@@ -558,13 +554,12 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
  * @param[in,out] accounter accounts for the computation progress
  * @returns a parameter set refined according with `formula`
  */
-PolytopesUnion Sapo::synthesize(Bundle init_set,
-                                const PolytopesUnion &pSet,
+PolytopesUnion Sapo::synthesize(Bundle init_set, const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::STL> formula,
                                 ProgressAccounter *accounter) const
 {
   (void)accounter;
-  if (this->assumptions.size()>0) {
+  if (this->assumptions.size() > 0) {
     throw std::runtime_error("Assumptions not supported in synthesis yet.");
   }
 

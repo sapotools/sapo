@@ -21,7 +21,7 @@ class ostream : public std::ostream
 public:
   /**
    * @brief A constructor for `JSON::ostream`
-   * 
+   *
    * @param os is the output stream to which the JSON output will be redirected
    * @param filter_unnecessary is a flag to filter spaces and new lines
    */
@@ -32,7 +32,7 @@ public:
 
   /**
    * @brief Print a JSON command in a JSON stream
-   * 
+   *
    * @param out is the JSON output stream
    * @param cmd is a JSON command
    * @return a reference to the JSON output stream
@@ -54,7 +54,7 @@ public:
 
   /**
    * @brief Print a character in a JSON stream
-   * 
+   *
    * @param out is the JSON output stream
    * @param ch is a character
    * @return a reference to the JSON output stream
@@ -73,7 +73,7 @@ public:
 
   /**
    * @brief Print a string in a JSON stream
-   * 
+   *
    * @param out is the JSON output stream
    * @param str is a string
    * @return a reference to the JSON output stream
@@ -99,7 +99,7 @@ public:
 
   /**
    * @brief Print a value in a JSON stream
-   * 
+   *
    * @param out is the JSON output stream
    * @param value is a value
    * @return a reference to the JSON output stream
@@ -118,7 +118,7 @@ public:
 
   /**
    * @brief Print a constant string in a JSON stream
-   * 
+   *
    * @param out is the JSON output stream
    * @param value is a constant string
    * @return a reference to the JSON output stream
@@ -135,7 +135,7 @@ public:
 
 /**
  * @brief Print a linear system in a JSON stream
- * 
+ *
  * @param out is the output JSON stream
  * @param ls is the linear system to be print
  * @return a reference to the output JSON stream

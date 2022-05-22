@@ -36,7 +36,7 @@ public:
    * @param[in] lower_bound is the lower bound offsets of the parallelotope
    * @param[in] upper_bound is the upper bound offsets of the parallelotope
    */
-  Parallelotope(const std::vector<LinearAlgebra::Vector<double>> &directions, 
+  Parallelotope(const std::vector<LinearAlgebra::Vector<double>> &directions,
                 const LinearAlgebra::Vector<double> &lower_bound,
                 const LinearAlgebra::Vector<double> &upper_bound);
 
@@ -60,7 +60,7 @@ public:
 
   /**
    * @brief Get the base vertex
-   * 
+   *
    * @return a reference to the base vertex
    */
   const LinearAlgebra::Vector<double> &base_vertex() const
@@ -70,7 +70,7 @@ public:
 
   /**
    * @brief Get the generator lengths
-   * 
+   *
    * @return a reference to the generator lengths
    */
   const std::vector<double> &lengths() const
@@ -80,7 +80,7 @@ public:
 
   /**
    * @brief Get the parallelotope generators
-   * 
+   *
    * @return a reference to the parallelotope generators
    */
   const std::vector<LinearAlgebra::Vector<double>> &generators() const
@@ -90,9 +90,9 @@ public:
 
   /**
    * @brief Swap two parallelotope
-   * 
+   *
    * This method swap two parallelotope objects.
-   * 
+   *
    * @param A is a parallelotope
    * @param B is a parallelotope
    */

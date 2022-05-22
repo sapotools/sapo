@@ -4,7 +4,7 @@
  * @brief A simple symbolic algebra module
  * @version 0.1
  * @date 2021-12-03
- * 
+ *
  * @copyright Copyright (c) 2021-2022
  */
 
@@ -177,10 +177,10 @@ public:
 
 /**
  * @brief A specialization of the std::less structure
- * 
- * This specialization of the std::less structure is meant 
- * to compare symbols. 
- * 
+ *
+ * This specialization of the std::less structure is meant
+ * to compare symbols.
+ *
  * @tparam C is the constant value type
  */
 template<typename C>
@@ -188,14 +188,14 @@ struct std::less<SymbolicAlgebra::Symbol<C>> {
 
   /**
    * @brief Compare two symbols
-   * 
+   *
    * This method is used to distinguish and artificially order
    * two symbols in containers such as sets. It is not meant to
    * semantically compare two symbols.
-   * 
+   *
    * @param a is a symbol
    * @param b is a symbol
-   * @return `true` if and only if the index of `a` is smaller, than 
+   * @return `true` if and only if the index of `a` is smaller, than
    *         that of `b`.
    */
   constexpr bool operator()(const SymbolicAlgebra::Symbol<C> &a,
@@ -325,7 +325,8 @@ public:
    * @param degree is the degree of the aimed term
    * @return The coefficient of the term \f$\texrm{symbol}^\textrm{degree}\f$
    */
-  inline Expression<C> get_coeff(const Symbol<C> &symbol, const int degree) const
+  inline Expression<C> get_coeff(const Symbol<C> &symbol,
+                                 const int degree) const
   {
     return Expression<C>(_ex->get_coeff(symbol.get_id(), degree));
   }
@@ -586,8 +587,8 @@ public:
   }
 
   /**
-   * @brief Check whether an expression is semantically equivalent to a constant
-   * value
+   * @brief Check whether an expression is semantically equivalent to a
+   * constant value
    *
    * @tparam C is the numeric type of constants
    * @param lhs is an expression
@@ -597,7 +598,7 @@ public:
    */
   template<typename T>
   friend bool operator==(const Expression<T> &lhs, const T rhs);
- 
+
   /**
    * @brief Get the sum between two expressions
    *
@@ -3049,7 +3050,7 @@ public:
 template<typename C>
 class symbol_type;
 
-} // end of low_level namespace 
+} // end of low_level namespace
 
 /**
  * @brief Exception raised when a symbol is evaluated
@@ -3057,33 +3058,35 @@ class symbol_type;
 class symbol_evaluation_error : public std::exception
 {
 private:
-  std::string _symbol_name;  //!< The name of the evaluated symbol
+  std::string _symbol_name; //!< The name of the evaluated symbol
 public:
   /**
    * @brief Constructor
-   * 
+   *
    * @tparam C is the type of expression numeric constants
    * @param symbol is the symbol that has been evaluated
    */
   template<typename C>
-  explicit symbol_evaluation_error(const Symbol<C>& symbol):
-    _symbol_name(symbol.get_name())
-  {}
+  explicit symbol_evaluation_error(const Symbol<C> &symbol):
+      _symbol_name(symbol.get_name())
+  {
+  }
 
   /**
    * @brief Constructor
-   * 
+   *
    * @tparam C is the type of expression numeric constants
    * @param symbol is the symbol that has been evaluated
    */
   template<typename C>
-  explicit symbol_evaluation_error(const low_level::symbol_type<C>& symbol):
-    _symbol_name(Symbol<C>::get_symbol_name(symbol.get_id()))
-  {}
+  explicit symbol_evaluation_error(const low_level::symbol_type<C> &symbol):
+      _symbol_name(Symbol<C>::get_symbol_name(symbol.get_id()))
+  {
+  }
 
   /**
    * @brief Get the name of the evaluated symbol
-   * 
+   *
    * @return the name of the evaluated symbol
    */
   inline const std::string &get_symbol_name() const noexcept
@@ -3098,15 +3101,16 @@ public:
 
   /**
    * @brief Return the error message
-   * 
+   *
    * @return the error message
    */
-  virtual const char* what() const noexcept {
-      return "Symbols cannot be evaluated";
+  virtual const char *what() const noexcept
+  {
+    return "Symbols cannot be evaluated";
   }
 };
 
-namespace low_level 
+namespace low_level
 {
 
 /**
@@ -3507,11 +3511,11 @@ const Expression<C> &Expression<C>::operator/=(Expression<C> &&rhs)
 
 /**
  * @brief Simplify an expression
- * 
- * This function produces an expression which is a constant 
- * or in which all the coefficients of the polynomial 
+ *
+ * This function produces an expression which is a constant
+ * or in which all the coefficients of the polynomial
  * representation on one of its symbol have been simplified.
- * 
+ *
  * @tparam C is the constant value type
  * @param exp is the expression to be simplified
  * @return a simplified expression

@@ -21,9 +21,9 @@
  * @param[in] upper_bound is the upper bound offsets of the parallelotope
  */
 Parallelotope::Parallelotope(
-            const std::vector<LinearAlgebra::Vector<double>> &directions, 
-            const LinearAlgebra::Vector<double> &lower_bound,
-            const LinearAlgebra::Vector<double> &upper_bound)
+    const std::vector<LinearAlgebra::Vector<double>> &directions,
+    const LinearAlgebra::Vector<double> &lower_bound,
+    const LinearAlgebra::Vector<double> &upper_bound)
 {
   using namespace LinearAlgebra;
 
@@ -31,7 +31,7 @@ Parallelotope::Parallelotope(
     std::ostringstream oss;
 
     oss << "The lower and upper bounds vectors must "
-        << "have the same dimension: they are " << lower_bound.size() 
+        << "have the same dimension: they are " << lower_bound.size()
         << " and " << upper_bound.size() << ", respectively.";
     throw std::domain_error(oss.str());
   }
@@ -40,7 +40,7 @@ Parallelotope::Parallelotope(
     std::ostringstream oss;
 
     oss << "The lower bounds vector and the direction vector must "
-        << "have the same dimension: they are " << lower_bound.size() 
+        << "have the same dimension: they are " << lower_bound.size()
         << " and " << directions.size() << ", respectively.";
     throw std::domain_error(oss.str());
   }
@@ -92,17 +92,17 @@ Parallelotope::operator Polytope() const
 {
   using namespace LinearAlgebra;
 
-  std::vector<Vector<double>> A(2*dim());
-  Vector<double> b(2*dim());
-  for (unsigned int i=0; i<dim(); ++i) {
-    const double base_bound = _generators[i]*_base_vertex;
+  std::vector<Vector<double>> A(2 * dim());
+  Vector<double> b(2 * dim());
+  for (unsigned int i = 0; i < dim(); ++i) {
+    const double base_bound = _generators[i] * _base_vertex;
     const double vertex_bound = base_bound + _lengths[i];
 
     A[i] = Vector<double>(_generators[i]);
-    A[i+dim()] = -_generators[i];
+    A[i + dim()] = -_generators[i];
     b[i] = std::max(base_bound, vertex_bound);
-    b[i+dim()] = -std::min(base_bound, vertex_bound);
-  } 
+    b[i + dim()] = -std::min(base_bound, vertex_bound);
+  }
 
   return Polytope(A, b);
 }

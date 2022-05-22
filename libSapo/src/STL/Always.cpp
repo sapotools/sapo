@@ -5,7 +5,7 @@
  * @brief Always STL formula
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2015-2022
  */
 
@@ -18,9 +18,9 @@ namespace STL
 
 /**
  * @brief A constructor for STL always formulas
- * 
- * This constructor creates an object of the type 
- * Always to represent the STL formula 
+ *
+ * This constructor creates an object of the type
+ * Always to represent the STL formula
  * \f$G_{[\textrm{begin}, \textrm{end}]} \textrm{formula}\f$.
  *
  * @param[in] begin is the begin of temporal interval
@@ -29,23 +29,23 @@ namespace STL
  */
 Always::Always(const int begin, const int end,
                const std::shared_ptr<STL> formula):
-    STL(ALWAYS), _subformula(formula), _t_interval(begin, end)
+    STL(ALWAYS),
+    _subformula(formula), _t_interval(begin, end)
 {
 }
 
 /**
  * @brief Print the STL formula in a stream
- * 
+ *
  * This method is publicly wrapped by the function
  * `operator<<(std::ostream&, const STL::STL &)`.
- * 
+ *
  * @param os is the output stream
  * @return a reference to the output stream
  */
 std::ostream &Always::print(std::ostream &os) const
 {
-  os << "G " << this->_t_interval << " (" 
-     << *(this->_subformula) << ")";
+  os << "G " << this->_t_interval << " (" << *(this->_subformula) << ")";
 
   return os;
 }

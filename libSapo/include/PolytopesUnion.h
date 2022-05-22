@@ -17,7 +17,7 @@
 
 /**
  * @brief Unions of polytopes
- * 
+ *
  * This class represents unions of polytopes.
  */
 class PolytopesUnion : private std::vector<Polytope>
@@ -169,7 +169,7 @@ public:
 
   /**
    * @brief The begin iterator
-   * 
+   *
    * @return the begin iterator
    */
   iterator begin()
@@ -179,7 +179,7 @@ public:
 
   /**
    * @brief The end iterator
-   * 
+   *
    * @return the end iterator
    */
   iterator end()
@@ -189,7 +189,7 @@ public:
 
   /**
    * @brief The constant begin iterator
-   * 
+   *
    * @return the constant begin iterator
    */
   const_iterator begin() const
@@ -199,7 +199,7 @@ public:
 
   /**
    * @brief The constant end iterator
-   * 
+   *
    * @return the constant end iterator
    */
   const_iterator end() const
@@ -287,7 +287,7 @@ bool every_set_is_empty(const std::list<PolytopesUnion> &ps_list);
 
 /**
  * @brief Print a polytope union in a stream
- * 
+ *
  * @tparam OSTREAM is the output stream type
  * @param os is the output stream
  * @param Pu is the polytope union to be printed

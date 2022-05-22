@@ -5,7 +5,7 @@
  * @brief Conjunction STL formula
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2015-2022
  */
 
@@ -17,9 +17,9 @@ namespace STL
 
 /**
  * @brief A constructor for STL conjunction
- * 
- * This constructor creates an object of the type 
- * Conjunction to represent the STL formula 
+ *
+ * This constructor creates an object of the type
+ * Conjunction to represent the STL formula
  * \f$\textrm{left} \land \textrm{right}\f$.
  *
  * @param[in] left is the left-side conjunction sub-formula
@@ -27,16 +27,17 @@ namespace STL
  */
 Conjunction::Conjunction(const std::shared_ptr<STL> left,
                          const std::shared_ptr<STL> right):
-    STL(CONJUNCTION), _left(left), _right(right)
+    STL(CONJUNCTION),
+    _left(left), _right(right)
 {
 }
 
 /**
  * @brief Print the STL formula in a stream
- * 
+ *
  * This method is publicly wrapped by the function
  * `operator<<(std::ostream&, const STL::STL &)`.
- * 
+ *
  * @param os is the output stream
  * @return a reference to the output stream
  */
@@ -47,7 +48,7 @@ std::ostream &Conjunction::print(std::ostream &os) const
 
 /**
  * @brief Get the formula variables
- * 
+ *
  * @return the set of formula variables
  */
 std::set<SymbolicAlgebra::Symbol<>> Conjunction::get_variables() const
@@ -61,8 +62,8 @@ std::set<SymbolicAlgebra::Symbol<>> Conjunction::get_variables() const
 }
 
 /**
- * @brief Get the formula time bounds 
- * 
+ * @brief Get the formula time bounds
+ *
  * @return the time interval affecting the formula sematics
  */
 TimeInterval Conjunction::time_bounds() const

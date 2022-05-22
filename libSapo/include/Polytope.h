@@ -13,11 +13,11 @@
 
 /**
  * @brief A polytope representation class
- * 
- * Polytopes are bounded convex sets representable 
- * by a linear system \f[A \cdot x \leq b\f]. 
- * This class extends the `LinearSystem` class and 
- * provides some set-based methods and functions 
+ *
+ * Polytopes are bounded convex sets representable
+ * by a linear system \f[A \cdot x \leq b\f].
+ * This class extends the `LinearSystem` class and
+ * provides some set-based methods and functions
  * such as `is_empty` or `intersect`.
  */
 class Polytope : public LinearSystem
@@ -140,12 +140,12 @@ public:
   }
 
   /**
-   * @brief Expand the polytope 
-   * 
+   * @brief Expand the polytope
+   *
    * This method expands the polytope so that each of its boundaries
    * is moved by a value `epsilon`.
-   * 
-   * @param epsilon is the aimed expansion 
+   *
+   * @param epsilon is the aimed expansion
    * @return a reference to the updated polytope
    */
   Polytope &expand_by(const double epsilon);
@@ -197,16 +197,16 @@ public:
 
   /**
    * @brief Swap two polytopes
-   * 
+   *
    * This method swaps two polytope objects.
-   * 
+   *
    * @param P1 is a polytope
    * @param P2 is a polytope
    */
   friend inline void swap(Polytope &P1, Polytope &P2)
   {
     swap(*(static_cast<LinearSystem *>(&P1)),
-        *(static_cast<LinearSystem *>(&P2)));
+         *(static_cast<LinearSystem *>(&P2)));
   }
 
   /**
@@ -220,18 +220,18 @@ public:
 };
 
 /**
- * @brief Get the expansion of a linear set 
- * 
+ * @brief Get the expansion of a linear set
+ *
  * This method expands a linear set so that each of its boundaries
  * is moved by a value `epsilon`.
- * 
+ *
  * @tparam SET_TYPE is the linear set type
  * @param S is the set to be expanded
- * @param epsilon is the aimed expansion 
+ * @param epsilon is the aimed expansion
  * @return an expanded version of `S`
  */
 template<typename SET_TYPE>
-SET_TYPE expand(const SET_TYPE& S, const double epsilon)
+SET_TYPE expand(const SET_TYPE &S, const double epsilon)
 {
   SET_TYPE expS(S);
 

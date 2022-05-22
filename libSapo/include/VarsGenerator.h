@@ -15,24 +15,23 @@
 
 /**
  * @brief Generate a vector of symbols
- * 
- * This method builds a vector of symbols whose 
+ *
+ * This method builds a vector of symbols whose
  * name have the form `basename_{vector_index}`.
- * 
+ *
  * @param basename is the name prefix of the symbols
  * @param size is the size of the output vector
  * @return a vector of `size` symbols
  */
 std::vector<SymbolicAlgebra::Symbol<>>
-get_symbol_vector(const std::string &basename,
-                  const size_t size);
+get_symbol_vector(const std::string &basename, const size_t size);
 
 /**
  * @brief Generate a vector of symbols
- * 
- * This method builds a vector of symbols whose 
+ *
+ * This method builds a vector of symbols whose
  * name have the form `basename_{vector_index}`.
- * 
+ *
  * @param basename is the name prefix of the symbols
  * @param size is the size of the output vector
  * @return a vector of `size` symbols

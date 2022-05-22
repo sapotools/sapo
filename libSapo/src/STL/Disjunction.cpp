@@ -5,7 +5,7 @@
  * @brief Disjunction STL formula
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2015-2022
  */
 
@@ -18,9 +18,9 @@ namespace STL
 
 /**
  * @brief A constructor for STL disjunction formulas
- * 
- * This constructor creates an object of the type 
- * Disjunction to represent the STL formula 
+ *
+ * This constructor creates an object of the type
+ * Disjunction to represent the STL formula
  * \f$\textrm{left} \lor \textrm{right}\f$.
  *
  * @param[in] left is the left-side disjunction sub-formula
@@ -28,16 +28,17 @@ namespace STL
  */
 Disjunction::Disjunction(const std::shared_ptr<STL> left,
                          const std::shared_ptr<STL> right):
-    STL(DISJUNCTION), _left(left), _right(right)
+    STL(DISJUNCTION),
+    _left(left), _right(right)
 {
 }
 
 /**
  * @brief Print the STL formula in a stream
- * 
+ *
  * This method is publicly wrapped by the function
  * `operator<<(std::ostream&, const STL::STL &)`.
- * 
+ *
  * @param os is the output stream
  * @return a reference to the output stream
  */
@@ -48,7 +49,7 @@ std::ostream &Disjunction::print(std::ostream &os) const
 
 /**
  * @brief Get the formula variables
- * 
+ *
  * @return the set of formula variables
  */
 std::set<SymbolicAlgebra::Symbol<>> Disjunction::get_variables() const
@@ -62,8 +63,8 @@ std::set<SymbolicAlgebra::Symbol<>> Disjunction::get_variables() const
 }
 
 /**
- * @brief Get the formula time bounds 
- * 
+ * @brief Get the formula time bounds
+ *
  * @return the time interval affecting the formula sematics
  */
 TimeInterval Disjunction::time_bounds() const

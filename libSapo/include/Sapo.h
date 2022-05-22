@@ -35,11 +35,11 @@ class Sapo
 {
 public:
   Bundle::transformation_mode t_mode; //!< transformation mode (OFO or AFO)
-  double decomp_weight;             //!< decomposition weight
+  double decomp_weight;               //!< decomposition weight
   unsigned int decomp; //!< number of decompositions (0: none, >0: yes)
   std::string plot;    //!< the name of the file were to plot the reach set
-  unsigned int time_horizon;     //!< the computation time horizon
-  unsigned int max_param_splits; //!< maximum number of splits in synthesis
+  unsigned int time_horizon;      //!< the computation time horizon
+  unsigned int max_param_splits;  //!< maximum number of splits in synthesis
   unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis
   double max_bundle_magnitude; //!< maximum versor magnitude for single bundle
 
@@ -69,15 +69,15 @@ private:
   {
     PolytopesUnion result;
 
-    //init_set.intersect(this->assumptions);
- 
+    // init_set.intersect(this->assumptions);
+
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle reached_set = init_set.transform(this->_variables, this->_parameters,
-                                              this->_dynamics, *p_it,
-                                              this->t_mode);
+      Bundle reached_set
+          = init_set.transform(this->_variables, this->_parameters,
+                               this->_dynamics, *p_it, this->t_mode);
 
-      //guarantee the assumptions
+      // guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
 
       result.add(synthesize(reached_set, pSet, formula, time + 1));
@@ -105,8 +105,9 @@ private:
    * @param[in] conj is an STL conjunction providing the specification
    * @returns refined parameter set
    */
-  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL::Conjunction> formula) const;
+  PolytopesUnion
+  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+             const std::shared_ptr<STL::Conjunction> formula) const;
 
   /**
    * Parameter synthesis for disjunctions
@@ -116,8 +117,9 @@ private:
    * @param[in] conj is an STL disjunction providing the specification
    * @returns refined parameter set
    */
-  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
-                            const std::shared_ptr<STL::Disjunction> formula) const;
+  PolytopesUnion
+  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+             const std::shared_ptr<STL::Disjunction> formula) const;
 
   /**
    * Parameter synthesis for until formulas
@@ -162,7 +164,7 @@ public:
    *
    * @param[in] model model to analyze
    */
-  Sapo(const Model& model);
+  Sapo(const Model &model);
 
   /**
    * Reachable set computation
@@ -184,8 +186,8 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(Bundle init_set, const PolytopesUnion &pSet,
-                 unsigned int k, ProgressAccounter *accounter = NULL) const;
+  Flowpipe reach(Bundle init_set, const PolytopesUnion &pSet, unsigned int k,
+                 ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis method
@@ -215,7 +217,8 @@ public:
    */
   std::list<PolytopesUnion>
   synthesize(Bundle init_set, const PolytopesUnion &pSet,
-             const std::shared_ptr<STL::STL> formula, const unsigned int max_splits,
+             const std::shared_ptr<STL::STL> formula,
+             const unsigned int max_splits,
              const unsigned int num_of_pre_splits = 0,
              ProgressAccounter *accounter = NULL) const;
 };

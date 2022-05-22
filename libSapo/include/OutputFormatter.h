@@ -6,7 +6,7 @@
 
 /**
  * @brief A formatter class
- * 
+ *
  * @tparam T the output stream type
  */
 template<typename T>
@@ -20,9 +20,9 @@ public:
 
   /**
    * @brief Get a field header
-   * 
+   *
    * This method formats the header of a field.
-   * 
+   *
    * @param name is the name of the field to be printed
    * @return the header of the field
    */
@@ -34,9 +34,9 @@ public:
 
   /**
    * @brief Get a field footer
-   * 
+   *
    * This method formats the footer of a field.
-   * 
+   *
    * @return the footer of the field
    */
   static std::string field_end()
@@ -46,7 +46,7 @@ public:
 
   /**
    * @brief Get a field separator
-   * 
+   *
    * @return a field separator
    */
   static std::string field_separator()
@@ -56,9 +56,9 @@ public:
 
   /**
    * @brief Get the header of a sequence
-   * 
+   *
    * This method formats the header of a sequence.
-   * 
+   *
    * @return the header of a sequence
    */
   static std::string sequence_begin()
@@ -68,9 +68,9 @@ public:
 
   /**
    * @brief Get the footer of a sequence
-   * 
+   *
    * This method formats the footer of a sequence.
-   * 
+   *
    * @return the footer of a sequence
    */
   static std::string sequence_end()
@@ -80,8 +80,8 @@ public:
 
   /**
    * @brief Get a sequence separator
-   * 
-   * @return a sequence separator 
+   *
+   * @return a sequence separator
    */
   static std::string sequence_separator()
   {
@@ -90,9 +90,9 @@ public:
 
   /**
    * @brief Get the header of a list
-   * 
+   *
    * This method formats the header of a list.
-   * 
+   *
    * @return the header of a list
    */
   static std::string list_begin()
@@ -102,9 +102,9 @@ public:
 
   /**
    * @brief Get the footer of a list
-   * 
+   *
    * This method formats the footer of a list.
-   * 
+   *
    * @return the footer of a list
    */
   static std::string list_end()
@@ -114,7 +114,7 @@ public:
 
   /**
    * @brief Get a list separator
-   * 
+   *
    * @return a list separator
    */
   static std::string list_separator()
@@ -124,9 +124,9 @@ public:
 
   /**
    * @brief Get the header of a short list
-   * 
+   *
    * This method formats the header of a short list.
-   * 
+   *
    * @return the header of a short list
    */
   static std::string short_list_begin()
@@ -136,9 +136,9 @@ public:
 
   /**
    * @brief Get the footer of a short list
-   * 
+   *
    * This method formats the footer of a short list.
-   * 
+   *
    * @return the footer of a short list
    */
   static std::string short_list_end()
@@ -148,7 +148,7 @@ public:
 
   /**
    * @brief Get the separator of a short list
-   * 
+   *
    * @return the separator of a short list
    */
   static std::string short_list_separator()
@@ -158,9 +158,9 @@ public:
 
   /**
    * @brief Get the representation of an empty list
-   * 
+   *
    * This method formats an empty list.
-   * 
+   *
    * @return the representation of an empty list
    */
   static std::string empty_list()
@@ -170,9 +170,9 @@ public:
 
   /**
    * @brief Get the header of a set
-   * 
+   *
    * This method formats the header of a set.
-   * 
+   *
    * @return the header of a set
    */
   static std::string set_begin()
@@ -182,9 +182,9 @@ public:
 
   /**
    * @brief Get the footer of a set
-   * 
+   *
    * This method formats the footer of a set.
-   * 
+   *
    * @return the footer of a set
    */
   static std::string set_end()
@@ -194,7 +194,7 @@ public:
 
   /**
    * @brief Get the separator for a set
-   * 
+   *
    * @return the separator for a set
    */
   static std::string set_separator()
@@ -204,9 +204,9 @@ public:
 
   /**
    * @brief Get the representation of an empty set
-   * 
+   *
    * This method formats an empty set.
-   * 
+   *
    * @return the representation of an empty set
    */
   static std::string empty_set()
@@ -216,9 +216,9 @@ public:
 
   /**
    * @brief Get the header of an object
-   * 
+   *
    * This method formats the header of an object.
-   * 
+   *
    * @return the header of an object
    */
   static std::string object_header()
@@ -228,9 +228,9 @@ public:
 
   /**
    * @brief Get the footer of an object
-   * 
+   *
    * This method formats the footer of an object.
-   * 
+   *
    * @return the footer of an object
    */
   static std::string object_footer()
@@ -246,12 +246,11 @@ template<>
 class OutputFormatter<std::ostream>
 {
 public:
-
   /**
    * @brief Get a field header
-   * 
+   *
    * This method formats the header of a field.
-   * 
+   *
    * @param name is the name of the field to be printed
    * @return the header of the field
    */
@@ -263,9 +262,9 @@ public:
 
   /**
    * @brief Get a field footer
-   * 
+   *
    * This method formats the footer of a field.
-   * 
+   *
    * @return the footer of the field
    */
   static std::string field_end()
@@ -275,7 +274,7 @@ public:
 
   /**
    * @brief Get a field separator
-   * 
+   *
    * @return a separator of the field
    */
   static std::string field_separator()
@@ -285,9 +284,9 @@ public:
 
   /**
    * @brief Get a sequence header
-   * 
+   *
    * This method formats the header of a sequence.
-   * 
+   *
    * @return the header of a sequence
    */
   static std::string sequence_begin()
@@ -297,9 +296,9 @@ public:
 
   /**
    * @brief Get a sequence footer
-   * 
+   *
    * This method formats the footer of a sequence.
-   * 
+   *
    * @return the footer of a sequence
    */
   static std::string sequence_end()
@@ -309,7 +308,7 @@ public:
 
   /**
    * @brief Get a sequence separator
-   * 
+   *
    * @return a separator of a sequence
    */
   static std::string sequence_separator()
@@ -319,9 +318,9 @@ public:
 
   /**
    * @brief Get a list header
-   * 
+   *
    * This method formats the header of a list.
-   * 
+   *
    * @return the header of a list
    */
   static std::string list_begin()
@@ -331,9 +330,9 @@ public:
 
   /**
    * @brief Get a list footer
-   * 
+   *
    * This method formats the footer of a list.
-   * 
+   *
    * @return the footer of a list
    */
   static std::string list_end()
@@ -343,7 +342,7 @@ public:
 
   /**
    * @brief Get a list separator
-   * 
+   *
    * @return a separator of a list
    */
   static std::string list_separator()
@@ -353,9 +352,9 @@ public:
 
   /**
    * @brief Get a short list header
-   * 
+   *
    * This method formats the header of a short list.
-   * 
+   *
    * @return the header of a short list
    */
   static std::string short_list_begin()
@@ -365,9 +364,9 @@ public:
 
   /**
    * @brief Get a short list footer
-   * 
+   *
    * This method formats the footer of a short list.
-   * 
+   *
    * @return the footer of a short list
    */
   static std::string short_list_end()
@@ -377,7 +376,7 @@ public:
 
   /**
    * @brief Get a short list separator
-   * 
+   *
    * @return a separator of a short list
    */
   static std::string short_list_separator()
@@ -387,9 +386,9 @@ public:
 
   /**
    * @brief Get the representation of an empty list
-   * 
+   *
    * This method formats an empty list.
-   * 
+   *
    * @return the representation of an empty list
    */
   static std::string empty_list()
@@ -400,9 +399,9 @@ public:
 
   /**
    * @brief Get a set header
-   * 
+   *
    * This method formats the header of a set.
-   * 
+   *
    * @return the header of a set
    */
   static std::string set_begin()
@@ -412,9 +411,9 @@ public:
 
   /**
    * @brief Get a set footer
-   * 
+   *
    * This method formats the footer of a set.
-   * 
+   *
    * @return the footer of a set
    */
   static std::string set_end()
@@ -424,7 +423,7 @@ public:
 
   /**
    * @brief Get the separator for a set
-   * 
+   *
    * @return the separator for a set
    */
   static std::string set_separator()
@@ -434,9 +433,9 @@ public:
 
   /**
    * @brief Get the representation of an empty set
-   * 
+   *
    * This method formats an empty set.
-   * 
+   *
    * @return the representation of an empty set
    */
   static std::string empty_set()
@@ -446,9 +445,9 @@ public:
 
   /**
    * @brief Get an object header
-   * 
+   *
    * This method formats the header of an object.
-   * 
+   *
    * @return the header of an object
    */
   static std::string object_header()
@@ -458,9 +457,9 @@ public:
 
   /**
    * @brief Get an object footer
-   * 
+   *
    * This method formats the footer of an object.
-   * 
+   *
    * @return the footer of an object
    */
   static std::string object_footer()
@@ -468,7 +467,6 @@ public:
     return "";
   }
 };
-
 
 namespace JSON
 {
@@ -489,9 +487,9 @@ public:
 
   /**
    * @brief Get a field header
-   * 
+   *
    * This method formats the header of a field.
-   * 
+   *
    * @param name is the name of the field to be printed
    * @return the header of the field
    */
@@ -503,9 +501,9 @@ public:
 
   /**
    * @brief Get a field footer
-   * 
+   *
    * This method formats the footer of a field.
-   * 
+   *
    * @return the footer of the field
    */
   static std::string field_end()
@@ -515,7 +513,7 @@ public:
 
   /**
    * @brief Get a field separator
-   * 
+   *
    * @return a field separator
    */
   static std::string field_separator()
@@ -525,9 +523,9 @@ public:
 
   /**
    * @brief Get the header of a sequence
-   * 
+   *
    * This method formats the header of a sequence.
-   * 
+   *
    * @return the header of a sequence
    */
   static std::string sequence_begin()
@@ -537,9 +535,9 @@ public:
 
   /**
    * @brief Get the footer of a sequence
-   * 
+   *
    * This method formats the footer of a sequence.
-   * 
+   *
    * @return the footer of a sequence
    */
   static std::string sequence_end()
@@ -549,8 +547,8 @@ public:
 
   /**
    * @brief Get a sequence separator
-   * 
-   * @return a sequence separator 
+   *
+   * @return a sequence separator
    */
   static std::string sequence_separator()
   {
@@ -560,9 +558,9 @@ public:
 
   /**
    * @brief Get the header of a list
-   * 
+   *
    * This method formats the header of a list.
-   * 
+   *
    * @return the header of a list
    */
   static std::string list_begin()
@@ -572,7 +570,7 @@ public:
 
   /**
    * @brief Get the separator of a short list
-   * 
+   *
    * @return the separator of a short list
    */
   static std::string list_end()
@@ -582,7 +580,7 @@ public:
 
   /**
    * @brief Get the separator of a short list
-   * 
+   *
    * @return the separator of a short list
    */
   static std::string list_separator()
@@ -592,9 +590,9 @@ public:
 
   /**
    * @brief Get the header of a short list
-   * 
+   *
    * This method formats the header of a short list.
-   * 
+   *
    * @return the header of a short list
    */
   static std::string short_list_begin()
@@ -604,9 +602,9 @@ public:
 
   /**
    * @brief Get the footer of a short list
-   * 
+   *
    * This method formats the footer of a short list.
-   * 
+   *
    * @return the footer of a short list
    */
   static std::string short_list_end()
@@ -616,7 +614,7 @@ public:
 
   /**
    * @brief Get the separator of a short list
-   * 
+   *
    * @return the separator of a short list
    */
   static std::string short_list_separator()
@@ -626,9 +624,9 @@ public:
 
   /**
    * @brief Get the representation of an empty list
-   * 
+   *
    * This method formats an empty list.
-   * 
+   *
    * @return the representation of
    */
   static std::string empty_list()
@@ -639,9 +637,9 @@ public:
 
   /**
    * @brief Get the header of a set
-   * 
+   *
    * This method formats the header of a set.
-   * 
+   *
    * @return the header of a set
    */
   static std::string set_begin()
@@ -651,9 +649,9 @@ public:
 
   /**
    * @brief Get the representation of an empty set
-   * 
+   *
    * This method formats an empty set.
-   * 
+   *
    * @return the representation of an empty set
    */
   static std::string set_end()
@@ -663,7 +661,7 @@ public:
 
   /**
    * @brief Get the separator for a set
-   * 
+   *
    * @return the separator for a set
    */
   static std::string set_separator()
@@ -673,9 +671,9 @@ public:
 
   /**
    * @brief Get the representation of an empty set
-   * 
+   *
    * This method formats an empty set.
-   * 
+   *
    * @return the representation of an empty set
    */
   static std::string empty_set()
@@ -686,9 +684,9 @@ public:
 
   /**
    * @brief Get an object header
-   * 
+   *
    * This method formats the header of an object.
-   * 
+   *
    * @return the header of an object
    */
   static std::string object_header()
@@ -698,9 +696,9 @@ public:
 
   /**
    * @brief Get an object footer
-   * 
+   *
    * This method formats the footer of an object.
-   * 
+   *
    * @return the footer of an object
    */
   static std::string object_footer()

@@ -5,9 +5,9 @@
  * @brief Represent and manipulate reachability flowpipes
  * @version 0.2
  * @date 2022-05-04
- * 
+ *
  * @copyright Copyright (c) 2016-2022
- * 
+ *
  */
 
 #ifndef FLOWPIPE_H_
@@ -21,11 +21,11 @@
 
 /**
  * @brief A representation for reachability flowpipe
- * 
- * This class represents reachability flowpipe as 
+ *
+ * This class represents reachability flowpipe as
  * a sequence of polytope union.
  */
-class Flowpipe: public std::vector<PolytopesUnion>
+class Flowpipe : public std::vector<PolytopesUnion>
 {
 
 public:
