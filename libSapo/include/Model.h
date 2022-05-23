@@ -16,6 +16,8 @@
 #include "PolytopesUnion.h"
 #include "STL.h"
 
+#include "DynamicalSystem.h"
+
 #include "LinearAlgebraIO.h"
 
 /**
@@ -27,18 +29,16 @@ class Model
 {
 
 protected:
-  std::vector<SymbolicAlgebra::Symbol<>> _vars;         //!< Variables
-  std::vector<SymbolicAlgebra::Symbol<>> _params;       //!< Parameters
-  std::vector<SymbolicAlgebra::Expression<>> _dynamics; //!< Dynamic laws
+  DynamicalSystem<double> _dynamical_system; //!< A dynamical system
 
-  std::shared_ptr<Bundle> _init_set; //!< Initial set
-  PolytopesUnion _param_set;         //!< Parameter set
+  std::shared_ptr<Bundle> _init_set; //!< The initial set
+  PolytopesUnion _param_set;         //!< The parameter set
 
-  std::shared_ptr<STL::STL> _spec; //!< Specification
+  std::shared_ptr<STL::STL> _spec; //!< a specification
 
-  LinearSystem _assumptions; //!< Assumptions
+  LinearSystem _assumptions; //!< The assumptions
 
-  std::string _name; //!< Name of the model
+  std::string _name; //!< The model name
 
 public:
   /**
@@ -70,6 +70,18 @@ public:
         const std::string name = "Unknown");
 
   /**
+   * @brief Constructor
+   *
+   * @param dynamical_system is the dynamical system
+   * @param init_set is the initial set
+   * @param param_set is the set of the parameter
+   * @param name is the model name
+   */
+  Model(const DynamicalSystem<double> &dynamical_system,
+        const Bundle &init_set, const PolytopesUnion &param_set,
+        const std::string name = "Unknown");
+
+  /**
    * @brief Get the model name
    *
    * @return a reference to the model name
@@ -80,13 +92,23 @@ public:
   }
 
   /**
+   * @brief Get the model dynamical system
+   *
+   * @return a reference to the model dynamical system
+   */
+  inline const DynamicalSystem<double> &dynamical_system() const
+  {
+    return this->_dynamical_system;
+  }
+
+  /**
    * @brief Get the model variables
    *
    * @return a reference to the model variables
    */
   inline const std::vector<SymbolicAlgebra::Symbol<>> &variables() const
   {
-    return this->_vars;
+    return this->dynamical_system().variables();
   }
 
   /**
@@ -96,7 +118,7 @@ public:
    */
   inline const std::vector<SymbolicAlgebra::Symbol<>> &parameters() const
   {
-    return this->_params;
+    return this->dynamical_system().parameters();
   }
 
   /**
@@ -106,7 +128,7 @@ public:
    */
   inline const std::vector<SymbolicAlgebra::Expression<>> &dynamics() const
   {
-    return this->_dynamics;
+    return this->dynamical_system().dynamics();
   }
 
   /**

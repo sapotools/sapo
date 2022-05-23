@@ -23,10 +23,10 @@
  * @param[in] model model to analyze
  */
 Sapo::Sapo(const Model &model):
-    t_mode(Bundle::AFO), decomp(0), max_param_splits(0), num_of_pre_splits(0),
+    decomp(0), max_param_splits(0), num_of_pre_splits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
-    _dynamics(model.dynamics()), _variables(model.variables()),
-    _parameters(model.parameters()), assumptions(model.assumptions())
+    _dynamical_system(model.dynamical_system()),
+    assumptions(model.assumptions())
 {
 }
 
@@ -62,9 +62,10 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
   {
     using namespace LinearAlgebra;
 
+    const DynamicalSystem<double> &ds = sapo->dynamical_system();
+
     // get the transformed bundle
-    Bundle nbundle = bundle.transform(sapo->_variables, sapo->_dynamics,
-                                      sapo->t_mode); // transform it
+    Bundle nbundle = ds.transform(bundle, sapo->t_mode); // transform it
 
     // guarantee the assumptions
     nbundle.intersect_with(sapo->assumptions);
@@ -185,13 +186,13 @@ Flowpipe Sapo::reach(Bundle init_set, const PolytopesUnion &pSet,
 #endif
 
   {
+    const DynamicalSystem<double> &ds = sapo->dynamical_system();
+
     // for all the parameter sets
     for (auto b_it = std::cbegin(cbundles[pos]);
          b_it != std::cend(cbundles[pos]); ++b_it) {
       // get the transformed bundle
-      Bundle nbundle = b_it->transform(sapo->_variables, sapo->_parameters,
-                                       sapo->_dynamics, pSet,
-                                       sapo->t_mode); // transform it
+      Bundle nbundle = ds.transform(*b_it, pSet, sapo->t_mode); // transform it
 
       // guarantee the assumptions
       nbundle.intersect_with(sapo->assumptions);
@@ -612,7 +613,7 @@ PolytopesUnion Sapo::synthesize(const Bundle &init_set,
                                 const PolytopesUnion &pSet,
                                 const std::shared_ptr<STL::Atom> atom) const
 {
-  return init_set.synthesize(_variables, _parameters, _dynamics, pSet, atom);
+  return ::synthesize(this->dynamical_system(), init_set, pSet, atom);
 }
 
 /**

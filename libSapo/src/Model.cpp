@@ -20,24 +20,31 @@ Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
              const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
              const Bundle &init_set, const PolytopesUnion &parameter_set,
              const std::string name):
-    _vars(variables),
-    _params(parameters), _dynamics(dynamics),
+    Model(DynamicalSystem<double>(variables, parameters, dynamics), init_set,
+          parameter_set, name)
+{
+}
+
+Model::Model(const DynamicalSystem<double> &dynamical_system,
+             const Bundle &init_set, const PolytopesUnion &parameter_set,
+             const std::string name):
+    _dynamical_system(dynamical_system),
     _init_set(std::make_shared<Bundle>(init_set)), _param_set(parameter_set),
     _spec(nullptr), _assumptions(), _name(name)
 {
   using namespace SymbolicAlgebra;
   std::set<Symbol<>> dyn_symbols;
 
-  for (const auto &dyn: dynamics) {
+  for (const auto &dyn: _dynamical_system.dynamics()) {
     auto symbols = dyn.get_symbols();
     dyn_symbols.insert(std::begin(symbols), std::end(symbols));
   }
 
-  for (const auto &var: variables) {
+  for (const auto &var: _dynamical_system.variables()) {
     dyn_symbols.erase(var);
   }
 
-  for (const auto &param: parameters) {
+  for (const auto &param: _dynamical_system.parameters()) {
     dyn_symbols.erase(param);
   }
 
@@ -48,21 +55,21 @@ Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
     throw std::domain_error(oss.str());
   }
 
-  if (init_set.dim() != variables.size()) {
+  if (init_set.dim() != _dynamical_system.dim()) {
     std::ostringstream oss;
     oss << "The space dimension of the initial set (" << init_set.dim()
         << ") differs from the "
-        << "variable number (" << variables.size() << "). "
-        << "They must be the same.";
+        << "variable number (" << _dynamical_system.dim()
+        << "). They must be the same.";
     throw std::domain_error(oss.str());
   }
 
-  if (parameter_set.dim() != parameters.size()) {
+  if (parameter_set.dim() != _dynamical_system.parameters().size()) {
     std::ostringstream oss;
     oss << "The space dimension of the parameter set (" << parameter_set.dim()
-        << ") differs from the "
-        << "parameter number (" << parameters.size() << "). "
-        << "They must be the same.";
+        << ") differs from the parameter number ("
+        << _dynamical_system.parameters().size()
+        << "). They must be the same.";
     throw std::domain_error(oss.str());
   }
 }
@@ -72,7 +79,7 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
   if (specification != nullptr) {
     auto spec_vars = specification->get_variables();
 
-    for (const auto &var: _vars) {
+    for (const auto &var: _dynamical_system.variables()) {
       spec_vars.erase(var);
     }
 
@@ -91,7 +98,7 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
 
 Model &Model::set_assumptions(const LinearSystem &assumptions)
 {
-  if (assumptions.size() > 0 && assumptions.dim() != _vars.size()) {
+  if (assumptions.size() > 0 && assumptions.dim() != _dynamical_system.dim()) {
     throw std::domain_error("The number of dimensions of the "
                             "assumptions space differs from "
                             "that of the model variables.");

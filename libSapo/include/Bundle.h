@@ -40,25 +40,6 @@
  */
 class Bundle
 {
-public:
-  /**
-   * @brief Approach to evaluate the image of a bundle
-   *
-   * The are two different approaches to evaluate the
-   * image of a bundle through a polynomial function:
-   * 1. One-For-One: the boundaries of any parallelotope
-   *                 image in the bundle are evaluated by
-   *                 exclusively considering the original
-   *                 parallelotope itself
-   * 2. All-For-One: the boundaries of any parallelotope
-   *                 image in the bundle are evaluated by
-   *                 exploiting all the bundle templates
-   */
-  typedef enum {
-    OFO, /* One-For-One */
-    AFO  /* All-For-One */
-  } transformation_mode;
-
 private:
   std::vector<LinearAlgebra::Vector<double>>
       _directions;                             //!< the vector of directions
@@ -76,107 +57,6 @@ private:
    * @returns the vector of the edge lengths
    */
   LinearAlgebra::Vector<double> edge_lengths();
-
-  /**
-   * @brief A class to find the minimum and the maximum Bernstein coefficients
-   */
-  class MinMaxCoeffFinder
-  {
-    /**
-     * @brief Evaluate a Bernstein coefficient
-     *
-     * @param bernCoeff is the symbolical representation of Bernstein
-     *    coefficient
-     * @return The numerical evaluation of Bernstein coefficient
-     */
-    double eval_coeff(const SymbolicAlgebra::Expression<> &bernCoeff) const;
-
-  public:
-    /**
-     * @brief Create MaxCoeffType objects.
-     */
-    MinMaxCoeffFinder() {}
-
-    /**
-     * @brief Find the interval containing the Bernstein coefficients.
-     *
-     * @param b_coeffs is a list of symbolical Bernstein coefficients.
-     * @return The pair minimum-maximum among all the Bernstein
-     *          coefficients in `b_coeffs`.
-     */
-    virtual std::pair<double, double> find_coeffs_itvl(
-        const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const;
-  };
-
-  /**
-   * @brief  A class to find the minimum and the maximum parametric Bernstein
-   * coefficients
-   */
-  class ParamMinMaxCoeffFinder : public MinMaxCoeffFinder
-  {
-    const std::vector<SymbolicAlgebra::Symbol<>> &params;
-    const Polytope &paraSet;
-    /**
-     * @brief Evaluate the parametric Bernstein coefficient upper-bound
-     *
-     * @param bernCoeff is the symbolical representation of Bernstein
-     *                  coefficient
-     * @return The numerical evaluation of parametric Bernstein
-     *         coefficient upper-bound
-     */
-    double
-    maximize_coeff(const SymbolicAlgebra::Expression<> &bernCoeff) const;
-
-    /**
-     * @brief Evaluate the parametric Bernstein coefficient lower-bound
-     *
-     * @param bernCoeff is the symbolical representation of Bernstein
-     *                  coefficient
-     * @return The numerical evaluation of parametric Bernstein coefficient
-     *         lower-bound
-     */
-    double
-    minimize_coeff(const SymbolicAlgebra::Expression<> &bernCoeff) const;
-
-  public:
-    /**
-     * @brief Constructor
-     *
-     * @param params is the list of parameters
-     * @param paraSet is the set of admissible values for parameters
-     */
-    ParamMinMaxCoeffFinder(
-        const std::vector<SymbolicAlgebra::Symbol<>> &params,
-        const Polytope &paraSet):
-        MinMaxCoeffFinder(),
-        params(params), paraSet(paraSet)
-    {
-    }
-
-    /**
-     * @brief Find the interval containing the Bernstein coefficients
-     *
-     * @param b_coeffs is a list of symbolical Bernstein coefficients
-     * @return The pair minimum-maximum among all the Bernstein
-     *          coefficients in `b_coeffs`
-     */
-    std::pair<double, double> find_coeffs_itvl(
-        const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const;
-  };
-
-  /**
-   * @brief Transform the bundle according to a dynamic law
-   *
-   * @param[in] variables is the vector of variables
-   * @param[in] dynamics is the vector of dynamic law expressions
-   * @param[in] max_finder is a pointer to a MinMaxCoeffFinder object
-   * @param[in] mode transformation mode, i.e., OFO or AFO
-   * @returns the transformed bundle
-   */
-  Bundle transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-                   const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-                   const MinMaxCoeffFinder *max_finder,
-                   Bundle::transformation_mode mode = Bundle::AFO) const;
 
   /**
    * @brief Add to the bundle templates for some directions
@@ -463,70 +343,6 @@ public:
    * @returns new bundle decomposing current symbolic polytope
    */
   Bundle decompose(double alpha, int max_iters);
-
-  /**
-   * @brief Transform the bundle according to a dynamic law
-   *
-   * @param[in] variables is the vector of variables
-   * @param[in] dynamics is the vector of dynamic law expressions
-   * @param[in] mode transformation mode, i.e., OFO or AFO
-   * @returns the transformed bundle
-   */
-  inline Bundle
-  transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-            const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            transformation_mode mode = Bundle::AFO) const
-  {
-    MinMaxCoeffFinder max_finder;
-
-    return transform(variables, dynamics, &max_finder, mode);
-  }
-
-  /**
-   * @brief Transform the bundle according to a dynamic law
-   *
-   * @param[in] variables is the vector of variables
-   * @param[in] parameters is the vector of parameter
-   * @param[in] dynamics is the vector of dynamic law expressions
-   * @param[in] parameter_set is the parameter set
-   * @param[in] mode transformation mode, i.e., OFO or AFO
-   * @returns the transformed bundle
-   */
-  inline Bundle
-  transform(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-            const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-            const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-            const Polytope &parameter_set,
-            transformation_mode mode = Bundle::AFO) const
-  {
-    ParamMinMaxCoeffFinder max_finder(parameters, parameter_set);
-
-    return transform(variables, dynamics, &max_finder, mode);
-  }
-
-  /**
-   * @brief Perform the parametric synthesis for an atom
-   *
-   * This method computes a set of parameters such that the
-   * transformation from the current bundle satisfies the
-   * provided atom.
-   *
-   * @param[in] variables is the vector of variables
-   * @param[in] parameters is the vector of parameter
-   * @param[in] dynamics is the vector of dynamic law expressions
-   * @param[in] parameter_set is the initial parameter set
-   * @param[in] atom is the specification to be satisfied
-   * @return a subset of `pSet` such that the transformation
-   *         from the current bundle through the dynamic laws
-   *         when the parameters are in the returned set satisfies
-   *         the atomic formula
-   */
-  PolytopesUnion
-  synthesize(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-             const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-             const PolytopesUnion &parameter_set,
-             const std::shared_ptr<STL::Atom> atom) const;
 
   /**
    * @brief Get the intersection between two bundles

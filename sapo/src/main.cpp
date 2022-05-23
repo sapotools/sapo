@@ -31,8 +31,8 @@ Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
 {
   Sapo sapo(model);
 
-  sapo.t_mode = (data.getTransValue() == AbsSyn::transType::OFO ? Bundle::OFO
-                                                               : Bundle::AFO);
+  sapo.t_mode = (data.getTransValue() == AbsSyn::transType::OFO ? ONE_FOR_ONE
+                                                               : ALL_FOR_ONE);
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();
@@ -49,13 +49,13 @@ Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
 
 template<typename OSTREAM>
 void print_symbol_vector(OSTREAM &os,
-                         const std::vector<SymbolicAlgebra::Symbol<>> &vect)
+                         const std::vector<SymbolicAlgebra::Symbol<>> &vector)
 {
   using OF = OutputFormatter<OSTREAM>;
 
   os << OF::short_list_begin();
   bool not_first = false;
-  for (auto v_it = std::begin(vect); v_it != std::end(vect); ++v_it) {
+  for (auto v_it = std::begin(vector); v_it != std::end(vector); ++v_it) {
     if (not_first) {
       os << OF::short_list_separator();
     } else {

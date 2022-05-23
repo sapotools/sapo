@@ -26,6 +26,8 @@
 #include "STL.h"
 #include "Until.h"
 
+#include "DynamicalSystem.h"
+
 #include "ProgressAccounter.h"
 
 /**
@@ -34,22 +36,18 @@
 class Sapo
 {
 public:
-  Bundle::transformation_mode t_mode; //!< transformation mode (OFO or AFO)
-  double decomp_weight;               //!< decomposition weight
-  unsigned int decomp; //!< number of decompositions (0: none, >0: yes)
-  std::string plot;    //!< the name of the file were to plot the reach set
+  transformation_mode t_mode; //!< transformation mode (OFO or AFO)
+  double decomp_weight;       //!< decomposition weight
+  unsigned int decomp;        //!< number of decompositions (0: none, >0: yes)
+  std::string plot; //!< the name of the file were to plot the reach set
   unsigned int time_horizon;      //!< the computation time horizon
   unsigned int max_param_splits;  //!< maximum number of splits in synthesis
   unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis
   double max_bundle_magnitude; //!< maximum versor magnitude for single bundle
 
 private:
-  const std::vector<SymbolicAlgebra::Expression<>>
-      &_dynamics; //!< dynamics of the system
-  const std::vector<SymbolicAlgebra::Symbol<>>
-      &_variables; //!< variables of the system
-  const std::vector<SymbolicAlgebra::Symbol<>>
-      &_parameters; //!< parameters of the system
+  const DynamicalSystem<double>
+      _dynamical_system; //!< the investigated dynamical system
 
   const LinearSystem assumptions;
 
@@ -73,9 +71,7 @@ private:
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle reached_set
-          = init_set.transform(this->_variables, this->_parameters,
-                               this->_dynamics, *p_it, this->t_mode);
+      Bundle reached_set = _dynamical_system.transform(init_set, *p_it);
 
       // guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
@@ -165,6 +161,16 @@ public:
    * @param[in] model model to analyze
    */
   Sapo(const Model &model);
+
+  /**
+   * @brief Get the dynamical system
+   *
+   * @return the dynamical system
+   */
+  inline const DynamicalSystem<double> &dynamical_system() const
+  {
+    return _dynamical_system;
+  }
 
   /**
    * Reachable set computation
