@@ -97,11 +97,19 @@ protected:
       }
     }
 
-    std::map<SymbolIdType, unsigned int> param_index;
+    std::set<SymbolIdType> param_index;
     for (auto p_it = std::begin(_parameters); p_it != std::end(_parameters);
          ++p_it) {
       symbols.erase(*p_it);
-      if (!param_index.emplace(p_it->get_id(), param_index.size()).second) {
+      if (_var_index.find(p_it->get_id())!=std::end(_var_index)) {
+        std::ostringstream oss;
+
+        oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id()) 
+            << "\" is reported as both a variable and a parameter";
+
+        throw std::domain_error(oss.str());
+      }
+      if (!param_index.emplace(p_it->get_id()).second) {
         throw std::domain_error("The vector of the parameters must not "
                                 "contain duplicates");
       }
