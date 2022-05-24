@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(test_bundle)
         {0,1,1}
     };
  
-    std::vector<Vector<unsigned int>> T = {
+    std::set<Vector<unsigned int>> T = {
         {0,1,2},
         {0,3,4}
     };
@@ -35,9 +35,9 @@ BOOST_AUTO_TEST_CASE(test_bundle)
         {0,0,1}
     };
 
-    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7},T),
-           b2(B,{0,0,0,0,0},{3,5,5,7,5},{{2,1,4}}),
-           b3(B,{0,0,0,0,0},{3,5,5,2,5},{{2,1,4}});
+    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}, T),
+           b2(B,{0,0,0,0,0},{3,5,5,7,5}, {{2,1,4}}),
+           b3(B,{0,0,0,0,0},{3,5,5,2,5}, {{2,1,4}});
 
 
     BOOST_CHECK(b1.dim()==3);
@@ -73,15 +73,15 @@ BOOST_AUTO_TEST_CASE(test_bundle_error)
         {0,1,1}
     };
  
-    std::vector<Vector<unsigned int>> T = {
+    std::set<Vector<unsigned int>> T = {
         {0,1,2},
         {0,3,4}
     };
 
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0}, {5,5,5,3,7},T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,3,7},T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0,0}, {5,5,5,3,7},T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,5,3,7},T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0}, {5,5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0,0}, {5,5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,5,3,7}, T);, std::domain_error);
     BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7}});, std::domain_error);
     BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7,0,0}}), std::domain_error);
     BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{0,0,0}}), std::domain_error);
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(test_is_empty_bundle)
         {0,1,1}
     };
  
-    std::vector<Vector<unsigned int>> T = {
+    std::set<Vector<unsigned int>> T = {
         {0,1,2},
         {0,3,4}
     };
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
         {0,1,1}
     };
  
-    std::vector<Vector<unsigned int>> TA = {
+    std::set<Vector<unsigned int>> TA = {
         {0,1,2},
         {0,3,4}
     };
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
         {0,0,1}
     };
  
-    std::vector<Vector<unsigned int>> TB = {
+    std::set<Vector<unsigned int>> TB = {
         {2,1,4},
         {2,0,3}
     };
@@ -147,7 +147,8 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
            b2(B,{0,0,0,0,0},{3,5,5,7,5}, TB),
            b3(A,{-1,-1,-1,-7,-7},{5,5,5,3,7}, TA),
            b4(A,{1,1,1,1,1},{5,5,5,3,7}, TA),
-           b5(A,{0,0,0,0,0},{-5,5,5,3,7}, TA);
+           b5(A,{0,0,0,0,0},{-5,5,5,3,7}, TA),
+           b_err({{1}}, {0}, {1});
 
     Bundle ba = intersect(b1,b1);
     BOOST_CHECK(ba==b1);
@@ -183,6 +184,9 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
         ba.intersect_with(b1);
         BOOST_CHECK(ba==bi);
     }
+
+    BOOST_REQUIRE_THROW(intersect(b1,b_err), std::domain_error);
+    BOOST_REQUIRE_THROW(intersect(b_err,b1), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
@@ -197,7 +201,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
         {0,1,1}
     };
  
-    std::vector<Vector<unsigned int>> TA = {
+    std::set<Vector<unsigned int>> TA = {
         {0,1,2},
         {0,3,4}
     };
@@ -256,7 +260,6 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
     BOOST_CHECK(((Polytope)ba).satisfies(ls4));
     BOOST_CHECK(ba==Polytope(C, {5,5,5,3,7,5,7,0,0,0,0,0,0,100}));
 
-
     std::vector<Vector<double>> D = {
         {1,0,0},
         {-1,0,0}
@@ -295,7 +298,7 @@ BOOST_AUTO_TEST_CASE(test_canonical_bundle)
         {0,1,1}
     };
  
-    std::vector<Vector<unsigned int>> TA = {
+    std::set<Vector<unsigned int>> TA = {
         {0,1,2},
         {0,3,4}
     };
@@ -331,4 +334,58 @@ BOOST_AUTO_TEST_CASE(test_canonical_bundle)
     for (; d_it != std::end(deltas); ++db_it, ++dc_it) {
         BOOST_CHECK(*dc_it == *db_it);
     }
+}
+
+BOOST_AUTO_TEST_CASE(test_approximate_union_bundle)
+{
+    using namespace LinearAlgebra;
+
+    std::vector<Vector<double>> A = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1},
+        {1,1,0},
+        {0,1,1}
+    };
+
+    std::vector<Vector<double>> B = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1}
+    };
+ 
+    std::vector<Vector<double>> C = {
+        {0,1,0},
+        {1,1,0},
+        {0,1,1}
+    };
+
+    std::set<Vector<unsigned int>> TA = {
+        {0,1,2},
+        {0,3,4}
+    };
+
+    Bundle b1(A,{6,6,6,2,2},{12,12,12,15,15}, TA),
+           b2(B,{0,0,0},{5,5,5}),
+           b3(C,{0,0,0},{5,5,5}),
+           b_empty(B,{0,0,6},{5,5,5}),
+           b_err({{1}},{0},{1});
+
+    Bundle res(A, {0,0,0,0,0}, {12,12,12,15,15});
+    BOOST_CHECK(over_approximate_union(b1, b2)==res);
+    BOOST_CHECK(over_approximate_union(b2, b1)==res);
+
+    res = Bundle(A, {-5,0,-5,0,0}, {12,12,12,15,15});
+    BOOST_CHECK(over_approximate_union(b1, b3)==res);
+    BOOST_CHECK(over_approximate_union(b3, b1)==res);
+
+    res = Bundle(A, {-5,0,-5,0,0}, {5,5,5,10,10});
+    BOOST_CHECK(over_approximate_union(b2, b3)==res);
+    BOOST_CHECK(over_approximate_union(b3, b2)==res);
+
+    BOOST_CHECK(over_approximate_union(b1, b_empty)==b1);
+    BOOST_CHECK(over_approximate_union(b_empty, b1)==b1);
+
+    BOOST_REQUIRE_THROW(intersect(b_err,b1), std::domain_error);
+    BOOST_REQUIRE_THROW(intersect(b1,b_err), std::domain_error);
 }

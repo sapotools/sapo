@@ -142,7 +142,7 @@ void trim_unused_directions(std::vector<std::vector<double>> &directions,
  * The objective function is simply the sum of all variables, since we are
  * interested in satisfiability and not in optimization
  */
-std::vector<std::vector<unsigned int>>
+std::set<std::vector<unsigned int>>
 computeTemplate(const std::vector<std::vector<double>> A,
                 const std::vector<std::vector<double>> C,
                 const std::vector<std::vector<unsigned int>> oldTemplate)
@@ -224,7 +224,7 @@ computeTemplate(const std::vector<std::vector<double>> A,
     }
   }
 
-  return T;
+  return std::set<std::vector<unsigned int>>(std::begin(T), std::end(T));
 }
 
 Bundle getBundle(const InputData &id)
@@ -256,10 +256,7 @@ Bundle getBundle(const InputData &id)
     trim_unused_directions(directions, LB, UB, template_matrix);
   }
 
-  std::vector<std::vector<unsigned int>> templ
-      = computeTemplate(directions, {}, template_matrix);
-
-  return Bundle(directions, LB, UB, templ);
+  return Bundle(directions, LB, UB, computeTemplate(directions, {}, template_matrix));
 }
 
 std::vector<Expression<>> &compose_dynamics(const std::vector<Symbol<>>& variables,

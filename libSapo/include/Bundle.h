@@ -13,6 +13,8 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
+#include <set>
+
 #include "LinearAlgebra.h"
 #include "BaseConverter.h"
 #include "Polytope.h"
@@ -42,11 +44,10 @@ class Bundle
 {
 private:
   std::vector<LinearAlgebra::Vector<double>>
-      _directions;                             //!< the vector of directions
-  LinearAlgebra::Vector<double> _lower_bounds; //!< direction upper bounds
-  LinearAlgebra::Vector<double> _upper_bounds; //!< direction lower bounds
-  std::vector<LinearAlgebra::Vector<unsigned int>>
-      _templates; //!< templates matrix
+      _directions;                                //!< the vector of directions
+  LinearAlgebra::Vector<double> _lower_bounds;    //!< direction upper bounds
+  LinearAlgebra::Vector<double> _upper_bounds;    //!< direction lower bounds
+  std::set<std::vector<unsigned int>> _templates; //!< templates matrix
 
   /**
    * Compute the edge lengths
@@ -87,12 +88,12 @@ public:
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] templates is the template vector
+   * @param[in] templates is the set of the templates
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
-         const std::vector<LinearAlgebra::Vector<unsigned int>> &templates);
+         const std::set<std::vector<unsigned int>> &templates);
 
   /**
    * @brief A move constructor
@@ -100,12 +101,12 @@ public:
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] templates is the template vector
+   * @param[in] templates is the set of the templates
    */
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds,
-         std::vector<LinearAlgebra::Vector<unsigned int>> &&templates);
+         const std::set<std::vector<unsigned int>> &templates);
 
   /**
    * @brief A constructor
@@ -188,20 +189,9 @@ public:
    *
    * @return a reference to the template vector
    */
-  const std::vector<LinearAlgebra::Vector<unsigned int>> &templates() const
+  const std::set<std::vector<unsigned int>> &templates() const
   {
     return _templates;
-  }
-
-  /**
-   * @brief Get the i-th template in the bundle
-   *
-   * @param i is the index of the aimed template
-   * @return a reference to the i-th template
-   */
-  const LinearAlgebra::Vector<unsigned int> &get_template(unsigned int i) const
-  {
-    return _templates[i];
   }
 
   /**
@@ -277,12 +267,13 @@ public:
   operator Polytope() const;
 
   /**
-   * @brief Get the i-th parallelotope of the bundle
+   * @brief Get a parallelotope of the bundle
    *
-   * @param[in] i is the index of the aimed parallelotope
-   * @returns i-th parallelotope of the bundle
+   * @param[in] bundle_template is the template for the bundle
+   * @returns the parallelotope of the bundle associated to `bundle_template`
    */
-  Parallelotope get_parallelotope(unsigned int i) const;
+  Parallelotope
+  get_parallelotope(const std::vector<unsigned int> &bundle_template) const;
 
   /**
    * @brief Get a canonical bundle equivalent to the current one
@@ -383,6 +374,8 @@ public:
   virtual ~Bundle();
 
   friend void swap(Bundle &A, Bundle &B);
+
+  friend Bundle over_approximate_union(const Bundle &b1, const Bundle &b2);
 };
 
 /**
@@ -409,5 +402,14 @@ inline Bundle intersect(const Bundle &b1, const Bundle &b2)
 
   return res;
 }
+
+/**
+ * @brief Compute the over-approximation of the union of two bundles
+ *
+ * @param b1 is a bundle
+ * @param b2 is a bundle
+ * @return A bundle over-approximating the union of `b1` and `b2`
+ */
+Bundle over_approximate_union(const Bundle &b1, const Bundle &b2);
 
 #endif /* BUNDLE_H_ */

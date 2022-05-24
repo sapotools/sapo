@@ -51,7 +51,8 @@ template<typename T>
 class DynamicalSystem
 {
 protected:
-  typedef typename SymbolicAlgebra::Symbol<T>::SymbolIdType SymbolIdType; //!< The type of symbol identificators
+  typedef typename SymbolicAlgebra::Symbol<T>::SymbolIdType
+      SymbolIdType; //!< The type of symbol identificators
 
   std::vector<SymbolicAlgebra::Symbol<T>>
       _variables; //!< the vector of the variables
@@ -101,10 +102,10 @@ protected:
     for (auto p_it = std::begin(_parameters); p_it != std::end(_parameters);
          ++p_it) {
       symbols.erase(*p_it);
-      if (_var_index.find(p_it->get_id())!=std::end(_var_index)) {
+      if (_var_index.find(p_it->get_id()) != std::end(_var_index)) {
         std::ostringstream oss;
 
-        oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id()) 
+        oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id())
             << "\" is reported as both a variable and a parameter";
 
         throw std::domain_error(oss.str());

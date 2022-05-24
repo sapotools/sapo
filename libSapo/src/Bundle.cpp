@@ -72,15 +72,37 @@ double orthProx(LinearAlgebra::Vector<double> v1,
   return std::abs(LinearAlgebra::angle(v1, v2) - M_PI_2);
 }
 
-Bundle::Bundle(
-    const std::vector<LinearAlgebra::Vector<double>> &directions,
-    const LinearAlgebra::Vector<double> &lower_bounds,
-    const LinearAlgebra::Vector<double> &upper_bounds,
-    const std::vector<LinearAlgebra::Vector<unsigned int>> &templates):
-    _directions(directions),
-    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds),
-    _templates(templates)
+/**
+ * @brief Test whether a vector is sorted
+ *
+ * @tparam T is the type of the values
+ * @param V is the vector to test
+ * @return `true` if and only if `V` is sorted
+ */
+template<typename T>
+bool is_sorted(const std::vector<T> &V)
 {
+  typename std::vector<T>::const_iterator v_it = std::begin(V);
+  typename std::vector<T>::const_iterator previous_it = std::begin(V);
+
+  for (++v_it; v_it != std::end(V); ++previous_it, ++v_it) {
+    if (*previous_it > *v_it) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+               const LinearAlgebra::Vector<double> &lower_bounds,
+               const LinearAlgebra::Vector<double> &upper_bounds,
+               const std::set<std::vector<unsigned int>> &templates):
+    _directions(directions),
+    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds), _templates()
+{
+  using namespace LinearAlgebra;
+
   if (directions.size() == 0) {
     throw std::domain_error("Bundle::Bundle: directions must be non empty");
   }
@@ -103,7 +125,14 @@ Bundle::Bundle(
                               "as many columns as directions");
     }
 
-    using namespace LinearAlgebra;
+    std::vector<unsigned int> new_template(*t_it);
+
+    if (!is_sorted(new_template)) {
+      // sort unsorted templates
+      std::sort(std::begin(new_template), std::end(new_template));
+    }
+
+    _templates.insert(new_template);
 
     Dense::Matrix<double> A;
     for (auto d_it = std::begin(*t_it); d_it != std::end(*t_it); ++d_it) {
@@ -129,12 +158,13 @@ Bundle::Bundle(
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds,
-               std::vector<LinearAlgebra::Vector<unsigned int>> &&templates):
+               const std::set<std::vector<unsigned int>> &templates):
     _directions(std::move(directions)),
     _lower_bounds(std::move(lower_bounds)),
-    _upper_bounds(std::move(upper_bounds)), _templates(std::move(templates))
+    _upper_bounds(std::move(upper_bounds)), _templates()
 {
   using namespace std;
+  using namespace LinearAlgebra;
 
   if (_directions.size() == 0) {
     throw std::domain_error("Bundle::Bundle: directions must be non empty");
@@ -151,13 +181,21 @@ Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
     throw std::domain_error("Bundle::Bundle: templates must be non empty");
   }
 
-  for (auto t_it = std::begin(_templates); t_it != std::end(_templates);
+  for (auto t_it = std::begin(templates); t_it != std::end(templates);
        ++t_it) {
     if (t_it->size() != this->dim()) {
       throw std::domain_error("Bundle::Bundle: templates must have "
                               "as many columns as directions");
     }
-    using namespace LinearAlgebra;
+
+    std::vector<unsigned int> new_template(*t_it);
+
+    if (!is_sorted(new_template)) {
+      // sort unsorted templates
+      std::sort(std::begin(new_template), std::end(new_template));
+    }
+
+    _templates.insert(new_template);
 
     Dense::Matrix<double> A;
     for (auto d_it = std::begin(*t_it); d_it != std::end(*t_it); ++d_it) {
@@ -250,10 +288,9 @@ Bundle &Bundle::operator=(const Bundle &orig)
   using namespace LinearAlgebra;
 
   this->_directions = std::vector<Vector<double>>();
-  this->_templates = std::vector<Vector<unsigned int>>();
+  this->_templates = std::set<Vector<unsigned int>>();
 
   this->_directions.reserve(orig._directions.size());
-  this->_templates.reserve(orig._templates.size());
 
   for (auto d_it = std::begin(orig._directions);
        d_it != std::end(orig._directions); ++d_it) {
@@ -262,7 +299,7 @@ Bundle &Bundle::operator=(const Bundle &orig)
 
   for (auto t_it = std::begin(orig._templates);
        t_it != std::end(orig._templates); ++t_it) {
-    this->_templates.emplace_back(*t_it);
+    this->_templates.emplace(*t_it);
   }
 
   this->_upper_bounds = orig._upper_bounds;
@@ -308,22 +345,23 @@ Bundle::operator Polytope() const
   return Polytope(std::move(A), std::move(b));
 }
 
-Parallelotope Bundle::get_parallelotope(unsigned int i) const
+Parallelotope Bundle::get_parallelotope(
+    const std::vector<unsigned int> &bundle_template) const
 {
   using namespace std;
-
-  if (i > this->_templates.size()) {
-    throw std::domain_error("Bundle::get_parallelotope: i must be a valid row "
-                            "for the template matrix");
-  }
 
   vector<double> lbound, ubound;
   vector<LinearAlgebra::Vector<double>> Lambda;
 
-  vector<unsigned int>::const_iterator it = std::begin(this->_templates[i]);
+  vector<unsigned int>::const_iterator it = std::begin(bundle_template);
   // upper facets
   for (unsigned int j = 0; j < this->dim(); j++) {
-    const int idx = *it;
+    const unsigned int idx = *it;
+    if (idx >= this->_directions.size()) {
+      throw std::domain_error(
+          "Bundle::get_parallelotope: the parameter is not a template for "
+          "for the bundle");
+    }
     Lambda.push_back(this->_directions[idx]);
     ubound.push_back(this->_upper_bounds[idx]);
     lbound.push_back(this->_lower_bounds[idx]);
@@ -485,7 +523,7 @@ double maxOffsetDist(const std::vector<unsigned int> &dirsIdx,
  * @param[in] distances pre-computed distances
  * @returns distance accumulation
  */
-double maxOffsetDist(const std::vector<LinearAlgebra::Vector<unsigned int>> &T,
+double maxOffsetDist(const std::vector<std::vector<unsigned int>> &T,
                      const LinearAlgebra::Vector<double> &distances)
 {
   double max_dist = std::numeric_limits<double>::lowest();
@@ -549,7 +587,7 @@ maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
  */
 double
 maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
-            const std::vector<LinearAlgebra::Vector<unsigned int>> &T)
+            const std::vector<std::vector<unsigned int>> &T)
 {
   double max_orth = std::numeric_limits<double>::lowest();
   for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
@@ -660,10 +698,12 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
   vector<double> off_distances = this->edge_lengths();
 
   // get current template and try to improve it
-  vector<Vector<unsigned int>> curT = this->_templates;
+  vector<Vector<unsigned int>> curT(std::begin(this->_templates),
+                                    std::end(this->_templates));
 
   // get current template and try to improve it
-  vector<Vector<unsigned int>> bestT = this->_templates;
+  vector<Vector<unsigned int>> bestT(std::begin(this->_templates),
+                                     std::end(this->_templates));
   int temp_card = this->_templates.size();
 
   int i = 0;
@@ -704,7 +744,8 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
     i++;
   }
 
-  return Bundle(_directions, _lower_bounds, _upper_bounds, bestT);
+  return Bundle(_directions, _lower_bounds, _upper_bounds,
+                set<Vector<unsigned int>>(std::begin(bestT), std::end(bestT)));
 }
 
 /**
@@ -750,7 +791,7 @@ bool isIn(int n, std::vector<int> v)
  * @returns true is v belongs to vlist
  */
 bool isIn(std::vector<unsigned int> v,
-          std::vector<LinearAlgebra::Vector<unsigned int>> vlist)
+          std::vector<std::vector<unsigned int>> vlist)
 {
   for (unsigned int i = 0; i < vlist.size(); i++) {
     if (isPermutation(v, vlist[i])) {
@@ -810,7 +851,7 @@ unsigned int get_a_linearly_dependent_in(
  *         `new_indices` in an index greater or equal to
  *         `first_bundle_size`
  */
-bool copy_required(const LinearAlgebra::Vector<unsigned int> &bundle_template,
+bool copy_required(const std::vector<unsigned int> &bundle_template,
                    const std::vector<unsigned int> &new_indices,
                    const unsigned int first_bundle_size)
 {
@@ -823,11 +864,48 @@ bool copy_required(const LinearAlgebra::Vector<unsigned int> &bundle_template,
   return false;
 }
 
+/**
+ * @brief Add missing templates to a template vector
+ *
+ * This function is called as the last phase of intersection or
+ * approximated union between two bundles. After identifying
+ * shared directions and adding non-shared ones to the direction
+ * vector, the templates involving non-shared
+ *
+ * @param dest_templates is the destination template set
+ * @param source_templates is the source template set
+ * @param new_direction_indices is the map from source indices
+ *                              to destination indices
+ */
+void add_missing_templates(
+    std::set<std::vector<unsigned int>> &dest_templates,
+    const std::set<std::vector<unsigned int>> &source_templates,
+    const std::vector<unsigned int> &new_direction_indices)
+{
+  // check whether some of the templates must be copied
+  for (const std::vector<unsigned int> &temp: source_templates) {
+    // if this is the case, copy and update the template indices
+    std::vector<unsigned int> t_copy(temp);
+    for (unsigned int j = 0; j < t_copy.size(); ++j) {
+      t_copy[j] = new_direction_indices[t_copy[j]];
+    }
+
+    std::sort(std::begin(t_copy), std::end(t_copy));
+
+    // add the new template to the intersected bundle
+    dest_templates.insert(t_copy);
+  }
+}
+
 Bundle &Bundle::intersect_with(const Bundle &A)
 {
   using namespace LinearAlgebra;
 
-  unsigned int old_size = this->size();
+  if (dim() != A.dim()) {
+    throw std::domain_error("Bundle::intersect_with: the two "
+                            "bundles differ in dimensions");
+  }
+
   std::vector<unsigned int> new_ids(A.size());
 
   // for each direction in A
@@ -858,21 +936,7 @@ Bundle &Bundle::intersect_with(const Bundle &A)
     }
   }
 
-  // check whether some of the templates must be copied
-  for (unsigned int i = 0; i < A._templates.size(); ++i) {
-    const std::vector<unsigned int> &A_template = A._templates[i];
-    if (copy_required(A_template, new_ids, old_size)) {
-
-      // if this is the case, copy and update the template indices
-      std::vector<unsigned int> t_copy(A_template);
-      for (unsigned int j = 0; j < t_copy.size(); ++j) {
-        t_copy[j] = new_ids[t_copy[j]];
-      }
-
-      // add the new template to the intersected bundle
-      this->_templates.push_back(t_copy);
-    }
-  }
+  add_missing_templates(_templates, A.templates(), new_ids);
 
   return *this;
 }
@@ -906,7 +970,12 @@ void Bundle::add_templates_for(std::set<unsigned int> &to_be_copied_directions)
     std::copy(std::begin(row_pos), std::begin(row_pos) + new_template.size(),
               std::begin(new_template));
 
-    this->_templates.push_back(new_template);
+    if (!is_sorted(new_template)) {
+      // sort unsorted templates
+      std::sort(std::begin(new_template), std::end(new_template));
+    }
+
+    this->_templates.insert(new_template);
     for (int i: new_template) {
       to_be_copied_directions.erase((unsigned int)i);
     }
@@ -928,6 +997,17 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
 {
   using namespace LinearAlgebra;
   using namespace LinearAlgebra::Dense;
+
+  // If the linear system has no constraint or involves no variables
+  if (ls.dim() == 0) {
+    return *this;
+  }
+
+  if (dim() != ls.dim()) {
+    throw std::domain_error("Bundle::intersect_with: the bundle "
+                            "and the linear system differ in "
+                            "dimensions");
+  }
 
   std::set<unsigned int> outside_templates;
   const Matrix<double> &A = ls.A();
@@ -991,3 +1071,80 @@ Bundle &Bundle::expand_by(const double epsilon)
 }
 
 Bundle::~Bundle() {}
+
+Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
+{
+  using namespace LinearAlgebra;
+  using namespace LinearAlgebra::Dense;
+
+  if (b1.dim() != b2.dim()) {
+    throw std::domain_error("over_approximate_union: the two "
+                            "bundles differ in dimensions");
+  }
+
+  Polytope p1(b1);
+  if (p1.is_empty()) {
+    return b2;
+  }
+
+  Polytope p2(b2);
+
+  if (p2.is_empty()) {
+    return b1;
+  }
+
+  Bundle res(b1);
+  const Matrix<double> &res_dirs = res.directions();
+  for (unsigned int i = 0; i < res_dirs.size(); ++i) {
+    const LinearAlgebra::Vector<double> &res_dir = res_dirs[i];
+    res._lower_bounds[i]
+        = std::min(p2.minimize(res_dir).optimum(), res.get_lower_bound(i));
+    res._upper_bounds[i]
+        = std::max(p2.maximize(res_dir).optimum(), res.get_upper_bound(i));
+  }
+
+  const Matrix<double> &b2_dirs = b2.directions();
+
+  std::vector<unsigned int> new_ids(b2.size());
+  // for each row in the linear system
+  for (unsigned int i = 0; i < b2_dirs.size(); ++i) {
+    const LinearAlgebra::Vector<double> &b2_dir = b2_dirs[i];
+
+    new_ids[i] = get_a_linearly_dependent_in(b2_dir, res.directions());
+
+    // if the direction is not present in this object
+    if (new_ids[i] == res.size()) {
+      double lower_bound
+          = std::min(p1.minimize(b2_dir).optimum(), b2.get_lower_bound(i));
+      double upper_bound
+          = std::max(p1.maximize(b2_dir).optimum(), b2.get_upper_bound(i));
+
+      // add the direction and the corresponding boundaries
+      res._directions.push_back(b2_dir);
+      res._lower_bounds.push_back(lower_bound);
+      res._upper_bounds.push_back(upper_bound);
+    } else {
+      // compute the dependency coefficient
+      const unsigned int &new_i = new_ids[i];
+      const double dep_coeff = res.get_direction(new_i) / b2_dir;
+
+      double lb_rescaled = b2.get_lower_bound(i) * dep_coeff;
+      double ub_rescaled = b2.get_upper_bound(i) * dep_coeff;
+      if (dep_coeff < 0) {
+        std::swap(lb_rescaled, ub_rescaled);
+      }
+
+      // if necessary, update the boundaries
+      if (res.get_upper_bound(new_i) < ub_rescaled) {
+        res._upper_bounds[new_i] = ub_rescaled;
+      }
+      if (res.get_lower_bound(new_i) > lb_rescaled) {
+        res._lower_bounds[new_i] = lb_rescaled;
+      }
+    }
+  }
+
+  add_missing_templates(res._templates, b2.templates(), new_ids);
+
+  return res;
+}

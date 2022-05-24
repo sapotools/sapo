@@ -77,8 +77,8 @@ replace_in(const std::vector<SymbolicAlgebra::Expression<>> &expressions,
  */
 std::vector<SymbolicAlgebra::Expression<>>
 compute_Bern_coefficients(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
-                    const std::vector<SymbolicAlgebra::Expression<>> &f,
-                    const LinearAlgebra::Vector<double> &direction)
+                          const std::vector<SymbolicAlgebra::Expression<>> &f,
+                          const LinearAlgebra::Vector<double> &direction)
 {
   SymbolicAlgebra::Expression<> Lfog = 0;
   // upper facets
@@ -426,47 +426,48 @@ DynamicalSystem<double>::transform(const Bundle &bundle,
 
   std::vector<Symbol<double>> alpha = get_symbol_vector("f", dim());
 
-  auto refine_coeff_itvl = [&max_coeffs, &min_coeffs, &bundle, &alpha,
-                            &itvl_finder,
-                            &t_mode](const DynamicalSystem<double> *ds,
-                                     const unsigned int template_num) 
-  {
-    Parallelotope P = bundle.get_parallelotope(template_num);
+  auto refine_coeff_itvl =
+      [&max_coeffs, &min_coeffs, &bundle, &alpha, &itvl_finder,
+       &t_mode](const DynamicalSystem<double> *ds,
+                const std::vector<unsigned int> &bundle_template) {
+        Parallelotope P = bundle.get_parallelotope(bundle_template);
 
-    const auto &genFun = build_instantiated_generator_functs(alpha, P);
-    const auto genFun_f = replace_in(ds->dynamics(), ds->variables(), genFun);
+        const auto &genFun = build_instantiated_generator_functs(alpha, P);
+        const auto genFun_f
+            = replace_in(ds->dynamics(), ds->variables(), genFun);
 
-    const auto &template_i = bundle.get_template(template_num);
+        unsigned int dir_b;
 
-    unsigned int dir_b;
+        // for each direction
+        const size_t num_of_dirs
+            = (t_mode == ONE_FOR_ONE ? bundle_template.size() : bundle.size());
 
-    // for each direction
-    const size_t num_of_dirs
-        = (t_mode == ONE_FOR_ONE ? template_i.size() : bundle.size());
+        for (unsigned int j = 0; j < num_of_dirs; j++) {
+          if (t_mode == ONE_FOR_ONE) {
+            dir_b = bundle_template[j];
+          } else {
+            dir_b = j;
+          }
+          auto coefficients = compute_Bern_coefficients(
+              alpha, genFun_f, bundle.get_direction(dir_b));
 
-    for (unsigned int j = 0; j < num_of_dirs; j++) {
-      if (t_mode == ONE_FOR_ONE) {
-        dir_b = template_i[j];
-      } else {
-        dir_b = j;
-      }
-      auto coefficients
-          = compute_Bern_coefficients(alpha, genFun_f, bundle.get_direction(dir_b));
+          auto coeff_itvl = (*itvl_finder)(coefficients);
 
-      auto coeff_itvl = (*itvl_finder)(coefficients);
-
-      min_coeffs[dir_b].update(coeff_itvl.first);
-      max_coeffs[dir_b].update(coeff_itvl.second);
-    }
-  };
+          min_coeffs[dir_b].update(coeff_itvl.first);
+          max_coeffs[dir_b].update(coeff_itvl.second);
+        }
+      };
 
   try {
 #ifdef WITH_THREADS
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
-    for (unsigned int i = 0; i < bundle.num_of_templates(); i++) {
+    for (auto t_it = std::begin(bundle.templates());
+         t_it != std::end(bundle.templates()); ++t_it) {
+
       // submit the task to the thread pool
-      thread_pool.submit_to_batch(batch_id, refine_coeff_itvl, this, i);
+      thread_pool.submit_to_batch(batch_id, refine_coeff_itvl, this,
+                                  std::ref(*t_it));
     }
 
     // join to the pool threads
@@ -475,8 +476,9 @@ DynamicalSystem<double>::transform(const Bundle &bundle,
     // close the batch
     thread_pool.close_batch(batch_id);
 #else  // WITH_THREADS
-    for (unsigned int i = 0; i < bundle.num_of_templates(); i++) {
-      refine_coeff_itvl(this, i);
+    for (auto t_it = std::begin(bundle.templates());
+         t_it != std::end(bundle.templates()); ++t_it) {
+      refine_coeff_itvl(this, std::ref(*t_it));
     }
 #endif // WITH_THREADS
     delete itvl_finder;
@@ -507,8 +509,6 @@ DynamicalSystem<double>::transform(const Bundle &bundle,
   return res;
 }
 
-
-
 PolytopesUnion synthesize(const DynamicalSystem<double> &ds,
                           const Bundle &bundle,
                           const PolytopesUnion &parameter_set,
@@ -531,10 +531,11 @@ PolytopesUnion synthesize(const DynamicalSystem<double> &ds,
 
   std::vector<Symbol<>> alpha = get_symbol_vector("f", bundle.dim());
 
-  for (unsigned int i = 0; i < bundle.num_of_templates();
-       i++) { // for each parallelotope
+  for (auto t_it = std::begin(bundle.templates());
+       t_it != std::end(bundle.templates());
+       ++t_it) { // for each parallelotope
 
-    Parallelotope P = bundle.get_parallelotope(i);
+    Parallelotope P = bundle.get_parallelotope(*t_it);
     std::vector<Expression<>> genFun
         = build_instantiated_generator_functs(alpha, P);
 
