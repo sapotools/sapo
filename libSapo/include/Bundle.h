@@ -404,6 +404,38 @@ inline Bundle intersect(const Bundle &b1, const Bundle &b2)
 }
 
 /**
+ * @brief Get the intersection between a bundle and a linear system
+ *
+ * @param bundle is a bundle
+ * @param linear_system is a linear system
+ * @return A bundle representing the intersection between
+ *         `bundle` and `linear_system`
+ */
+inline Bundle intersect(const Bundle &bundle, 
+                        const LinearSystem &linear_system)
+{
+  Bundle res(bundle);
+
+  res.intersect_with(linear_system);
+
+  return res;
+}
+
+/**
+ * @brief Get the intersection between a linear system and a bundle
+ *
+ * @param linear_system is a linear system
+ * @param bundle is a bundle
+ * @return A bundle representing the intersection between
+ *         `linear_system` and `bundle`
+ */
+inline Bundle intersect(const LinearSystem &linear_system,
+                        const Bundle &bundle)
+{
+  return intersect(bundle, linear_system);
+}
+
+/**
  * @brief Compute the over-approximation of the union of two bundles
  *
  * @param b1 is a bundle

@@ -1095,6 +1095,8 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
 
   Bundle res(b1);
   const Matrix<double> &res_dirs = res.directions();
+
+  // Updates res boundaries to include p2
   for (unsigned int i = 0; i < res_dirs.size(); ++i) {
     const LinearAlgebra::Vector<double> &res_dir = res_dirs[i];
     res._lower_bounds[i]
