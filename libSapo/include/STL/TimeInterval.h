@@ -115,7 +115,7 @@ public:
    * @return `true` if and only if the provided parameter is strictly
    *         included in the time interval.
    */
-  bool strictly_contains(const int time) const
+  bool strictly_includes(const int time) const
   {
     return (this->begin() < time) && (time < this->end());
   }
@@ -127,7 +127,7 @@ public:
    * @return `true` if and only if the provided parameter is included
    *         in the time interval.
    */
-  bool contains(const int time) const
+  bool includes(const int time) const
   {
     return (this->begin() <= time) && (time <= this->end());
   }
