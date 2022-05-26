@@ -25,6 +25,8 @@
 #include <functional>
 #include <sstream>
 
+#include <glpk.h>
+
 #include "LinearAlgebra.h"
 #include "LinearAlgebraIO.h"
 
@@ -386,6 +388,16 @@ Bundle Bundle::get_canonical() const
 
 Bundle &Bundle::canonize()
 {
+
+  if (this->size()==0) {
+    return *this;
+  }
+  
+  // if the bundle is empty
+  if (is_empty()) {
+    return *this;
+  }
+
   // get current polytope
   Polytope bund = *this;
   for (unsigned int i = 0; i < this->size(); ++i) {
@@ -393,6 +405,77 @@ Bundle &Bundle::canonize()
     _upper_bounds[i] = bund.maximize(this->_directions[i]).optimum();
   }
   return *this;
+}
+
+/**
+ * @brief Test whether the bundle is empty
+ *
+ * @return `true` if and only if the bundle is empty
+ */
+bool Bundle::is_empty() const
+{
+  // since bundle are maintained in canonical form
+  // if the bundle is empty the upper bound of the
+  // first direction is smaller than the lower bound
+  //return _lower_bounds[0] > _upper_bounds[0];
+  
+  Polytope bund = *this;
+  return bund.minimize(this->_directions[0]).status() == GLP_NOFEAS;
+
+  for (unsigned int i = 0; i < size(); ++i) {
+    if (_lower_bounds[i] > _upper_bounds[i]) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * @brief Test whether a bundle includes another bundle
+ *
+ * @param bundle is the bundle whose inclusion is tested
+ * @return `true` if and only if `bundle` is a subset of
+ *         the current bundle
+ */
+bool Bundle::includes(Bundle &bundle) const
+{
+  // if the parameter is empty, return true
+  if (bundle.is_empty()) {
+    return true;
+  }
+
+  // if this object is empty and the parameter is not,
+  // return false
+  if (this->is_empty()) {
+    return false;
+  }
+
+  bundle.canonize();
+
+  Polytope P_this = *this;
+  // for each direction in the bundle
+  for (unsigned int dir_idx = 0; dir_idx < bundle.size(); ++dir_idx) {
+
+    // if the minimum of this object on that direction is greater than
+    // the bundle minimum, this object does not include the bundle
+    if (P_this.minimize(bundle._directions[dir_idx]).optimum()
+        > bundle._lower_bounds[dir_idx]) {
+      return false;
+    }
+
+    // if the maximum of this object on that direction is smaller than
+    // the bundle maximum, this object does not include the bundle
+    if (P_this.maximize(bundle._directions[dir_idx]).optimum()
+        < bundle._upper_bounds[dir_idx]) {
+
+      return false;
+    }
+  }
+
+  // if none of the previous conditions hold, the bundle is a
+  // subset for this object
+  return true;
 }
 
 /**
@@ -766,42 +849,6 @@ LinearAlgebra::Vector<double> Bundle::edge_lengths()
 }
 
 /**
- * Determine belonging of an element in a vector
- *
- * @param[in] n element to be searched
- * @param[in] v vector in which to look for
- * @returns true is n belongs to v
- */
-bool isIn(int n, std::vector<int> v)
-{
-
-  for (unsigned int i = 0; i < v.size(); i++) {
-    if (n == v[i]) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Determine belonging of a vector in a set of vectors
- *
- * @param[in] v vector to be searched
- * @param[in] vlist set of vectors in which to look for
- * @returns true is v belongs to vlist
- */
-bool isIn(std::vector<unsigned int> v,
-          std::vector<std::vector<unsigned int>> vlist)
-{
-  for (unsigned int i = 0; i < vlist.size(); i++) {
-    if (isPermutation(v, vlist[i])) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * @brief Search for linearly dependent vector in an array
  *
  * This function search for the index `i` such that the vector
@@ -1057,6 +1104,10 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
 
 Bundle &Bundle::expand_by(const double epsilon)
 {
+  if (is_empty()) {
+    return *this;
+  }
+
   for (auto b_it = std::begin(_lower_bounds); b_it != std::end(_lower_bounds);
        ++b_it) {
     *b_it -= epsilon;
@@ -1082,17 +1133,15 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
                             "bundles differ in dimensions");
   }
 
-  Polytope p1(b1);
-  if (p1.is_empty()) {
+  if (b1.is_empty()) {
     return b2;
   }
 
-  Polytope p2(b2);
-
-  if (p2.is_empty()) {
+  if (b2.is_empty()) {
     return b1;
   }
 
+  Polytope p2(b2);
   Bundle res(b1);
   const Matrix<double> &res_dirs = res.directions();
 
@@ -1107,6 +1156,7 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
 
   const Matrix<double> &b2_dirs = b2.directions();
 
+  Polytope p1(b1);
   std::vector<unsigned int> new_ids(b2.size());
   // for each row in the linear system
   for (unsigned int i = 0; i < b2_dirs.size(); ++i) {

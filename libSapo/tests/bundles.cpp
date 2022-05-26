@@ -108,8 +108,8 @@ BOOST_AUTO_TEST_CASE(test_is_empty_bundle)
     Bundle b1(A, {0,0,0,0,0}, {5,5,5,3,7}, T),
            b2(A, {0,0,0,0,0}, {-5,5,5,3,7}, T);
 
-    BOOST_CHECK(((Polytope)b1).is_empty()==false);
-    BOOST_CHECK(((Polytope)b2).is_empty()==true);
+    BOOST_CHECK(b1.is_empty()==false);
+    BOOST_CHECK(b2.is_empty()==true);
 }
 
 BOOST_AUTO_TEST_CASE(test_intersect_bundle)
@@ -169,9 +169,9 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
     BOOST_CHECK(ba==intersect(b4,b1));
 
     ba = intersect(b1,b5);
-    BOOST_CHECK(((Polytope)ba).is_empty());
-    BOOST_CHECK(((Polytope)b5).is_empty());
-    BOOST_CHECK(!((Polytope)b1).is_empty());
+    BOOST_CHECK(ba.is_empty());
+    BOOST_CHECK(b5.is_empty());
+    BOOST_CHECK(!b1.is_empty());
     BOOST_CHECK(ba==intersect(b5,b1));
 
     for (const auto& b: {b1,b2,b3,b4,b5}) {
@@ -238,26 +238,26 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
 
     Bundle ba = b;
     ba.intersect_with(ls1);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls1));
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls1));
     BOOST_CHECK(ba==Polytope(C, {5,5,5,3,7,5,7,0,0,0,0,0,0,0}));
 
     ba = b;
     ba.intersect_with(ls2);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls2));
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls2));
     BOOST_CHECK(ba==b);
 
     ba = b;
     ba.intersect_with(ls3);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls3));
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls3));
     BOOST_CHECK(ba==Polytope(C, {5,5,5,3,7,100,7,0,0,0,0,0,0,0}));
 
     ba = b;
     ba.intersect_with(ls4);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls4));
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls4));
     BOOST_CHECK(ba==Polytope(C, {5,5,5,3,7,5,7,0,0,0,0,0,0,100}));
 
     std::vector<Vector<double>> D = {
@@ -269,20 +269,21 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
 
     ba = b;
     ba.intersect_with(ls5);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls5));
+
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls5));
     BOOST_CHECK(ba==empty_poly);
 
     ba = b;
     ba.intersect_with(ls6);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls6));
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls6));
     BOOST_CHECK(ba==empty_poly);
 
     ba = b;
     ba.intersect_with(ls7);
-    BOOST_CHECK(((Polytope)b).contains(ba));
-    BOOST_CHECK(((Polytope)ba).satisfies(ls7));
+    BOOST_CHECK(b.includes(ba));
+    BOOST_CHECK(ba.satisfies(ls7));
     BOOST_CHECK(ba==empty_poly);
 }
 

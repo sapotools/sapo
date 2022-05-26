@@ -260,6 +260,51 @@ public:
   }
 
   /**
+   * @brief Test whether the bundle is empty
+   *
+   * @return `true` if and only if the bundle is empty
+   */
+  bool is_empty() const;
+
+  /**
+   * @brief Test whether a bundle includes another bundle
+   *
+   * This method tests whether a bundle is subset of the 
+   * current object. During the computation the parameter 
+   * bundle is canonized.
+   * 
+   * @param[in,out] bundle is the bundle whose inclusion is tested
+   * @return `true` if and only if `bundle` is a subset of
+   *         the current bundle
+   */
+  bool includes(Bundle &bundle) const;
+
+  /**
+   * @brief Test whether a bundle includes a polytope
+   *
+   * @param P is the polytope whose inclusion is tested
+   * @return `true` if and only if `P` is a subset of
+   *         the current bundle
+   */
+  inline bool includes(const Polytope &P) const
+  {
+    return ((Polytope)*this).includes(P);
+  }
+
+  /**
+   * @brief Check whether the solutions of a linear system 
+   *        belong to a bundle
+   *
+   * @param ls is the considered linear system
+   * @return `true` if and only if all the solutions of `ls` 
+   *          belong to the current bundle
+   */
+  inline bool satisfies(const LinearSystem &ls) const
+  {
+    return ((Polytope)*this).satisfies(ls);
+  }
+
+  /**
    * @brief Generate the polytope represented by the bundle
    *
    * @returns polytope represented by the bundle
@@ -411,7 +456,7 @@ inline Bundle intersect(const Bundle &b1, const Bundle &b2)
  * @return A bundle representing the intersection between
  *         `bundle` and `linear_system`
  */
-inline Bundle intersect(const Bundle &bundle, 
+inline Bundle intersect(const Bundle &bundle,
                         const LinearSystem &linear_system)
 {
   Bundle res(bundle);
