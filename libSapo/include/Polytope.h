@@ -125,16 +125,31 @@ public:
   }
 
   /**
-   * Check whether one polytope contains another polytope.
+   * Check whether one polytope is a subset of another polytope
    *
-   * This method establishes whether the current Polytope fully
-   * contains another polytope.
+   * This method establishes whether the current polytope is a
+   * subset of another polytope.
    *
    * @param[in] P is the polytope that are compared to the current
-   *     object.
-   * @return `true` if and only if this polytope contains `P`
+   *             object
+   * @return `true` if and only if this polytope is a subset of `P`
    */
-  inline bool contains(const Polytope &P) const
+  inline bool is_subset_of(const Polytope &P) const
+  {
+    return this->satisfies(P);
+  }
+
+  /**
+   * Check whether one polytope is a superset of another polytope
+   *
+   * This method establishes whether the current polytope is a
+   * superset of another polytope.
+   *
+   * @param[in] P is the polytope that are compared to the current
+   *             object
+   * @return `true` if and only if this polytope is a superset of `P`
+   */
+  inline bool includes(const Polytope &P) const
   {
     return P.satisfies(*this);
   }

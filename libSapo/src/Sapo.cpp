@@ -74,16 +74,15 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
       nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
     }
 
-    Polytope bls = nbundle;
-
     // TODO: check whether there is any chance for a transformed bundle to
     // be empty
-    if (!bls.is_empty()) {
+    if (!nbundle.is_empty()) {
       // split if necessary the new reached bundle and add the resulting
       // bundles to the nbundles list
       nbundles.splice(nbundles.end(),
                       nbundle.split(sapo->max_bundle_magnitude));
 
+      Polytope bls = nbundle;
       {
 #ifdef WITH_THREADS
         std::unique_lock<std::mutex> lock(mutex);

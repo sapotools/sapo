@@ -133,8 +133,8 @@ BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
 inline bool epsilon_equivalent(const Polytope& synthesized,
                                const Polytope& expected, const double epsilon)
 {
-    return ((expand(synthesized, epsilon).contains(expected)) && 
-            (expand(expected, epsilon).contains(synthesized)));    
+    return ((expand(synthesized, epsilon).includes(expected)) && 
+            (expand(expected, epsilon).includes(synthesized)));    
 }
 
 BOOST_AUTO_TEST_CASE(test_synthesis_bundle)

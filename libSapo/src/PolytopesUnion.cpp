@@ -72,7 +72,7 @@ PolytopesUnion &PolytopesUnion::operator=(PolytopesUnion &&orig)
   return *this;
 }
 
-bool PolytopesUnion::contains(const Polytope &P)
+bool PolytopesUnion::any_includes(const Polytope &P) const
 {
 
 #ifdef WITH_THREADS
@@ -102,7 +102,7 @@ bool PolytopesUnion::contains(const Polytope &P)
   ThreadResult result;
 
   auto check_and_update = [&result, &P](const Polytope &P1) {
-    if (!result.get() && P1.contains(P)) {
+    if (!result.get() && P.is_subset_of(P1)) {
       result.set(true);
     }
   };
@@ -123,7 +123,7 @@ bool PolytopesUnion::contains(const Polytope &P)
   return result.get();
 #else  // WITH_THREADS
   for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-    if (it->contains(P)) {
+    if (P.is_subset_of(*this)) {
       return true;
     }
   }
@@ -139,26 +139,28 @@ PolytopesUnion &PolytopesUnion::add(const Polytope &P)
               << "polytope having a different dimension" << std::endl;
   }
 
-  // if P is empty and is not contained by
-  // the polytopes union
-  if (!(P.is_empty() || this->contains(P))) {
-
-    // check whether P contains any of the polytopes in the union
-    for (auto p_it = std::begin(*this); p_it != std::end(*this); ++p_it) {
-      if (P.contains(*p_it)) {
-
-        // if this is the case, replace that polytope by P
-        *p_it = P;
-
-        // return the updated union
-        return *this;
-      }
-    }
-
-    // if P does not contains any polytope in the
-    // union append P to the union itself
-    this->push_back(P);
+  if (P.is_empty()) {
+    return *this;
   }
+
+  // check whether P includes any of the polytopes in the union
+  for (auto p_it = std::begin(*this); p_it != std::end(*this); ++p_it) {
+    if (p_it->includes(P)) {
+      return *this;
+    }
+    if (P.includes(*p_it)) {
+
+      // if this is the case, replace that polytope by P
+      *p_it = P;
+
+      // return the updated union
+      return *this;
+    }
+  }
+
+  // if P does not includes any polytope in the
+  // union append P to the union itself
+  this->push_back(P);
 
   return *this;
 }
@@ -170,9 +172,28 @@ PolytopesUnion &PolytopesUnion::add(Polytope &&P)
               << "polytope having a different dimension" << std::endl;
   }
 
-  if (!(P.is_empty() || this->contains(P))) {
-    this->push_back(P);
+  if (P.is_empty()) {
+    return *this;
   }
+
+  // check whether P includes any of the polytopes in the union
+  for (auto p_it = std::begin(*this); p_it != std::end(*this); ++p_it) {
+    if (p_it->includes(P)) {
+      return *this;
+    }
+    if (P.includes(*p_it)) {
+
+      // if this is the case, replace that polytope by P
+      *p_it = std::move(P);
+
+      // return the updated union
+      return *this;
+    }
+  }
+
+  // if P does not includes any polytope in the
+  // union append P to the union itself
+  this->push_back(std::move(P));
 
   return *this;
 }

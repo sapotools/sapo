@@ -6,8 +6,8 @@
  * @version 0.1
  */
 
-#ifndef LINEARSYSTEMSET_H_
-#define LINEARSYSTEMSET_H_
+#ifndef POLYTOPESUNION_H_
+#define POLYTOPESUNION_H_
 
 #include <list>
 #include <memory>
@@ -142,13 +142,13 @@ public:
   double volume_of_bounding_boxes() const;
 
   /**
-   * Check whether one of the polytopes in a union contains a polytope.
+   * Check whether one of the polytopes in a union includes a polytope
    *
    * @param[in] P is the polytopes whose inclusion must be tested
-   * @return true, if the parameter is contained by one of the polytopes in the
-   * union. It returns false, otherwise.
+   * @return `true` if the parameter is included by one of the
+   *         polytopes in the union; it returns `false`, otherwise
    */
-  bool contains(const Polytope &P);
+  bool any_includes(const Polytope &P) const;
 
   /**
    * Get the number of polytopes in the union
@@ -315,4 +315,4 @@ OSTREAM &operator<<(OSTREAM &os, const PolytopesUnion &Pu)
   return os;
 }
 
-#endif /* LINEARSYSTEMSET_H_ */
+#endif /* POLYTOPESUNION_H_ */

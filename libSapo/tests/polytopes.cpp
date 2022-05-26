@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_is_empty_polytope)
     BOOST_CHECK(p.is_empty());
 }
 
-BOOST_AUTO_TEST_CASE(test_contains_polytope)
+BOOST_AUTO_TEST_CASE(test_includes_polytope)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
@@ -103,21 +103,21 @@ BOOST_AUTO_TEST_CASE(test_contains_polytope)
 
     BOOST_CHECK(p5.is_empty());
 
-    BOOST_CHECK(p1.contains(p2));
-    BOOST_CHECK(p1.contains(p1));
-    BOOST_CHECK(p2.contains(p5));
-    BOOST_CHECK(p3.contains(p2));
-    BOOST_CHECK(p5.contains(p5));
-    BOOST_CHECK(p1.contains(p6));
-    BOOST_CHECK(!p3.contains(p1));
-    BOOST_CHECK(!p1.contains(p3));
-    BOOST_CHECK(!p2.contains(p3));
-    BOOST_CHECK(!p1.contains(p4));
-    BOOST_CHECK(!p4.contains(p1));
-    BOOST_CHECK(!p5.contains(p1));
-    BOOST_CHECK(!p2.contains(p1));
-    BOOST_CHECK(!p2.contains(p3));
-    BOOST_CHECK(!p6.contains(p1));
+    BOOST_CHECK(p1.includes(p2));
+    BOOST_CHECK(p1.includes(p1));
+    BOOST_CHECK(p2.includes(p5));
+    BOOST_CHECK(p3.includes(p2));
+    BOOST_CHECK(p5.includes(p5));
+    BOOST_CHECK(p1.includes(p6));
+    BOOST_CHECK(!p3.includes(p1));
+    BOOST_CHECK(!p1.includes(p3));
+    BOOST_CHECK(!p2.includes(p3));
+    BOOST_CHECK(!p1.includes(p4));
+    BOOST_CHECK(!p4.includes(p1));
+    BOOST_CHECK(!p5.includes(p1));
+    BOOST_CHECK(!p2.includes(p1));
+    BOOST_CHECK(!p2.includes(p3));
+    BOOST_CHECK(!p6.includes(p1));
 }
 
 BOOST_AUTO_TEST_CASE(test_intersect_polytope)
