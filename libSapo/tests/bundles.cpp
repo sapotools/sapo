@@ -4,11 +4,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <sstream>
-
 #include "Bundle.h"
-
-#define APPROX_ERR 1e-14
 
 BOOST_AUTO_TEST_CASE(test_bundle)
 {
@@ -86,7 +82,6 @@ BOOST_AUTO_TEST_CASE(test_bundle_error)
     BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7,0,0}}), std::domain_error);
     BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{0,0,0}}), std::domain_error);
 }
-
 
 BOOST_AUTO_TEST_CASE(test_is_empty_bundle)
 {
@@ -187,6 +182,101 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
 
     BOOST_REQUIRE_THROW(intersect(b1,b_err), std::domain_error);
     BOOST_REQUIRE_THROW(intersect(b_err,b1), std::domain_error);
+}
+
+BOOST_AUTO_TEST_CASE(test_is_subset_of_bundle)
+{
+    using namespace LinearAlgebra;
+
+    std::vector<Vector<double>> A = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1},
+        {1,1,0},
+        {0,1,1}
+    };
+
+    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}),
+           b2(A,{-1,0,-1,-3,-3},{6,7,8,9,10}),
+           b3(A,{-1,-1,-1,-7,-7},{5,5,5,3,7}),
+           b4(A,{1,1,1,1,1},{5,5,5,3,7}),
+           b5(A,{0,0,0,0,0},{1,5,5,3,7}),
+           b6(A,{0,0,0,0,0},{-5,5,5,3,7});
+
+    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+        BOOST_CHECK(bundle.is_subset_of(bundle));
+    }
+
+    BOOST_CHECK(b1.is_subset_of(b2));
+    BOOST_CHECK(!b2.is_subset_of(b1));
+
+    BOOST_CHECK(b1.is_subset_of(b3));
+    BOOST_CHECK(!b3.is_subset_of(b1));
+
+    BOOST_CHECK(b4.is_subset_of(b1));
+    BOOST_CHECK(!b1.is_subset_of(b4));
+
+    BOOST_CHECK(!b1.is_subset_of(b5));
+    BOOST_CHECK(b5.is_subset_of(b1));
+
+    BOOST_CHECK(!b4.is_subset_of(b5));
+    BOOST_CHECK(!b5.is_subset_of(b4));
+
+    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+        BOOST_CHECK(b6.is_subset_of(bundle));
+
+        if (!bundle.is_empty()) {
+            BOOST_CHECK(!bundle.is_subset_of(b6));
+        }
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(test_includes_bundle)
+{
+    using namespace LinearAlgebra;
+
+    std::vector<Vector<double>> A = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1},
+        {1,1,0},
+        {0,1,1}
+    };
+
+    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}),
+           b2(A,{-1,0,-1,-3,-3},{6,7,8,9,10}),
+           b3(A,{-1,-1,-1,-7,-7},{5,5,5,3,7}),
+           b4(A,{1,1,1,1,1},{5,5,5,3,7}),
+           b5(A,{0,0,0,0,0},{1,5,5,3,7}),
+           b6(A,{0,0,0,0,0},{-5,5,5,3,7});
+
+    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+        BOOST_CHECK(bundle.includes(bundle));
+    }
+
+    BOOST_CHECK(b2.includes(b1));
+    BOOST_CHECK(!b1.includes(b2));
+
+    BOOST_CHECK(b3.includes(b1));
+    BOOST_CHECK(!b1.includes(b3));
+
+    BOOST_CHECK(b1.includes(b4));
+    BOOST_CHECK(!b4.includes(b1));
+
+    BOOST_CHECK(!b5.includes(b1));
+    BOOST_CHECK(b1.includes(b5));
+
+    BOOST_CHECK(!b4.includes(b5));
+    BOOST_CHECK(!b5.includes(b4));
+
+    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+        BOOST_CHECK(bundle.includes(b6));
+
+        if (!bundle.is_empty()) {
+            BOOST_CHECK(!b6.includes(bundle));
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
@@ -372,20 +462,19 @@ BOOST_AUTO_TEST_CASE(test_approximate_union_bundle)
            b_empty(B,{0,0,6},{5,5,5}),
            b_err({{1}},{0},{1});
 
-    Bundle res(A, {0,0,0,0,0}, {12,12,12,15,15});
-    BOOST_CHECK(over_approximate_union(b1, b2)==res);
-    BOOST_CHECK(over_approximate_union(b2, b1)==res);
+    std::vector<std::pair<Bundle, Bundle>> b_pairs{
+        {b1,b2}, {b1,b3}, {b2,b3}, {b1, b_empty}
+    };
 
-    res = Bundle(A, {-5,0,-5,0,0}, {12,12,12,15,15});
-    BOOST_CHECK(over_approximate_union(b1, b3)==res);
-    BOOST_CHECK(over_approximate_union(b3, b1)==res);
-
-    res = Bundle(A, {-5,0,-5,0,0}, {5,5,5,10,10});
-    BOOST_CHECK(over_approximate_union(b2, b3)==res);
-    BOOST_CHECK(over_approximate_union(b3, b2)==res);
-
-    BOOST_CHECK(over_approximate_union(b1, b_empty)==b1);
-    BOOST_CHECK(over_approximate_union(b_empty, b1)==b1);
+    for (const auto& b_pair: b_pairs) {
+        Bundle res = over_approximate_union(b_pair.first, b_pair.second);
+        BOOST_CHECK(res.includes(b_pair.first));
+        BOOST_CHECK(res.includes(b_pair.second));
+        
+        res = over_approximate_union(b_pair.second, b_pair.first);
+        BOOST_CHECK(res.includes(b_pair.first));
+        BOOST_CHECK(res.includes(b_pair.second));
+    }
 
     BOOST_REQUIRE_THROW(intersect(b_err,b1), std::domain_error);
     BOOST_REQUIRE_THROW(intersect(b1,b_err), std::domain_error);

@@ -248,13 +248,12 @@ public:
   }
 
   /**
-   * Return the (i,j) element of the template matrix
+   * Return the i-th row of the matrix
    *
    * @param[in] i row index
-   * @param[in] j column index
-   * @return (i,j) element
+   * @return the i-th row 
    */
-  const double &A(const unsigned int i, const unsigned int j) const;
+  const LinearAlgebra::Vector<double> &A(const unsigned int i) const;
 
   /**
    * Return the i-th element of the offset vector

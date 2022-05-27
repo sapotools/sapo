@@ -414,44 +414,34 @@ Bundle &Bundle::canonize()
  */
 bool Bundle::is_empty() const
 {
-  // since bundle are maintained in canonical form
-  // if the bundle is empty the upper bound of the
-  // first direction is smaller than the lower bound
-  //return _lower_bounds[0] > _upper_bounds[0];
-  
   Polytope bund = *this;
-  return bund.minimize(this->_directions[0]).status() == GLP_NOFEAS;
-
-  for (unsigned int i = 0; i < size(); ++i) {
-    if (_lower_bounds[i] > _upper_bounds[i]) {
-      return true;
-    }
-  }
-
-  return false;
+  auto test_status = bund.minimize(this->_directions[0]).status();
+  
+  return (test_status == GLP_NOFEAS) || (test_status == GLP_INFEAS);
 }
 
 /**
- * @brief Test whether a bundle includes another bundle
+ * @brief Test whether a bundle is subset of another bundle
  *
- * @param bundle is the bundle whose inclusion is tested
- * @return `true` if and only if `bundle` is a subset of
- *         the current bundle
+ * This method tests whether the current object is subset 
+ * of a bundle.
+ * 
+ * @param[in] bundle is the tested bundle 
+ * @return `true` if and only if the current bundle is a 
+ *         subset of `bundle`
  */
-bool Bundle::includes(Bundle &bundle) const
+bool Bundle::is_subset_of(const Bundle &bundle) const
 {
-  // if the parameter is empty, return true
-  if (bundle.is_empty()) {
+  // if this object is empty
+  if (this->is_empty()) {
     return true;
   }
 
-  // if this object is empty and the parameter is not,
+  // if the parameter is empty and this object is not,
   // return false
-  if (this->is_empty()) {
+  if (bundle.is_empty()) {
     return false;
   }
-
-  bundle.canonize();
 
   Polytope P_this = *this;
   // for each direction in the bundle
@@ -459,16 +449,55 @@ bool Bundle::includes(Bundle &bundle) const
 
     // if the minimum of this object on that direction is greater than
     // the bundle minimum, this object does not include the bundle
-    if (P_this.minimize(bundle._directions[dir_idx]).optimum()
-        > bundle._lower_bounds[dir_idx]) {
+    if (P_this.minimize(bundle.get_direction(dir_idx)).optimum()
+        < bundle.get_lower_bound(dir_idx)) {
       return false;
     }
 
     // if the maximum of this object on that direction is smaller than
     // the bundle maximum, this object does not include the bundle
-    if (P_this.maximize(bundle._directions[dir_idx]).optimum()
-        < bundle._upper_bounds[dir_idx]) {
+    if (P_this.maximize(bundle.get_direction(dir_idx)).optimum()
+        > bundle.get_upper_bound(dir_idx)) {
 
+      return false;
+    }
+  }
+
+  // if none of the previous conditions hold, the bundle is a
+  // subset for this object
+  return true;
+}
+
+/**
+ * @brief Check whether a bundle satisfies a linear system 
+ * 
+ * This method checks whether all the points in the 
+ * current object are solutions for a linear system.
+ * 
+ * @param ls is the considered linear system
+ * @return `true` if and only if all the points of 
+ *          the current bundle are solutions for `ls`
+ */
+bool Bundle::satisfies(const LinearSystem &ls) const
+{
+  // if this object is empty
+  if (this->is_empty()) {
+    return true;
+  }
+
+  // if the parameter has no solutions and this object is not,
+  // return false
+  if (!ls.has_solutions()) {
+    return false;
+  }
+
+  Polytope P_this = *this;
+  // for each direction in the bundle
+  for (unsigned int dir_idx = 0; dir_idx < ls.size(); ++dir_idx) {
+
+    // if the maximum of this object on that direction is smaller than
+    // the bundle maximum, this object does not include the bundle
+    if (P_this.maximize(ls.A(dir_idx)).optimum() > ls.b(dir_idx)) {
       return false;
     }
   }

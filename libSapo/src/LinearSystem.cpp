@@ -32,7 +32,7 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
     }
 
     for (unsigned int col_idx = 0; col_idx < ls.dim(); col_idx++) {
-      out << ls.A(row_idx, col_idx) << " ";
+      out << ls.A(row_idx)[col_idx] << " ";
     }
     out << "<= " << ls.b(row_idx);
   }
@@ -316,19 +316,18 @@ LinearSystem::LinearSystem(
 }
 
 /**
- * Return the (i,j) element of the template matrix
+ * Return the i-th row of the matrix
  *
  * @param[in] i row index
- * @param[in] j column index
- * @return (i,j) element
+ * @return the i-th row 
  */
-const double &LinearSystem::A(unsigned int i, unsigned int j) const
+const LinearAlgebra::Vector<double> &LinearSystem::A(const unsigned int i) const
 {
-  if (i < this->_A.size() && j < this->_A[j].size()) {
-    return this->_A[i][j];
+  if (i < this->_A.size()) {
+    return this->_A[i];
   }
-  throw std::domain_error("LinearSystem::getA: i and j must be valid "
-                          "indices for the system matrix A");
+  throw std::domain_error("LinearSystem::getA: i must be a valid "
+                          "index for the system matrix A");
 }
 
 /**
