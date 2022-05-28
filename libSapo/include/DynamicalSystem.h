@@ -454,8 +454,8 @@ public:
  *         satisfies the atomic formula
  */
 SetsUnion<Polytope> synthesize(const DynamicalSystem<double> &ds,
-                              const Bundle &bundle,
-                              const SetsUnion<Polytope> &parameter_set,
-                              const std::shared_ptr<STL::Atom> atom);
+                               const Bundle &bundle,
+                               const SetsUnion<Polytope> &parameter_set,
+                               const std::shared_ptr<STL::Atom> atom);
 
 #endif // DYNAMICS_H_

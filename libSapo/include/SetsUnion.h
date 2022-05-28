@@ -4,7 +4,7 @@
  * @brief Representing and handling unions of sets
  * @version 0.1
  * @date 2022-05-27
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 
@@ -25,7 +25,7 @@
  * @brief Unions of sets
  *
  * This class represents unions of sets.
- * 
+ *
  * @tparam SET_TYPE is the set type
  */
 template<class SET_TYPE>
@@ -35,7 +35,7 @@ class SetsUnion;
  * @brief Unions of sets
  *
  * This class represents unions of sets.
- * 
+ *
  * @tparam SET_TYPE is the set type
  */
 template<class SET_TYPE>
@@ -56,8 +56,7 @@ public:
    * @brief Constructor
    *
    */
-  SetsUnion()
-  {}
+  SetsUnion() {}
 
   /**
    * @brief Constructor
@@ -90,10 +89,7 @@ public:
    *
    * @param[in] orig is a union of sets
    */
-  SetsUnion(const SetsUnion<SET_TYPE> &orig):
-    std::vector<SET_TYPE>(orig)
-  {
-  }
+  SetsUnion(const SetsUnion<SET_TYPE> &orig): std::vector<SET_TYPE>(orig) {}
 
   /**
    * @brief A swap constructor for a union of sets
@@ -224,7 +220,8 @@ public:
    */
   SetsUnion<SET_TYPE> &add(const SetsUnion<SET_TYPE> &sets_union)
   {
-    for (auto it = std::cbegin(sets_union); it != std::cend(sets_union); ++it) {
+    for (auto it = std::cbegin(sets_union); it != std::cend(sets_union);
+         ++it) {
       this->add(*it);
     }
 
@@ -252,7 +249,7 @@ public:
    * @brief Check whether one of the sets in a union contains a set
    *
    * @param[in] set_obj is the set whose inclusion must be tested
-   * @return `true` if and only if `set` is a subset of some of 
+   * @return `true` if and only if `set` is a subset of some of
    *         the sets in the union
    */
   bool any_includes(const SET_TYPE &set_obj) const
@@ -381,7 +378,7 @@ public:
 
   /**
    * @brief Test whether the union of sets is empty
-   * 
+   *
    * @return `true` if and only if the union of sets is empty
    */
   bool is_empty() const
@@ -405,10 +402,11 @@ public:
  *
  * @param[in] A is a sets union
  * @param[in] B is a sets union
- * @return the sets union representing \f$A \cap B\f$    
+ * @return the sets union representing \f$A \cap B\f$
  */
 template<typename SET_TYPE>
-SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A, const SetsUnion<SET_TYPE> &B)
+SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A,
+                              const SetsUnion<SET_TYPE> &B)
 {
   SetsUnion<SET_TYPE> result;
 
@@ -430,7 +428,8 @@ SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A, const SetsUnion<SET_
  * @return the sets union representing \f$A \cap B\f$
  */
 template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A, const SET_TYPE &B)
+inline SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A,
+                                     const SET_TYPE &B)
 {
   return intersect(A, SetsUnion<SET_TYPE>(B));
 }
@@ -444,7 +443,8 @@ inline SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A, const SET_TYP
  * @return the bundles union representing \f$A \cap B\f$
  */
 template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> intersect(const SET_TYPE &A, const SetsUnion<SET_TYPE> &B)
+inline SetsUnion<SET_TYPE> intersect(const SET_TYPE &A,
+                                     const SetsUnion<SET_TYPE> &B)
 {
   return intersect(B, A);
 }
@@ -458,7 +458,8 @@ inline SetsUnion<SET_TYPE> intersect(const SET_TYPE &A, const SetsUnion<SET_TYPE
  * @return the sets union representing \f$A \cup B\f$
  */
 template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> unite(const SetsUnion<SET_TYPE> &A, const SetsUnion<SET_TYPE> &B)
+inline SetsUnion<SET_TYPE> unite(const SetsUnion<SET_TYPE> &A,
+                                 const SetsUnion<SET_TYPE> &B)
 {
   return SetsUnion<SET_TYPE>(A).add(B);
 }

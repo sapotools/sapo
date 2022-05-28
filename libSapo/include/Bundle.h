@@ -267,11 +267,11 @@ public:
   /**
    * @brief Test whether a bundle is subset of another bundle
    *
-   * This method tests whether the current object is subset 
+   * This method tests whether the current object is subset
    * of a bundle.
-   * 
-   * @param[in] bundle is the tested bundle 
-   * @return `true` if and only if the current bundle is a 
+   *
+   * @param[in] bundle is the tested bundle
+   * @return `true` if and only if the current bundle is a
    *         subset of `bundle`
    */
   bool is_subset_of(const Bundle &bundle) const;
@@ -279,11 +279,11 @@ public:
   /**
    * @brief Test whether a bundle is subset of a polytope
    *
-   * This method tests whether the current object is subset 
+   * This method tests whether the current object is subset
    * of a polytope.
-   * 
-   * @param[in] P is a polytope 
-   * @return `true` if and only if the current bundle is a 
+   *
+   * @param[in] P is a polytope
+   * @return `true` if and only if the current bundle is a
    *         subset of `P`
    */
   inline bool is_subset_of(const Polytope &P) const
@@ -294,9 +294,9 @@ public:
   /**
    * @brief Test whether a bundle includes another bundle
    *
-   * This method tests whether a bundle is subset of the 
+   * This method tests whether a bundle is subset of the
    * current object.
-   * 
+   *
    * @param[in] bundle is the bundle whose inclusion is tested
    * @return `true` if and only if `bundle` is a subset of
    *         the current bundle
@@ -315,17 +315,17 @@ public:
    */
   inline bool includes(const Polytope &P) const
   {
-    return ((Polytope)*this).includes(P);
+    return ((Polytope) * this).includes(P);
   }
 
   /**
-   * @brief Check whether a bundle satisfies a linear system 
-   * 
-   * This method checks whether all the points in the 
+   * @brief Check whether a bundle satisfies a linear system
+   *
+   * This method checks whether all the points in the
    * current object are solutions for a linear system.
    *
    * @param ls is the considered linear system
-   * @return `true` if and only if all the points of 
+   * @return `true` if and only if all the points of
    *          the current bundle are solutions for `ls`
    */
   bool satisfies(const LinearSystem &ls) const;
@@ -459,19 +459,19 @@ void swap(Bundle &A, Bundle &B);
 
 /**
  * @brief Equality between bundles
- * 
- * This method tests whether the space represented by two bundles 
- * is the same. Please, notice that this method does not consider 
- * bundle templates; thus, event if two bundles are considered 
- * equivalent by it, their evolutions according to the very same 
+ *
+ * This method tests whether the space represented by two bundles
+ * is the same. Please, notice that this method does not consider
+ * bundle templates; thus, event if two bundles are considered
+ * equivalent by it, their evolutions according to the very same
  * dynamic laws may differ.
- * 
+ *
  * @param b1 is a bundle
  * @param b2 is a bundle
- * @return `true` if and only if `b1` and `b2` represent the 
+ * @return `true` if and only if `b1` and `b2` represent the
  *         very same space set
  */
-inline bool operator==(const Bundle& b1, const Bundle &b2)
+inline bool operator==(const Bundle &b1, const Bundle &b2)
 {
   return b1.is_subset_of(b2) && b2.is_subset_of(b1);
 }

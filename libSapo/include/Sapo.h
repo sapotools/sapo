@@ -60,10 +60,10 @@ private:
    * @returns a refined sets of parameters
    */
   template<typename T>
-  SetsUnion<Polytope> transition_and_synthesis(Bundle init_set,
-                                          const SetsUnion<Polytope> &pSet,
-                                          const std::shared_ptr<T> formula,
-                                          const int time) const
+  SetsUnion<Polytope>
+  transition_and_synthesis(Bundle init_set, const SetsUnion<Polytope> &pSet,
+                           const std::shared_ptr<T> formula,
+                           const int time) const
   {
     SetsUnion<Polytope> result;
 
@@ -90,8 +90,9 @@ private:
    * @param[in] formula is an STL atomic formula providing the specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-                            const std::shared_ptr<STL::Atom> formula) const;
+  SetsUnion<Polytope>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
+             const std::shared_ptr<STL::Atom> formula) const;
 
   /**
    * Parameter synthesis for conjunctions
@@ -126,9 +127,10 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-                            const std::shared_ptr<STL::Until> formula,
-                            const int time) const;
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
+                                 const SetsUnion<Polytope> &pSet,
+                                 const std::shared_ptr<STL::Until> formula,
+                                 const int time) const;
 
   /**
    * Parameter synthesis for always formulas
@@ -139,9 +141,10 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-                            const std::shared_ptr<STL::Always> formula,
-                            const int time) const;
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
+                                 const SetsUnion<Polytope> &pSet,
+                                 const std::shared_ptr<STL::Always> formula,
+                                 const int time) const;
   /**
    * Parameter synthesis for the eventually formulas
    *
@@ -151,8 +154,9 @@ private:
    * specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-                            const std::shared_ptr<STL::Eventually> ev) const;
+  SetsUnion<Polytope>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
+             const std::shared_ptr<STL::Eventually> ev) const;
 
 public:
   /**
@@ -192,8 +196,8 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(Bundle init_set, const SetsUnion<Polytope> &pSet, unsigned int k,
-                 ProgressAccounter *accounter = NULL) const;
+  Flowpipe reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
+                 unsigned int k, ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis method
@@ -204,9 +208,10 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns a parameter set refined according with `formula`
    */
-  SetsUnion<Polytope> synthesize(Bundle init_set, const SetsUnion<Polytope> &pSet,
-                            const std::shared_ptr<STL::STL> formula,
-                            ProgressAccounter *accounter = NULL) const;
+  SetsUnion<Polytope> synthesize(Bundle init_set,
+                                 const SetsUnion<Polytope> &pSet,
+                                 const std::shared_ptr<STL::STL> formula,
+                                 ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis with splits

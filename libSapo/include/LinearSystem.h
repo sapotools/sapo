@@ -251,7 +251,7 @@ public:
    * Return the i-th row of the matrix
    *
    * @param[in] i row index
-   * @return the i-th row 
+   * @return the i-th row
    */
   const LinearAlgebra::Vector<double> &A(const unsigned int i) const;
 

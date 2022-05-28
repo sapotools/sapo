@@ -319,9 +319,10 @@ LinearSystem::LinearSystem(
  * Return the i-th row of the matrix
  *
  * @param[in] i row index
- * @return the i-th row 
+ * @return the i-th row
  */
-const LinearAlgebra::Vector<double> &LinearSystem::A(const unsigned int i) const
+const LinearAlgebra::Vector<double> &
+LinearSystem::A(const unsigned int i) const
 {
   if (i < this->_A.size()) {
     return this->_A[i];
@@ -518,7 +519,7 @@ bool LinearSystem::constraint_is_redundant(const unsigned int i) const
 LinearSystem &LinearSystem::simplify()
 {
   unsigned int i = 0;
-  unsigned int last_index = size()-1;
+  unsigned int last_index = size() - 1;
 
   while (i < last_index) { // for every unchecked constraint
     // if it is redundant

@@ -389,10 +389,10 @@ Bundle Bundle::get_canonical() const
 Bundle &Bundle::canonize()
 {
 
-  if (this->size()==0) {
+  if (this->size() == 0) {
     return *this;
   }
-  
+
   // if the bundle is empty
   if (is_empty()) {
     return *this;
@@ -416,18 +416,18 @@ bool Bundle::is_empty() const
 {
   Polytope bund = *this;
   auto test_status = bund.minimize(this->_directions[0]).status();
-  
+
   return (test_status == GLP_NOFEAS) || (test_status == GLP_INFEAS);
 }
 
 /**
  * @brief Test whether a bundle is subset of another bundle
  *
- * This method tests whether the current object is subset 
+ * This method tests whether the current object is subset
  * of a bundle.
- * 
- * @param[in] bundle is the tested bundle 
- * @return `true` if and only if the current bundle is a 
+ *
+ * @param[in] bundle is the tested bundle
+ * @return `true` if and only if the current bundle is a
  *         subset of `bundle`
  */
 bool Bundle::is_subset_of(const Bundle &bundle) const
@@ -469,13 +469,13 @@ bool Bundle::is_subset_of(const Bundle &bundle) const
 }
 
 /**
- * @brief Check whether a bundle satisfies a linear system 
- * 
- * This method checks whether all the points in the 
+ * @brief Check whether a bundle satisfies a linear system
+ *
+ * This method checks whether all the points in the
  * current object are solutions for a linear system.
- * 
+ *
  * @param ls is the considered linear system
- * @return `true` if and only if all the points of 
+ * @return `true` if and only if all the points of
  *          the current bundle are solutions for `ls`
  */
 bool Bundle::satisfies(const LinearSystem &ls) const

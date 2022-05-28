@@ -510,9 +510,9 @@ DynamicalSystem<double>::transform(const Bundle &bundle,
 }
 
 SetsUnion<Polytope> synthesize(const DynamicalSystem<double> &ds,
-                          const Bundle &bundle,
-                          const SetsUnion<Polytope> &parameter_set,
-                          const std::shared_ptr<STL::Atom> atom)
+                               const Bundle &bundle,
+                               const SetsUnion<Polytope> &parameter_set,
+                               const std::shared_ptr<STL::Atom> atom)
 {
   using namespace std;
   using namespace SymbolicAlgebra;

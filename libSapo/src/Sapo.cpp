@@ -3,12 +3,12 @@
  * @author Tommaso Dreossi (tommasodreossi@berkeley.edu)
  * @author Alberto Casagrande (acasagrande@units.it)
  * @brief Core of Sapo tool
- * 
+ *
  * @version 0.3
  * @date 2022-04-12
- * 
+ *
  * @copyright Copyright (c) 2015-2022
- * 
+ *
  */
 
 #include "Sapo.h"
@@ -416,8 +416,9 @@ synthesize_list(const Sapo &sapo, const Bundle &init_set,
   // close the batch
   thread_pool.close_batch(batch_id);
 
-  return std::list<SetsUnion<Polytope>>(std::make_move_iterator(vect_res.begin()),
-                                   std::make_move_iterator(vect_res.end()));
+  return std::list<SetsUnion<Polytope>>(
+      std::make_move_iterator(vect_res.begin()),
+      std::make_move_iterator(vect_res.end()));
 
 #else  // WITH_THREADS
   std::list<SetsUnion<Polytope>> results;
@@ -560,9 +561,10 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
  * @param[in,out] accounter accounts for the computation progress
  * @returns a parameter set refined according with `formula`
  */
-SetsUnion<Polytope> Sapo::synthesize(Bundle init_set, const SetsUnion<Polytope> &pSet,
-                                const std::shared_ptr<STL::STL> formula,
-                                ProgressAccounter *accounter) const
+SetsUnion<Polytope> Sapo::synthesize(Bundle init_set,
+                                     const SetsUnion<Polytope> &pSet,
+                                     const std::shared_ptr<STL::STL> formula,
+                                     ProgressAccounter *accounter) const
 {
   (void)accounter;
   if (this->assumptions.size() > 0) {
@@ -614,9 +616,9 @@ SetsUnion<Polytope> Sapo::synthesize(Bundle init_set, const SetsUnion<Polytope> 
  * @param[in] sigma STL atomic formula
  * @returns refined parameter set
  */
-SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
-                                const SetsUnion<Polytope> &pSet,
-                                const std::shared_ptr<STL::Atom> atom) const
+SetsUnion<Polytope>
+Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
+                 const std::shared_ptr<STL::Atom> atom) const
 {
   return ::synthesize(this->dynamical_system(), init_set, pSet, atom);
 }
@@ -631,9 +633,9 @@ SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
  * @returns refined parameter set
  */
 SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
-                                const SetsUnion<Polytope> &pSet,
-                                const std::shared_ptr<STL::Until> formula,
-                                const int time) const
+                                     const SetsUnion<Polytope> &pSet,
+                                     const std::shared_ptr<STL::Until> formula,
+                                     const int time) const
 {
   const TimeInterval &t_interval = formula->time_bounds();
 
@@ -686,10 +688,10 @@ SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
  * @param[in] time is the time of the current evaluation
  * @returns refined parameter set
  */
-SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
-                                const SetsUnion<Polytope> &pSet,
-                                const std::shared_ptr<STL::Always> formula,
-                                const int time) const
+SetsUnion<Polytope>
+Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
+                 const std::shared_ptr<STL::Always> formula,
+                 const int time) const
 {
   const TimeInterval &t_interval = formula->time_bounds();
 
