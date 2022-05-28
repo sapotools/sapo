@@ -21,7 +21,7 @@
 #include "Eventually.h"
 #include "Flowpipe.h"
 #include "Polytope.h"
-#include "PolytopesUnion.h"
+#include "SetsUnion.h"
 #include "Model.h"
 #include "STL.h"
 #include "Until.h"
@@ -60,12 +60,12 @@ private:
    * @returns a refined sets of parameters
    */
   template<typename T>
-  PolytopesUnion transition_and_synthesis(Bundle init_set,
-                                          const PolytopesUnion &pSet,
+  SetsUnion<Polytope> transition_and_synthesis(Bundle init_set,
+                                          const SetsUnion<Polytope> &pSet,
                                           const std::shared_ptr<T> formula,
                                           const int time) const
   {
-    PolytopesUnion result;
+    SetsUnion<Polytope> result;
 
     // init_set.intersect(this->assumptions);
 
@@ -90,7 +90,7 @@ private:
    * @param[in] formula is an STL atomic formula providing the specification
    * @returns refined parameter set
    */
-  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
                             const std::shared_ptr<STL::Atom> formula) const;
 
   /**
@@ -101,8 +101,8 @@ private:
    * @param[in] conj is an STL conjunction providing the specification
    * @returns refined parameter set
    */
-  PolytopesUnion
-  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+  SetsUnion<Polytope>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
              const std::shared_ptr<STL::Conjunction> formula) const;
 
   /**
@@ -113,8 +113,8 @@ private:
    * @param[in] conj is an STL disjunction providing the specification
    * @returns refined parameter set
    */
-  PolytopesUnion
-  synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+  SetsUnion<Polytope>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
              const std::shared_ptr<STL::Disjunction> formula) const;
 
   /**
@@ -126,7 +126,7 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
                             const std::shared_ptr<STL::Until> formula,
                             const int time) const;
 
@@ -139,7 +139,7 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
                             const std::shared_ptr<STL::Always> formula,
                             const int time) const;
   /**
@@ -151,7 +151,7 @@ private:
    * specification
    * @returns refined parameter set
    */
-  PolytopesUnion synthesize(const Bundle &reachSet, const PolytopesUnion &pSet,
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
                             const std::shared_ptr<STL::Eventually> ev) const;
 
 public:
@@ -192,7 +192,7 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(Bundle init_set, const PolytopesUnion &pSet, unsigned int k,
+  Flowpipe reach(Bundle init_set, const SetsUnion<Polytope> &pSet, unsigned int k,
                  ProgressAccounter *accounter = NULL) const;
 
   /**
@@ -204,7 +204,7 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns a parameter set refined according with `formula`
    */
-  PolytopesUnion synthesize(Bundle init_set, const PolytopesUnion &pSet,
+  SetsUnion<Polytope> synthesize(Bundle init_set, const SetsUnion<Polytope> &pSet,
                             const std::shared_ptr<STL::STL> formula,
                             ProgressAccounter *accounter = NULL) const;
 
@@ -221,12 +221,30 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns the list of refined parameter sets
    */
-  std::list<PolytopesUnion>
-  synthesize(Bundle init_set, const PolytopesUnion &pSet,
+  std::list<SetsUnion<Polytope>>
+  synthesize(Bundle init_set, const SetsUnion<Polytope> &pSet,
              const std::shared_ptr<STL::STL> formula,
              const unsigned int max_splits,
              const unsigned int num_of_pre_splits = 0,
              ProgressAccounter *accounter = NULL) const;
 };
+
+/**
+ * Test whether all the sets in a list are empty
+ *
+ * @param[in] sets ia a list of sets
+ * @returns `true` if and only if all the sets in `sets` are empty
+ */
+template<class T>
+bool every_set_is_empty(const std::list<T> &sets)
+{
+  for (auto s_it = std::begin(sets); s_it != std::end(sets); ++s_it) {
+    if (!s_it->is_empty()) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 #endif /* SAPO_H_ */

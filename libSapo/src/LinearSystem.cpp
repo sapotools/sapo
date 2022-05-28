@@ -517,22 +517,21 @@ bool LinearSystem::constraint_is_redundant(const unsigned int i) const
  */
 LinearSystem &LinearSystem::simplify()
 {
-  if (size() == 0) {
-    return *this;
-  }
+  unsigned int i = 0;
+  unsigned int last_index = size()-1;
 
-  unsigned int i = 0, last_non_redundant = size() - 1;
-
-  while (i < last_non_redundant) { // for every unchecked constraint
-
+  while (i < last_index) { // for every unchecked constraint
     // if it is redundant
     if (constraint_is_redundant(i)) {
-      // swap it with the last non-reduntant constraint
-      std::swap(_A[i], _A[last_non_redundant]);
-      std::swap(_b[i], _b[last_non_redundant]);
+      // swap it with the last constraint
+      std::swap(_A[i], _A[last_index]);
+      std::swap(_b[i], _b[last_index]);
 
-      // decrease the number of the non-reduntant constraints
-      last_non_redundant--;
+      // remove the redundant constraint
+      _A.resize(last_index);
+      _b.resize(last_index);
+
+      --last_index;
     } else { // otherwise, i.e. if it is not redundant
 
       // increase the index of the next constraint to be checked
@@ -540,15 +539,10 @@ LinearSystem &LinearSystem::simplify()
     }
   }
 
-  // if the last constraint to be checked is redundant
-  if (constraint_is_redundant(last_non_redundant)) {
-    // reduce the number of non-reduntant constraints
-    last_non_redundant--;
+  if (constraint_is_redundant(last_index)) {
+    _A.resize(last_index);
+    _b.resize(last_index);
   }
-
-  // remove the redundant constraints that are at the end of the system
-  _A.resize(last_non_redundant + 1);
-  _b.resize(last_non_redundant + 1);
 
   return *this;
 }
@@ -558,7 +552,7 @@ LinearSystem &LinearSystem::simplify()
  */
 LinearSystem LinearSystem::get_simplified() const
 {
-  LinearSystem simplier(*this);
+  LinearSystem simpler(*this);
 
-  return simplier.simplify();
+  return simpler.simplify();
 }

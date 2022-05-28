@@ -298,10 +298,10 @@ std::vector<Expression<>> &compose_dynamics(const std::vector<Symbol<>>& variabl
   return dynamics;
 }
 
-PolytopesUnion getParameterSet(const InputData &id)
+SetsUnion<Polytope> getParameterSet(const InputData &id)
 {
   if (id.paramDirectionsNum() == 0) {
-    return PolytopesUnion();
+    return SetsUnion<Polytope>();
   }
 
   vector<vector<double>> pA(2 * id.paramDirectionsNum(),
@@ -319,7 +319,7 @@ PolytopesUnion getParameterSet(const InputData &id)
     pb[2 * i + 1] = -id.getParamDirection(i)->getLB();
   }
 
-  return PolytopesUnion(Polytope(pA, pb));
+  return SetsUnion<Polytope>(Polytope(pA, pb));
 }
 
 
@@ -396,7 +396,7 @@ Model get_model(const InputData &id)
 
   Bundle init_set = getBundle(id);
 
-  PolytopesUnion param_set = getParameterSet(id);
+  SetsUnion<Polytope> param_set = getParameterSet(id);
 
   Model model(variables, parameters, dynamics, init_set, param_set);
 

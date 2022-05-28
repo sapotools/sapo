@@ -16,6 +16,8 @@
 #include "Bundle.h"
 #include "SymbolicAlgebra.h"
 #include "Polytope.h"
+#include "SetsUnion.h"
+
 #include "LinearAlgebraIO.h"
 
 #include "STL/Atom.h"
@@ -451,9 +453,9 @@ public:
  *         system when the parameters are in the returned set
  *         satisfies the atomic formula
  */
-PolytopesUnion synthesize(const DynamicalSystem<double> &ds,
-                          const Bundle &bundle,
-                          const PolytopesUnion &parameter_set,
-                          const std::shared_ptr<STL::Atom> atom);
+SetsUnion<Polytope> synthesize(const DynamicalSystem<double> &ds,
+                              const Bundle &bundle,
+                              const SetsUnion<Polytope> &parameter_set,
+                              const std::shared_ptr<STL::Atom> atom);
 
 #endif // DYNAMICS_H_

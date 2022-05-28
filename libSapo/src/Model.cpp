@@ -11,14 +11,14 @@
 Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
              const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
              const Bundle &init_set, const std::string name):
-    Model(variables, {}, dynamics, init_set, PolytopesUnion(), name)
+    Model(variables, {}, dynamics, init_set, SetsUnion<Polytope>(), name)
 {
 }
 
 Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
              const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
              const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-             const Bundle &init_set, const PolytopesUnion &parameter_set,
+             const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
              const std::string name):
     Model(DynamicalSystem<double>(variables, parameters, dynamics), init_set,
           parameter_set, name)
@@ -26,7 +26,7 @@ Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
 }
 
 Model::Model(const DynamicalSystem<double> &dynamical_system,
-             const Bundle &init_set, const PolytopesUnion &parameter_set,
+             const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
              const std::string name):
     _dynamical_system(dynamical_system),
     _init_set(std::make_shared<Bundle>(init_set)), _param_set(parameter_set),

@@ -1,8 +1,21 @@
-#ifndef OUTPUTFORMATTER_H_
-#define OUTPUTFORMATTER_H_
+/**
+ * @file OutputFormater.h
+ * @author Alberto Casagrande (acasagrande@units.it)
+ * @brief Format the sapo application output
+ * @version 0.1
+ * @date 2022-04-12
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+#ifndef OUTPUTFORMATER_H_
+#define OUTPUTFORMATER_H_
 
 #include <algorithm>
 #include <string>
+
+#include <Flowpipe.h>
+#include <SetsUnion.h>
 
 /**
  * @brief A formatter class
@@ -10,13 +23,13 @@
  * @tparam T the output stream type
  */
 template<typename T>
-class OutputFormatter
+class OutputFormater
 {
 public:
   /**
    * @brief The constructor
    */
-  OutputFormatter() {}
+  OutputFormater() {}
 
   /**
    * @brief Get a field header
@@ -243,7 +256,7 @@ public:
  * @brief The formatter class specialization for standard output streams
  */
 template<>
-class OutputFormatter<std::ostream>
+class OutputFormater<std::ostream>
 {
 public:
   /**
@@ -477,13 +490,13 @@ class ostream;
  * @brief The formatter class specialization for JSON output streams
  */
 template<>
-class OutputFormatter<JSON::ostream>
+class OutputFormater<JSON::ostream>
 {
 public:
   /**
    * @brief Constructor
    */
-  OutputFormatter() {}
+  OutputFormater() {}
 
   /**
    * @brief Get a field header
@@ -530,7 +543,7 @@ public:
    */
   static std::string sequence_begin()
   {
-    return OutputFormatter<JSON::ostream>::list_begin();
+    return OutputFormater<JSON::ostream>::list_begin();
   }
 
   /**
@@ -542,7 +555,7 @@ public:
    */
   static std::string sequence_end()
   {
-    return OutputFormatter<JSON::ostream>::list_end();
+    return OutputFormater<JSON::ostream>::list_end();
   }
 
   /**
@@ -552,7 +565,7 @@ public:
    */
   static std::string sequence_separator()
   {
-    return OutputFormatter<JSON::ostream>::list_separator();
+    return OutputFormater<JSON::ostream>::list_separator();
     ;
   }
 
@@ -597,7 +610,7 @@ public:
    */
   static std::string short_list_begin()
   {
-    return OutputFormatter<JSON::ostream>::list_begin();
+    return OutputFormater<JSON::ostream>::list_begin();
   }
 
   /**
@@ -609,7 +622,7 @@ public:
    */
   static std::string short_list_end()
   {
-    return OutputFormatter<JSON::ostream>::list_end();
+    return OutputFormater<JSON::ostream>::list_end();
   }
 
   /**
@@ -619,7 +632,7 @@ public:
    */
   static std::string short_list_separator()
   {
-    return OutputFormatter<JSON::ostream>::list_separator();
+    return OutputFormater<JSON::ostream>::list_separator();
   }
 
   /**
@@ -631,8 +644,8 @@ public:
    */
   static std::string empty_list()
   {
-    return (OutputFormatter<JSON::ostream>::list_begin()
-            + OutputFormatter<JSON::ostream>::list_end());
+    return (OutputFormater<JSON::ostream>::list_begin()
+            + OutputFormater<JSON::ostream>::list_end());
   }
 
   /**
@@ -644,7 +657,7 @@ public:
    */
   static std::string set_begin()
   {
-    return OutputFormatter<JSON::ostream>::list_begin();
+    return OutputFormater<JSON::ostream>::list_begin();
   }
 
   /**
@@ -656,7 +669,7 @@ public:
    */
   static std::string set_end()
   {
-    return OutputFormatter<JSON::ostream>::list_end();
+    return OutputFormater<JSON::ostream>::list_end();
   }
 
   /**
@@ -666,7 +679,7 @@ public:
    */
   static std::string set_separator()
   {
-    return OutputFormatter<JSON::ostream>::list_separator();
+    return OutputFormater<JSON::ostream>::list_separator();
   }
 
   /**
@@ -678,8 +691,8 @@ public:
    */
   static std::string empty_set()
   {
-    return OutputFormatter<JSON::ostream>::set_begin()
-           + OutputFormatter<JSON::ostream>::set_end();
+    return OutputFormater<JSON::ostream>::set_begin()
+           + OutputFormater<JSON::ostream>::set_end();
   }
 
   /**
@@ -707,4 +720,58 @@ public:
   }
 };
 
-#endif // OUTPUTFORMATTER_H_
+/**
+ * @brief Print a sets union in a stream
+ *
+ * @tparam OSTREAM is the output stream type
+ * @param os is the output stream
+ * @param set_union is the set union to be printed
+ * @return a reference to the output stream
+ */
+template<typename OSTREAM, class SET_TYPE>
+OSTREAM &operator<<(OSTREAM &os, const SetsUnion<SET_TYPE> &set_union)
+{
+  using OF = OutputFormater<OSTREAM>;
+
+  if (set_union.size() == 0) {
+    os << OF::empty_set();
+  } else {
+    os << OF::set_begin();
+    for (auto it = std::cbegin(set_union); it != std::cend(set_union); ++it) {
+      if (it != std::cbegin(set_union)) {
+        os << OF::set_separator();
+      }
+      os << *it;
+    }
+
+    os << OF::set_end();
+  }
+
+  return os;
+}
+
+/**
+ * Stream a flowpipe
+ *
+ * @param[in] os is the output stream
+ * @param[in] fp is the flowpipe to be streamed
+ * @return the output stream
+ */
+template<typename OSTREAM>
+OSTREAM &operator<<(OSTREAM &os, const Flowpipe &fp)
+{
+  using OF = OutputFormater<OSTREAM>;
+
+  os << OF::sequence_begin();
+  for (auto it = std::cbegin(fp); it != std::cend(fp); ++it) {
+    if (it != std::cbegin(fp)) {
+      os << OF::sequence_separator();
+    }
+    os << *it;
+  }
+  os << OF::sequence_end();
+
+  return os;
+}
+
+#endif // OUTPUTFORMATER_H_

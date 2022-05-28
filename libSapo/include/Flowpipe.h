@@ -16,8 +16,7 @@
 #include <vector>
 
 #include "Bundle.h"
-#include "PolytopesUnion.h"
-#include "OutputFormatter.h"
+#include "SetsUnion.h"
 
 /**
  * @brief A representation for reachability flowpipe
@@ -25,7 +24,7 @@
  * This class represents reachability flowpipe as
  * a sequence of polytope union.
  */
-class Flowpipe : public std::vector<PolytopesUnion>
+class Flowpipe : public std::vector<SetsUnion<Polytope>>
 {
 
 public:
@@ -34,8 +33,8 @@ public:
    */
   Flowpipe();
 
-  const PolytopesUnion &
-  get(const unsigned int i) const; // get i-th PolytopesUnion
+  const SetsUnion<Polytope> &
+  get(const unsigned int i) const; // get i-th polytopes union
 
   /**
    * Append a polytopes union to the flowpipe
@@ -43,9 +42,9 @@ public:
    * @param[in] Pu is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  inline Flowpipe &push_back(const PolytopesUnion &Pu)
+  inline Flowpipe &push_back(const SetsUnion<Polytope> &Pu)
   {
-    std::vector<PolytopesUnion>::push_back(Pu);
+    std::vector<SetsUnion<Polytope>>::push_back(Pu);
 
     return *this;
   }
@@ -56,9 +55,9 @@ public:
    * @param[in] Pu is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  inline Flowpipe &push_back(PolytopesUnion &&Pu)
+  inline Flowpipe &push_back(SetsUnion<Polytope> &&Pu)
   {
-    std::vector<PolytopesUnion>::push_back(std::move(Pu));
+    std::vector<SetsUnion<Polytope>>::push_back(std::move(Pu));
 
     return *this;
   }
@@ -82,30 +81,6 @@ public:
    * @returns number of variables stored in the flowpipe
    */
   unsigned int dim() const;
-
-  /**
-   * Stream a flowpipe
-   *
-   * @param[in] os is the output stream
-   * @param[in] fp is the flowpipe to be streamed
-   * @return the output stream
-   */
-  template<typename OSTREAM>
-  friend OSTREAM &operator<<(OSTREAM &os, const Flowpipe &fp)
-  {
-    using OF = OutputFormatter<OSTREAM>;
-
-    os << OF::sequence_begin();
-    for (auto it = std::cbegin(fp); it != std::cend(fp); ++it) {
-      if (it != std::cbegin(fp)) {
-        os << OF::sequence_separator();
-      }
-      os << *it;
-    }
-    os << OF::sequence_end();
-
-    return os;
-  }
 };
 
-#endif /* BUNDLE_H_ */
+#endif /* FLOWPIPE_H_ */

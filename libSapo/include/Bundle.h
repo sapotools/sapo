@@ -18,9 +18,7 @@
 #include "LinearAlgebra.h"
 #include "BaseConverter.h"
 #include "Polytope.h"
-#include "PolytopesUnion.h"
 #include "Parallelotope.h"
-#include "VarsGenerator.h"
 
 #include "STL/Atom.h"
 

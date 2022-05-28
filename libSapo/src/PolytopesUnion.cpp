@@ -1,261 +1,41 @@
 /**
  * @file PolytopesUnion.cpp
- * Represent and manipulate a set of polytopes
- * It can be used to represent a symbolic union of polytopes
- *
- * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Alberto Casagrande (acasagrande@units.it)
+ * @brief Simplify polytopes union representations
  * @version 0.1
+ * @date 2022-05-28
+ * 
+ * @copyright Copyright (c) 2022
  */
 
-#include "PolytopesUnion.h"
+#include "Polytope.h"
+#include "SetsUnion.h"
 
-#ifdef WITH_THREADS
-#include <mutex>
-#include <shared_mutex>
-
-#include "SapoThreads.h"
-#endif // WITH_THREADS
-
-using namespace std;
-
-PolytopesUnion::PolytopesUnion() {}
-
-PolytopesUnion::PolytopesUnion(const Polytope &P)
-{
-  if (!P.is_empty()) {
-    this->push_back(P);
-
-    this->back().simplify();
-  }
-}
-
-PolytopesUnion::PolytopesUnion(Polytope &&P)
-{
-  if (!P.is_empty()) {
-    P.simplify();
-    this->push_back(P);
-  }
-}
-
-/**
- * A copy constructor for a polytopes union
- *
- * @param[in] orig a polytopes union
- */
-PolytopesUnion::PolytopesUnion(const PolytopesUnion &orig):
-    std::vector<Polytope>(orig)
-{
-}
-
-PolytopesUnion::PolytopesUnion(PolytopesUnion &&orig)
-{
-  std::swap(*(static_cast<std::vector<Polytope> *>(this)),
-            *(static_cast<std::vector<Polytope> *>(&orig)));
-}
-
-PolytopesUnion &PolytopesUnion::operator=(const PolytopesUnion &orig)
-{
-  resize(0);
-
-  for (auto it = std::cbegin(orig); it != std::cend(orig); ++it) {
-    this->push_back(*it);
-  }
-
-  return *this;
-}
-
-PolytopesUnion &PolytopesUnion::operator=(PolytopesUnion &&orig)
-{
-  std::swap(*(static_cast<std::vector<Polytope> *>(this)),
-            *(static_cast<std::vector<Polytope> *>(&orig)));
-
-  return *this;
-}
-
-bool PolytopesUnion::any_includes(const Polytope &P) const
-{
-
-#ifdef WITH_THREADS
-  class ThreadResult
-  {
-    mutable std::shared_timed_mutex mutex;
-    bool value;
-
-  public:
-    ThreadResult(): value(false) {}
-
-    bool get() const
-    {
-      std::shared_lock<std::shared_timed_mutex> rlock(mutex);
-
-      return value;
-    }
-
-    void set(const bool &value)
-    {
-      std::unique_lock<std::shared_timed_mutex> wlock(mutex);
-
-      this->value = value;
-    }
-  };
-
-  ThreadResult result;
-
-  auto check_and_update = [&result, &P](const Polytope &P1) {
-    if (!result.get() && P.is_subset_of(P1)) {
-      result.set(true);
-    }
-  };
-
-  ThreadPool::BatchId batch_id = thread_pool.create_batch();
-
-  for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-    // submit the task to the thread pool
-    thread_pool.submit_to_batch(batch_id, check_and_update, std::ref(*it));
-  }
-
-  // join to the pool threads
-  thread_pool.join_threads(batch_id);
-
-  // close the batch
-  thread_pool.close_batch(batch_id);
-
-  return result.get();
-#else  // WITH_THREADS
-  for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-    if (P.is_subset_of(*this)) {
-      return true;
-    }
-  }
-
-  return false;
-#endif // WITH_THREADS
-}
-
-PolytopesUnion &PolytopesUnion::add(const Polytope &P)
-{
-  if (size() != 0 && (front().dim() != P.dim())) {
-    std::cerr << "Adding to a polytopes union a "
-              << "polytope having a different dimension" << std::endl;
-  }
-
-  if (P.is_empty()) {
-    return *this;
-  }
-
-  // check whether P includes any of the polytopes in the union
-  for (auto p_it = std::begin(*this); p_it != std::end(*this); ++p_it) {
-    if (p_it->includes(P)) {
-      return *this;
-    }
-    if (P.includes(*p_it)) {
-
-      // if this is the case, replace that polytope by P
-      *p_it = P;
-
-      // return the updated union
-      return *this;
-    }
-  }
-
-  // if P does not includes any polytope in the
-  // union append P to the union itself
-  this->push_back(P);
-
-  return *this;
-}
-
-PolytopesUnion &PolytopesUnion::add(Polytope &&P)
-{
-  if (size() != 0 && (front().dim() != P.dim())) {
-    std::cerr << "Adding to a polytopes union a "
-              << "polytope having a different dimension" << std::endl;
-  }
-
-  if (P.is_empty()) {
-    return *this;
-  }
-
-  // check whether P includes any of the polytopes in the union
-  for (auto p_it = std::begin(*this); p_it != std::end(*this); ++p_it) {
-    if (p_it->includes(P)) {
-      return *this;
-    }
-    if (P.includes(*p_it)) {
-
-      // if this is the case, replace that polytope by P
-      *p_it = std::move(P);
-
-      // return the updated union
-      return *this;
-    }
-  }
-
-  // if P does not includes any polytope in the
-  // union append P to the union itself
-  this->push_back(std::move(P));
-
-  return *this;
-}
-
-PolytopesUnion &PolytopesUnion::simplify()
+SetsUnion<Polytope> &simplify(SetsUnion<Polytope> &polytope_union)
 {
 #ifdef WITH_THREADS
-  class ThreadResult
-  {
-    mutable std::shared_timed_mutex mutex;
-    unsigned int non_empty;
-    std::map<unsigned int, unsigned int> new_position;
 
-  public:
-    ThreadResult(): non_empty(0) {}
-
-    unsigned int get_non_empty() const
-    {
-      std::shared_lock<std::shared_timed_mutex> read_lock(mutex);
-
-      return non_empty;
-    }
-
-    void set_non_empty(const unsigned int &index)
-    {
-      std::unique_lock<std::shared_timed_mutex> write_lock(mutex);
-
-      this->new_position[non_empty++] = index;
-    }
-
-    unsigned int old_pos(const unsigned int &new_index) const
-    {
-      std::shared_lock<std::shared_timed_mutex> read_lock(mutex);
-
-      return this->new_position.at(new_index);
-    }
-  };
-
-  if (size() < 2) { // if the union consists in less than 2 polytopes, use the
-                    // non-threaded version to avoid the overhead.
-    for (auto it = std::begin(*this); it != std::end(*this); ++it) {
+  if (polytope_union.size() < 2) { // if the union consists in less 
+                                   // than two polytopes, use the
+                                   // non-threaded version to avoid
+                                   // the thread overhead
+    for (auto it = std::begin(polytope_union); 
+              it != std::end(polytope_union); ++it) {
       it->simplify();
     }
 
-    return *this;
+    return polytope_union;
   }
 
-  ThreadResult result;
-  auto test_emptiness_and_simplify
-      = [&result](Polytope &P, const unsigned int i) {
-          if (!P.is_empty()) {
-            P.simplify();
-            result.set_non_empty(i);
-          }
-        };
+  auto simplify_polytope = [](Polytope &P) { P.simplify(); };
 
   ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
-  for (unsigned int i = 0; i < size(); ++i) {
+  for (auto it = std::begin(polytope_union); 
+            it != std::end(polytope_union); ++it) {
     // submit the task to the thread pool
-    thread_pool.submit_to_batch(batch_id, test_emptiness_and_simplify,
-                                std::ref((*this)[i]), i);
+    thread_pool.submit_to_batch(batch_id, simplify_polytope,
+                                std::ref(*it));
   }
 
   // join to the pool threads
@@ -264,137 +44,12 @@ PolytopesUnion &PolytopesUnion::simplify()
   // close the batch
   thread_pool.close_batch(batch_id);
 
-  PolytopesUnion Pu;
-  for (unsigned int i = 0; i < result.get_non_empty(); ++i) {
-    Pu.push_back((*this)[result.old_pos(i)]);
-  }
-
-  std::swap(Pu, *this);
-
 #else  // WITH_THREADS
-  for (auto it = std::begin(*this); it != std::end(*this); ++it) {
+  for (auto it = std::begin(polytope_union); 
+            it != std::end(polytope_union); ++it) {
     it->simplify();
   }
 #endif // WITH_THREADS
 
-  return *this;
-}
-
-PolytopesUnion intersect(const PolytopesUnion &A, const PolytopesUnion &B)
-{
-  PolytopesUnion result;
-
-  for (auto t_it = std::begin(A); t_it != std::end(A); ++t_it) {
-    for (auto s_it = std::begin(B); s_it != std::end(B); ++s_it) {
-      Polytope I = intersect(*t_it, *s_it);
-
-      if (!I.is_empty()) {
-        result.add(I);
-      }
-    }
-  }
-
-  return result;
-}
-
-PolytopesUnion intersect(const PolytopesUnion &A, const Polytope &B)
-{
-  PolytopesUnion result;
-
-  for (auto t_it = std::begin(A); t_it != std::end(A); ++t_it) {
-    Polytope I = intersect(*t_it, B);
-
-    if (!I.is_empty()) {
-      result.add(I);
-    }
-  }
-
-  return result;
-}
-
-PolytopesUnion &PolytopesUnion::add(const PolytopesUnion &Pu)
-{
-  for (auto it = std::cbegin(Pu); it != std::cend(Pu); ++it) {
-    this->add(*it);
-  }
-
-  return *this;
-}
-
-PolytopesUnion unite(const PolytopesUnion &A, const PolytopesUnion &B)
-{
-  return PolytopesUnion(A).add(B);
-}
-
-PolytopesUnion &PolytopesUnion::add(PolytopesUnion &&Pu)
-{
-  for (auto it = std::begin(Pu); it != std::end(Pu); ++it) {
-    this->add(*it);
-  }
-
-  return *this;
-}
-
-PolytopesUnion unite(const Polytope &A, const Polytope &B)
-{
-  PolytopesUnion result(A);
-
-  result.add(B);
-
-  return result;
-}
-
-/**
- * Sum of volumes of boxes containing the sets
- *
- * @returns sum of bounding boxes
- */
-double PolytopesUnion::volume_of_bounding_boxes() const
-{
-
-  double vol = 0;
-  for (unsigned int i = 0; i < this->size(); i++) {
-    vol = vol + (*this)[i].bounding_box_volume();
-  }
-  return vol;
-}
-
-unsigned int PolytopesUnion::dim() const
-{
-  if (this->empty()) {
-    return 0;
-  }
-
-  return front().dim();
-}
-
-/**
- * Check if the current set is empty
- *
- * @returns true if the set is empty
- */
-bool PolytopesUnion::is_empty() const
-{
-  if (this->empty()) {
-    return true;
-  }
-
-  for (auto it = std::begin(*this); it != std::end(*this); ++it) {
-    if (!it->is_empty()) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool every_set_is_empty(const std::list<PolytopesUnion> &ps_list)
-{
-  for (auto ps_it = std::begin(ps_list); ps_it != std::end(ps_list); ++ps_it) {
-    if (!ps_it->is_empty()) {
-      return false;
-    }
-  }
-
-  return true;
+  return polytope_union;
 }

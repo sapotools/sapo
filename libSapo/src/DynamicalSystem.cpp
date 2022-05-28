@@ -509,9 +509,9 @@ DynamicalSystem<double>::transform(const Bundle &bundle,
   return res;
 }
 
-PolytopesUnion synthesize(const DynamicalSystem<double> &ds,
+SetsUnion<Polytope> synthesize(const DynamicalSystem<double> &ds,
                           const Bundle &bundle,
-                          const PolytopesUnion &parameter_set,
+                          const SetsUnion<Polytope> &parameter_set,
                           const std::shared_ptr<STL::Atom> atom)
 {
   using namespace std;
@@ -527,7 +527,7 @@ PolytopesUnion synthesize(const DynamicalSystem<double> &ds,
                             "must have the same number of dimensions.");
   }
 
-  PolytopesUnion result = parameter_set;
+  SetsUnion<Polytope> result = parameter_set;
 
   std::vector<Symbol<>> alpha = get_symbol_vector("f", bundle.dim());
 

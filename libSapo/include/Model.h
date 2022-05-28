@@ -13,12 +13,11 @@
 
 #include "SymbolicAlgebra.h"
 #include "Bundle.h"
-#include "PolytopesUnion.h"
+#include "Polytope.h"
+#include "SetsUnion.h"
 #include "STL.h"
 
 #include "DynamicalSystem.h"
-
-#include "LinearAlgebraIO.h"
 
 /**
  * @brief Dynamical system models
@@ -32,7 +31,7 @@ protected:
   DynamicalSystem<double> _dynamical_system; //!< A dynamical system
 
   std::shared_ptr<Bundle> _init_set; //!< The initial set
-  PolytopesUnion _param_set;         //!< The parameter set
+  SetsUnion<Polytope> _param_set;    //!< The parameter set
 
   std::shared_ptr<STL::STL> _spec; //!< a specification
 
@@ -66,7 +65,7 @@ public:
   Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
         const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
         const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-        const Bundle &init_set, const PolytopesUnion &param_set,
+        const Bundle &init_set, const SetsUnion<Polytope> &param_set,
         const std::string name = "Unknown");
 
   /**
@@ -78,7 +77,7 @@ public:
    * @param name is the model name
    */
   Model(const DynamicalSystem<double> &dynamical_system,
-        const Bundle &init_set, const PolytopesUnion &param_set,
+        const Bundle &init_set, const SetsUnion<Polytope> &param_set,
         const std::string name = "Unknown");
 
   /**
@@ -146,7 +145,7 @@ public:
    *
    * @return a reference to the model parameter set
    */
-  inline const PolytopesUnion &parameter_set() const
+  inline const SetsUnion<Polytope> &parameter_set() const
   {
     return this->_param_set;
   }

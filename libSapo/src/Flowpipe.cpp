@@ -11,11 +11,13 @@
 #include <string>
 
 #include "Flowpipe.h"
+#include "Polytope.h"
+#include "SetsUnion.h"
 
 /**
- * Constructor that instantiates Flowpipe
+ * Constructor that instantiates flowpipes
  */
-Flowpipe::Flowpipe(): std::vector<PolytopesUnion>() {}
+Flowpipe::Flowpipe(): std::vector<SetsUnion<Polytope>>() {}
 
 /**
  * Return the i-th polytopes union
@@ -23,7 +25,7 @@ Flowpipe::Flowpipe(): std::vector<PolytopesUnion>() {}
  * @param[in] i index
  * @return i-th polytopes union
  */
-const PolytopesUnion &Flowpipe::get(const unsigned int i) const
+const SetsUnion<Polytope> &Flowpipe::get(const unsigned int i) const
 {
   if (i >= this->size()) {
     std::domain_error("Flowpipe::get: i must be included in [0,"
