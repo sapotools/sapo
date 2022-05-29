@@ -76,7 +76,7 @@ private:
       // guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
 
-      result.add(synthesize(reached_set, pSet, formula, time + 1));
+      result.update(synthesize(reached_set, pSet, formula, time + 1));
     }
 
     return result;
@@ -237,7 +237,7 @@ public:
 /**
  * Test whether all the sets in a list are empty
  *
- * @param[in] sets ia a list of sets
+ * @param[in] sets is a list of sets
  * @returns `true` if and only if all the sets in `sets` are empty
  */
 template<class T>

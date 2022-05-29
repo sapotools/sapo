@@ -526,7 +526,7 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
 {
   SetsUnion<Polytope> Pu
       = this->synthesize(init_set, pSet, disj->get_left_subformula());
-  Pu.add(this->synthesize(init_set, pSet, disj->get_right_subformula()));
+  Pu.update(this->synthesize(init_set, pSet, disj->get_right_subformula()));
 
   return Pu;
 }
@@ -668,7 +668,7 @@ SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
 
     SetsUnion<Polytope> result
         = transition_and_synthesis(init_set, P1, formula, time);
-    result.add(
+    result.update(
         this->synthesize(init_set, pSet, formula->get_right_subformula()));
 
     return result;
