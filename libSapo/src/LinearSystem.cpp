@@ -1,10 +1,11 @@
 /**
  * @file LinearSystem.cpp
- * Represent and manipulate a linear system
- * It can be used to represent polytopes (reached states, parameters, etc.)
- *
- * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Linear algebra classes and functions code
  * @version 0.1
+ * @date 2021-11-20
+ *
+ * @copyright Copyright (c) 2021-2022
  */
 
 #include <iostream>

@@ -1,3 +1,13 @@
+/**
+ * @file JSONStreamer.h
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief A JSON streamer definition
+ * @version 0.1
+ * @date 2021-11-06
+ * 
+ * @copyright Copyright (c) 2022
+ */
+
 #ifndef JSONSTREAMER_H_
 #define JSONSTREAMER_H_
 
@@ -9,6 +19,9 @@
 namespace JSON
 {
 
+/**
+ * @brief Define JSON streamer debug and production modalities
+ */
 enum Command { debug, production };
 
 /**
@@ -134,10 +147,10 @@ public:
 }
 
 /**
- * @brief Print a linear system in a JSON stream
+ * @brief Print a vector in a JSON stream
  *
  * @param out is the output JSON stream
- * @param ls is the linear system to be print
+ * @param v is the vector to be print
  * @return a reference to the output JSON stream
  */
 template<typename T>

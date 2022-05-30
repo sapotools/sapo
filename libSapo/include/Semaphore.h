@@ -1,9 +1,11 @@
 /**
  * @file Semaphore.h
- * This file defines Semaphore class.
- *
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief `Semaphore` definition
  * @version 0.1
+ * @date 2021-12-10
+ * 
+ * @copyright Copyright (c) 2021-2022
  */
 
 #ifndef SEMAPHORE_H_

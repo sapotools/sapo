@@ -1,5 +1,5 @@
 /**
- * @file Polytope.h
+ * @file LinearSystem.h
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
  * @brief Represent and manipulate linear systems

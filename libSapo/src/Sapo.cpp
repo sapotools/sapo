@@ -1,7 +1,7 @@
 /**
  * @file Sapo.cpp
  * @author Tommaso Dreossi (tommasodreossi@berkeley.edu)
- * @author Alberto Casagrande (acasagrande@units.it)
+ * @author Alberto Casagrande <acasagrande@units.it>
  * @brief Core of Sapo tool
  *
  * @version 0.3

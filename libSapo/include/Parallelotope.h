@@ -1,9 +1,12 @@
 /**
  * @file Parallelotope.h
- * Represent and manipulate a parallelotope
- *
- * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Tommaso Dreossi (tommasodreossi@berkeley.edu)
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent and manipulate a parallelotope
  * @version 0.1
+ * @date 2015-10-14
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef PARALLELOTOPE_H_

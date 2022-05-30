@@ -1,7 +1,7 @@
 /**
  * @file LinearAlgebra.h
  * @author Alberto Casagrande <acasagrande@units.it>
- * @brief Contains linear algebra classes and functions code
+ * @brief Linear algebra classes and functions code
  * @version 0.1
  * @date 2021-11-20
  *

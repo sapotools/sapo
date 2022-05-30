@@ -1,9 +1,11 @@
 /**
  * @file Polytope.cpp
- * Represent and manipulate polytopes (reached states, parameters, etc.)
- *
- * @author Alberto Casagrande <acasagrande@units.it>
+ * @author <acasagrande@units.it>
+ * @brief  Represent and manipulate polytopes (reached states, parameters, etc.)
  * @version 0.1
+ * @date 2021-11-16
+ * 
+ * @copyright Copyright (c) 2021-2022
  */
 
 #include "Polytope.h"

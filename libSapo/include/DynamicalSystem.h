@@ -1,9 +1,11 @@
 /**
  * @file DynamicalSystem.h
- * Represent dynamic system laws
- *
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Represent dynamic system laws
  * @version 0.1
+ * @date 2022-05-23
+ * 
+ * @copyright Copyright (c) 2022
  */
 
 #ifndef DYNAMICS_H_

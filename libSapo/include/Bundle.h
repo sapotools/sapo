@@ -3,7 +3,6 @@
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
  * @brief Represent and manipulate bundles of parallelotopes
- *        whose intersection represents a polytope
  * @version 0.2
  * @date 2022-05-04
  *

@@ -7,7 +7,6 @@
  * @date 2022-05-04
  *
  * @copyright Copyright (c) 2016-2022
- *
  */
 
 #ifndef FLOWPIPE_H_

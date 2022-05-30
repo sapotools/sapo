@@ -1,7 +1,7 @@
 /**
  * @file LinearAlgebraIO.h
  * @author Alberto Casagrande <acasagrande@units.it>
- * @brief Contains linear algebra print functions
+ * @brief Linear algebra print functions
  * @version 0.1
  * @date 2021-11-26
  *

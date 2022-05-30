@@ -1,6 +1,6 @@
 /**
  * @file PolytopesUnion.h
- * @author Alberto Casagrande (acasagrande@units.it)
+ * @author Alberto Casagrande <acasagrande@units.it>
  * @brief Simplify polytopes union representations
  * @version 0.1
  * @date 2022-05-28

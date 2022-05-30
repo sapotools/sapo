@@ -1,10 +1,11 @@
 /**
  * @file SapoThreads.h
- *
- * An header for the Sapo thread pool.
- *
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief An header for importing the Sapo thread pool
  * @version 0.1
+ * @date 2022-02-17
+ * 
+ * @copyright Copyright (c) 2022
  */
 
 #ifndef SAPOTHREADS_H_

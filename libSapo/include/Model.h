@@ -1,9 +1,12 @@
 /**
  * @file Model.h
- * Represent a discrete-time (eventually parametric) dynamical system
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Discrete-time dynamical models
  * @version 0.1
+ * @date 2015-10-15
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef MODEL_H_

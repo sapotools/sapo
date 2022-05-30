@@ -1,10 +1,12 @@
 /**
  * @file Sapo.h
- * Core of Sapo tool.
- * Here the reachable set and the parameter synthesis are done.
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Sapo analysis methods
  * @version 0.1
+ * @date 2015-10-14
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef SAPO_H_

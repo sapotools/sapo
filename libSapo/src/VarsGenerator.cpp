@@ -1,9 +1,12 @@
 /**
  * @file VarsGenerator.cpp
- * Automatically generate variables.
- *
+ * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
  * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Automatically generate vectors of variables
  * @version 0.1
+ * @date 2015-10-14
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #include "VarsGenerator.h"

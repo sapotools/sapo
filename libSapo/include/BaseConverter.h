@@ -1,9 +1,12 @@
 /**
  * @file BaseConverter.h
- * Convert the basis of the given polynomial
- *
  * @author Tommaso Dreossi <tommasodreossi@berkeley.edu>
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief  Computing Bernstein polynomial basis
  * @version 0.1
+ * @date 2015-10-14
+ * 
+ * @copyright Copyright (c) 2015-2022
  */
 
 #ifndef BASECONVERTER_H_

@@ -1,6 +1,6 @@
 /**
  * @file SetsUnion.h
- * @author Alberto Casagrande (acasagrande@units.it)
+ * @author Alberto Casagrande <acasagrande@units.it>
  * @brief Representing and handling unions of sets
  * @version 0.1
  * @date 2022-05-27

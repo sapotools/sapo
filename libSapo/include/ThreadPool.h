@@ -1,3 +1,13 @@
+/**
+ * @file ThreadPool.h
+ * @author Alberto Casagrande <acasagrande@units.it>
+ * @brief Define and handle pools of threads
+ * @version 0.1
+ * @date 2021-12-10
+ *
+ * @copyright Copyright (c) 2021-2022
+ */
+
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
