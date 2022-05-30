@@ -436,6 +436,76 @@ public:
    */
   Bundle transform(const Bundle &bundle, const Polytope &parameter_set,
                    const transformation_mode t_mode = ALL_FOR_ONE) const;
+
+  /**
+   * @brief Transform a bundles union according with the system dynamics
+   *
+   * @param bundles_union is the set of bundles to be transformed
+   * @param t_mode is the mode used to compute the transformation
+   * @return an over-approximation of set reached from `bundles_union`
+   *         by the dynamic laws
+   */
+  inline SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
+                                     const transformation_mode t_mode
+                                     = ALL_FOR_ONE) const
+  {
+    if (_parameters.size() != 0) {
+      throw std::domain_error("The parameter set has not been specified");
+    }
+
+    return this->transform(bundles_union, Polytope(), t_mode);
+  }
+
+  /**
+   * @brief Transform a bundles union according with the system dynamics
+   *
+   * @param bundles_union is the set of bundles to be transformed
+   * @param parameter_set is the parameter set
+   * @param t_mode is the mode used to compute the transformation
+   * @return an over-approximation of set reached from `bundles_union`
+   *         by the dynamic laws
+   */
+  SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
+                              const Polytope &parameter_set,
+                              const transformation_mode t_mode
+                              = ALL_FOR_ONE) const
+  {
+    SetsUnion<Bundle> result;
+
+    for (auto it = std::begin(bundles_union); it != std::end(bundles_union);
+         ++it) {
+      result.add(transform(*it, parameter_set, t_mode));
+    }
+
+    return result;
+  }
+
+  /**
+   * @brief Transform a bundles union according with the system dynamics
+   *
+   * @param bundles_union is the set of bundles to be transformed
+   * @param parameter_set is the parameter set
+   * @param t_mode is the mode used to compute the transformation
+   * @return an over-approximation of set reached from `bundles_union`
+   *         by the dynamic laws
+   */
+  SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
+                              const SetsUnion<Polytope> &parameter_set,
+                              const transformation_mode t_mode
+                              = ALL_FOR_ONE) const
+  {
+    SetsUnion<Bundle> result;
+
+    for (auto p_it = std::begin(parameter_set);
+         p_it != std::end(parameter_set); ++p_it) {
+      for (auto b_it = std::begin(bundles_union);
+           b_it != std::end(bundles_union); ++b_it) {
+        result.add(transform(*b_it, *p_it, t_mode));
+      }
+    }
+
+    return result;
+  }
 };
 
 /**
