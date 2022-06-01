@@ -4,7 +4,7 @@
  * @brief A JSON streamer definition
  * @version 0.1
  * @date 2021-11-06
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 

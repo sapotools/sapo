@@ -5,7 +5,7 @@
  * @brief Discrete-time dynamical models
  * @version 0.1
  * @date 2015-10-15
- * 
+ *
  * @copyright Copyright (c) 2015-2022
  */
 

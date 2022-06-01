@@ -4,7 +4,7 @@
  * @brief Represent dynamic system laws
  * @version 0.1
  * @date 2022-05-23
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 

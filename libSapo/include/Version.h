@@ -4,7 +4,7 @@
  * @brief Export the `sapo_version` string
  * @version 0.1
  * @date 2021-11-13
- * 
+ *
  * @copyright Copyright (c) 2021-2022
  */
 

@@ -4,7 +4,7 @@
  * @brief An header for importing the Sapo thread pool
  * @version 0.1
  * @date 2022-02-17
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 
