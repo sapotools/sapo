@@ -206,7 +206,6 @@ BOOST_AUTO_TEST_CASE(test_intersect_polytope)
     BOOST_CHECK(pa != p1);
 }
 
-
 BOOST_AUTO_TEST_CASE(test_intersect_with_polytope)
 {
     using namespace LinearAlgebra;
@@ -281,4 +280,48 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_polytope)
     pb.intersect_with(p1);
     BOOST_CHECK(intersect(p1, p6) == pa);
     BOOST_CHECK(pa == pb);
+}
+
+BOOST_AUTO_TEST_CASE(test_over_approximate_union)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0},
+        {0,1},
+        {-1,0},
+        {0,-1}
+    };
+
+    Matrix<double> B = {
+        {1},
+        {-1}
+    };
+
+    Polytope p1(A,{2,3,0,-1}), p2(A, {4,2,-1,0}), p3(A,{5,3,-3,-1.5}),
+             p4(A,{12,3,-10,-1}), p5(A,{14,2,-11,0}), p6(A,{13.5,3.5,-11.5,-2.5}),
+             p7(A,{1.5,2.5,-0.5,-1}), p8(B,{1,-1}), p9(A,{-3,-4,1,0});
+
+    BOOST_CHECK(p1.includes(p7));
+    BOOST_CHECK(p9.is_empty());
+
+    Polytope res = over_approximate_union(p1, p2);
+    
+    BOOST_CHECK(res.includes(p1));
+    BOOST_CHECK(res.includes(p2));
+    BOOST_CHECK(!res.includes(p3));
+
+    res = over_approximate_union(p1, p3);
+
+    BOOST_CHECK(res.includes(p1));
+    BOOST_CHECK(!res.includes(p2));
+    BOOST_CHECK(res.includes(p3));
+
+    res = over_approximate_union(p1, p9);
+
+    BOOST_CHECK(res.includes(p1));
+    BOOST_CHECK(res.includes(p9));
+
+    BOOST_REQUIRE_THROW(over_approximate_union(p1, p8);, std::domain_error);
 }

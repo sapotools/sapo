@@ -1,10 +1,11 @@
 /**
  * @file Polytope.cpp
  * @author <acasagrande@units.it>
- * @brief  Represent and manipulate polytopes (reached states, parameters, etc.)
+ * @brief  Represent and manipulate polytopes (reached states, parameters,
+ * etc.)
  * @version 0.1
  * @date 2021-11-16
- * 
+ *
  * @copyright Copyright (c) 2021-2022
  */
 
@@ -153,6 +154,11 @@ std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
  */
 Polytope &Polytope::intersect_with(const Polytope &P)
 {
+  if (this->dim() != P.dim()) {
+    throw std::domain_error("Intersecting different dimension "
+                            "polytopes");
+  }
+
   for (unsigned int i = 0; i < P.size(); i++) {
     if (!this->satisfies(P._A[i], P._b[i])) {
       (this->_A).push_back(P._A[i]);
@@ -202,4 +208,45 @@ double Polytope::bounding_box_volume() const
   }
 
   return vol;
+}
+
+Polytope over_approximate_union(const Polytope &P1, const Polytope &P2)
+{
+  using namespace LinearAlgebra;
+  using namespace LinearAlgebra::Dense;
+
+  if (P1.dim() != P2.dim()) {
+    throw std::domain_error("over_approximate_union: the two "
+                            "polytopes differ in dimensions");
+  }
+
+  if (P1.is_empty()) {
+    return P2;
+  }
+
+  if (P2.is_empty()) {
+    return P1;
+  }
+
+  Matrix<double> A;
+  Vector<double> b;
+
+  A.reserve(P1.size() + P2.size());
+  b.reserve(P1.size() + P2.size());
+
+  for (unsigned int i = 0; i < P1.size(); ++i) {
+    A.push_back(P1._A[i]);
+    b.push_back(std::max(P2.maximize(A.back()).optimum(), P1._b[i]));
+  }
+
+  for (unsigned int i = 0; i < P2.size(); ++i) {
+    A.push_back(P2._A[i]);
+    b.push_back(std::max(P1.maximize(A.back()).optimum(), P2._b[i]));
+  }
+
+  Polytope res(std::move(A), std::move(b));
+
+  res.simplify();
+
+  return res;
 }

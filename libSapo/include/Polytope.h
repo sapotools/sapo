@@ -1,10 +1,10 @@
 /**
  * @file Polytope.h
  * @author <acasagrande@units.it>
- * @brief  Represent and manipulate polytopes (reached states, parameters, etc.)
+ * @brief  Represent and manipulate polytopes
  * @version 0.1
  * @date 2021-11-16
- * 
+ *
  * @copyright Copyright (c) 2021-2022
  */
 
@@ -234,6 +234,16 @@ public:
    * @return the intersection of the two parameters.
    */
   friend Polytope intersect(const Polytope &P1, const Polytope &P2);
+
+  /**
+   * Compute and over-approximation of the union of two polytopes
+   *
+   * @param[in] P1 is a polytope
+   * @param[in] P2 is a polytope
+   * @return an over-approximation of the union of `P1` and `P2`
+   */
+  friend Polytope over_approximate_union(const Polytope &P1,
+                                         const Polytope &P2);
 };
 
 /**
@@ -257,4 +267,6 @@ SET_TYPE expand(const SET_TYPE &S, const double epsilon)
   return expS;
 }
 
-#endif /* LINEARSYSTEM_H_ */
+Polytope over_approximate_union(const Polytope &P1, const Polytope &P2);
+
+#endif /* POLYTOPE_H_ */
