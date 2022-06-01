@@ -595,6 +595,21 @@ inline SetsUnion<SET_TYPE> make_union(const SetsUnion<SET_TYPE> &A,
  * Compute the union of two sets
  *
  * @tparam SET_TYPE is the set type
+ * @param[in] A is a union of sets
+ * @param[in] B is a set
+ * @return the sets union representing \f$A \cup B\f$
+ */
+template<typename SET_TYPE>
+inline SetsUnion<SET_TYPE> make_union(const SetsUnion<SET_TYPE> &A,
+                                      const SET_TYPE &B)
+{
+  return make_union(A, SetsUnion<SET_TYPE>(B));
+}
+
+/**
+ * Compute the union of two sets
+ *
+ * @tparam SET_TYPE is the set type
  * @param[in] A is a set
  * @param[in] B is a set
  * @return the sets union representing \f$A \cup B\f$
@@ -603,6 +618,101 @@ template<typename SET_TYPE>
 inline SetsUnion<SET_TYPE> make_union(const SET_TYPE &A, const SET_TYPE &B)
 {
   return SetsUnion<SET_TYPE>(A).add(B);
+}
+
+/**
+ * @brief Compute the union of intersecting sets
+ *
+ * This method searches in a container for all the objects
+ * \f$S_1,\ldots,S_n\f$ intersecting a provided set \f$S\f$
+ * and builds the union \f$S \cup \bigcup_{i=1}^{n}S_i\f$.
+ *
+ * The union evaluator is provided as parameter and,
+ * by default, is
+ * `make_union(const SETS_UNION_TYPE &, const SET_TYPE &)`.
+ *
+ * @tparam SETS_UNION_TYPE is the type of the produced union
+ * @tparam SET_TYPE is the type of the sets
+ * @tparam CONTAINER is the type of the considered set container
+ * @param begin_iter is the iterator from which the search begin
+ * @param end_iter is the first iterator that should not be considered
+ * @param set_obj is the set whose intersecting object must be united
+ * @param union_evaluator is the union function
+ * @return the union of the sets between `*begin_iter` and `*end_iter`
+ *       that intersect `set_obj`
+ */
+template<class SETS_UNION_TYPE, class CONTAINER_ITER, class SET_TYPE>
+SETS_UNION_TYPE
+touching_union(const CONTAINER_ITER &begin_iter,
+               const CONTAINER_ITER &end_iter, const SET_TYPE &set_obj,
+               SETS_UNION_TYPE (*union_evaluator)(const SETS_UNION_TYPE &,
+                                                  const SET_TYPE &)
+               = &make_union)
+{
+  SETS_UNION_TYPE res;
+  for (CONTAINER_ITER c_it = begin_iter; c_it != end_iter; ++c_it) {
+    if (!intersect(set_obj, *c_it).is_empty()) {
+      if (res.dim() == 0) {
+        res = *c_it;
+      } else {
+        res = union_evaluator(res, *c_it);
+      }
+    }
+  }
+
+  return res;
+}
+
+/**
+ * @brief Over-approximate the groups of the intersecting sets
+ * in a union representation
+ *
+ * This method over-approximates a union of sets by
+ * over-approximating all the intersecting sets that represent it.
+ * Thus, if set \f$S\f$ in the representation of the union
+ * does intersect the sets \f$S_1,\ldots,S_n\f$ in the same
+ * representation, then the over-approximation of
+ * \f[S \cup \bigcup_{i=1}^n S_i\f] is added to the resulting
+ * union.
+ *
+ * The algorithm guarantees that if the intersection of two sets
+ * in the initial union representation is not empty, then the
+ * resulting union representation contains a set which includes
+ * both of them. Moreover, while some of the sets in the final
+ * representation may have non-null intersections, these
+ * intersections do not intersect the original union of sets.
+ *
+ * Let `U` and `S` be a union of sets and a set, respectively.
+ * If \f$S \subseteq U\f$, then `join(U).any_includes(S)`.
+ *
+ * @tparam SET_TYPE is the set type
+ * @param[in, out] sets_union is the original union of sets
+ * @return a union of the over-approximations of the unions of
+ *         all the groups of intersecting sets in `sets_union`
+ * @todo This method performs \f$O(|\texttt{sets_union}|^2)\f$
+ * unions. While the lower bound for the solved problem seems
+ * to be \f$\Omega(|\texttt{sets_union}|^2)\f$, the execution
+ * time of the method can be improved by reducing the number
+ * of unions to \f$O(|\texttt{sets_union}|)\f$
+ */
+template<class SET_TYPE>
+SetsUnion<SET_TYPE> join(const SetsUnion<SET_TYPE> &sets_union)
+{
+  SetsUnion<SET_TYPE> res;
+  auto s_it = std::begin(sets_union);
+
+  // for each set `*s_it` in `sets_union`
+  for (; s_it != std::end(sets_union); ++s_it) {
+    // compute the union of the sets intersecting *s_it
+    SET_TYPE joint = touching_union<SET_TYPE>(std::begin(sets_union),
+                                              std::end(sets_union), *s_it,
+                                              over_approximate_union);
+
+    // Then, place `joint` into the list `joints`
+    res.add(std::move(joint));
+  }
+
+  return res;
 }
 
 #endif /* SETSUNION_H_ */
