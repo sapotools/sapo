@@ -41,6 +41,8 @@
  */
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
 
+Bundle::Bundle() {}
+
 Bundle::Bundle(const Bundle &orig):
     _directions(orig._directions), _lower_bounds(orig._lower_bounds),
     _upper_bounds(orig._upper_bounds), _templates(orig._templates)
@@ -414,6 +416,10 @@ Bundle &Bundle::canonize()
  */
 bool Bundle::is_empty() const
 {
+  if (size() == 0) {
+    return true;
+  }
+
   Polytope bund = *this;
   auto test_status = bund.minimize(this->_directions[0]).status();
 

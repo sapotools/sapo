@@ -66,6 +66,12 @@ private:
 
 public:
   /**
+   * @brief A constructor
+   *
+   */
+  Bundle();
+
+  /**
    * @brief A copy constructor
    *
    * @param orig is the model for the new object
