@@ -120,6 +120,73 @@ BOOST_AUTO_TEST_CASE(test_includes_polytope)
     BOOST_CHECK(!p6.includes(p1));
 }
 
+BOOST_AUTO_TEST_CASE(test_are_disjoint_polytope)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1},
+        {-1,0,0},
+        {0,-1,0},
+        {0,0,-1}
+    };
+
+    Matrix<double> B = {
+        {1,1},
+        {1,-1},
+    };
+
+    Polytope p1(A,{1,2,3,3,2,1}), p2(A,{1,2,3,0,0,0}), 
+             p3(A,{3,4,5,0,0,0}), p4(A,{3,4,5,-2,-3,-4}), 
+             p5(A,{1,2,3,-3,2,1}), 
+             p6(B,{1,1});
+
+    BOOST_CHECK(!are_disjoint(p1, p1));
+    BOOST_CHECK(!are_disjoint(p1, p2));
+    BOOST_CHECK(!are_disjoint(p1, p3));
+    BOOST_CHECK(are_disjoint(p1, p4));
+    BOOST_CHECK(are_disjoint(p1, p5));
+    BOOST_REQUIRE_THROW(are_disjoint(p1, p6), std::domain_error);
+
+    BOOST_CHECK(!are_disjoint(p2, p1));
+    BOOST_CHECK(!are_disjoint(p2, p2));
+    BOOST_CHECK(!are_disjoint(p2, p3));
+    BOOST_CHECK(are_disjoint(p2, p4));
+    BOOST_CHECK(are_disjoint(p2, p5));
+    BOOST_REQUIRE_THROW(are_disjoint(p2, p6), std::domain_error);
+
+    BOOST_CHECK(!are_disjoint(p3, p1));
+    BOOST_CHECK(!are_disjoint(p3, p2));
+    BOOST_CHECK(!are_disjoint(p3, p3));
+    BOOST_CHECK(!are_disjoint(p3, p4));
+    BOOST_CHECK(are_disjoint(p3, p5));
+    BOOST_REQUIRE_THROW(are_disjoint(p3, p6), std::domain_error);
+
+    BOOST_CHECK(are_disjoint(p4, p1));
+    BOOST_CHECK(are_disjoint(p4, p2));
+    BOOST_CHECK(!are_disjoint(p4, p3));
+    BOOST_CHECK(!are_disjoint(p4, p4));
+    BOOST_CHECK(are_disjoint(p4, p5));
+    BOOST_REQUIRE_THROW(are_disjoint(p4, p6), std::domain_error);
+
+    BOOST_CHECK(are_disjoint(p5, p1));
+    BOOST_CHECK(are_disjoint(p5, p2));
+    BOOST_CHECK(are_disjoint(p5, p3));
+    BOOST_CHECK(are_disjoint(p5, p4));
+    BOOST_CHECK(are_disjoint(p5, p5));
+    BOOST_REQUIRE_THROW(are_disjoint(p5, p6), std::domain_error);
+
+    BOOST_REQUIRE_THROW(are_disjoint(p6, p1), std::domain_error);
+    BOOST_REQUIRE_THROW(are_disjoint(p6, p2), std::domain_error);
+    BOOST_REQUIRE_THROW(are_disjoint(p6, p3), std::domain_error);
+    BOOST_REQUIRE_THROW(are_disjoint(p6, p4), std::domain_error);
+    BOOST_REQUIRE_THROW(are_disjoint(p6, p5), std::domain_error);
+    BOOST_REQUIRE(!are_disjoint(p6, p6));
+}
+
 BOOST_AUTO_TEST_CASE(test_intersect_polytope)
 {
     using namespace LinearAlgebra;

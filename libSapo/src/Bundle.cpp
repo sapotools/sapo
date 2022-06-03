@@ -409,6 +409,104 @@ Bundle &Bundle::canonize()
   return *this;
 }
 
+void _bundle_free_lp_problem(glp_prob *lp, int *ia, int *ja, double *ar)
+{
+  glp_delete_prob(lp);
+  glp_free_env();
+  free(ia);
+  free(ja);
+  free(ar);
+}
+
+bool are_disjoint(const Bundle &A, const Bundle &B)
+{
+  if (A.dim() != B.dim()) {
+    throw std::domain_error("The two bundles must have the "
+                            "same dimension");
+  }
+
+  if (A.dim() == 0) {
+    return false;
+  }
+
+  unsigned int num_rows = A.size() + B.size();
+  unsigned int num_cols = A.dim();
+  unsigned int size_lp = num_rows * num_cols;
+
+  std::vector<double> obj_fun(num_cols, 0);
+  obj_fun[0] = 1;
+
+  int *ia, *ja;
+  double *ar;
+
+  ia = (int *)calloc(size_lp + 1, sizeof(int));
+  ja = (int *)calloc(size_lp + 1, sizeof(int));
+  ar = (double *)calloc(size_lp + 1, sizeof(double));
+
+  glp_prob *lp;
+  lp = glp_create_prob();
+  glp_set_obj_dir(lp, GLP_MAX);
+
+  // Turn off verbose mode
+  glp_smcp lp_param;
+  glp_init_smcp(&lp_param);
+  lp_param.msg_lev = GLP_MSG_ERR;
+
+  glp_add_rows(lp, num_rows);
+  for (unsigned int i = 0; i < A.size(); i++) {
+    if (A.get_lower_bound(i) > A.get_upper_bound(i)) {
+      _bundle_free_lp_problem(lp, ia, ja, ar);
+
+      return true;
+    }
+    glp_set_row_bnds(lp, i + 1, GLP_DB, A.get_lower_bound(i),
+                     A.get_upper_bound(i));
+  }
+  for (unsigned int i = 0; i < B.size(); i++) {
+    if (B.get_lower_bound(i) > B.get_upper_bound(i)) {
+      _bundle_free_lp_problem(lp, ia, ja, ar);
+
+      return true;
+    }
+    glp_set_row_bnds(lp, A.size() + i + 1, GLP_DB, B.get_lower_bound(i),
+                     B.get_upper_bound(i));
+  }
+
+  glp_add_cols(lp, num_cols);
+  for (unsigned int i = 0; i < num_cols; i++) {
+    glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
+    glp_set_obj_coef(lp, i + 1, obj_fun[i]);
+  }
+
+  unsigned int k = 1;
+  for (unsigned int i = 0; i < A.size(); i++) {
+    for (unsigned int j = 0; j < num_cols; j++) {
+      ia[k] = i + 1;
+      ja[k] = j + 1;
+      ar[k] = A.get_direction(i)[j]; /* a[i+1,j+1] = A[i][j] */
+      k++;
+    }
+  }
+  for (unsigned int i = 0; i < B.size(); i++) {
+    for (unsigned int j = 0; j < num_cols; j++) {
+      ia[k] = A.size() + i + 1;
+      ja[k] = j + 1;
+      ar[k] = B.get_direction(i)[j]; /* a[i+1,j+1] = A[i][j] */
+      k++;
+    }
+  }
+
+  glp_load_matrix(lp, size_lp, ia, ja, ar);
+  glp_exact(lp, &lp_param);
+
+  auto status = glp_get_status(lp);
+  bool res = (status == GLP_NOFEAS || status == GLP_INFEAS);
+
+  _bundle_free_lp_problem(lp, ia, ja, ar);
+
+  return res;
+}
+
 /**
  * @brief Test whether the bundle is empty
  *

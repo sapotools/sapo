@@ -247,6 +247,18 @@ public:
 };
 
 /**
+ * @brief Test whether two polytopes are disjoint
+ *
+ * @param P1 is a polytope
+ * @param P2 is a polytope
+ * @return `true` if and only if `P1` and `P2` are disjoint
+ */
+inline bool are_disjoint(const Polytope &P1, const Polytope &P2)
+{
+  return disjoint_solutions(P1, P2);
+}
+
+/**
  * @brief Get the expansion of a linear set
  *
  * This method expands a linear set so that each of its boundaries

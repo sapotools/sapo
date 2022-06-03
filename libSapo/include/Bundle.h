@@ -455,6 +455,15 @@ public:
 };
 
 /**
+ * @brief Test whether two bundles are disjoint
+ *
+ * @param A is a bundle
+ * @param B is a bundle
+ * @return `true` if and only if `A` and `B` are disjoint
+ */
+bool are_disjoint(const Bundle &A, const Bundle &B);
+
+/**
  * @brief Swap the content of two bundles
  *
  * @param A is the first bundle to be swapped

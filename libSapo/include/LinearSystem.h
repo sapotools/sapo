@@ -390,6 +390,16 @@ public:
 };
 
 /**
+ * @brief Test whether two linear systems do not have common solutions
+ *
+ * @param ls1 is a linear system
+ * @param ls2 is a linear system
+ * @return `true` if and only if the solutions of `ls1` and `ls2` are
+ *         disjoint
+ */
+bool disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2);
+
+/**
  * @brief Test whether two linear systems are the same one
  *
  * @param P1 is the first linear system

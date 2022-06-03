@@ -140,6 +140,87 @@ LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
   return ::optimize(this->_A, this->_b, obj_fun, maximize);
 }
 
+bool disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
+{
+  if (ls1.dim() != ls2.dim()) {
+    throw std::domain_error("The two linear systems must have the "
+                            "same number of columns");
+  }
+
+  if (ls1.dim() == 0) {
+    return false;
+  }
+
+  unsigned int num_rows = ls1.size() + ls2.size();
+  unsigned int num_cols = ls1.dim();
+  unsigned int size_lp = num_rows * num_cols;
+
+  std::vector<double> obj_fun(num_cols, 0);
+  obj_fun[0] = 1;
+
+  int *ia, *ja;
+  double *ar;
+
+  ia = (int *)calloc(size_lp + 1, sizeof(int));
+  ja = (int *)calloc(size_lp + 1, sizeof(int));
+  ar = (double *)calloc(size_lp + 1, sizeof(double));
+
+  glp_prob *lp;
+  lp = glp_create_prob();
+  glp_set_obj_dir(lp, GLP_MAX);
+
+  // Turn off verbose mode
+  glp_smcp lp_param;
+  glp_init_smcp(&lp_param);
+  lp_param.msg_lev = GLP_MSG_ERR;
+
+  glp_add_rows(lp, num_rows);
+  for (unsigned int i = 0; i < ls1.size(); i++) {
+    glp_set_row_bnds(lp, i + 1, GLP_UP, 0.0, ls1.b(i));
+  }
+  for (unsigned int i = 0; i < ls2.size(); i++) {
+    glp_set_row_bnds(lp, ls1.size() + i + 1, GLP_UP, 0.0, ls2.b(i));
+  }
+
+  glp_add_cols(lp, num_cols);
+  for (unsigned int i = 0; i < num_cols; i++) {
+    glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
+    glp_set_obj_coef(lp, i + 1, obj_fun[i]);
+  }
+
+  unsigned int k = 1;
+  for (unsigned int i = 0; i < ls1.size(); i++) {
+    for (unsigned int j = 0; j < num_cols; j++) {
+      ia[k] = i + 1;
+      ja[k] = j + 1;
+      ar[k] = ls1.A(i)[j]; /* a[i+1,j+1] = A[i][j] */
+      k++;
+    }
+  }
+  for (unsigned int i = 0; i < ls2.size(); i++) {
+    for (unsigned int j = 0; j < num_cols; j++) {
+      ia[k] = ls1.size() + i + 1;
+      ja[k] = j + 1;
+      ar[k] = ls2.A(i)[j]; /* a[i+1,j+1] = A[i][j] */
+      k++;
+    }
+  }
+
+  glp_load_matrix(lp, size_lp, ia, ja, ar);
+  glp_exact(lp, &lp_param);
+
+  auto status = glp_get_status(lp);
+  bool res = (status == GLP_NOFEAS || status == GLP_INFEAS);
+
+  glp_delete_prob(lp);
+  glp_free_env();
+  free(ia);
+  free(ja);
+  free(ar);
+
+  return res;
+}
+
 /**
  * Minimize the linear system
  *
