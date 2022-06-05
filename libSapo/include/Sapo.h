@@ -13,6 +13,7 @@
 #define SAPO_H_
 
 #include <string>
+#include <climits>
 
 #include "Always.h"
 #include "Atom.h"
@@ -54,18 +55,20 @@ private:
   const LinearSystem assumptions;
 
   /**
-   * Parameter synthesis w.r.t. an always formula
+   * @brief Parameter synthesis
    *
-   * @param[in] init_set is bundle with the initial set
-   * @param[in] parameterSet is set of parameters
-   * @param[in] sigma is STL always formula
-   * @returns a refined sets of parameters
+   * @tparam T is the STL specification type
+   * @param init_set is the initial set
+   * @param pSet is the set of parameters
+   * @param formula is the specification
+   * @param epoch_horizon
+   * @return SetsUnion<Polytope>
    */
   template<typename T>
   SetsUnion<Polytope>
   transition_and_synthesis(Bundle init_set, const SetsUnion<Polytope> &pSet,
                            const std::shared_ptr<T> formula,
-                           const int time) const
+                           const int epoch_horizon) const
   {
     SetsUnion<Polytope> result;
 
@@ -78,7 +81,7 @@ private:
       // guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
 
-      result.update(synthesize(reached_set, pSet, formula, time + 1));
+      result.update(synthesize(reached_set, pSet, formula, epoch_horizon + 1));
     }
 
     return result;
@@ -182,11 +185,11 @@ public:
    * Reachable set computation
    *
    * @param[in] init_set is the initial set
-   * @param[in] k is the time horizon
+   * @param[in] epoch_horizon is the time horizon
    * @param[in,out] accounter accounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(Bundle init_set, unsigned int k,
+  Flowpipe reach(Bundle init_set, unsigned int epoch_horizon,
                  ProgressAccounter *accounter = NULL) const;
 
   /**
@@ -194,12 +197,13 @@ public:
    *
    * @param[in] init_set is the initial set
    * @param[in] pSet is the set of parameters
-   * @param[in] k is the time horizon
+   * @param[in] epoch_horizon is the epoch horizon
    * @param[in,out] accounter accounts for the computation progress
    * @returns the reached flowpipe
    */
   Flowpipe reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
-                 unsigned int k, ProgressAccounter *accounter = NULL) const;
+                 unsigned int epoch_horizon,
+                 ProgressAccounter *accounter = NULL) const;
 
   /**
    * Parameter synthesis method
@@ -234,6 +238,30 @@ public:
              const unsigned int max_splits,
              const unsigned int num_of_pre_splits = 0,
              ProgressAccounter *accounter = NULL) const;
+
+  /**
+   * @brief Establish whether a set is k-invariant
+   *
+   * @param init_set is the initial set
+   * @param pSet is the parameter set
+   * @param invariant_candidate is the candidate k-invariant
+   * @param epoch_horizon is the maximum `k` to be tested
+   * @param accounter accounts for the computation progress
+   * @return a pair<bool, unsigned>. The first value
+   * is `true` if and only if the method has identified
+   * a `k` such that `invariant_candidate` is a `k`-invariant
+   * for the investigated model. In such a case, the second
+   * returned value is such a `k`. Whenever the first value
+   * is `false`, then the second value report the epoch
+   * in which `invariant_candidate` has been disproved to be
+   * a `k`-invariant
+   */
+  std::pair<bool, unsigned int>
+  check_k_invariant(const SetsUnion<Bundle> &init_set,
+                    const SetsUnion<Polytope> &pSet,
+                    const LinearSystem &invariant_candidate,
+                    unsigned int epoch_horizon = UINT_MAX,
+                    ProgressAccounter *accounter = NULL) const;
 };
 
 /**

@@ -724,12 +724,13 @@ public:
  * @brief Print a sets union in a stream
  *
  * @tparam OSTREAM is the output stream type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param os is the output stream
  * @param set_union is the set union to be printed
  * @return a reference to the output stream
  */
-template<typename OSTREAM, class SET_TYPE>
-OSTREAM &operator<<(OSTREAM &os, const SetsUnion<SET_TYPE> &set_union)
+template<typename OSTREAM, class BASIC_SET_TYPE>
+OSTREAM &operator<<(OSTREAM &os, const SetsUnion<BASIC_SET_TYPE> &set_union)
 {
   using OF = OutputFormater<OSTREAM>;
 

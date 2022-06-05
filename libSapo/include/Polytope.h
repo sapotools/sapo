@@ -264,15 +264,15 @@ inline bool are_disjoint(const Polytope &P1, const Polytope &P2)
  * This method expands a linear set so that each of its boundaries
  * is moved by a value `epsilon`.
  *
- * @tparam SET_TYPE is the linear set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param S is the set to be expanded
  * @param epsilon is the aimed expansion
  * @return an expanded version of `S`
  */
-template<typename SET_TYPE>
-SET_TYPE expand(const SET_TYPE &S, const double epsilon)
+template<typename BASIC_SET_TYPE>
+BASIC_SET_TYPE expand(const BASIC_SET_TYPE &S, const double epsilon)
 {
-  SET_TYPE expS(S);
+  BASIC_SET_TYPE expS(S);
 
   expS.expand_by(epsilon);
 

@@ -23,6 +23,8 @@
 
 #include "PolytopesUnion.h"
 
+#include "StickyUnion.h"
+
 /**
  * Constructor that instantiates Sapo
  *
@@ -723,4 +725,92 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
   // If none of the above condition holds, then it must holds that :
   // 			t_interval.begin()<=time and t_interval.end()==time
   return this->synthesize(init_set, pSet, formula->get_subformula());
+}
+
+/**
+ * @brief Establish whether a set is k-invariant
+ *
+ * @param init_set is the initial set
+ * @param pSet is the parameter set
+ * @param invariant_candidate is the candidate k-invariant
+ * @param epoch_horizon is the maximum `k` to be tested
+ * @param accounter accounts for the computation progress
+ * @return a pair<bool, unsigned>. The first value
+ * is `true` if and only if the method has identified
+ * a `k` such that `invariant_candidate` is a `k`-invariant
+ * for the investigated model. In such a case, the second
+ * returned value is such a `k`. Whenever the first value
+ * is `false`, then the second value report the epoch
+ * in which `invariant_candidate` has been disproved to be
+ * a `k`-invariant
+ */
+std::pair<bool, unsigned int> Sapo::check_k_invariant(
+    const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
+    const LinearSystem &invariant_candidate, unsigned int epoch_horizon,
+    ProgressAccounter *accounter) const
+{
+  if (!init_set.satisfies(invariant_candidate)) {
+
+    // if init_set does not satisfies the invariant candidate
+    // return false, 0
+    return {false, 0};
+  }
+
+  unsigned int k = 1;
+  SetsUnion<Bundle> Tk = init_set;
+  StickyUnion<Bundle> CI(init_set);
+
+  // alias the transformation function
+  const Sapo *sapo = this;
+  auto T = [&sapo, &pSet](const SetsUnion<Bundle> &set) {
+    return sapo->dynamical_system().transform(set, pSet);
+  };
+
+  auto is_k_invariant = [&T](const StickyUnion<Bundle> &CI,
+                             const SetsUnion<Bundle> &Tk, const unsigned &k) {
+    auto TCI = Tk;
+    for (unsigned int i = 1; i < k; ++i) {
+      TCI = intersect(T(TCI), CI);
+      if (TCI.is_empty()) {
+        return true;
+      }
+
+      if (!CI.includes(TCI)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  while (k < epoch_horizon) {
+
+    if (is_k_invariant(CI, Tk, k)) {
+      return {true, k};
+    }
+
+    // update TK
+    Tk = T(Tk);
+
+    if (!Tk.satisfies(invariant_candidate)) {
+
+      // if Tk(init_set) does not satisfies the invariant candidate
+      // return false, k
+      return {false, k};
+    }
+
+    // update CI
+    CI.update(Tk);
+
+    if (!CI.satisfies(invariant_candidate)) {
+      CI = Tk;
+      k = 0;
+    }
+    ++k;
+    if (accounter != NULL) {
+      accounter->increase_performed_to(k);
+    }
+  }
+
+  return {false, k};
 }

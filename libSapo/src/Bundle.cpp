@@ -390,7 +390,6 @@ Bundle Bundle::get_canonical() const
 
 Bundle &Bundle::canonize()
 {
-
   if (this->size() == 0) {
     return *this;
   }
@@ -409,6 +408,7 @@ Bundle &Bundle::canonize()
   return *this;
 }
 
+/// @private
 void _bundle_free_lp_problem(glp_prob *lp, int *ia, int *ja, double *ar)
 {
   glp_delete_prob(lp);

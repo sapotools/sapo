@@ -26,9 +26,9 @@
  *
  * This class represents unions of sets.
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  */
-template<class SET_TYPE>
+template<class BASIC_SET_TYPE>
 class SetsUnion;
 
 /**
@@ -44,11 +44,32 @@ class SetsUnion;
  * the list included by \f$S\f$ are removed from the
  * list and \f$S\f$ itself is appended at its end.
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  */
-template<class SET_TYPE>
-class SetsUnion : private std::list<SET_TYPE>
+template<class BASIC_SET_TYPE>
+class SetsUnion : private std::list<BASIC_SET_TYPE>
 {
+private:
+  /**
+   * @brief Append a list of sets at the end of the current sets union
+   *
+   * @param list is the list of sets to append
+   */
+  inline void append(std::list<BASIC_SET_TYPE> &list)
+  {
+    this->splice(end(), list);
+  }
+
+  /**
+   * @brief Append a list of sets at the end of the current sets union
+   *
+   * @param list is the list of sets to append
+   */
+  inline void append(std::list<BASIC_SET_TYPE> &&list)
+  {
+    this->splice(end(), std::move(list));
+  }
+
   /**
    * @brief Add a set to a sets union
    *
@@ -72,7 +93,7 @@ class SetsUnion : private std::list<SET_TYPE>
    * @return `true` if and only if the computation has added
    *         `set_obj` at the end of the sets list
    */
-  bool add(const SET_TYPE &set_obj, size_t sets_to_cmp)
+  bool add(const BASIC_SET_TYPE &set_obj, size_t sets_to_cmp)
   {
     if (size() != 0 && (this->front().dim() != set_obj.dim())) {
       throw std::domain_error("Adding a set to a union of sets "
@@ -97,7 +118,7 @@ class SetsUnion : private std::list<SET_TYPE>
       // this set can be removed as `set_obj` is
       // going to be added to the list
       if (it->is_subset_of(set_obj)) {
-        it = std::list<SET_TYPE>::erase(it);
+        it = std::list<BASIC_SET_TYPE>::erase(it);
       } else {
         ++it;
       }
@@ -131,10 +152,10 @@ class SetsUnion : private std::list<SET_TYPE>
    * @param[in] set_obj is the set to be added
    * @param[in] sets_to_cmp is the number of sets in the list
    *            to be compared to `set_obj`
-   * @return `true` if and only if the computation has added
-   *         `set_obj` at the end of the sets list
+   * @return `true` if and only if `set_obj` was not already
+   *         contained in the object
    */
-  bool add(SET_TYPE &&set_obj, size_t sets_to_cmp)
+  bool add(BASIC_SET_TYPE &&set_obj, size_t sets_to_cmp)
   {
     if (size() != 0 && (this->front().dim() != set_obj.dim())) {
       throw std::domain_error("Adding a set to a union of sets "
@@ -159,7 +180,7 @@ class SetsUnion : private std::list<SET_TYPE>
       // this set can be removed as `set_obj` is
       // going to be added to the list
       if (it->is_subset_of(set_obj)) {
-        it = std::list<SET_TYPE>::erase(it);
+        it = std::list<BASIC_SET_TYPE>::erase(it);
       } else {
         ++it;
       }
@@ -177,12 +198,12 @@ public:
   /**
    * @brief A constant iterator alias
    */
-  using const_iterator = typename std::list<SET_TYPE>::const_iterator;
+  using const_iterator = typename std::list<BASIC_SET_TYPE>::const_iterator;
 
   /**
    * @brief A iterator alias
    */
-  using iterator = typename std::list<SET_TYPE>::iterator;
+  using iterator = typename std::list<BASIC_SET_TYPE>::iterator;
 
   /**
    * @brief Constructor
@@ -196,7 +217,7 @@ public:
    * @param[in] set_obj is the set to be included in
    *            the union
    */
-  SetsUnion(const SET_TYPE &set_obj)
+  SetsUnion(const BASIC_SET_TYPE &set_obj)
   {
     this->add(set_obj);
   }
@@ -207,7 +228,7 @@ public:
    * @param[in] set_obj is the set to be included in
    *            the union
    */
-  SetsUnion(SET_TYPE &&set_obj)
+  SetsUnion(BASIC_SET_TYPE &&set_obj)
   {
     this->add(std::move(set_obj));
   }
@@ -217,14 +238,17 @@ public:
    *
    * @param[in] orig is a union of sets
    */
-  SetsUnion(const SetsUnion<SET_TYPE> &orig): std::list<SET_TYPE>(orig) {}
+  SetsUnion(const SetsUnion<BASIC_SET_TYPE> &orig):
+      std::list<BASIC_SET_TYPE>(orig)
+  {
+  }
 
   /**
    * @brief Constructor
    *
    * @param[in] sets is a container of sets
    */
-  SetsUnion(const std::list<SET_TYPE> &sets)
+  SetsUnion(const std::list<BASIC_SET_TYPE> &sets)
   {
     for (auto it = std::begin(sets); it != std::end(sets); ++it) {
       this->add(*it);
@@ -236,7 +260,7 @@ public:
    *
    * @param[in] sets is a container of sets
    */
-  SetsUnion(std::list<SET_TYPE> &&sets)
+  SetsUnion(std::list<BASIC_SET_TYPE> &&sets)
   {
     for (auto it = std::begin(sets); it != std::end(sets); ++it) {
       this->add(std::move(*it));
@@ -248,10 +272,10 @@ public:
    *
    * @param[in] orig is a union of sets
    */
-  SetsUnion(SetsUnion<SET_TYPE> &&orig)
+  SetsUnion(SetsUnion<BASIC_SET_TYPE> &&orig)
   {
-    std::swap(*(static_cast<std::list<SET_TYPE> *>(this)),
-              *(static_cast<std::list<SET_TYPE> *>(&orig)));
+    std::swap(*(static_cast<std::list<BASIC_SET_TYPE> *>(this)),
+              *(static_cast<std::list<BASIC_SET_TYPE> *>(&orig)));
   }
 
   /**
@@ -259,7 +283,7 @@ public:
    *
    * @param[in] orig is a union of sets
    */
-  SetsUnion<SET_TYPE> &operator=(const SetsUnion<SET_TYPE> &orig)
+  SetsUnion<BASIC_SET_TYPE> &operator=(const SetsUnion<BASIC_SET_TYPE> &orig)
   {
     this->clear();
 
@@ -275,10 +299,10 @@ public:
    *
    * @param[in] orig is a union of sets
    */
-  SetsUnion<SET_TYPE> &operator=(SetsUnion<SET_TYPE> &&orig)
+  SetsUnion<BASIC_SET_TYPE> &operator=(SetsUnion<BASIC_SET_TYPE> &&orig)
   {
-    std::swap(*(static_cast<std::list<SET_TYPE> *>(this)),
-              *(static_cast<std::list<SET_TYPE> *>(&orig)));
+    std::swap(*(static_cast<std::list<BASIC_SET_TYPE> *>(this)),
+              *(static_cast<std::list<BASIC_SET_TYPE> *>(&orig)));
 
     return *this;
   }
@@ -297,13 +321,12 @@ public:
    * the list and `set_obj` is added to the set.
    *
    * @param[in] set_obj is the set to be added
-   * @return a reference to the updated union
+   * @return `true` if and only if `set_obj` was not already
+   *         contained in the object
    */
-  inline SetsUnion<SET_TYPE> &add(const SET_TYPE &set_obj)
+  inline bool add(const BASIC_SET_TYPE &set_obj)
   {
-    add(set_obj, size());
-
-    return *this;
+    return add(set_obj, size());
   }
 
   /**
@@ -320,13 +343,12 @@ public:
    * the list and `set_obj` is added to the set.
    *
    * @param[in] set_obj is the set to be added
-   * @return a reference to the updated union
+   * @return `true` if and only if `set_obj` was not already
+   *         contained in the object
    */
-  inline SetsUnion<SET_TYPE> &add(SET_TYPE &&set_obj)
+  inline bool add(BASIC_SET_TYPE &&set_obj)
   {
-    add(std::move(set_obj), size());
-
-    return *this;
+    return add(std::move(set_obj), size());
   }
 
   /**
@@ -337,7 +359,8 @@ public:
    * @param[in] sets_union is a sets union
    * @return a reference to the updated object
    */
-  SetsUnion<SET_TYPE> &update(const SetsUnion<SET_TYPE> &sets_union)
+  SetsUnion<BASIC_SET_TYPE> &
+  update(const SetsUnion<BASIC_SET_TYPE> &sets_union)
   {
     unsigned int from_sets_union = 0;
 
@@ -359,7 +382,7 @@ public:
    * @param[in] sets_union is a sets union
    * @return a reference to the updated object
    */
-  SetsUnion<SET_TYPE> &update(SetsUnion<SET_TYPE> &&sets_union)
+  SetsUnion<BASIC_SET_TYPE> &update(SetsUnion<BASIC_SET_TYPE> &&sets_union)
   {
     unsigned int from_sets_union = 0;
 
@@ -373,13 +396,58 @@ public:
   }
 
   /**
+   * @brief Check whether a sets union satisfies a linear system
+   *
+   * This method checks whether all the points in the
+   * current object are solutions for a linear system.
+   *
+   * @param ls is the considered linear system
+   * @return `true` if and only if all the points of
+   *          the current union of sets are solutions
+   *          for `ls`
+   */
+  bool satisfies(const LinearSystem &ls) const
+  {
+    for (auto it = begin(); it != end(); ++it) {
+      if (!it->satisfies(ls)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * @brief Test whether a sets union is subset of a set
+   *
+   * This method tests whether the current object is subset
+   * for a set.
+   *
+   * @param[in] set_obj is the set
+   * @return `true` if and only if the current bundle is a
+   *         subset of `set_obj`
+   */
+  template<class BASIC_SET_TYPE2>
+  bool is_subset_of(const BASIC_SET_TYPE2 &set_obj) const
+  {
+    for (auto it = begin(); it != end(); ++it) {
+      if (!it->is_subset_of(set_obj)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * @brief Check whether one of the sets in a union contains a set
    *
    * @param[in] set_obj is the set whose inclusion must be tested
    * @return `true` if and only if `set` is a subset of some of
    *         the sets in the union
    */
-  bool any_includes(const SET_TYPE &set_obj) const
+  template<class BASIC_SET_TYPE2>
+  bool any_includes(const BASIC_SET_TYPE2 &set_obj) const
   {
 
     if (set_obj.is_empty()) {
@@ -412,7 +480,7 @@ public:
 
     ThreadResult result;
 
-    auto check_and_update = [&result, &set_obj](const SET_TYPE &s) {
+    auto check_and_update = [&result, &set_obj](const BASIC_SET_TYPE &s) {
       if (!result.get() && set_obj.is_subset_of(s)) {
         result.set(true);
       }
@@ -450,7 +518,7 @@ public:
    */
   size_t size() const
   {
-    return std::list<SET_TYPE>::size();
+    return std::list<BASIC_SET_TYPE>::size();
   }
 
   /**
@@ -475,7 +543,7 @@ public:
    */
   iterator begin()
   {
-    return std::list<SET_TYPE>::begin();
+    return std::list<BASIC_SET_TYPE>::begin();
   }
 
   /**
@@ -485,7 +553,7 @@ public:
    */
   iterator end()
   {
-    return std::list<SET_TYPE>::end();
+    return std::list<BASIC_SET_TYPE>::end();
   }
 
   /**
@@ -495,7 +563,7 @@ public:
    */
   const_iterator begin() const
   {
-    return std::list<SET_TYPE>::begin();
+    return std::list<BASIC_SET_TYPE>::begin();
   }
 
   /**
@@ -505,7 +573,7 @@ public:
    */
   const_iterator end() const
   {
-    return std::list<SET_TYPE>::end();
+    return std::list<BASIC_SET_TYPE>::end();
   }
 
   /**
@@ -522,24 +590,86 @@ public:
 
     return this->empty();
   }
+
+  template<class BASIC_SET_TYPE2>
+  friend class StickyUnion;
 };
+
+/**
+ * @brief Test whether two unions of sets are disjoint
+ *
+ * @tparam BASIC_SET_TYPE is the basic set type
+ * @param A is a sets union
+ * @param B is a sets union
+ * @return `true` if and only if `A` and `B` are disjoint
+ */
+template<typename BASIC_SET_TYPE>
+bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
+                  const SetsUnion<BASIC_SET_TYPE> &B)
+{
+  for (auto A_it = std::begin(A); A_it != std::end(A); ++A_it) {
+    for (auto B_it = std::begin(B); B_it != std::end(B); ++B_it) {
+      if (!are_disjoint(*A_it, *B_it)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @brief Test whether a sets union and a set are disjoint
+ *
+ * @tparam BASIC_SET_TYPE is the basic set type
+ * @param A is a sets union
+ * @param B is a set
+ * @return `true` if and only if `A` and `B` are disjoint
+ */
+template<typename BASIC_SET_TYPE>
+bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A, const BASIC_SET_TYPE &B)
+{
+  for (auto A_it = std::begin(A); A_it != std::end(A); ++A_it) {
+    if (!are_disjoint(*A_it, B)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @brief Test whether a set and a sets union are disjoint
+ *
+ * @tparam BASIC_SET_TYPE is the basic set type
+ * @param A is a set
+ * @param B is a sets union
+ * @return `true` if and only if `A` and `B` are disjoint
+ */
+template<typename BASIC_SET_TYPE>
+inline bool are_disjoint(const BASIC_SET_TYPE &A,
+                         const SetsUnion<BASIC_SET_TYPE> &B)
+{
+  return are_disjoint(B, A);
+}
 
 /**
  * Compute the intersection of two sets unions
  *
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param[in] A is a sets union
  * @param[in] B is a sets union
  * @return the sets union representing \f$A \cap B\f$
  */
-template<typename SET_TYPE>
-SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A,
-                              const SetsUnion<SET_TYPE> &B)
+template<typename BASIC_SET_TYPE>
+SetsUnion<BASIC_SET_TYPE> intersect(const SetsUnion<BASIC_SET_TYPE> &A,
+                                    const SetsUnion<BASIC_SET_TYPE> &B)
 {
-  SetsUnion<SET_TYPE> result;
+  SetsUnion<BASIC_SET_TYPE> result;
 
-  for (auto t_it = std::begin(A); t_it != std::end(A); ++t_it) {
-    for (auto s_it = std::begin(B); s_it != std::end(B); ++s_it) {
-      result.add(intersect(*t_it, *s_it));
+  for (auto A_it = std::begin(A); A_it != std::end(A); ++A_it) {
+    for (auto B_it = std::begin(B); B_it != std::end(B); ++B_it) {
+      result.add(intersect(*A_it, *B_it));
     }
   }
 
@@ -549,29 +679,29 @@ SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A,
 /**
  * Compute the intersection between a sets unions and a set
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param[in] A is a sets union
  * @param[in] B is a set
  * @return the sets union representing \f$A \cap B\f$
  */
-template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> intersect(const SetsUnion<SET_TYPE> &A,
-                                     const SET_TYPE &B)
+template<typename BASIC_SET_TYPE>
+inline SetsUnion<BASIC_SET_TYPE> intersect(const SetsUnion<BASIC_SET_TYPE> &A,
+                                           const BASIC_SET_TYPE &B)
 {
-  return intersect(A, SetsUnion<SET_TYPE>(B));
+  return intersect(A, SetsUnion<BASIC_SET_TYPE>(B));
 }
 
 /**
  * Compute the intersection between a sets unions and a set
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param[in] A is a set
  * @param[in] B is a sets union
  * @return the bundles union representing \f$A \cap B\f$
  */
-template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> intersect(const SET_TYPE &A,
-                                     const SetsUnion<SET_TYPE> &B)
+template<typename BASIC_SET_TYPE>
+inline SetsUnion<BASIC_SET_TYPE> intersect(const BASIC_SET_TYPE &A,
+                                           const SetsUnion<BASIC_SET_TYPE> &B)
 {
   return intersect(B, A);
 }
@@ -579,140 +709,50 @@ inline SetsUnion<SET_TYPE> intersect(const SET_TYPE &A,
 /**
  * Compute the union of two sets unions
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param[in] A is a sets union
  * @param[in] B is a sets union
  * @return the sets union representing \f$A \cup B\f$
  */
-template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> make_union(const SetsUnion<SET_TYPE> &A,
-                                      const SetsUnion<SET_TYPE> &B)
+template<typename BASIC_SET_TYPE>
+inline SetsUnion<BASIC_SET_TYPE> make_union(const SetsUnion<BASIC_SET_TYPE> &A,
+                                            const SetsUnion<BASIC_SET_TYPE> &B)
 {
-  return SetsUnion<SET_TYPE>(A).update(B);
+  return SetsUnion<BASIC_SET_TYPE>(A).update(B);
 }
 
 /**
  * Compute the union of two sets
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param[in] A is a union of sets
  * @param[in] B is a set
  * @return the sets union representing \f$A \cup B\f$
  */
-template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> make_union(const SetsUnion<SET_TYPE> &A,
-                                      const SET_TYPE &B)
+template<typename BASIC_SET_TYPE>
+inline SetsUnion<BASIC_SET_TYPE> make_union(const SetsUnion<BASIC_SET_TYPE> &A,
+                                            const BASIC_SET_TYPE &B)
 {
-  return make_union(A, SetsUnion<SET_TYPE>(B));
+  return make_union(A, SetsUnion<BASIC_SET_TYPE>(B));
 }
 
 /**
  * Compute the union of two sets
  *
- * @tparam SET_TYPE is the set type
+ * @tparam BASIC_SET_TYPE is the basic set type
  * @param[in] A is a set
  * @param[in] B is a set
  * @return the sets union representing \f$A \cup B\f$
  */
-template<typename SET_TYPE>
-inline SetsUnion<SET_TYPE> make_union(const SET_TYPE &A, const SET_TYPE &B)
+template<typename BASIC_SET_TYPE>
+inline SetsUnion<BASIC_SET_TYPE> make_union(const BASIC_SET_TYPE &A,
+                                            const BASIC_SET_TYPE &B)
 {
-  return SetsUnion<SET_TYPE>(A).add(B);
-}
+  SetsUnion<BASIC_SET_TYPE> result(A);
 
-/**
- * @brief Compute the union of intersecting sets
- *
- * This method searches in a container for all the objects
- * \f$S_1,\ldots,S_n\f$ intersecting a provided set \f$S\f$
- * and builds the union \f$S \cup \bigcup_{i=1}^{n}S_i\f$.
- *
- * The union evaluator is provided as parameter and,
- * by default, is
- * `make_union(const SETS_UNION_TYPE &, const SET_TYPE &)`.
- *
- * @tparam SETS_UNION_TYPE is the type of the produced union
- * @tparam SET_TYPE is the type of the sets
- * @tparam CONTAINER is the type of the considered set container
- * @param begin_iter is the iterator from which the search begin
- * @param end_iter is the first iterator that should not be considered
- * @param set_obj is the set whose intersecting object must be united
- * @param union_evaluator is the union function
- * @return the union of the sets between `*begin_iter` and `*end_iter`
- *       that intersect `set_obj`
- */
-template<class SETS_UNION_TYPE, class CONTAINER_ITER, class SET_TYPE>
-SETS_UNION_TYPE
-touching_union(const CONTAINER_ITER &begin_iter,
-               const CONTAINER_ITER &end_iter, const SET_TYPE &set_obj,
-               SETS_UNION_TYPE (*union_evaluator)(const SETS_UNION_TYPE &,
-                                                  const SET_TYPE &)
-               = &make_union)
-{
-  SETS_UNION_TYPE res;
-  for (CONTAINER_ITER c_it = begin_iter; c_it != end_iter; ++c_it) {
-    if (!intersect(set_obj, *c_it).is_empty()) {
-      if (res.dim() == 0) {
-        res = *c_it;
-      } else {
-        res = union_evaluator(res, *c_it);
-      }
-    }
-  }
+  result.add(B);
 
-  return res;
-}
-
-/**
- * @brief Over-approximate the groups of the intersecting sets
- * in a union representation
- *
- * This method over-approximates a union of sets by
- * over-approximating all the intersecting sets that represent it.
- * Thus, if set \f$S\f$ in the representation of the union
- * does intersect the sets \f$S_1,\ldots,S_n\f$ in the same
- * representation, then the over-approximation of
- * \f[S \cup \bigcup_{i=1}^n S_i\f] is added to the resulting
- * union.
- *
- * The algorithm guarantees that if the intersection of two sets
- * in the initial union representation is not empty, then the
- * resulting union representation contains a set which includes
- * both of them. Moreover, while some of the sets in the final
- * representation may have non-null intersections, these
- * intersections do not intersect the original union of sets.
- *
- * Let `U` and `S` be a union of sets and a set, respectively.
- * If \f$S \subseteq U\f$, then `join(U).any_includes(S)`.
- *
- * @tparam SET_TYPE is the set type
- * @param[in, out] sets_union is the original union of sets
- * @return a union of the over-approximations of the unions of
- *         all the groups of intersecting sets in `sets_union`
- * @todo This method performs \f$O(|\texttt{sets_union}|^2)\f$
- * unions. While the lower bound for the solved problem seems
- * to be \f$\Omega(|\texttt{sets_union}|^2)\f$, the execution
- * time of the method can be improved by reducing the number
- * of unions to \f$O(|\texttt{sets_union}|)\f$
- */
-template<class SET_TYPE>
-SetsUnion<SET_TYPE> join(const SetsUnion<SET_TYPE> &sets_union)
-{
-  SetsUnion<SET_TYPE> res;
-  auto s_it = std::begin(sets_union);
-
-  // for each set `*s_it` in `sets_union`
-  for (; s_it != std::end(sets_union); ++s_it) {
-    // compute the union of the sets intersecting *s_it
-    SET_TYPE joint = touching_union<SET_TYPE>(std::begin(sets_union),
-                                              std::end(sets_union), *s_it,
-                                              over_approximate_union);
-
-    // Then, place `joint` into the list `joints`
-    res.add(std::move(joint));
-  }
-
-  return res;
+  return result;
 }
 
 #endif /* SETSUNION_H_ */
