@@ -12,13 +12,6 @@
 
 #include "Bundle.h"
 
-#ifdef WITH_THREADS
-#include <mutex>
-#include <shared_mutex>
-
-#include "SapoThreads.h"
-#endif // WITH_THREADS
-
 #include <limits>
 #include <string>
 #include <algorithm>
@@ -27,12 +20,20 @@
 
 #include <glpk.h>
 
-#include "LinearAlgebra.h"
-#include "LinearAlgebraIO.h"
-
 #define _USE_MATH_DEFINES //!< This macro enables the use of cmath constants
 
 #include <cmath>
+
+#ifdef WITH_THREADS
+#include <mutex>
+#include <shared_mutex>
+
+#include "SapoThreads.h"
+#endif // WITH_THREADS
+
+#include "SetsUnion.h"
+#include "LinearAlgebra.h"
+#include "LinearAlgebraIO.h"
 
 /**
  * @brief Avoid \f$-0\f$
@@ -505,23 +506,6 @@ bool are_disjoint(const Bundle &A, const Bundle &B)
   _bundle_free_lp_problem(lp, ia, ja, ar);
 
   return res;
-}
-
-/**
- * @brief Test whether the bundle is empty
- *
- * @return `true` if and only if the bundle is empty
- */
-bool Bundle::is_empty() const
-{
-  if (size() == 0) {
-    return true;
-  }
-
-  Polytope bund = *this;
-  auto test_status = bund.minimize(this->_directions[0]).status();
-
-  return (test_status == GLP_NOFEAS) || (test_status == GLP_INFEAS);
 }
 
 /**
@@ -1332,4 +1316,44 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
   add_missing_templates(res._templates, b2.templates(), new_ids);
 
   return res;
+}
+
+SetsUnion<Bundle> subtract_and_close(const Bundle &b1, const Bundle &b2)
+{
+  SetsUnion<Bundle> su;
+  if (b2.includes(b1)) {
+    return su;
+  }
+
+  if (are_disjoint(b1, b2)) {
+    su.add(b1);
+
+    return su;
+  }
+
+  Polytope p1 = b1;
+
+  for (unsigned int i = 0; i < b2.size(); ++i) {
+    auto new_bound = p1.maximize(b2.get_direction(i)).optimum();
+    if (new_bound > b2.get_upper_bound(i)) {
+      Bundle new_b1 = b1;
+      new_b1._directions.push_back(b2.get_direction(i));
+      new_b1._lower_bounds.push_back(b2.get_upper_bound(i));
+      new_b1._upper_bounds.push_back(new_bound);
+
+      su.add(std::move(new_b1.canonize()));
+    }
+
+    new_bound = p1.minimize(b2.get_direction(i)).optimum();
+    if (new_bound < b2.get_lower_bound(i)) {
+      Bundle new_b1 = b1;
+      new_b1._directions.push_back(b2.get_direction(i));
+      new_b1._lower_bounds.push_back(new_bound);
+      new_b1._upper_bounds.push_back(b2.get_lower_bound(i));
+
+      su.add(std::move(new_b1.canonize()));
+    }
+  }
+
+  return su;
 }

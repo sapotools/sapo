@@ -13,6 +13,7 @@
 #include "PolytopesUnion.h"
 
 #include "LinearAlgebra.h"
+#include "SetsUnion.h"
 
 using namespace std;
 
@@ -249,4 +250,43 @@ Polytope over_approximate_union(const Polytope &P1, const Polytope &P2)
   res.simplify();
 
   return res;
+}
+
+/**
+ * @brief Subtract two polytopes and close the result
+ *
+ * @param[in] P1 is a polytope
+ * @param[in] P2 is a polytope
+ * @return a union of polytopes obtained by closing the set
+ *         \f$P1\setminus P2\f$
+ */
+SetsUnion<Polytope> subtract_and_close(const Polytope &P1, const Polytope &P2)
+{
+  using namespace LinearAlgebra;
+
+  SetsUnion<Polytope> su;
+
+  if (P2.includes(P1)) {
+    return su;
+  }
+
+  if (are_disjoint(P1, P2)) {
+    su.add(P1);
+
+    return su;
+  }
+
+  for (unsigned int i = 0; i < P2.size(); ++i) {
+    auto min = P1.minimize(P2.A(i)).optimum();
+
+    if (min < P2.b(1)) {
+      Polytope new_P1 = P1;
+      new_P1._A.push_back(-P2.A(i));
+      new_P1._b.push_back(-P2.b(1));
+
+      su.add(std::move(new_P1));
+    }
+  }
+
+  return su;
 }

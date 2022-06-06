@@ -25,6 +25,16 @@
   0.75 //!< define the default versor magnitude multiplier for bundle splits
 
 /**
+ * @brief Unions of closed sets
+ *
+ * This class represents unions of closed sets.
+ *
+ * @tparam BASIC_SET_TYPE is the basic set type
+ */
+template<class BASIC_SET_TYPE>
+class SetsUnion;
+
+/**
  * @brief A class for parallelotope bundles
  *
  * A parallelotope bundle represents the intersection between
@@ -267,7 +277,20 @@ public:
    *
    * @return `true` if and only if the bundle is empty
    */
-  bool is_empty() const;
+  inline bool is_empty() const
+  {
+    return ((Polytope) * this).is_empty();
+  }
+
+  /**
+   * @brief Test whether the bundle interior is empty
+   *
+   * @return `true` if and only if the bundle interior is empty
+   */
+  inline bool is_interior_empty() const
+  {
+    return ((Polytope) * this).is_interior_empty();
+  }
 
   /**
    * @brief Test whether a bundle is subset of another bundle
@@ -452,6 +475,9 @@ public:
   friend void swap(Bundle &A, Bundle &B);
 
   friend Bundle over_approximate_union(const Bundle &b1, const Bundle &b2);
+
+  friend SetsUnion<Bundle> subtract_and_close(const Bundle &b1,
+                                              const Bundle &b2);
 };
 
 /**
@@ -547,5 +573,15 @@ inline Bundle intersect(const LinearSystem &linear_system,
  * @return A bundle over-approximating the union of `b1` and `b2`
  */
 Bundle over_approximate_union(const Bundle &b1, const Bundle &b2);
+
+/**
+ * @brief Subtract two bundle and close the result
+ *
+ * @param b1 is a bundle
+ * @param b2 is a bundle
+ * @return a union of bundles obtained by closing the set
+ *         \f$b1\setminus b2\f$
+ */
+SetsUnion<Bundle> subtract_and_close(const Bundle &b1, const Bundle &b2);
 
 #endif /* BUNDLE_H_ */

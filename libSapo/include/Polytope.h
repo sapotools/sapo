@@ -14,6 +14,16 @@
 #include "LinearSystem.h"
 
 /**
+ * @brief Unions of closed sets
+ *
+ * This class represents unions of closed sets.
+ *
+ * @tparam BASIC_SET_TYPE is the basic set type
+ */
+template<class BASIC_SET_TYPE>
+class SetsUnion;
+
+/**
  * @brief A polytope representation class
  *
  * Polytopes are bounded convex sets representable
@@ -121,9 +131,19 @@ public:
    *         defined by a strict inequality (i.e., Ax < b).
    * @return `true` if and only if the polytope is empty
    */
-  bool is_empty(const bool strict_inequality = false) const
+  inline bool is_empty(const bool strict_inequality = false) const
   {
     return !this->has_solutions(strict_inequality);
+  }
+
+  /**
+   * Establish whether a polytope interior is empty
+   *
+   * @return `true` if and only if the polytope interior is empty
+   */
+  inline bool is_interior_empty() const
+  {
+    return !this->has_solutions(true);
   }
 
   /**
@@ -244,6 +264,17 @@ public:
    */
   friend Polytope over_approximate_union(const Polytope &P1,
                                          const Polytope &P2);
+
+  /**
+   * @brief Subtract two polytopes and close the result
+   *
+   * @param[in] P1 is a polytope
+   * @param[in] P2 is a polytope
+   * @return a union of polytopes obtained by closing the set
+   *         \f$P1\setminus P2\f$
+   */
+  friend SetsUnion<Polytope> subtract_and_close(const Polytope &P1,
+                                                const Polytope &P2);
 };
 
 /**
@@ -269,7 +300,7 @@ inline bool are_disjoint(const Polytope &P1, const Polytope &P2)
  * @param epsilon is the aimed expansion
  * @return an expanded version of `S`
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 BASIC_SET_TYPE expand(const BASIC_SET_TYPE &S, const double epsilon)
 {
   BASIC_SET_TYPE expS(S);
@@ -279,6 +310,23 @@ BASIC_SET_TYPE expand(const BASIC_SET_TYPE &S, const double epsilon)
   return expS;
 }
 
+/**
+ * Compute and over-approximation of the union of two polytopes
+ *
+ * @param[in] P1 is a polytope
+ * @param[in] P2 is a polytope
+ * @return an over-approximation of the union of `P1` and `P2`
+ */
 Polytope over_approximate_union(const Polytope &P1, const Polytope &P2);
+
+/**
+ * @brief Subtract two polytopes and close the result
+ *
+ * @param[in] P1 is a polytope
+ * @param[in] P2 is a polytope
+ * @return a union of polytopes obtained by closing the set
+ *         \f$P1\setminus P2\f$
+ */
+SetsUnion<Polytope> subtract_and_close(const Polytope &P1, const Polytope &P2);
 
 #endif /* POLYTOPE_H_ */
