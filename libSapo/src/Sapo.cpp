@@ -728,12 +728,21 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
 }
 
 /**
- * @brief Establish whether a set is k-invariant
+ * @brief Try to establish whether a set is an invariant
  *
  * @param init_set is the initial set
  * @param pSet is the parameter set
- * @param invariant_candidate is the candidate k-invariant
- * @param epoch_horizon is the maximum `k` to be tested
+ * @param invariant_candidate is the candidate invariant
+ * @param epoch_horizon is the maximum investigated epoch.
+ *        If `epoch_horizon` is set to be 0, then the
+ *        computation does not end until the correct
+ *        answer has been found (potentially, forever)
+ * @param approximate_Tk is the function used to approximate
+ *        the set reached during an epoch. If `CI` is the
+ *        approximation of the reached set up to the
+ *        (k-1)-th step and `Tk` is the set reached during
+ *        the k-th epoch `approximate_Tk(CI, Tk)` is the
+ *        approximation of `Tk`
  * @param accounter accounts for the computation progress
  * @return a pair<bool, unsigned>. The first value
  * is `true` if and only if the method has identified
@@ -744,9 +753,11 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
  * in which `invariant_candidate` has been disproved to be
  * a `k`-invariant
  */
-std::pair<bool, unsigned int> Sapo::check_k_invariant(
+std::pair<bool, unsigned int> Sapo::check_invariant(
     const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
-    const LinearSystem &invariant_candidate, unsigned int epoch_horizon,
+    const LinearSystem &invariant_candidate, const unsigned int epoch_horizon,
+    SetsUnion<Bundle> (*approximate_Tk)(const SetsUnion<Bundle> &CI,
+                                        const SetsUnion<Bundle> &Tk),
     ProgressAccounter *accounter) const
 {
   if (!init_set.satisfies(invariant_candidate)) {
@@ -757,8 +768,10 @@ std::pair<bool, unsigned int> Sapo::check_k_invariant(
   }
 
   unsigned int k = 1;
+  unsigned int elapsed_epochs = 1;
   SetsUnion<Bundle> Tk = init_set;
-  StickyUnion<Bundle> CI(init_set);
+  SetsUnion<Bundle> CI(init_set);
+  SetsUnion<Bundle> Tk_approx = approximate_Tk(CI, Tk);
 
   // alias the transformation function
   const Sapo *sapo = this;
@@ -766,7 +779,7 @@ std::pair<bool, unsigned int> Sapo::check_k_invariant(
     return sapo->dynamical_system().transform(set, pSet);
   };
 
-  auto is_k_invariant = [&T](const StickyUnion<Bundle> &CI,
+  auto is_k_invariant = [&T](const SetsUnion<Bundle> &CI,
                              const SetsUnion<Bundle> &Tk, const unsigned &k) {
     auto TCI = Tk;
     for (unsigned int i = 1; i < k; ++i) {
@@ -783,10 +796,10 @@ std::pair<bool, unsigned int> Sapo::check_k_invariant(
     return true;
   };
 
-  while (k < epoch_horizon) {
+  while (epoch_horizon == 0 || k < epoch_horizon) {
 
-    if (is_k_invariant(CI, Tk, k)) {
-      return {true, k};
+    if (is_k_invariant(CI, Tk_approx, k)) {
+      return {true, elapsed_epochs};
     }
 
     // update TK
@@ -796,21 +809,23 @@ std::pair<bool, unsigned int> Sapo::check_k_invariant(
 
       // if Tk(init_set) does not satisfies the invariant candidate
       // return false, k
-      return {false, k};
+      return {false, elapsed_epochs};
     }
 
     // update CI
-    CI.update(Tk);
+    Tk_approx = approximate_Tk(CI, Tk);
+    CI.update(Tk_approx);
 
     if (!CI.satisfies(invariant_candidate)) {
       CI = Tk;
       k = 0;
     }
     ++k;
+    ++elapsed_epochs;
     if (accounter != NULL) {
       accounter->increase_performed_to(k);
     }
   }
 
-  return {false, k};
+  return {false, elapsed_epochs};
 }

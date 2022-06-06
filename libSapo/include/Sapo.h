@@ -240,12 +240,23 @@ public:
              ProgressAccounter *accounter = NULL) const;
 
   /**
-   * @brief Establish whether a set is k-invariant
+   * @brief Try to establish whether a set is an invariant
    *
    * @param init_set is the initial set
    * @param pSet is the parameter set
-   * @param invariant_candidate is the candidate k-invariant
-   * @param epoch_horizon is the maximum `k` to be tested
+   * @param invariant_candidate is the candidate invariant
+   * @param epoch_horizon is the maximum investigated epoch.
+   *        If `epoch_horizon` is set to be 0, then the
+   *        computation does not end until the correct
+   *        answer has been found (potentially, forever).
+   *        The default value is 0
+   * @param approximate_Tk is the function used to approximate
+   *        the set reached during an epoch. If `CI` is the
+   *        approximation of the reached set up to the
+   *        (k-1)-th step and `Tk` is the set reached during
+   *        the k-th epoch `approximate_Tk(CI, Tk)` is the
+   *        approximation of `Tk`. The default value is the
+   *        identity function for `Tk`, i.e., no approximation
    * @param accounter accounts for the computation progress
    * @return a pair<bool, unsigned>. The first value
    * is `true` if and only if the method has identified
@@ -256,12 +267,18 @@ public:
    * in which `invariant_candidate` has been disproved to be
    * a `k`-invariant
    */
-  std::pair<bool, unsigned int>
-  check_k_invariant(const SetsUnion<Bundle> &init_set,
-                    const SetsUnion<Polytope> &pSet,
-                    const LinearSystem &invariant_candidate,
-                    unsigned int epoch_horizon = UINT_MAX,
-                    ProgressAccounter *accounter = NULL) const;
+  std::pair<bool, unsigned int> check_invariant(
+      const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
+      const LinearSystem &invariant_candidate,
+      const unsigned int epoch_horizon = 0,
+      SetsUnion<Bundle> (*approximate_Tk)(const SetsUnion<Bundle> &CI,
+                                          const SetsUnion<Bundle> &Tk)
+      =
+          [](const SetsUnion<Bundle> &CI, const SetsUnion<Bundle> &Tk) {
+            (void)CI;
+            return Tk;
+          },
+      ProgressAccounter *accounter = NULL) const;
 };
 
 /**
