@@ -1,7 +1,7 @@
 /**
  * @file SetsUnion.h
  * @author Alberto Casagrande <acasagrande@units.it>
- * @brief Representing and handling unions of sets
+ * @brief Representing and handling unions of closed sets
  * @version 0.1
  * @date 2022-05-27
  *
@@ -22,9 +22,9 @@
 #endif // WITH_THREADS
 
 /**
- * @brief Unions of sets
+ * @brief Unions of closed sets
  *
- * This class represents unions of sets.
+ * This class represents unions of closed sets.
  *
  * @tparam BASIC_SET_TYPE is the basic set type
  */
@@ -32,9 +32,9 @@ template<class BASIC_SET_TYPE>
 class SetsUnion;
 
 /**
- * @brief Unions of sets
+ * @brief Unions of closed sets
  *
- * This template represents unions of sets as a
+ * This template represents unions of closed sets as a
  * list of non-comparable sets: any two sets \f$A\f$ and
  * \f$B\f$ in the list are such that
  * \f$A \not\subseteq B\f$ and \f$A \not\supseteq B\f$.
@@ -51,9 +51,9 @@ class SetsUnion : private std::list<BASIC_SET_TYPE>
 {
 private:
   /**
-   * @brief Append a list of sets at the end of the current sets union
+   * @brief Append a list of closed sets at the end of the current sets union
    *
-   * @param list is the list of sets to append
+   * @param list is the list of closed sets to append
    */
   inline void append(std::list<BASIC_SET_TYPE> &list)
   {
@@ -61,9 +61,9 @@ private:
   }
 
   /**
-   * @brief Append a list of sets at the end of the current sets union
+   * @brief Append a list of closed sets at the end of the current sets union
    *
-   * @param list is the list of sets to append
+   * @param list is the list of closed sets to append
    */
   inline void append(std::list<BASIC_SET_TYPE> &&list)
   {
@@ -73,7 +73,7 @@ private:
   /**
    * @brief Add a set to a sets union
    *
-   * This method adds a set `set_obj` to a union of sets.
+   * This method adds a set `set_obj` to a union of closed sets.
    * First of all the method, tests whether the new set
    * is empty. If this is the case, no set is added to the
    * union. No set is added to the union also in the case
@@ -88,7 +88,7 @@ private:
    * end of the sets list.
    *
    * @param[in] set_obj is the set to be added
-   * @param[in] sets_to_cmp is the number of sets in the list
+   * @param[in] sets_to_cmp is the number of closed sets in the list
    *            to be compared to `set_obj`
    * @return `true` if and only if the computation has added
    *         `set_obj` at the end of the sets list
@@ -96,7 +96,7 @@ private:
   bool add(const BASIC_SET_TYPE &set_obj, size_t sets_to_cmp)
   {
     if (size() != 0 && (this->front().dim() != set_obj.dim())) {
-      throw std::domain_error("Adding a set to a union of sets "
+      throw std::domain_error("Adding a set to a union of closed sets "
                               "that has different dimension");
     }
 
@@ -135,7 +135,7 @@ private:
   /**
    * @brief Add a set to a sets union
    *
-   * This method adds a set `set_obj` to a union of sets.
+   * This method adds a set `set_obj` to a union of closed sets.
    * First of all the method, tests whether the new set
    * is empty. If this is the case, no set is added to the
    * union. No set is added to the union also in the case
@@ -150,7 +150,7 @@ private:
    * end of the sets list.
    *
    * @param[in] set_obj is the set to be added
-   * @param[in] sets_to_cmp is the number of sets in the list
+   * @param[in] sets_to_cmp is the number of closed sets in the list
    *            to be compared to `set_obj`
    * @return `true` if and only if `set_obj` was not already
    *         contained in the object
@@ -158,7 +158,7 @@ private:
   bool add(BASIC_SET_TYPE &&set_obj, size_t sets_to_cmp)
   {
     if (size() != 0 && (this->front().dim() != set_obj.dim())) {
-      throw std::domain_error("Adding a set to a union of sets "
+      throw std::domain_error("Adding a set to a union of closed sets "
                               "that has different dimension");
     }
 
@@ -234,9 +234,9 @@ public:
   }
 
   /**
-   * @brief A copy constructor for a union of sets
+   * @brief A copy constructor for a union of closed sets
    *
-   * @param[in] orig is a union of sets
+   * @param[in] orig is a union of closed sets
    */
   SetsUnion(const SetsUnion<BASIC_SET_TYPE> &orig):
       std::list<BASIC_SET_TYPE>(orig)
@@ -246,7 +246,7 @@ public:
   /**
    * @brief Constructor
    *
-   * @param[in] sets is a container of sets
+   * @param[in] sets is a container of closed sets
    */
   SetsUnion(const std::list<BASIC_SET_TYPE> &sets)
   {
@@ -258,7 +258,7 @@ public:
   /**
    * @brief Constructor
    *
-   * @param[in] sets is a container of sets
+   * @param[in] sets is a container of closed sets
    */
   SetsUnion(std::list<BASIC_SET_TYPE> &&sets)
   {
@@ -268,9 +268,9 @@ public:
   }
 
   /**
-   * @brief A swap constructor for a union of sets
+   * @brief A swap constructor for a union of closed sets
    *
-   * @param[in] orig is a union of sets
+   * @param[in] orig is a union of closed sets
    */
   SetsUnion(SetsUnion<BASIC_SET_TYPE> &&orig)
   {
@@ -279,9 +279,9 @@ public:
   }
 
   /**
-   * @brief An assignment operator for unions of sets
+   * @brief An assignment operator for unions of closed sets
    *
-   * @param[in] orig is a union of sets
+   * @param[in] orig is a union of closed sets
    */
   SetsUnion<BASIC_SET_TYPE> &operator=(const SetsUnion<BASIC_SET_TYPE> &orig)
   {
@@ -295,9 +295,9 @@ public:
   }
 
   /**
-   * @brief A swap assignment for unions of sets
+   * @brief A swap assignment for unions of closed sets
    *
-   * @param[in] orig is a union of sets
+   * @param[in] orig is a union of closed sets
    */
   SetsUnion<BASIC_SET_TYPE> &operator=(SetsUnion<BASIC_SET_TYPE> &&orig)
   {
@@ -310,7 +310,7 @@ public:
   /**
    * @brief Add a set to the union
    *
-   * This method adds a set `set_obj` to a union of sets.
+   * This method adds a set `set_obj` to a union of closed sets.
    * First of all the method, tests whether the new set
    * is empty. If this is the case, no set is added to the
    * union. No set is added to the union also in the case
@@ -332,7 +332,7 @@ public:
   /**
    * @brief Add a set to the union
    *
-   * This method adds a set `set_obj` to a union of sets.
+   * This method adds a set `set_obj` to a union of closed sets.
    * First of all the method, tests whether the new set
    * is empty. If this is the case, no set is added to the
    * union. No set is added to the union also in the case
@@ -349,6 +349,17 @@ public:
   inline bool add(BASIC_SET_TYPE &&set_obj)
   {
     return add(std::move(set_obj), size());
+  }
+
+  /**
+   * @brief Get the last set that changed the union
+   *
+   * @return the last set added to the the union that
+   * changed it
+   */
+  inline const BASIC_SET_TYPE &last_added_set() const
+  {
+    return std::list<BASIC_SET_TYPE>::back();
   }
 
   /**
@@ -403,7 +414,7 @@ public:
    *
    * @param ls is the considered linear system
    * @return `true` if and only if all the points of
-   *          the current union of sets are solutions
+   *          the current union of closed sets are solutions
    *          for `ls`
    */
   bool satisfies(const LinearSystem &ls) const
@@ -423,6 +434,7 @@ public:
    * This method tests whether the current object is subset
    * for a set.
    *
+   * @tparam BASIC_SET_TYPE2 is the type of the tested set
    * @param[in] set_obj is the set
    * @return `true` if and only if the current bundle is a
    *         subset of `set_obj`
@@ -440,10 +452,53 @@ public:
   }
 
   /**
-   * @brief Check whether one of the sets in a union contains a set
+   * @brief Test whether a sets union is subset of a sets union
    *
+   * @tparam BASIC_SET_TYPE2 is the type of the tested set
+   * @param set_obj sets_union is the tested sets union
+   * @return `true` if and only if the current bundle is a
+   *         subset of `sets_union`
+   */
+  template<class BASIC_SET_TYPE2>
+  inline bool is_subset_of(const SetsUnion<BASIC_SET_TYPE2> &sets_union) const
+  {
+    return sets_union.includes(*this);
+  }
+
+  /**
+   * @brief Check whether a sets union includes a closed set
+   *
+   * @tparam BASIC_SET_TYPE2 is the type of the tested set
+   * @param set_obj is the set whose inclusion must be tested
+   * @return `true` if and only if `set_obj` is a subset of the
+   *         current object
+   */
+  template<class BASIC_SET_TYPE2>
+  inline bool includes(const BASIC_SET_TYPE2 &set_obj) const
+  {
+    return subtract_and_close(set_obj, *this).is_empty();
+  }
+
+  /**
+   * @brief Check whether a sets union includes another sets union
+   *
+   * @tparam BASIC_SET_TYPE2 is the type of the tested sets union
+   * @param sets_union is the set whose inclusion must be tested
+   * @return `true` if and only if `sets_union` is a subset of the
+   *         current object
+   */
+  template<class BASIC_SET_TYPE2>
+  inline bool includes(const SetsUnion<BASIC_SET_TYPE2> &sets_union) const
+  {
+    return subtract_and_close(sets_union, *this).is_empty();
+  }
+
+  /**
+   * @brief Check whether one of the sets in a union includes a set
+   *
+   * @tparam BASIC_SET_TYPE2 is the type of the tested set
    * @param[in] set_obj is the set whose inclusion must be tested
-   * @return `true` if and only if `set` is a subset of some of
+   * @return `true` if and only if `set_obj` is a subset of some of
    *         the sets in the union
    */
   template<class BASIC_SET_TYPE2>
@@ -512,9 +567,9 @@ public:
   }
 
   /**
-   * @brief Get the number of sets in the union
+   * @brief Get the number of closed sets in the union
    *
-   * @returns the number of sets in the union
+   * @returns the number of closed sets in the union
    */
   size_t size() const
   {
@@ -577,9 +632,9 @@ public:
   }
 
   /**
-   * @brief Test whether the union of sets is empty
+   * @brief Test whether the union of closed sets is empty
    *
-   * @return `true` if and only if the union of sets is empty
+   * @return `true` if and only if the union of closed sets is empty
    */
   inline bool is_empty() const
   {
@@ -596,14 +651,14 @@ public:
 };
 
 /**
- * @brief Test whether two unions of sets are disjoint
+ * @brief Test whether two unions of closed sets are disjoint
  *
  * @tparam BASIC_SET_TYPE is the basic set type
  * @param A is a sets union
  * @param B is a sets union
  * @return `true` if and only if `A` and `B` are disjoint
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
                   const SetsUnion<BASIC_SET_TYPE> &B)
 {
@@ -626,7 +681,7 @@ bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
  * @param B is a set
  * @return `true` if and only if `A` and `B` are disjoint
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A, const BASIC_SET_TYPE &B)
 {
   for (auto A_it = std::begin(A); A_it != std::end(A); ++A_it) {
@@ -646,7 +701,7 @@ bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A, const BASIC_SET_TYPE &B)
  * @param B is a sets union
  * @return `true` if and only if `A` and `B` are disjoint
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 inline bool are_disjoint(const BASIC_SET_TYPE &A,
                          const SetsUnion<BASIC_SET_TYPE> &B)
 {
@@ -661,7 +716,7 @@ inline bool are_disjoint(const BASIC_SET_TYPE &A,
  * @param[in] B is a sets union
  * @return the sets union representing \f$A \cap B\f$
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 SetsUnion<BASIC_SET_TYPE> intersect(const SetsUnion<BASIC_SET_TYPE> &A,
                                     const SetsUnion<BASIC_SET_TYPE> &B)
 {
@@ -684,7 +739,7 @@ SetsUnion<BASIC_SET_TYPE> intersect(const SetsUnion<BASIC_SET_TYPE> &A,
  * @param[in] B is a set
  * @return the sets union representing \f$A \cap B\f$
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 inline SetsUnion<BASIC_SET_TYPE> intersect(const SetsUnion<BASIC_SET_TYPE> &A,
                                            const BASIC_SET_TYPE &B)
 {
@@ -699,7 +754,7 @@ inline SetsUnion<BASIC_SET_TYPE> intersect(const SetsUnion<BASIC_SET_TYPE> &A,
  * @param[in] B is a sets union
  * @return the bundles union representing \f$A \cap B\f$
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 inline SetsUnion<BASIC_SET_TYPE> intersect(const BASIC_SET_TYPE &A,
                                            const SetsUnion<BASIC_SET_TYPE> &B)
 {
@@ -714,7 +769,7 @@ inline SetsUnion<BASIC_SET_TYPE> intersect(const BASIC_SET_TYPE &A,
  * @param[in] B is a sets union
  * @return the sets union representing \f$A \cup B\f$
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 inline SetsUnion<BASIC_SET_TYPE> make_union(const SetsUnion<BASIC_SET_TYPE> &A,
                                             const SetsUnion<BASIC_SET_TYPE> &B)
 {
@@ -725,11 +780,11 @@ inline SetsUnion<BASIC_SET_TYPE> make_union(const SetsUnion<BASIC_SET_TYPE> &A,
  * Compute the union of two sets
  *
  * @tparam BASIC_SET_TYPE is the basic set type
- * @param[in] A is a union of sets
+ * @param[in] A is a union of closed sets
  * @param[in] B is a set
  * @return the sets union representing \f$A \cup B\f$
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 inline SetsUnion<BASIC_SET_TYPE> make_union(const SetsUnion<BASIC_SET_TYPE> &A,
                                             const BASIC_SET_TYPE &B)
 {
@@ -744,7 +799,7 @@ inline SetsUnion<BASIC_SET_TYPE> make_union(const SetsUnion<BASIC_SET_TYPE> &A,
  * @param[in] B is a set
  * @return the sets union representing \f$A \cup B\f$
  */
-template<typename BASIC_SET_TYPE>
+template<class BASIC_SET_TYPE>
 inline SetsUnion<BASIC_SET_TYPE> make_union(const BASIC_SET_TYPE &A,
                                             const BASIC_SET_TYPE &B)
 {
@@ -753,6 +808,79 @@ inline SetsUnion<BASIC_SET_TYPE> make_union(const BASIC_SET_TYPE &A,
   result.add(B);
 
   return result;
+}
+
+/**
+ * @brief Subtract a sets union to a set and close the result
+ *
+ * @param[in] set_obj is a closed set
+ * @param[in] sets_union is a union of closed sets
+ * @return a union of sets obtained by closing the difference
+ *         between `set_obj` and `sets_union`
+ */
+template<class BASIC_SET_TYPE>
+SetsUnion<BASIC_SET_TYPE>
+subtract_and_close(const BASIC_SET_TYPE &set_obj,
+                   const SetsUnion<BASIC_SET_TYPE> &sets_union)
+{
+  SetsUnion<BASIC_SET_TYPE> res = set_obj;
+
+  for (auto u_it = std::begin(sets_union); u_it != std::end(sets_union);
+       ++u_it) {
+    SetsUnion<BASIC_SET_TYPE> tmp;
+    for (auto s_it = std::begin(res); s_it != std::end(res); ++s_it) {
+      tmp.update(subtract_and_close(*s_it, *u_it));
+    }
+
+    res = std::move(tmp);
+  }
+
+  return res;
+}
+
+/**
+ * @brief Subtract a set to a sets union and close the result
+ *
+ * @param[in] sets_union is a union of closed sets
+ * @param[in] set_obj is a closed set
+ * @return a union of sets obtained by closing the difference
+ *         between `sets_union` and `set_obj`
+ */
+template<class BASIC_SET_TYPE>
+SetsUnion<BASIC_SET_TYPE>
+subtract_and_close(const SetsUnion<BASIC_SET_TYPE> &sets_union,
+                   const BASIC_SET_TYPE &set_obj)
+{
+  SetsUnion<BASIC_SET_TYPE> res;
+
+  for (auto u_it = std::begin(sets_union); u_it != std::end(sets_union);
+       ++u_it) {
+    res.update(subtract_and_close(*u_it, set_obj));
+  }
+
+  return res;
+}
+
+/**
+ * @brief Subtract a set to a sets union and close the result
+ *
+ * @param[in] minuend is a union of closed sets
+ * @param[in] subtrahend is a union of closed sets
+ * @return a union of sets obtained by closing the difference
+ *         between `minuend` and `subtrahend`
+ */
+template<class BASIC_SET_TYPE>
+SetsUnion<BASIC_SET_TYPE>
+subtract_and_close(const SetsUnion<BASIC_SET_TYPE> &minuend,
+                   const SetsUnion<BASIC_SET_TYPE> &subtrahend)
+{
+  SetsUnion<BASIC_SET_TYPE> res;
+
+  for (auto s_it = std::begin(minuend); s_it != std::end(minuend); ++s_it) {
+    res.update(subtract_and_close(*s_it, subtrahend));
+  }
+
+  return res;
 }
 
 #endif /* SETSUNION_H_ */

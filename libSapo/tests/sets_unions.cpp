@@ -694,3 +694,66 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     BOOST_CHECK(are_disjoint(Pu2, SetsUnion<Polytope>()));
     BOOST_CHECK(are_disjoint(SetsUnion<Polytope>(), Pu2));
 }
+
+BOOST_AUTO_TEST_CASE(test_includes_sets_union)
+{
+    using namespace LinearAlgebra;
+    using namespace LinearAlgebra::Dense;
+
+    Matrix<double> A = {
+        {1,0},
+        {0,1}
+    };
+
+    Matrix<double> B = {
+        {1}
+    };
+
+    Bundle b1(A,{3,1.5}, {5,3}), b2(A, {2,0}, {4,2.5}), b3(A,{0,1}, {2,3}),
+           b4(A,{10,1}, {12,3}), b5(A,{11,0},{14,2}), b6(A,{13,2.5},{15,3.5}),
+           b7(A,{0.5,1},{1.5,2.5}), b8(A,{4.5,1},{6,2}), b9(A,{-1,0},{-3,-4});
+
+    Bundle c1(A,{0,1.5},{5.5,2}), c2(A,{10.5,1},{13,1.5}), c3(A, {0,1},{5.5,3});
+
+    BOOST_CHECK(b9.is_empty());
+
+    BOOST_CHECK(b3.includes(b7));
+
+    BOOST_CHECK(!are_disjoint(b1,b2));
+    BOOST_CHECK(are_disjoint(b1,b3));
+    BOOST_CHECK(are_disjoint(b1,b4));
+    BOOST_CHECK(are_disjoint(b1,b5));
+    BOOST_CHECK(are_disjoint(b1,b6));
+
+    BOOST_CHECK(!are_disjoint(b2,b3));
+    BOOST_CHECK(are_disjoint(b2,b4));
+    BOOST_CHECK(are_disjoint(b2,b5));
+    BOOST_CHECK(are_disjoint(b2,b6));
+
+    BOOST_CHECK(are_disjoint(b3,b4));
+    BOOST_CHECK(are_disjoint(b3,b5));
+    BOOST_CHECK(are_disjoint(b3,b6));
+
+    BOOST_CHECK(!are_disjoint(b4,b5));
+    BOOST_CHECK(are_disjoint(b4,b6));
+
+    BOOST_CHECK(are_disjoint(b5,b6));
+
+    std::list<Bundle> blist{b1,b2,b3,b4,b5,b6,b7,b8,b9};
+
+    SetsUnion<Bundle> bsu(blist);
+    SetsUnion<Bundle> bsu2({c1, c2});
+
+    BOOST_CHECK(!bsu.any_includes(c1));
+    BOOST_CHECK(!bsu.any_includes(c2));
+    BOOST_CHECK(!bsu.any_includes(c3));
+
+    BOOST_CHECK(bsu.includes(c1));
+    /*
+    BOOST_CHECK(bsu.includes(c2));
+    BOOST_CHECK(!bsu.includes(c3));
+
+    BOOST_CHECK(bsu.includes(bsu2));
+    BOOST_CHECK(!bsu2.includes(bsu));
+    */
+}
