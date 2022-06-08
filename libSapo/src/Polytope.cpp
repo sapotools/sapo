@@ -170,10 +170,10 @@ Polytope &Polytope::intersect_with(const Polytope &P)
   return *this;
 }
 
-Polytope &Polytope::expand_by(const double epsilon)
+Polytope &Polytope::expand_by(const double delta)
 {
   for (auto b_it = std::begin(_b); b_it != std::end(_b); ++b_it) {
-    *b_it += epsilon;
+    *b_it += delta;
   }
 
   return *this;

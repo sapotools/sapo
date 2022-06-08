@@ -180,12 +180,12 @@ public:
    * @brief Expand the polytope
    *
    * This method expands the polytope so that each of its boundaries
-   * is moved by a value `epsilon`.
+   * is moved by a value `delta`.
    *
-   * @param epsilon is the aimed expansion
+   * @param delta is the aimed expansion
    * @return a reference to the updated polytope
    */
-  Polytope &expand_by(const double epsilon);
+  Polytope &expand_by(const double delta);
 
   /**
    *  Split a polytope in a list of polytopes.

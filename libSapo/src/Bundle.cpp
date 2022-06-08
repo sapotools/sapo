@@ -535,24 +535,23 @@ bool Bundle::is_subset_of(const Bundle &bundle) const
   // for each direction in the bundle
   for (unsigned int dir_idx = 0; dir_idx < bundle.size(); ++dir_idx) {
 
-    // if the minimum of this object on that direction is greater than
-    // the bundle minimum, this object does not include the bundle
+    // if the minimum of this object on that direction is lesser than
+    // the bundle minimum, this object is not a subset of the bundle
     if (P_this.minimize(bundle.get_direction(dir_idx)).optimum()
         < bundle.get_lower_bound(dir_idx)) {
       return false;
     }
 
-    // if the maximum of this object on that direction is smaller than
-    // the bundle maximum, this object does not include the bundle
+    // if the maximum of this object on that direction is greater than
+    // the bundle maximum, this object is not a subset of the bundle
     if (P_this.maximize(bundle.get_direction(dir_idx)).optimum()
         > bundle.get_upper_bound(dir_idx)) {
-
       return false;
     }
   }
 
-  // if none of the previous conditions hold, the bundle is a
-  // subset for this object
+  // if none of the previous conditions hold, this object is a
+  // subset for the bundle
   return true;
 }
 
@@ -1219,7 +1218,7 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   return *this;
 }
 
-Bundle &Bundle::expand_by(const double epsilon)
+Bundle &Bundle::expand_by(const double delta)
 {
   if (is_empty()) {
     return *this;
@@ -1227,12 +1226,12 @@ Bundle &Bundle::expand_by(const double epsilon)
 
   for (auto b_it = std::begin(_lower_bounds); b_it != std::end(_lower_bounds);
        ++b_it) {
-    *b_it -= epsilon;
+    *b_it -= delta;
   }
 
   for (auto b_it = std::begin(_upper_bounds); b_it != std::end(_upper_bounds);
        ++b_it) {
-    *b_it += epsilon;
+    *b_it += delta;
   }
 
   return *this;

@@ -385,7 +385,7 @@ public:
       // Since all the classes are disjoint by definition
       // checking for inclusion as done by `SetsUnion::add`
       // can be avoided
-      for (auto s_it = std::begin(c_it->sets_union); 
+      for (auto s_it = std::begin(c_it->sets_union);
            s_it != std::end(c_it->sets_union); ++s_it) {
         sets_union.push_back(*s_it);
       }
@@ -411,7 +411,7 @@ public:
     for (auto c_it = std::begin(_classes); c_it != std::end(_classes);
          ++c_it) {
 
-      // append the intersection of `sticky_union` and the over-approximation 
+      // append the intersection of `sticky_union` and the over-approximation
       // of the class pointed by `c_it`
       sets_union.update(sticky_union.get_intersection_with(c_it->over_approx));
     }
@@ -526,20 +526,19 @@ public:
  * @return the intersection of `A` and `B`
  */
 template<class BASIC_SET_TYPE>
-SetsUnion<BASIC_SET_TYPE>
-intersect(const StickyUnion<BASIC_SET_TYPE> &A,
-          const StickyUnion<BASIC_SET_TYPE> &B)
+SetsUnion<BASIC_SET_TYPE> intersect(const StickyUnion<BASIC_SET_TYPE> &A,
+                                    const StickyUnion<BASIC_SET_TYPE> &B)
 {
-    SetsUnion<BASIC_SET_TYPE> sets_union;
+  SetsUnion<BASIC_SET_TYPE> sets_union;
 
-    // for each class
-    for (auto c_it = std::begin(A._classes); c_it != std::end(A._classes); ++c_it) {
+  // for each class
+  for (auto c_it = std::begin(A._classes); c_it != std::end(A._classes);
+       ++c_it) {
 
-        sets_union.update(intersect(B, c_it->over_approx));
-    }
+    sets_union.update(intersect(B, c_it->over_approx));
+  }
 
-
-    return sets_union;
+  return sets_union;
 }
 
 /**
@@ -557,18 +556,18 @@ SetsUnion<BASIC_SET_TYPE>
 intersect(const StickyUnion<BASIC_SET_TYPE> &sticky_union,
           const SET_TYPE &set_obj)
 {
-    SetsUnion<BASIC_SET_TYPE> sets_union;
+  SetsUnion<BASIC_SET_TYPE> sets_union;
 
-    // for each class
-    for (auto c_it = std::begin(sticky_union._classes);
-         c_it != std::end(sticky_union._classes); ++c_it) {
+  // for each class
+  for (auto c_it = std::begin(sticky_union._classes);
+       c_it != std::end(sticky_union._classes); ++c_it) {
 
-      // append the intersection of `set_obj` and the over-approximation of the
-      // class pointed by `c_it`
-      sets_union.update(intersect(c_it->over_approx, set_obj));
-    }
+    // append the intersection of `set_obj` and the over-approximation of the
+    // class pointed by `c_it`
+    sets_union.update(intersect(c_it->over_approx, set_obj));
+  }
 
-    return sets_union;
+  return sets_union;
 }
 
 /**
@@ -589,7 +588,6 @@ intersect(const SET_TYPE &set_obj,
   return intersect(sticky_union, set_obj);
 }
 
-
 /**
  * @brief Compute the intersection of a sticky union and a set
  *
@@ -604,18 +602,18 @@ SetsUnion<BASIC_SET_TYPE>
 intersect(const StickyUnion<BASIC_SET_TYPE> &sticky_union,
           const BASIC_SET_TYPE &set_obj)
 {
-    SetsUnion<BASIC_SET_TYPE> sets_union;
+  SetsUnion<BASIC_SET_TYPE> sets_union;
 
-    // for each class
-    for (auto c_it = std::begin(sticky_union._classes);
-         c_it != std::end(sticky_union._classes); ++c_it) {
+  // for each class
+  for (auto c_it = std::begin(sticky_union._classes);
+       c_it != std::end(sticky_union._classes); ++c_it) {
 
-      // append the intersection of `set_obj` and the over-approximation of the
-      // class pointed by `c_it`
-      sets_union.add(intersect(c_it->over_approx, set_obj));
-    }
+    // append the intersection of `set_obj` and the over-approximation of the
+    // class pointed by `c_it`
+    sets_union.add(intersect(c_it->over_approx, set_obj));
+  }
 
-    return sets_union;
+  return sets_union;
 }
 
 /**

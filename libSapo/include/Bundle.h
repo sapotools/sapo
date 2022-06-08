@@ -465,10 +465,10 @@ public:
    * This method expands the bundle so that each of its boundaries
    * is moved by a value `epsilon`.
    *
-   * @param epsilon is the aimed expansion
+   * @param delta is the aimed expansion
    * @return a reference to the updated bundle
    */
-  Bundle &expand_by(const double epsilon);
+  Bundle &expand_by(const double delta);
 
   virtual ~Bundle();
 

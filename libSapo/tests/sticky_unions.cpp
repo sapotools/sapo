@@ -308,7 +308,6 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     BOOST_CHECK(Su4.any_includes(res));
 }
 
-
 BOOST_AUTO_TEST_CASE(test_includes_sticky_union)
 {
     using namespace LinearAlgebra;
