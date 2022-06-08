@@ -776,24 +776,34 @@ std::pair<bool, unsigned int> Sapo::check_invariant(
   // alias the transformation function
   const Sapo *sapo = this;
   auto T = [&sapo, &pSet](const SetsUnion<Bundle> &set) {
-    return sapo->dynamical_system().transform(set, pSet);
+    if (sapo->dynamical_system().parameters().size() > 0) {
+      return sapo->dynamical_system().transform(set, pSet);
+    } else {
+      return sapo->dynamical_system().transform(set);
+    }
   };
 
   auto is_k_invariant = [&T](const SetsUnion<Bundle> &CI,
                              const SetsUnion<Bundle> &Tk, const unsigned &k) {
     auto TCI = Tk;
+
     for (unsigned int i = 1; i < k; ++i) {
-      TCI = intersect(T(TCI), CI);
-      if (TCI.is_empty()) {
-        return true;
-      }
+      TCI = T(TCI);
 
       if (!CI.includes(TCI)) {
         return false;
       }
+
+      TCI = intersect(TCI, CI);
+
+      if (TCI.is_empty()) {
+        return true;
+      }
     }
 
-    return true;
+    TCI = T(TCI);
+
+    return CI.includes(TCI);
   };
 
   while (epoch_horizon == 0 || k < epoch_horizon) {
