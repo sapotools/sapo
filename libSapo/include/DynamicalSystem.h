@@ -447,15 +447,23 @@ public:
    * @return an over-approximation of set reached from `bundles_union`
    *         by the dynamic laws
    */
-  inline SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
-                                     const transformation_mode t_mode
-                                     = ALL_FOR_ONE) const
+  SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
+                              const transformation_mode t_mode
+                              = ALL_FOR_ONE) const
   {
     if (_parameters.size() != 0) {
       throw std::domain_error("The parameter set has not been specified");
     }
 
-    return this->transform(bundles_union, Polytope(), t_mode);
+    SetsUnion<Bundle> result;
+
+    for (auto b_it = std::begin(bundles_union);
+         b_it != std::end(bundles_union); ++b_it) {
+
+      result.add(transform(*b_it, t_mode));
+    }
+
+    return result;
   }
 
   /**
