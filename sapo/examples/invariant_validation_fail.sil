@@ -1,0 +1,14 @@
+problem: invariant_validation;
+
+var x, y;
+
+const alpha = 0.9;
+const beta=11/9;
+
+dynamic(x) = alpha*x;
+dynamic(y) = beta*y*x;
+
+invariant: x>=0 && y>=0 && y<=150;
+
+direction x in [0, 5];
+direction y in [0, 0.00025];
