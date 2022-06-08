@@ -592,6 +592,24 @@ public:
   }
 
   /**
+   * @brief Expand the union of closed sets
+   *
+   * This method expands the union so that each of its boundaries
+   * is moved by a value `delta`.
+   *
+   * @param delta is the aimed expansion
+   * @return a reference to the updated object
+   */
+  SetsUnion<BASIC_SET_TYPE> &expand_by(const double delta)
+  {
+    for (auto it = std::begin(*this); it != std::end(*this); ++it) {
+      it->expand_by(delta);
+    }
+
+    return *this;
+  }
+
+  /**
    * @brief The begin iterator
    *
    * @return the begin iterator
