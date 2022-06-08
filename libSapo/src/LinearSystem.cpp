@@ -56,11 +56,27 @@ JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
   return out;
 }
 
+/// @private
+template<typename T>
+unsigned int find_in(const std::vector<LinearAlgebra::Vector<T>> &A,
+                     const LinearAlgebra::Vector<T> &v)
+{
+  for (unsigned int i=0; i<A.size(); ++i) {
+    if (A[i]==v) {
+      return i;
+    }
+  }
+
+  return A.size();
+}
+
 OptimizationResult<double>
 optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
          const LinearAlgebra::Vector<double> &b,
          const LinearAlgebra::Vector<double> &obj_fun, const bool maximize)
 {
+  using namespace LinearAlgebra;
+
   unsigned int num_rows = A.size();
   unsigned int num_cols = obj_fun.size();
   unsigned int size_lp = num_rows * num_cols;
@@ -121,6 +137,24 @@ optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
   default:
     res = glp_get_obj_val(lp);
   }
+
+  // The following lines are meant to contain GLPK 
+  // approximation error!!!
+  if (maximize) {
+    unsigned int const_idx = find_in(A, obj_fun);
+
+    if (const_idx < A.size() && res > b[const_idx]) {
+      res = b[const_idx];
+    }
+  } else {
+    unsigned int const_idx = find_in(A, -obj_fun);
+
+    if (const_idx < A.size() && -res > b[const_idx]) {
+      res = -b[const_idx];
+    }
+  }
+  // End of the tricky code to contain 
+  // approximation GLPK errors
 
   OptimizationResult<double> opt_res(res, glp_get_status(lp));
 
