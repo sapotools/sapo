@@ -111,3 +111,16 @@ Model &Model::set_assumptions(const LinearSystem &assumptions)
 
   return *this;
 }
+
+Model &Model::set_invariant(const LinearSystem &invariant)
+{
+  if (invariant.size() > 0 && invariant.dim() != _dynamical_system.dim()) {
+    throw std::domain_error("The number of dimensions of the "
+                            "invariant space differs from "
+                            "that of the model variables.");
+  }
+
+  _invariant = LinearSystem(invariant);
+
+  return *this;
+}

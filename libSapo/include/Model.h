@@ -39,6 +39,7 @@ protected:
   std::shared_ptr<STL::STL> _spec; //!< a specification
 
   LinearSystem _assumptions; //!< The assumptions
+  LinearSystem _invariant;   //!< The candidate invariant
 
   std::string _name; //!< The model name
 
@@ -181,11 +182,28 @@ public:
   }
 
   /**
+   * @brief Get the candidate model invariant
+   *
+   * @return a reference to the candidate model invariant
+   */
+  inline const LinearSystem &invariant() const
+  {
+    return this->_invariant;
+  }
+
+  /**
    * @brief Set the model assumptions
    *
    * @return a reference to the model assumptions
    */
   Model &set_assumptions(const LinearSystem &assumptions);
+
+  /**
+   * @brief Set the candidate model invariant
+   *
+   * @return a reference to the candidate model invariant
+   */
+  Model &set_invariant(const LinearSystem &invariant);
 };
 
 #endif /* MODEL_H_ */
