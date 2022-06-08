@@ -11,10 +11,12 @@
 #ifndef JSONSTREAMER_H_
 #define JSONSTREAMER_H_
 
-#include <ostream>
+#include <iostream>
 #include <string>
 #include <algorithm>
 #include <list>
+
+#include "LinearSystem.h"
 
 namespace JSON
 {
@@ -142,6 +144,34 @@ public:
 
     return out;
   }
+
+  /**
+   * @brief Print a Boolean value in a JSON stream
+   *
+   * @param out is the JSON output stream
+   * @param value is a Boolean value
+   * @return a reference to the JSON output stream
+   */
+  friend JSON::ostream &operator<<(JSON::ostream &out, const bool value)
+  {
+    dynamic_cast<std::ostream &>(out) << value;
+
+    return out;
+  }
+
+  /**
+   * @brief Print an unsigned interger in a JSON stream
+   *
+   * @param out is the JSON output stream
+   * @param value is an unsigned interger value
+   * @return a reference to the JSON output stream
+   */
+  friend JSON::ostream &operator<<(JSON::ostream &out, const unsigned int value)
+  {
+    dynamic_cast<std::ostream &>(out) << value;
+
+    return out;
+  }
 };
 
 }
@@ -167,5 +197,14 @@ JSON::ostream &operator<<(JSON::ostream &out, const std::vector<T> &v)
 
   return out;
 }
+
+/**
+ * @brief Print a linear system in a JSON stream
+ *
+ * @param out is the output JSON stream
+ * @param ls is the linear system to be print
+ * @return a reference to the output JSON stream
+ */
+JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls);
 
 #endif // JSONSTREAMER_H_

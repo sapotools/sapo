@@ -19,8 +19,6 @@
 #include "LinearAlgebra.h"
 #include "SymbolicAlgebra.h"
 
-#include "JSONStreamer.h"
-
 /**
  * @brief The result of an optimization process
  *
@@ -433,14 +431,5 @@ inline bool operator!=(const LinearSystem &P1, const LinearSystem &P2)
  * @return a reference to the output stream
  */
 std::ostream &operator<<(std::ostream &out, const LinearSystem &ls);
-
-/**
- * @brief Print a linear system in a JSON stream
- *
- * @param out is the output JSON stream
- * @param ls is the linear system to be print
- * @return a reference to the output JSON stream
- */
-JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls);
 
 #endif /* LINEARSYSTEM_H_ */

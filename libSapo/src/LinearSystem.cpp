@@ -41,28 +41,13 @@ std::ostream &operator<<(std::ostream &out, const LinearSystem &ls)
   return out;
 }
 
-/**
- * @brief Print a linear system in a JSON stream
- *
- * @param out is the output JSON stream
- * @param ls is the linear system to be print
- * @return a reference to the output JSON stream
- */
-JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls)
-{
-  out << "{\"A\":" << ls.A() << ","
-      << "\"b\":" << ls.b() << "}";
-
-  return out;
-}
-
 /// @private
 template<typename T>
 unsigned int find_in(const std::vector<LinearAlgebra::Vector<T>> &A,
                      const LinearAlgebra::Vector<T> &v)
 {
-  for (unsigned int i=0; i<A.size(); ++i) {
-    if (A[i]==v) {
+  for (unsigned int i = 0; i < A.size(); ++i) {
+    if (A[i] == v) {
       return i;
     }
   }
@@ -138,7 +123,7 @@ optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
     res = glp_get_obj_val(lp);
   }
 
-  // The following lines are meant to contain GLPK 
+  // The following lines are meant to contain GLPK
   // approximation error!!!
   if (maximize) {
     unsigned int const_idx = find_in(A, obj_fun);
@@ -153,7 +138,7 @@ optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
       res = -b[const_idx];
     }
   }
-  // End of the tricky code to contain 
+  // End of the tricky code to contain
   // approximation GLPK errors
 
   OptimizationResult<double> opt_res(res, glp_get_status(lp));
