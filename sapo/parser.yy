@@ -76,6 +76,7 @@
 	END 0
 	PROB 
 	REACH
+	INVCHECK
 	SYNTH
 	VARMODE
 	PARAMMODE
@@ -106,6 +107,8 @@
 	DECOMP
 	ALPHA
 	COMPOSE
+	INVARIANT
+	EXP_DELTA
 	AND					"&&"
 	OR					"||"
 	NOT					"!"
@@ -490,6 +493,12 @@ symbol			: VAR identList IN doubleInterval ";"
 						{
 							MISSING_SC(@3);
 						}
+						| INVARIANT ":" invariant ";"
+						{}
+						| INVARIANT ":" invariant error
+						{
+							MISSING_SC(@3);
+						}
 						| ASSUME direction ";"
 						{
 							if ($2->contains(drv.data.getParamSymbols())) {
@@ -518,8 +527,8 @@ symbol			: VAR identList IN doubleInterval ";"
 						}
 
 matrices		: var_direction {}
-						| template {}
-						| param_direction {}
+				| template {}
+				| param_direction {}
 
 direction	: expr directionType expr
 						{
@@ -555,25 +564,40 @@ direction	: expr directionType expr
 						}
 
 directionType		: "<"
-							{
-								$$ = AbsSyn::Direction::Type::LT;
-							}
-							| "<="
-							{
-								$$ = AbsSyn::Direction::Type::LE;
-							}
-							| ">"
-							{
-								$$ = AbsSyn::Direction::Type::GT;
-							}
-							| ">="
-							{
-								$$ = AbsSyn::Direction::Type::GE;
-							}
-							| "="
-							{
-								$$ = AbsSyn::Direction::Type::EQ;
-							}
+						{
+							$$ = AbsSyn::Direction::Type::LT;
+						}
+					| "<="
+						{
+							$$ = AbsSyn::Direction::Type::LE;
+						}
+					| ">"
+						{
+							$$ = AbsSyn::Direction::Type::GT;
+						}
+					| ">="
+						{
+							$$ = AbsSyn::Direction::Type::GE;
+						}
+					| "="
+						{
+							$$ = AbsSyn::Direction::Type::EQ;
+						}
+
+invariant 	: 	direction
+				{
+					if ($1->contains(drv.data.getParamSymbols())) {
+						ERROR(@1, "Invariant formula cannot contain parameters");
+					}
+					drv.data.addInvariantConstraint($1);
+				}
+			|	invariant AND direction
+				{
+					if ($3->contains(drv.data.getParamSymbols())) {
+						ERROR(@3, "Invariant formula cannot contain parameters");
+					}
+					drv.data.addInvariantConstraint($3);
+				}
 
 var_direction	: DIR direction ";"
 							{
@@ -801,6 +825,7 @@ param_direction	: PDIR direction ";"
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }
 						| SYNTH { $$ = AbsSyn::problemType::SYNTH; }
+						| INVCHECK { $$ = AbsSyn::problemType::INVARIANT; }
 
 modeType	: BOX { $$ = AbsSyn::modeType::BOX; }
 					| PARAL { $$ = AbsSyn::modeType::PARAL; }
@@ -950,111 +975,111 @@ expr		: number	{ $$ = $1; }
 				}
 
 formula	: expr ">" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
-				| expr ">=" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
-				| expr "<" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
-				| expr "<=" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
-				| expr "=" expr
-				{
-					std::shared_ptr<STL::STL> f1 = std::make_shared<STL::Atom>($1 - $3);
-					std::shared_ptr<STL::STL> f2 = std::make_shared<STL::Atom>($3 - $1);
-					$$ = std::make_shared<STL::Conjunction>(f1, f2);
-				}
-				| formula AND formula		{ $$ = std::make_shared<STL::Conjunction>($1, $3); }
-				| formula OR formula		{ $$ = std::make_shared<STL::Disjunction>($1, $3); }
-				| NOT formula									{ $$ = std::make_shared<STL::Negation>($2); }
-				| "(" formula ")" { $$ = $2; }
-				| "(" formula error
-				{
-					ERROR(@2, "Missing \"(\"");
-					$$ = $2;
-				}
-				| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<STL::Always>($2.first, $2.second, $3); }
-				| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<STL::Eventually>($2.first, $2.second, $3); }
-				| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<STL::Until>($1, $3.first, $3.second, $4); }
+		| expr ">=" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
+		| expr "<" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
+		| expr "<=" expr { $$ = std::make_shared<STL::Atom>($1 - $3); }
+		| expr "=" expr
+		{
+			std::shared_ptr<STL::STL> f1 = std::make_shared<STL::Atom>($1 - $3);
+			std::shared_ptr<STL::STL> f2 = std::make_shared<STL::Atom>($3 - $1);
+			$$ = std::make_shared<STL::Conjunction>(f1, f2);
+		}
+		| formula AND formula		{ $$ = std::make_shared<STL::Conjunction>($1, $3); }
+		| formula OR formula		{ $$ = std::make_shared<STL::Disjunction>($1, $3); }
+		| NOT formula									{ $$ = std::make_shared<STL::Negation>($2); }
+		| "(" formula ")" { $$ = $2; }
+		| "(" formula error
+		{
+			ERROR(@2, "Missing \"(\"");
+			$$ = $2;
+		}
+		| "G" intInterval formula %prec "G"	{ $$ = std::make_shared<STL::Always>($2.first, $2.second, $3); }
+		| "F" intInterval formula %prec "F"	{ $$ = std::make_shared<STL::Eventually>($2.first, $2.second, $3); }
+		| formula "U" intInterval formula %prec "U"	{ $$ = std::make_shared<STL::Until>($1, $3.first, $3.second, $4); }
 
 footer	: OPT option {}
-				| OPT error ";"
-				{
-					ERROR(@2, "Syntax error in option");
-				}
+		| OPT error ";"
+		{
+			ERROR(@2, "Syntax error in option");
+		}
 
 option	: TRANS transType ";"
-				{
-					if (drv.data.isTransModeDefined()) {
-						WARNING(@$, "Transformation type already defined");
-					} else {
-						drv.data.setTransMode($2);
-					}
-				}
-				| TRANS transType error
-				{
-					MISSING_SC(@2);
-					if (drv.data.isTransModeDefined()) {
-						WARNING(@$, "Transformation type already defined");
-					} else {
-						drv.data.setTransMode($2);
-					}
-				}
-				| TRANS error ";"
-				{
-					ERROR(@2, "Unknown transformation type");
-				}
-				| DECOMP ";"
-				{
-					if (drv.data.isDecompositionDefined()) {
-						WARNING(@$, "Decomposition option already defined");
-					} else {
-						drv.data.setDecomposition();
-					}
-				}
-				| DECOMP error
-				{
-					MISSING_SC(@1);
-					if (drv.data.isDecompositionDefined()) {
-						WARNING(@$, "Decomposition option already defined");
-					} else {
-						drv.data.setDecomposition();
-					}
-				}
-				| ALPHA DOUBLE ";"
-				{
-					if (drv.data.isAlphaDefined()) {
-						WARNING(@$, "Alpha already defined");
-					}
-					
-					if ($2 > 1) {
-						ERROR(@2, "Alpha must be between 0 and 1");
-					}
-					
-					drv.data.setAlpha($2);
-				}
-				| ALPHA DOUBLE error
-				{
-					MISSING_SC(@2);
-					if (drv.data.isAlphaDefined()) {
-						WARNING(@$, "Alpha already defined");
-					}
-					
-					if ($2 > 1) {
-						ERROR(@2, "Alpha must be between 0 and 1");
-					}
-					
-					drv.data.setAlpha($2);
-				}
-				| COMPOSE NATURAL ";"
-				{
-					if ($2 < 1) {
-						yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
-					}
-					drv.data.setDynamicDegree($2);
-				}
-				| COMPOSE NATURAL error
-				{
-					MISSING_SC(@2);
-					if ($2 < 1) {
-						yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
-					}
-				}
+		{
+			if (drv.data.isTransModeDefined()) {
+				WARNING(@$, "Transformation type already defined");
+			} else {
+				drv.data.setTransMode($2);
+			}
+		}
+		| TRANS transType error
+		{
+			MISSING_SC(@2);
+			if (drv.data.isTransModeDefined()) {
+				WARNING(@$, "Transformation type already defined");
+			} else {
+				drv.data.setTransMode($2);
+			}
+		}
+		| TRANS error ";"
+		{
+			ERROR(@2, "Unknown transformation type");
+		}
+		| DECOMP ";"
+		{
+			if (drv.data.isDecompositionDefined()) {
+				WARNING(@$, "Decomposition option already defined");
+			} else {
+				drv.data.setDecomposition();
+			}
+		}
+		| DECOMP error
+		{
+			MISSING_SC(@1);
+			if (drv.data.isDecompositionDefined()) {
+				WARNING(@$, "Decomposition option already defined");
+			} else {
+				drv.data.setDecomposition();
+			}
+		}
+		| ALPHA DOUBLE ";"
+		{
+			if (drv.data.isAlphaDefined()) {
+				WARNING(@$, "Alpha already defined");
+			}
+			
+			if ($2 > 1) {
+				ERROR(@2, "Alpha must be between 0 and 1");
+			}
+			
+			drv.data.setAlpha($2);
+		}
+		| ALPHA DOUBLE error
+		{
+			MISSING_SC(@2);
+			if (drv.data.isAlphaDefined()) {
+				WARNING(@$, "Alpha already defined");
+			}
+			
+			if ($2 > 1) {
+				ERROR(@2, "Alpha must be between 0 and 1");
+			}
+			
+			drv.data.setAlpha($2);
+		}
+		| COMPOSE NATURAL ";"
+		{
+			if ($2 < 1) {
+				yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
+			}
+			drv.data.setDynamicDegree($2);
+		}
+		| COMPOSE NATURAL error
+		{
+			MISSING_SC(@2);
+			if ($2 < 1) {
+				yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
+			}
+		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
 					| OFO { $$ = AbsSyn::transType::OFO; }
@@ -1129,6 +1154,7 @@ std::string possibleStatements(std::string s)
 		"const",
 		"define",
 		"dynamic",
+		"invariant",
 		"spec",
 		"assume",
 		"iterations",

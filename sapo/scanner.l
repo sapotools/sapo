@@ -54,6 +54,8 @@ ml_comment	"/*"((("*"[^/])?)|[^*])*"*/"
 problem			return yy::parser::make_PROB(loc);
 reachability		return yy::parser::make_REACH(loc);
 synthesis		return yy::parser::make_SYNTH(loc);
+invariant_validation		return yy::parser::make_INVCHECK(loc);
+
 variable_mode		return yy::parser::make_VARMODE(loc);
 parameter_mode		return yy::parser::make_PARAMMODE(loc);
 boxes			return yy::parser::make_BOX(loc);
@@ -74,6 +76,7 @@ on				return yy::parser::make_ON(loc);
 off				return yy::parser::make_OFF(loc);
 max_bundle_magnitude return yy::parser::make_MAX_MAGNITUDE(loc);
 direction		return yy::parser::make_DIR(loc);
+invariant		return yy::parser::make_INVARIANT(loc);
 template		return yy::parser::make_TEMPL(loc);
 parameter_direction	return yy::parser::make_PDIR(loc);
 option			return yy::parser::make_OPT(loc);

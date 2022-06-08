@@ -14,7 +14,7 @@ InputData::InputData():
     paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
     max_param_splits(0), presplits(false),
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
-    consts(), defs(), assumptions(), spec(NULL), directions(),
+    consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
     decomp(false), decomp_defined(false), alpha(0.5), alphaDefined(false),
     compose_dynamic(false), dynamic_degree(1)
@@ -39,6 +39,9 @@ InputData::~InputData()
     delete *it;
 
   for (auto it = std::begin(directions); it != std::end(directions); ++it)
+    delete *it;
+
+  for (auto it = std::begin(invariant); it != std::end(invariant); ++it)
     delete *it;
 
   for (auto it = std::begin(paramDirections); it != std::end(paramDirections);
@@ -88,17 +91,25 @@ ostream &operator<<(ostream &os, const InputData &m)
   os << endl;
 
   os << "assumptions: ";
-  for (unsigned i = 0; i < m.assumptions.size(); i++)
-    os << *(m.assumptions[i]) << endl;
+  for (auto it=std::begin(m.getAssumptions()); it != std::end(m.getAssumptions()); ++it) {
+    os << **it << std::endl;
+  }
   os << endl;
 
   os << endl;
-  os << "Directions:" << endl << "{" << endl;
+  os << "directions:" << endl << "{" << endl;
   for (unsigned i = 0; i < m.directions.size(); i++) {
     os << "\t" << *(m.directions[i]) << endl;
   }
   //    os << "\t<" << m.directions[i] << "> in [" << m.LBoffsets[i] << ", "
   //       << m.UBoffsets[i] << "]" << endl;
+  os << "}" << endl;
+
+  os << std::endl;
+  os << "invariant:" << std::endl << "{" << endl;
+  for (auto it=std::begin(m.getInvariant()); it != std::end(m.getInvariant()); ++it) {
+    os << "\t" << **it << std::endl;
+  }
   os << "}" << endl;
 
   os << endl;
@@ -318,6 +329,11 @@ int find(std::vector<Direction *> M, Direction *v)
   }
   // not found
   return -1;
+}
+
+void InputData::addInvariantConstraint(Direction *d)
+{
+  invariant.push_back(d);
 }
 
 void InputData::addDirectionConstraint(Direction *d, bool isVar)
@@ -580,7 +596,7 @@ bool InputData::check()
     res = false;
   }
 
-  if (!isIterationSet()) {
+  if (!isIterationSet() && problem != problemType::INVARIANT) {
     cerr << "Number of iterations is mandatory" << endl;
     res = false;
   }
@@ -628,6 +644,14 @@ bool InputData::check()
          << endl;
     res = false;
   }
+
+  // specs
+  if (problem == problemType::INVARIANT && invariant.size() == 0) {
+    cerr << "Invariant validation requires invariant specification"
+         << endl;
+    res = false;
+  }
+
 
   // trans type (AFO or OFO), if undefined set to AFO
   if (trans == transType::T_UNDEF) {

@@ -133,10 +133,6 @@ public:
   {
     return defs.size();
   }
-  unsigned getAssumptionsNumber() const
-  {
-    return assumptions.size();
-  }
 
   bool isVarDefined(const std::string &name)
       const; // checks if a variable named 'name' already exists
@@ -195,10 +191,9 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 
-  const Direction *
-  getAssumption(int i) const // return the assumption in position i
+  const std::list<Direction *> &getAssumptions() const
   {
-    return assumptions[i];
+    return assumptions;
   }
 
   void addVariable(
@@ -245,6 +240,7 @@ public:
 
   // add direction with specified name
   void addVarDirectionConstraint(Direction *d);
+
   unsigned int getDirectionsNum() const
   {
     return directions.size();
@@ -260,6 +256,13 @@ public:
   bool isBounded(const unsigned int &d) const
   {
     return directions[d]->hasLB() && directions[d]->hasUB();
+  }
+
+  void addInvariantConstraint(Direction *d);
+
+  const std::list<Direction *> &getInvariant() const
+  {
+    return invariant;
   }
 
   unsigned int findDirectionPos(const std::string &name) const;
@@ -397,7 +400,8 @@ protected:
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
 
-  std::vector<Direction *> assumptions;
+  std::list<Direction *> assumptions;
+  std::list<Direction *> invariant;
 
   std::shared_ptr<STL::STL> spec;
 

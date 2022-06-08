@@ -10,7 +10,8 @@ namespace AbsSyn
 enum problemType {
   P_UNDEF, // undefined
   REACH,   // reachability
-  SYNTH    // parameter synthesis
+  SYNTH,   // parameter synthesis
+  INVARIANT // invariant validation
 };
 
 // defines modalities for representing variables and parameters
@@ -35,24 +36,48 @@ namespace std
 
 inline ostream &operator<<(ostream &os, const AbsSyn::problemType t)
 {
-  if (t == AbsSyn::problemType::P_UNDEF)
-    return os << "UNDEF";
-  else if (t == AbsSyn::problemType::REACH)
-    return os << "reachability";
-  else
-    return os << "synthesis";
+  switch(t) {
+    case AbsSyn::problemType::P_UNDEF:
+      os << "Undefined";
+      break;
+    case AbsSyn::problemType::REACH:
+      os << "reachability";
+      break;
+    case AbsSyn::problemType::SYNTH:
+      os << "synthesis";
+      break;
+    case AbsSyn::problemType::INVARIANT:
+      os << "invariant validation";
+      break;
+    default:
+      os << "Unknown problem type ("<< (unsigned int)t << ")";
+      break;
+  }
+
+  return os;
 }
 
 inline ostream &operator<<(ostream &os, const AbsSyn::modeType t)
 {
-  if (t == AbsSyn::modeType::M_UNDEF)
-    return os << "UNDEF";
-  else if (t == AbsSyn::modeType::BOX)
-    return os << "boxes";
-  else if (t == AbsSyn::modeType::PARAL)
-    return os << "parallelotopes";
-  else
-    return os << "polytopes";
+  switch(t) {
+    case AbsSyn::modeType::M_UNDEF:
+      os << "Undefined";
+      break;
+    case AbsSyn::modeType::BOX:
+      os << "boxes";
+      break;
+    case AbsSyn::modeType::PARAL:
+      os << "parallelotopes";
+      break;
+    case AbsSyn::modeType::POLY:
+      os << "polytopes";
+      break;
+    default:
+      os << "Unknown mode type ("<< (unsigned int)t << ")";
+      break;
+  }
+
+  return os;
 }
 
 }
