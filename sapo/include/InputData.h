@@ -13,6 +13,7 @@
 
 #include "AbsSynIO.h"
 
+#include "Sapo.h"
 #include "types.h"
 #include "Variable.h"
 #include "Parameter.h"
@@ -265,6 +266,16 @@ public:
     return invariant;
   }
 
+  inline void setApproxType(const Sapo::invariantApproxType type)
+  {
+    approx_type = type;
+  }
+
+  inline const Sapo::invariantApproxType &getApproxType() const 
+  {
+    return approx_type;
+  }
+
   unsigned int findDirectionPos(const std::string &name) const;
 
   unsigned templateRows() const
@@ -418,6 +429,7 @@ protected:
   bool alphaDefined;
   bool compose_dynamic;
   unsigned dynamic_degree;
+  Sapo::invariantApproxType approx_type;
 
   // addition of direction to params or vars
   void addDirectionConstraint(Direction *d, bool isVar);

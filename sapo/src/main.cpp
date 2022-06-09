@@ -44,6 +44,7 @@ Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
     sapo.num_of_pre_splits = 0;
   }
   sapo.max_bundle_magnitude = data.getMaxVersorMagnitude();
+  sapo.inv_approximation = data.getApproxType();
 
   return sapo;
 }
@@ -189,20 +190,22 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
         sapo.time_horizon, BAR_LENGTH, std::ref(std::cerr));
   }
 
-  auto approximate_Tk = [](const SetsUnion<Bundle> &CI, const SetsUnion<Bundle> &Tk) {
-            (void)CI;
-            return Tk;
-          };
-  auto result = sapo.check_invariant(*(model.initial_set()), model.parameter_set(), 
-                                     model.invariant(), sapo.time_horizon,
-                                     approximate_Tk,  accounter);
+  InvariantValidationResult result;
+
+  result = sapo.check_invariant(*(model.initial_set()), model.parameter_set(), 
+                                model.invariant(), sapo.time_horizon, accounter);
 
   using OF = OutputFormater<OSTREAM>;
 
-  os << OF::object_header() << OF::field_begin("validated") << result.first
-     << OF::field_end() << OF::field_separator()
-     << OF::field_begin("k-induction") << result.second
-     << OF::field_end() << OF::object_footer() << std::endl; 
+  os << OF::object_header() 
+     << OF::field_begin("validated") << result.validated << OF::field_end() 
+     << OF::field_separator()
+     << OF::field_begin("k-induction") << result.k_induction << OF::field_end() 
+     << OF::field_separator()   
+     << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end() 
+     << OF::field_separator()   
+     << OF::field_begin("reached approx") << result.r_approx << OF::field_end()
+     << OF::object_footer() << std::endl; 
 
   if (display_progress) {
     delete accounter;

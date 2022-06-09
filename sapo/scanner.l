@@ -80,6 +80,11 @@ invariant		return yy::parser::make_INVARIANT(loc);
 template		return yy::parser::make_TEMPL(loc);
 parameter_direction	return yy::parser::make_PDIR(loc);
 option			return yy::parser::make_OPT(loc);
+k_induction_join return yy::parser::make_K_IND_JOIN(loc);
+listing			return yy::parser::make_LISTING(loc);
+packaging			return yy::parser::make_PACKAGING(loc);
+merging			return yy::parser::make_MERGING(loc);
+
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);
 OFO			return yy::parser::make_OFO(loc);

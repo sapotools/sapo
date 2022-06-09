@@ -33,11 +33,24 @@
 
 #include "ProgressAccounter.h"
 
+
+/**
+ * @brief Result of an invariant validation
+ */
+typedef struct
+{
+  bool validated;               //!< invariant candidate has been validated
+  unsigned int k_induction;     //!< k-induction level
+  Flowpipe flowpipe;            //!< system flowpipe
+  SetsUnion<Bundle> r_approx;   //!< over-approximation of the reached set
+} InvariantValidationResult;
+
 /**
  * @brief The computation orchestrator
  */
 class Sapo
 {
+
 public:
   transformation_mode t_mode; //!< transformation mode (OFO or AFO)
   double decomp_weight;       //!< decomposition weight
@@ -47,6 +60,17 @@ public:
   unsigned int max_param_splits;  //!< maximum number of splits in synthesis
   unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis
   double max_bundle_magnitude; //!< maximum versor magnitude for single bundle
+
+  /**
+   * @brief Approximation used during invariant validation
+   */
+  enum invariantApproxType {
+    NO_APPROX,    // no approximation is used (listing)
+    CHAIN_JOIN,   // chain-join approximation (packaging)
+    FULL_JOIN     // full-join approximation (merging)
+  };
+
+  invariantApproxType inv_approximation;
 
 private:
   const DynamicalSystem<double>
@@ -250,34 +274,13 @@ public:
    *        computation does not end until the correct
    *        answer has been found (potentially, forever).
    *        The default value is 0
-   * @param approximate_Tk is the function used to approximate
-   *        the set reached during an epoch. If `CI` is the
-   *        approximation of the reached set up to the
-   *        (k-1)-th step and `Tk` is the set reached during
-   *        the k-th epoch `approximate_Tk(CI, Tk)` is the
-   *        approximation of `Tk`. The default value is the
-   *        identity function for `Tk`, i.e., no approximation
    * @param accounter accounts for the computation progress
-   * @return a pair<bool, unsigned>. The first value
-   * is `true` if and only if the method has identified
-   * a `k` such that `invariant_candidate` is a `k`-invariant
-   * for the investigated model. In such a case, the second
-   * returned value is such a `k`. Whenever the first value
-   * is `false`, then the second value report the epoch
-   * in which `invariant_candidate` has been disproved to be
-   * a `k`-invariant
+   * @return an object of the type `InvariantValidationResult`
    */
-  std::pair<bool, unsigned int> check_invariant(
+  InvariantValidationResult check_invariant(
       const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
       const LinearSystem &invariant_candidate,
       const unsigned int epoch_horizon = 0,
-      SetsUnion<Bundle> (*approximate_Tk)(const SetsUnion<Bundle> &CI,
-                                          const SetsUnion<Bundle> &Tk)
-      =
-          [](const SetsUnion<Bundle> &CI, const SetsUnion<Bundle> &Tk) {
-            (void)CI;
-            return Tk;
-          },
       ProgressAccounter *accounter = NULL) const;
 };
 

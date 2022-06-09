@@ -22,6 +22,7 @@
  *
  * This class represents reachability flowpipe as
  * a sequence of polytope union.
+ * @todo reimplement this class as a list of `SetsUnion`
  */
 class Flowpipe : public std::vector<SetsUnion<Polytope>>
 {
@@ -57,6 +58,25 @@ public:
   inline Flowpipe &push_back(SetsUnion<Polytope> &&Pu)
   {
     std::vector<SetsUnion<Polytope>>::push_back(std::move(Pu));
+
+    return *this;
+  }
+
+  /**
+   * Append a bundles union to the flowpipe
+   *
+   * @param[in] Bu is the bundles union to be appended
+   * @return a reference to the new flowpipe
+   */
+  inline Flowpipe &push_back(const SetsUnion<Bundle> &Bu)
+  {
+    SetsUnion<Polytope> Pu;
+
+    for (const Bundle &b: Bu) {
+      Pu.add(b);
+    }
+
+    push_back(Pu);
 
     return *this;
   }

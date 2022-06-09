@@ -17,7 +17,8 @@ InputData::InputData():
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
     decomp(false), decomp_defined(false), alpha(0.5), alphaDefined(false),
-    compose_dynamic(false), dynamic_degree(1)
+    compose_dynamic(false), dynamic_degree(1),
+    approx_type(Sapo::NO_APPROX)
 {
 }
 

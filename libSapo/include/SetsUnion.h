@@ -664,6 +664,20 @@ public:
     return this->empty();
   }
 
+  /**
+   * @brief Get the list of closed sets in the union
+   * 
+   * @return the list of closed sets in the union
+   */
+  std::list<BASIC_SET_TYPE> get_list() const
+  {
+    std::list<BASIC_SET_TYPE> set_list;
+
+    std::copy(begin(), end(), std::back_inserter(set_list));
+
+    return set_list;
+  }
+
   template<class BASIC_SET_TYPE2>
   friend class StickyUnion;
 };
@@ -899,6 +913,101 @@ subtract_and_close(const SetsUnion<BASIC_SET_TYPE> &minuend,
   }
 
   return res;
+}
+
+/**
+ * @brief Over-approximate the union of a union of sets
+ * 
+ * @tparam BASIC_SET_TYPE is the type of the closed sets
+ * @param container is the container of the closed sets
+ * @return an over-approximation of the union of the 
+ *    sets in `sets_union` 
+ */
+template<class BASIC_SET_TYPE>
+BASIC_SET_TYPE
+over_approximate_union(const SetsUnion<BASIC_SET_TYPE> &sets_union)
+{
+  BASIC_SET_TYPE union_set;
+  for (auto it = std::begin(sets_union); it != std::end(sets_union); ++it) {
+    if (union_set.dim()==0) {
+      union_set = *it;
+    } else {
+      union_set = over_approximate_union(union_set, *it);
+    }
+  }
+
+  return union_set;
+}
+
+/**
+ * @brief Over-approximate the union of a collection of sets
+ * 
+ * @tparam BASIC_SET_TYPE is the type of the closed sets
+ * @param container is the container of the closed sets
+ * @return an over-approximation of the union of the 
+ *    sets in `container` 
+ */
+template<class BASIC_SET_TYPE>
+BASIC_SET_TYPE
+over_approximate_union(const std::list<BASIC_SET_TYPE> &container)
+{
+  BASIC_SET_TYPE union_set;
+  for (auto it = std::begin(container); it != std::end(container); ++it) {
+    if (union_set.dim()==0) {
+      union_set = *it;
+    } else {
+      union_set = over_approximate_union(union_set, *it);
+    }
+  }
+
+  return union_set;
+}
+
+/**
+ * @brief Compute the chain-join of a set in a list of sets
+ * 
+ * The chain-join of a basic set \f$S\f$ in a list \f$L\f$ of 
+ * sets is the smallest basic set \f$C\f$ that 
+ * over-approximates   
+ * \f$S \cup \bigcup_{i=1}^n L_i\f$, where \f$L_i \in L\f$ for 
+ * all $i \in [1,n]$, and does not intersect the remaining 
+ * sets in \f$L\f$.
+ * 
+ * @tparam BASIC_SET_TYPE is the basic set type
+ * @param sets_list is a list of basic sets
+ * @param set_obj is a basic set
+ * @return the chain-join of `set_obj` in `sets_list` 
+ */
+template<class BASIC_SET_TYPE>
+BASIC_SET_TYPE
+chain_join(std::list<BASIC_SET_TYPE> sets_list,
+           const BASIC_SET_TYPE &set_obj)
+{
+  BASIC_SET_TYPE joint(set_obj);
+  bool fix_point_reached;
+
+  do {
+    std::list<BASIC_SET_TYPE> intersecting;
+    fix_point_reached = true;
+
+    for (auto it = std::begin(sets_list); it != std::end(sets_list);) {
+      if (!are_disjoint(*it, set_obj)) {
+        intersecting.push_back(std::move(*it));
+        it = sets_list.erase(it);
+
+        fix_point_reached = false;
+      } else {
+        ++it;
+      }
+    }
+
+    if (!fix_point_reached) {
+      intersecting.push_back(std::move(joint));
+      joint = over_approximate_union(intersecting);
+    }
+  } while (fix_point_reached);
+
+  return joint;
 }
 
 #endif /* SETSUNION_H_ */

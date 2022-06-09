@@ -101,6 +101,10 @@
 	TEMPL
 	PDIR
 	OPT
+	K_IND_JOIN
+	LISTING
+	PACKAGING
+	MERGING
 	TRANS
 	AFO
 	OFO
@@ -1079,6 +1083,18 @@ option	: TRANS transType ";"
 			if ($2 < 1) {
 				yy::parser::error(@2, "Degree of composing dynamic must be at least 1");
 			}
+		}
+		| K_IND_JOIN LISTING ";"
+		{
+			drv.data.setApproxType(Sapo::NO_APPROX);
+		}
+		| K_IND_JOIN PACKAGING ";"
+		{
+			drv.data.setApproxType(Sapo::FULL_JOIN);
+		}
+		| K_IND_JOIN MERGING ";"
+		{
+			drv.data.setApproxType(Sapo::CHAIN_JOIN);
 		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
