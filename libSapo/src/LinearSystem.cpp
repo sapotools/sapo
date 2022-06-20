@@ -17,6 +17,7 @@
 
 #include "LinearSystem.h"
 #include "SymbolicAlgebra.h"
+#include "LinearAlgebraIO.h"
 
 /**
  * @brief Print a linear system in a stream
@@ -63,7 +64,13 @@ optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
   using namespace LinearAlgebra;
 
   unsigned int num_rows = A.size();
-  unsigned int num_cols = obj_fun.size();
+
+  unsigned int num_cols = (A.size() == 0 ? 0 : A[0].size());
+  if (num_cols != obj_fun.size()) {
+    throw std::domain_error("obj_fun size does not equal the number "
+                            "of columns in A: they must be the same");
+  }
+
   unsigned int size_lp = num_rows * num_cols;
 
   int *ia, *ja;
@@ -265,6 +272,43 @@ LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 }
 
 /**
+ * @brief Get the ordinal of a number
+ *
+ * @param number is the number whose ordinal must be returned
+ * @return the ordinal of `number`
+ */
+std::string get_ordinal(unsigned int number)
+{
+  std::ostringstream oss;
+
+  oss << number;
+
+  number = number % 100;
+
+  if (number / 10 == 1) {
+    oss << "th";
+
+    return oss.str();
+  }
+
+  switch (number % 10) {
+  case 1:
+    oss << "st";
+    break;
+  case 2:
+    oss << "nd";
+    break;
+  case 3:
+    oss << "rd";
+    break;
+  default:
+    oss << "th";
+  }
+
+  return oss.str();
+}
+
+/**
  * Constructor
  *
  * @param[in] A is the matrix
@@ -280,6 +324,16 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
         << "have the same size: they are " << A.size() << " and " << b.size()
         << ", respectively.";
     throw std::domain_error(oss.str());
+  }
+
+  for (unsigned int i = 0; i < A.size(); i++) {
+    if (A[i].size() != A[0].size()) {
+      std::ostringstream oss;
+      oss << "The " << get_ordinal(i + 1) << " row " << A[i]
+          << " and the 1st one " << A[0] << " differ in "
+          << "size" << std::endl;
+      throw std::domain_error(oss.str());
+    }
   }
 
   bool smart_insert = false;
@@ -316,6 +370,16 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
         << "have the same size: they are " << _A.size() << " and " << _b.size()
         << ", respectively.";
     throw std::domain_error(oss.str());
+  }
+
+  for (unsigned int i = 0; i < _A.size(); i++) {
+    if (_A[i].size() != _A[0].size()) {
+      std::ostringstream oss;
+      oss << "The " << get_ordinal(i + 1) << " row " << A[i]
+          << " and the 1st one " << A[0] << " differ in "
+          << "size" << std::endl;
+      throw std::domain_error(oss.str());
+    }
   }
 }
 

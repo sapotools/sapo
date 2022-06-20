@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(test_copy_sticky_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},

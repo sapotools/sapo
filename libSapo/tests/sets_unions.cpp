@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(test_copy_sets_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(test_add_sets_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(test_make_union_sets_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -427,7 +427,7 @@ BOOST_AUTO_TEST_CASE(test_update_sets_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -564,7 +564,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -659,13 +659,15 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     res = intersect(Pu2, Pu3);
 
     for (auto it=std::begin(res); it != std::end(res); ++it) {
-        BOOST_CHECK(Pu2.any_includes(*it)&&Pu3.any_includes(*it));
+        BOOST_CHECK(Pu2.any_includes(*it));
+        BOOST_CHECK(Pu3.any_includes(*it));
     }
 
     res = intersect(Pu2, Pu4);
 
     for (auto it=std::begin(res); it != std::end(res); ++it) {
-        BOOST_CHECK(Pu2.any_includes(*it)&&Pu4.any_includes(*it));
+        BOOST_CHECK(Pu2.any_includes(*it));
+        BOOST_CHECK(Pu4.any_includes(*it));
     }
 
     res = intersect(Pu3, Pu3);
@@ -679,8 +681,8 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     res = intersect(Pu3, Pu4);
 
     for (auto it=std::begin(res); it != std::end(res); ++it) {
-        BOOST_CHECK(Pu3.any_includes(*it)&&
-                    Pu4.any_includes(*it));
+        BOOST_CHECK(Pu3.any_includes(*it));
+        BOOST_CHECK(Pu4.any_includes(*it));
     }
 
     res = intersect(Pu4, Pu4);

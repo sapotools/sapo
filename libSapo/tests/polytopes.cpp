@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(test_includes_polytope)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_polytope)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
@@ -271,6 +271,13 @@ BOOST_AUTO_TEST_CASE(test_intersect_polytope)
     BOOST_CHECK(pa == pb);
     BOOST_CHECK(pa == p6);
     BOOST_CHECK(pa != p1);
+
+    pa = intersect(p2, p6);
+    pb = intersect(p6, p2);
+
+    BOOST_CHECK(pa == pb);
+    BOOST_CHECK(p2.includes(pa));
+    BOOST_CHECK(p6.includes(pa));
 }
 
 BOOST_AUTO_TEST_CASE(test_intersect_with_polytope)
@@ -290,7 +297,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_polytope)
     Matrix<double> B = {
         {1,1,0},
         {1,-1,0},
-        {0,1,1,0},
+        {0,1,1},
         {0,-1,1},
         {1,0,1},
         {1,0,-1},
