@@ -728,64 +728,60 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
   return this->synthesize(init_set, pSet, formula->get_subformula());
 }
 
-typedef SetsUnion<Bundle> (*approx_funct_type)(const SetsUnion<Bundle> &, 
+typedef SetsUnion<Bundle> (*approx_funct_type)(const SetsUnion<Bundle> &,
                                                const SetsUnion<Bundle> &);
 
 template<class BASIC_SET_TYPE>
-SetsUnion<BASIC_SET_TYPE> 
-Tk_identify(const SetsUnion<BASIC_SET_TYPE> &reached_set, 
-            const SetsUnion<BASIC_SET_TYPE> &Tk) 
+SetsUnion<BASIC_SET_TYPE>
+Tk_identify(const SetsUnion<BASIC_SET_TYPE> &reached_set,
+            const SetsUnion<BASIC_SET_TYPE> &Tk)
 {
   (void)reached_set;
   return Tk;
 }
 
 template<class BASIC_SET_TYPE>
-SetsUnion<BASIC_SET_TYPE> 
-Tk_chain_join(const SetsUnion<BASIC_SET_TYPE> &reached_set, 
-              const SetsUnion<BASIC_SET_TYPE> &Tk) 
+SetsUnion<BASIC_SET_TYPE>
+Tk_chain_join(const SetsUnion<BASIC_SET_TYPE> &reached_set,
+              const SetsUnion<BASIC_SET_TYPE> &Tk)
 {
   return chain_join(reached_set.get_list(), over_approximate_union(Tk));
 }
 
 template<class BASIC_SET_TYPE>
-SetsUnion<BASIC_SET_TYPE> 
-Tk_full_join(const SetsUnion<BASIC_SET_TYPE> &reached_set, 
-             const SetsUnion<BASIC_SET_TYPE> &Tk) 
+SetsUnion<BASIC_SET_TYPE>
+Tk_full_join(const SetsUnion<BASIC_SET_TYPE> &reached_set,
+             const SetsUnion<BASIC_SET_TYPE> &Tk)
 {
   auto reached_list = reached_set.get_list();
 
   for (auto it = std::begin(Tk); it != std::end(Tk); ++it) {
     reached_list.push_back(*it);
   }
-  
+
   return over_approximate_union(reached_list);
 }
 
 /// @private
-approx_funct_type
-select_approx(Sapo::invariantApproxType approx)
+approx_funct_type select_approx(Sapo::invariantApproxType approx)
 {
-  switch(approx) {
-    case Sapo::NO_APPROX:
-      return Tk_identify<Bundle>;
-    case Sapo::CHAIN_JOIN:
-      return &Tk_chain_join<Bundle>;
-    case Sapo::FULL_JOIN:
-      return &Tk_full_join<Bundle>;
-    default:
-      throw std::domain_error("Unsupported approximation type");
+  switch (approx) {
+  case Sapo::NO_APPROX:
+    return Tk_identify<Bundle>;
+  case Sapo::CHAIN_JOIN:
+    return &Tk_chain_join<Bundle>;
+  case Sapo::FULL_JOIN:
+    return &Tk_full_join<Bundle>;
+  default:
+    throw std::domain_error("Unsupported approximation type");
   }
 }
 
-bool is_k_invariant(const DynamicalSystem<double>& ds,
-                    const SetsUnion<Bundle> &reached_set,
-                    const unsigned int k)
+bool is_k_invariant(const DynamicalSystem<double> &ds,
+                    const SetsUnion<Bundle> &reached_set, const unsigned int k)
 {
   // alias the transformation function
-  auto T = [&ds](const SetsUnion<Bundle> &set) {
-    return ds.transform(set);
-  };
+  auto T = [&ds](const SetsUnion<Bundle> &set) { return ds.transform(set); };
 
   auto T_reached = reached_set;
   for (unsigned int i = 1; i < k; ++i) {
@@ -794,13 +790,12 @@ bool is_k_invariant(const DynamicalSystem<double>& ds,
 
   T_reached = T(T_reached);
 
-  return reached_set.includes(T_reached);  
+  return reached_set.includes(T_reached);
 }
 
-bool is_k_invariant(const DynamicalSystem<double>& ds,
+bool is_k_invariant(const DynamicalSystem<double> &ds,
                     const SetsUnion<Bundle> &reached_set,
-                    const SetsUnion<Polytope> &param_set,
-                    const unsigned int k)
+                    const SetsUnion<Polytope> &param_set, const unsigned int k)
 {
   // alias the transformation function
   auto T = [&ds, &param_set](const SetsUnion<Bundle> &set) {
@@ -814,18 +809,15 @@ bool is_k_invariant(const DynamicalSystem<double>& ds,
 
   T_reached = T(T_reached);
 
-  return reached_set.includes(T_reached);  
+  return reached_set.includes(T_reached);
 }
 
-bool is_k_invariant_exact(const DynamicalSystem<double>& ds,
+bool is_k_invariant_exact(const DynamicalSystem<double> &ds,
                           const SetsUnion<Bundle> &reached_set,
-                          const SetsUnion<Bundle> &Tk,
-                          const unsigned int k)
+                          const SetsUnion<Bundle> &Tk, const unsigned int k)
 {
   // alias the transformation function
-  auto T = [&ds](const SetsUnion<Bundle> &set) {
-      return ds.transform(set);
-  };
+  auto T = [&ds](const SetsUnion<Bundle> &set) { return ds.transform(set); };
 
   auto T_reached = Tk;
 
@@ -848,15 +840,14 @@ bool is_k_invariant_exact(const DynamicalSystem<double>& ds,
   return reached_set.includes(T_reached);
 }
 
-bool is_k_invariant_exact(const DynamicalSystem<double>& ds,
+bool is_k_invariant_exact(const DynamicalSystem<double> &ds,
                           const SetsUnion<Bundle> &reached_set,
                           const SetsUnion<Polytope> &param_set,
-                          const SetsUnion<Bundle> &Tk,
-                          const unsigned int k)
+                          const SetsUnion<Bundle> &Tk, const unsigned int k)
 {
   // alias the transformation function
   auto T = [&ds, &param_set](const SetsUnion<Bundle> &set) {
-      return ds.transform(set, param_set);
+    return ds.transform(set, param_set);
   };
 
   auto T_reached = Tk;
@@ -879,7 +870,6 @@ bool is_k_invariant_exact(const DynamicalSystem<double>& ds,
 
   return reached_set.includes(T_reached);
 }
-
 
 /**
  * @brief Try to establish whether a set is an invariant
@@ -928,7 +918,7 @@ InvariantValidationResult Sapo::check_invariant(
   // alias the transformation function
   const Sapo *sapo = this;
   auto T = [&sapo, &pSet](const SetsUnion<Bundle> &set) {
-    if (sapo->dynamical_system().parameters().size()>0) {
+    if (sapo->dynamical_system().parameters().size() > 0) {
       return sapo->dynamical_system().transform(set, pSet);
     } else {
       return sapo->dynamical_system().transform(set);
@@ -936,24 +926,21 @@ InvariantValidationResult Sapo::check_invariant(
   };
 
   auto is_k_inv = [&sapo, &pSet](const SetsUnion<Bundle> &reached_set,
-                                       const SetsUnion<Bundle> &Tk, 
-                                       const unsigned &k) {
-      
-      if (sapo->inv_approximation==Sapo::NO_APPROX) {
-        if (sapo->dynamical_system().parameters().size()>0) {
-          return is_k_invariant_exact(sapo->dynamical_system(), 
-                                      reached_set, pSet, Tk, k);
-        }
-        return is_k_invariant_exact(sapo->dynamical_system(), 
-                                    reached_set, Tk, k);
+                                 const SetsUnion<Bundle> &Tk,
+                                 const unsigned &k) {
+    if (sapo->inv_approximation == Sapo::NO_APPROX) {
+      if (sapo->dynamical_system().parameters().size() > 0) {
+        return is_k_invariant_exact(sapo->dynamical_system(), reached_set,
+                                    pSet, Tk, k);
       }
+      return is_k_invariant_exact(sapo->dynamical_system(), reached_set, Tk,
+                                  k);
+    }
 
-      if (sapo->dynamical_system().parameters().size()>0) {
-        return is_k_invariant(sapo->dynamical_system(), 
-                              reached_set, pSet, k);
-      }
-      return is_k_invariant(sapo->dynamical_system(), 
-                            reached_set, k);
+    if (sapo->dynamical_system().parameters().size() > 0) {
+      return is_k_invariant(sapo->dynamical_system(), reached_set, pSet, k);
+    }
+    return is_k_invariant(sapo->dynamical_system(), reached_set, k);
   };
 
   while (epoch_horizon == 0 || flowpipe.size() < epoch_horizon) {

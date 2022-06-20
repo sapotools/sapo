@@ -33,16 +33,14 @@
 
 #include "ProgressAccounter.h"
 
-
 /**
  * @brief Result of an invariant validation
  */
-typedef struct
-{
-  bool validated;               //!< invariant candidate has been validated
-  unsigned int k_induction;     //!< k-induction level
-  Flowpipe flowpipe;            //!< system flowpipe
-  SetsUnion<Bundle> r_approx;   //!< over-approximation of the reached set
+typedef struct {
+  bool validated;             //!< invariant candidate has been validated
+  unsigned int k_induction;   //!< k-induction level
+  Flowpipe flowpipe;          //!< system flowpipe
+  SetsUnion<Bundle> r_approx; //!< over-approximation of the reached set
 } InvariantValidationResult;
 
 /**
@@ -65,9 +63,9 @@ public:
    * @brief Approximation used during invariant validation
    */
   enum invariantApproxType {
-    NO_APPROX,    // no approximation is used (listing)
-    CHAIN_JOIN,   // chain-join approximation (packaging)
-    FULL_JOIN     // full-join approximation (merging)
+    NO_APPROX,  // no approximation is used (listing)
+    CHAIN_JOIN, // chain-join approximation (packaging)
+    FULL_JOIN   // full-join approximation (merging)
   };
 
   invariantApproxType inv_approximation;
@@ -277,11 +275,12 @@ public:
    * @param accounter accounts for the computation progress
    * @return an object of the type `InvariantValidationResult`
    */
-  InvariantValidationResult check_invariant(
-      const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
-      const LinearSystem &invariant_candidate,
-      const unsigned int epoch_horizon = 0,
-      ProgressAccounter *accounter = NULL) const;
+  InvariantValidationResult
+  check_invariant(const SetsUnion<Bundle> &init_set,
+                  const SetsUnion<Polytope> &pSet,
+                  const LinearSystem &invariant_candidate,
+                  const unsigned int epoch_horizon = 0,
+                  ProgressAccounter *accounter = NULL) const;
 };
 
 /**

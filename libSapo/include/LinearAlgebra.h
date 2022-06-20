@@ -16,10 +16,11 @@
 #include <map>
 #include <set>
 
-#include <numeric> // due to std::iota
-#include <math.h>  // due to sqrt
-#include <cmath>   // due to floor
-#include <limits>  // due to numeric_limits
+#include <numeric>   // due to std::iota
+#include <math.h>    // due to sqrt
+#include <cmath>     // due to floor
+#include <limits>    // due to numeric_limits
+#include <algorithm> // due to transform
 
 namespace LinearAlgebra
 {
@@ -102,7 +103,7 @@ Vector<T> operator-(const Vector<T> &orig)
 {
   Vector<T> res = orig;
 
-  transform(res.begin(), res.end(), res.begin(), std::negate<T>());
+  std::transform(res.begin(), res.end(), res.begin(), std::negate<T>());
 
   return res;
 }
@@ -155,7 +156,7 @@ bool operator!=(const Vector<T> &a, const Vector<T> &b)
 template<typename T>
 Vector<T> operator-(Vector<T> &&v)
 {
-  transform(v.begin(), v.end(), v.begin(), std::negate<T>());
+  std::transform(v.begin(), v.end(), v.begin(), std::negate<T>());
 
   return std::move(v);
 }
