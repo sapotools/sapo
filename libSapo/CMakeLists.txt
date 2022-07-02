@@ -4,7 +4,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Version.cpp.in ${CMAKE_CURRENT_SO
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 include_directories(${GMPXX_INCLUDE_DIR} ${GMP_INCLUDE_DIR})
-include_directories(include include/STL)
+include_directories(include)
 
 add_library(objlib OBJECT ${SOURCES})
 
@@ -24,10 +24,22 @@ file(GLOB STL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/STL/*.h)
 
 set_target_properties(SapoStatic PROPERTIES OUTPUT_NAME Sapo)
 
-install(TARGETS Sapo DESTINATION lib)
-install(TARGETS SapoStatic DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/sapo)
-install(FILES ${STL_HEADERS} DESTINATION include/sapo/STL)
+set(INCLUDE_INSTALL_DIR include )
+set(LIB_INSTALL_DIR lib )
+
+install(TARGETS Sapo DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS SapoStatic DESTINATION ${LIB_INSTALL_DIR})
+install(FILES ${HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR}/sapo)
+install(FILES ${STL_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR}/sapo/STL)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(SapoConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/SapoConfig.cmake
+  INSTALL_DESTINATION ${LIB_INSTALL_DIR}/Sapo/cmake
+  PATH_VARS INCLUDE_INSTALL_DIR)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SapoConfig.cmake
+  DESTINATION lib/Sapo/cmake )
 
 if(CLANG_FORMAT_EXE)
    add_custom_target( format-lib-code COMMAND ${CLANG_FORMAT_EXE} -i

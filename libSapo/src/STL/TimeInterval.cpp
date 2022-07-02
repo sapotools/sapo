@@ -9,7 +9,7 @@
  *
  */
 
-#include "TimeInterval.h"
+#include "STL/TimeInterval.h"
 
 /**
  * Constructor for the time interval [0,0]

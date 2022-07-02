@@ -15,19 +15,19 @@
 #include <string>
 #include <climits>
 
-#include "Always.h"
-#include "Atom.h"
 #include "BaseConverter.h"
 #include "Bundle.h"
-#include "Conjunction.h"
-#include "Disjunction.h"
-#include "Eventually.h"
 #include "Flowpipe.h"
 #include "Polytope.h"
 #include "SetsUnion.h"
 #include "Model.h"
-#include "STL.h"
-#include "Until.h"
+#include "STL/Always.h"
+#include "STL/Atom.h"
+#include "STL/Conjunction.h"
+#include "STL/Disjunction.h"
+#include "STL/Eventually.h"
+#include "STL/STL.h"
+#include "STL/Until.h"
 
 #include "DynamicalSystem.h"
 

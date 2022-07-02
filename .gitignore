@@ -17,6 +17,7 @@ libSapo.*
 libSapo/doc
 libSapo/tests/test_*
 libSapo/src/Version.cpp
+libSapo/SapoConfig.cmake
 sapo/*.err
 sapo/*.out
 sapo/bin/*

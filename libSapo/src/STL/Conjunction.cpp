@@ -9,7 +9,7 @@
  * @copyright Copyright (c) 2015-2022
  */
 
-#include "Conjunction.h"
+#include "STL/Conjunction.h"
 
 #include <algorithm>
 namespace STL

@@ -9,15 +9,15 @@
  * @copyright Copyright (c) 2015-2022
  */
 
-#include "Negation.h"
+#include "STL/Negation.h"
 
-#include "Atom.h"
-#include "Conjunction.h"
-#include "Disjunction.h"
-#include "Negation.h"
-#include "Always.h"
-#include "Eventually.h"
-#include "Until.h"
+#include "STL/Atom.h"
+#include "STL/Conjunction.h"
+#include "STL/Disjunction.h"
+#include "STL/Negation.h"
+#include "STL/Always.h"
+#include "STL/Eventually.h"
+#include "STL/Until.h"
 
 namespace STL
 {

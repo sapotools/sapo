@@ -1,0 +1,29 @@
+set(SAPO_VERSION "@SAPO_VERSION@")
+
+@PACKAGE_INIT@
+
+set_and_check(SAPO_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@/sapo")
+
+
+find_library(SAPO_LIB NAMES Sapo
+  DOC "Path to the Sapo library"
+  )
+
+check_required_components(Sapo)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Sapo
+  DEFAULT_MSG
+  SAPO_INCLUDE_DIR SAPO_LIB
+)
+
+# Set targets
+if(SAPO_FOUND)
+  if(NOT TARGET Sapo)
+    add_library(Sapo UNKNOWN IMPORTED)
+    set_target_properties(Sapo PROPERTIES
+      IMPORTED_LOCATION ${SAPO_LIB}
+      INTERFACE_INCLUDE_DIRECTORIES ${SAPO_INCLUDE_DIR}
+    )
+  endif()
+endif()

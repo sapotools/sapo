@@ -18,7 +18,7 @@
 #include "Bundle.h"
 #include "Polytope.h"
 #include "SetsUnion.h"
-#include "STL.h"
+#include "STL/STL.h"
 
 #include "DynamicalSystem.h"
 
