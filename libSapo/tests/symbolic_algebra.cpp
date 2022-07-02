@@ -104,7 +104,7 @@ bool are_equivalent(const std::map<int, Expression<T>>& map_a,
     auto b_it = std::begin(map_b);
 
     for (; a_it != std::end(map_a); ++a_it, ++b_it) {
-        if (!((*a_it).first == (*b_it).first && 
+        if (!((*a_it).first == (*b_it).first &&
                 are_equivalent((*a_it).second,(*b_it).second))) {
             return false;
         }
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_expr_coeffs, T, test_types)
 {
     Symbol<T> x("x"), y("y"), z("z");
 
-    std::vector<std::pair<Expression<T>, 
+    std::vector<std::pair<Expression<T>,
                 std::vector<std::pair<Symbol<T>, std::map<int, Expression<T>>>>>> tests
     {
         {3+4*y-x*y+z*(z*y)*z, {{y, {{0,3},{1,4 - x + z*z*z}}},
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_expr_coeffs, T, test_types)
         {x*(y + z*y), {{y, {{1,(1 + z)*x}}},
                        {z, {{0,x*y},{1,x*y}}},
                        {x, {{1,y + z*y}}} }},
-        {3 + 4*y + z - x*(y + z*(z*y)*z), 
+        {3 + 4*y + z - x*(y + z*(z*y)*z),
                                {{y, {{0,3 + z},{1,4 - x*(1+z*z*z)}}},
                                 {x, {{0,3 + 4*y + z},{1,-y-y*z*z*z}}},
                                 {z, {{0,3 + 4*y-x*y},{1,1},{3,-x*y}}}
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_expr_coeffs, T, test_types)
             auto coeffs = t_it->first.get_coeffs((*s_it).first);
             bool b_eval = are_equivalent(coeffs,(*s_it).second);
             std::ostringstream ss;
-            ss << "("<< t_it->first << ").get_coeffs("<< (*s_it).first << ") = " << coeffs 
+            ss << "("<< t_it->first << ").get_coeffs("<< (*s_it).first << ") = " << coeffs
                << " != " << (*s_it).second;
             BOOST_REQUIRE_MESSAGE(b_eval, ss.str());
         }
@@ -220,15 +220,15 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_equivalence, T, test_types)
 
     std::vector<std::pair<std::pair<Expression<T>,Expression<T>>, bool>> tests
     {
-        {{3+4*y-x*y+z*(z*y)*z, 3+4*y-x*y+z*(z*y)*z}, true}, 
-        {{-y*(x-z*(z*z)-4)+3, -y*(x-z*(z*z)-4)+3}, true}, 
-        {{3+4*y-x*y+z*(z*y)*z, -y*(x-z*(z*z)-4)+3}, true}, 
-        {{2*(y + z*y), y*(2+2*z)}, true}, 
-        {{x*(y + z*y), (z+1)*x*y}, true}, 
+        {{3+4*y-x*y+z*(z*y)*z, 3+4*y-x*y+z*(z*y)*z}, true},
+        {{-y*(x-z*(z*z)-4)+3, -y*(x-z*(z*z)-4)+3}, true},
+        {{3+4*y-x*y+z*(z*y)*z, -y*(x-z*(z*z)-4)+3}, true},
+        {{2*(y + z*y), y*(2+2*z)}, true},
+        {{x*(y + z*y), (z+1)*x*y}, true},
         {{3 + 4*y + z - x*(y + z*(z*y)*z), (3+z)+(4-(z*z*z+1)*x)*y}, true},
-        {{3+4*y-x*y+z*(z*y)*z, (3+z)+(4-(z*z*z+1)*x)*y}, false}, 
-        {{2*(y + z*y), (z+1)*x*y}, false}, 
-        {{x*(y + z*y), y*(2+2*z)}, false}, 
+        {{3+4*y-x*y+z*(z*y)*z, (3+z)+(4-(z*z*z+1)*x)*y}, false},
+        {{2*(y + z*y), (z+1)*x*y}, false},
+        {{x*(y + z*y), y*(2+2*z)}, false},
         {{3 + 4*y + z - x*(y + z*(z*y)*z), -y*(x-z*(z*z)-4)+3}, false},
     };
 
@@ -237,5 +237,33 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_equivalence, T, test_types)
         std::ostringstream ss;
         ss << t_it->first.first << (t_it->second ? " != ": " == ") << t_it->first.second;
         BOOST_REQUIRE_MESSAGE(b_eval, ss.str());
+    }
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_evaluate, T, test_types)
+{
+    Symbol<T> x("x"), y("y"), z("z");
+
+    std::vector<std::pair<std::pair<Expression<T>, std::map<Symbol<T>,T>>, T>> tests
+    {
+        {{3+4*y-x*y+z*(z*y)*z, {{x, 1},{y, 0},{z, 2}}}, 3},
+        {{3+4*y-x*y+z*(z*y)*z, {{x, 1},{y, 1},{z, 2}}}, 14},
+        {{-y*(x-z*(z*z)-4)+3, {{x, 1},{y, 0},{z, 2}}}, 3},
+        {{-y*(x-z*(z*z)-4)+3, {{x, 1},{y, 1},{z, 2}}}, 14},
+        {{2*(y + z*y), {{y, 1},{z, 2}}}, 6},
+        {{2*(y + z*y), {{y, 1},{z, 0}}}, 2},
+        {{x*(y + z*y), {{x, 1},{y, 0},{z, 2}}}, 0},
+        {{x*(y + z*y), {{x, 1},{y, 1},{z, 2}}}, 3},
+        {{3 + 4*y + z - x*(y + z*(z*y)*z), {{x, 1},{y, 0},{z, 2}}}, 5},
+        {{3 + 4*y + z - x*(y + z*(z*y)*z), {{x, 1},{y, 1},{z, 2}}}, 0},
+        {{(3+z)+(4-(z*z*z+1)*x)*y, {{x, 1},{y, 0},{z, 2}}}, 5},
+        {{(3+z)+(4-(z*z*z+1)*x)*y, {{x, 1},{y, 1},{z, 2}}}, 0},
+    };
+
+    for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
+        auto eval = t_it->first.first.evaluate(t_it->first.second);
+        std::ostringstream ss;
+        ss << "("<< t_it->first.first << ").evalute(" << t_it->first.second<< ") == "<< eval << "!=" << t_it->second;
+        BOOST_REQUIRE_MESSAGE((eval == t_it->second), ss.str());
     }
 }

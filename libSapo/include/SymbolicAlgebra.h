@@ -244,6 +244,8 @@ protected:
 public:
   typedef std::map<Symbol<C>, Expression<C>>
       replacement_type; //!< Replacement type
+  typedef std::map<Symbol<C>, C>
+      interpretation_type; //!< Symbol interpretation type
 
   /**
    * @brief Build an empty Expression object
@@ -317,6 +319,17 @@ public:
 
     return value == 0 ? 0 : value;
   }
+
+  /**
+   * @brief Numerically evaluate the expression 
+   * 
+   * This method evaluate the expression using the symbol interpretation
+   * provided as parameter.
+   * 
+   * @param interpretation is an interpretation for the symbols
+   * @return The numeric evaluation of the expression
+   */
+  C evaluate(const interpretation_type &interpretation) const;
 
   /**
    * @brief Get the coefficient of a term having a given degree
@@ -1428,6 +1441,17 @@ public:
   virtual C evaluate() const = 0;
 
   /**
+   * @brief Numerically evaluate the expression 
+   * 
+   * This method evaluate the expression using the symbol interpretation
+   * provided as parameter.
+   * 
+   * @param interpretation is an interpretation for the symbols
+   * @return The numeric evaluation of the expression
+   */
+  virtual C evaluate(const std::map<SymbolIdType, C> &interpretation) const = 0;
+
+  /**
    * @brief Get the coefficient of a term having a given degree
    *
    * @param symbol_id is the symbol id whose term coefficient is aimed
@@ -1830,6 +1854,22 @@ public:
    */
   C evaluate() const
   {
+    return _value;
+  }
+
+  /**
+   * @brief Numerically evaluate the expression 
+   * 
+   * This method evaluate the expression using the symbol interpretation
+   * provided as parameter.
+   * 
+   * @param interpretation is an interpretation for the symbols
+   * @return The numeric evaluation of the expression
+   */
+  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  {
+    (void)interpretation;
+
     return _value;
   }
 
@@ -2292,9 +2332,28 @@ public:
    */
   C evaluate() const
   {
-    C total = 0;
+    C total = _constant;
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
       total += (*it)->evaluate();
+    }
+
+    return total;
+  }
+
+  /**
+   * @brief Numerically evaluate the expression 
+   * 
+   * This method evaluate the expression using the symbol interpretation
+   * provided as parameter.
+   * 
+   * @param interpretation is an interpretation for the symbols
+   * @return The numeric evaluation of the expression
+   */
+  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  {
+    C total = _constant;
+    for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
+      total += (*it)->evaluate(interpretation);
     }
 
     return total;
@@ -2845,6 +2904,29 @@ public:
   }
 
   /**
+   * @brief Numerically evaluate the expression 
+   * 
+   * This method evaluate the expression using the symbol interpretation
+   * provided as parameter.
+   * 
+   * @param interpretation is an interpretation for the symbols
+   * @return The numeric evaluation of the expression
+   */
+  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  {
+    C prod = this->_constant;
+    for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
+      prod *= (*it)->evaluate(interpretation);
+    }
+    for (auto it = std::begin(_denominator); it != std::end(_denominator);
+         ++it) {
+      prod /= (*it)->evaluate(interpretation);
+    }
+
+    return prod;
+  }
+
+  /**
    * @brief Get the coefficient of a term having a given degree
    *
    * @param symbol_id is the symbol id whose term coefficient is aimed
@@ -3261,6 +3343,26 @@ public:
   }
 
   /**
+   * @brief Numerically evaluate the expression 
+   * 
+   * This method evaluate the expression using the symbol interpretation
+   * provided as parameter.
+   * 
+   * @param interpretation is an interpretation for the symbols
+   * @return The numeric evaluation of the expression
+   */
+  C evaluate(const std::map<SymbolIdType, C>  &interpretation) const
+  {
+    auto found = interpretation.find(_id);
+
+    if (found == std::end(interpretation)) {
+      throw symbol_evaluation_error(*this);
+    }
+
+    return found->second;
+  }
+
+  /**
    * @brief Get the coefficient of a term having a given degree
    *
    * @param symbol_id is the symbol id whose term coefficient is aimed
@@ -3384,6 +3486,23 @@ Expression<C>::replace(const Expression<C>::replacement_type &replacement)
   this->_ex = this->_ex->replace(base_repl);
 
   return *this;
+}
+
+template<typename C>
+C Expression<C>::evaluate(const Expression<C>::interpretation_type &interpretation) const
+{
+  if (this->_ex == nullptr) {
+    return 0;
+  }
+  std::map<typename Symbol<C>::SymbolIdType, C> base_interpretation;
+
+  for (auto it = std::begin(interpretation); it != std::end(interpretation); ++it) {
+    base_interpretation[it->first.get_id()] = it->second;
+  }
+
+  const C value = _ex->evaluate(base_interpretation);
+
+  return value == 0 ? 0 : value;
 }
 
 template<typename C>
