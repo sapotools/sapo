@@ -11,6 +11,10 @@
 #ifndef EVOLVER_H_
 #define EVOLVER_H_
 
+#ifdef WITH_THREADS
+#include <shared_mutex>
+#endif // WITH_THREADS
+
 #include "DynamicalSystem.h"
 
 #include "Bundle.h"
@@ -34,10 +38,6 @@ template<typename T>
 class Evolver
 {
 public:
-protected:
-  DynamicalSystem<T> _ds; //!< The dynamical system
-
-public:
   /**
    * @brief Approach to evaluate the image of a bundle
    *
@@ -56,8 +56,12 @@ public:
     ALL_FOR_ONE  /* All-For-One */
   } evolver_mode;
 
-  evolver_mode mode; //!< the mode used to compute the evolution
+protected:
+  DynamicalSystem<T> _ds; //!< The dynamical system
 
+  evolver_mode _mode; //!< the mode used to compute the evolution
+
+public:
   /**
    * @brief A constructor
    *
@@ -67,7 +71,7 @@ public:
   Evolver(const DynamicalSystem<T> &dynamical_system,
           const evolver_mode mode = ALL_FOR_ONE):
       _ds(dynamical_system),
-      mode(mode)
+      _mode(mode)
   {
   }
 
@@ -80,7 +84,7 @@ public:
   Evolver(DynamicalSystem<T> &&dynamical_system,
           const evolver_mode mode = ALL_FOR_ONE):
       _ds(std::move(dynamical_system)),
-      mode(mode)
+      _mode(mode)
   {
   }
 
@@ -89,7 +93,27 @@ public:
    *
    * @param orig is the template object
    */
-  Evolver(const Evolver<T> &orig): _ds(orig._ds), mode(orig.mode) {}
+  Evolver(const Evolver<T> &orig): _ds(orig._ds), _mode(orig._mode) {}
+
+  /**
+   * @brief Get the evolver mode
+   * 
+   * @return evolver mode
+   */
+  inline evolver_mode get_mode() const
+  {
+    return _mode;
+  }
+
+  /**
+   * @brief Set the evolver mode
+   *
+   * @param mode is the to-be-set evolver mode
+   */
+  inline void set_mode(const evolver_mode mode)
+  {
+    _mode = mode;
+  }
 
   /**
    * @brief Return the dynamical system
@@ -195,6 +219,111 @@ public:
 
     return result;
   }
+};
+
+/**
+* @brief Handle evolution of geometric sets subject to a dynamical system
+ *
+ * The objects of this class let geometric objects, such as
+ * `Parallelotope` or `Bundle`, subject to a dynamical system evolve.
+ * This class computes the symbolic Bernstein coefficients of the 
+ * associated dynamical system and the evolving geometric set and 
+ * store them in a cache. When needed the computed symbolic 
+ * coefficient are recovered and instantiated for the specific 
+ * geometric set.
+ *
+ * @tparam T is the type of expression value domain
+ */
+template<typename T>
+class CachedEvolver : public Evolver<T>
+{
+protected:
+  /**
+   * @brief Direction type
+   */
+  typedef LinearAlgebra::Vector<T> dir_type;
+
+  /**
+   * @brief Maps that associate directions to Bernstein coefficients
+   */
+  typedef std::map<dir_type, std::vector<SymbolicAlgebra::Expression<T>>> dir2coeffs_type;
+
+  /**
+   * @brief Maps that associate generators to direction to Bernstein coefficient map
+   */
+  typedef std::map<LinearAlgebra::Dense::Matrix<T>, dir2coeffs_type> cache_type;
+
+  cache_type _cache; //!< The evolver cache for symbolic Bernstein coefficients
+
+#ifdef WITH_THREADS
+  mutable std::shared_timed_mutex _cache_mutex; //!< Cache mutex
+#endif // WITH_THREADS
+
+  /**
+   * @brief Get the cached Bernstein coefficients of a parallelotope
+   * 
+   * @param P is a parallelotope
+   * @return the cached symbolic Bernstein coefficients for `P` and 
+   *         the current evolver
+   */
+  dir2coeffs_type& get_cached_coefficients(const Parallelotope &P)
+  {
+    std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
+
+    return _cache[P.generators()];
+  }
+
+public:
+
+  /**
+   * @brief A constructor
+   *
+   * @param dynamical_system is the investigated dynamical system
+   * @param mode is the mode used to compute the evolution
+   */
+  CachedEvolver(const DynamicalSystem<T> &dynamical_system,
+                const typename Evolver<T>::evolver_mode mode = Evolver<T>::ALL_FOR_ONE):
+      Evolver<T>(dynamical_system, mode), _cache()
+  {
+  }
+
+  /**
+   * @brief A constructor
+   *
+   * @param dynamical_system is the investigated dynamical system
+   * @param mode is the mode used to compute the evolution
+   */
+  CachedEvolver(DynamicalSystem<T> &&dynamical_system,
+                const typename Evolver<T>::evolver_mode mode = Evolver<T>::ALL_FOR_ONE):
+      Evolver<T>(std::move(dynamical_system), mode), _cache()
+  {
+  }
+
+  /**
+   * @brief A constructor
+   *
+   * @param evolver is the original evolver
+   */
+  CachedEvolver(const Evolver<T> &evolver): Evolver<T>(evolver), _cache() 
+  {}
+
+  /**
+   * @brief A copy constructor
+   *
+   * @param orig is the template object
+   */
+  CachedEvolver(const CachedEvolver<T> &orig): Evolver<T>(orig), _cache(orig._cache) 
+  {}
+
+  /**
+   * @brief Let a bundle evolve according with the dynamical system
+   *
+   * @param bundle is the bundle to evolve
+   * @param parameter_set is the parameter set
+   * @return an over-approximation of the bundle transformed
+   *         by the dynamic laws
+   */
+  Bundle operator()(const Bundle &bundle, const Polytope &parameter_set);
 };
 
 /**

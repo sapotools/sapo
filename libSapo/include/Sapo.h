@@ -218,7 +218,7 @@ public:
    */
   inline void set_evolver_mode(const Evolver<double>::evolver_mode mode)
   {
-    _evolver.mode = mode;
+    _evolver.set_mode(mode);
   }
 
   /**

@@ -467,7 +467,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     itvl_finder = new ParamMinMaxCoeffFinder(_ds.parameters(), parameter_set);
   }
 
-  std::vector<Symbol<double>> alpha = get_symbol_vector("alpha", _ds.dim());
+  std::vector<Symbol<double>> alpha = get_symbol_vector<double>("alpha", _ds.dim());
 
   auto refine_coeff_itvl =
       [&max_coeffs, &min_coeffs, &bundle, &alpha,
@@ -508,7 +508,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 
       // submit the task to the thread pool
       thread_pool.submit_to_batch(batch_id, refine_coeff_itvl, std::ref(_ds),
-                                  std::ref(*t_it), mode);
+                                  std::ref(*t_it), _mode);
     }
 
     // join to the pool threads
@@ -543,31 +543,125 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   Bundle res(bundle.directions(), lower_bounds, upper_bounds,
              bundle.templates());
 
-  if (mode == ONE_FOR_ONE) {
+  if (_mode == ONE_FOR_ONE) {
     res.canonize();
   }
 
   return res;
 }
 
+template<typename T>
+inline
+void init_genFun_if_necessary(std::vector<SymbolicAlgebra::Expression<T>> &genFun_f, 
+                              const Parallelotope &P, const DynamicalSystem<T> &ds, 
+                              const std::vector<SymbolicAlgebra::Symbol<T>> &base, 
+                              const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+                              const std::vector<SymbolicAlgebra::Symbol<T>> &lambda)
+{
+  if (genFun_f.size()==0) {  // not initialized yet
+    auto genFun = build_generator_functs(base, alpha, lambda,
+                                         P.generators());
+
+    genFun_f = replace_in(ds.dynamics(), ds.variables(), genFun);
+  }
+}
+
+template<typename T>
+const std::vector<SymbolicAlgebra::Expression<T>> &
+get_symbolic_coefficients(std::map<LinearAlgebra::Vector<T>, 
+          std::vector<SymbolicAlgebra::Expression<T>>> P_cache,
+          std::vector<SymbolicAlgebra::Expression<T>> &genFun_f,
+          const Parallelotope &P, const DynamicalSystem<T> &ds, 
+          const std::vector<SymbolicAlgebra::Symbol<T>> &base, 
+          const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+          const std::vector<SymbolicAlgebra::Symbol<T>> &lambda,
+          const LinearAlgebra::Vector<double> &bundle_dir)
+{
+  auto &dir_cache = P_cache[bundle_dir];
+  if (dir_cache.size()==0) {  // Bernstein coefficients have not 
+                              // been computed yet
+    init_genFun_if_necessary(genFun_f, P, ds, base, alpha, lambda);
+
+    dir_cache = compute_Bern_coefficients(alpha, genFun_f, bundle_dir);
+  }
+
+  return dir_cache;
+}
+
 /*
+template<typename T>
+void
+refine_coeff_itvl(CachedEvolver<double> *evolver,
+                  std::vector<CondSyncUpdater<T, std::less<T>>> max_coeffs,
+                  std::vector<CondSyncUpdater<T, std::greater<T>>> min_coeffs,
+                  MinMaxCoeffFinder *itvl_finder,
+                  const Bundle &bundle,
+                  const std::vector<SymbolicAlgebra::Symbol<T>>& alpha,
+                  const std::vector<SymbolicAlgebra::Symbol<T>>& base,
+                  const std::vector<SymbolicAlgebra::Symbol<T>>& lambda,
+                  const std::vector<unsigned int> &bundle_template)
+{]
+  Parallelotope P = bundle.get_parallelotope(bundle_template);
+
+  Expression<double>::replacement_type P_rep;
+
+  for (size_t i=0; i<P.dim(); ++i) {
+    P_rep[base[i]] = P.base_vertex()[i];
+    P_rep[lambda[i]] = P.lengths()[i];
+  }
+
+  auto &P_cache = evolver->get_cached_coefficients(P);
+  
+  std::vector<SymbolicAlgebra::Expression<double>> genFun_f;
+
+  unsigned int dir_b;
+
+  // for each direction
+  const size_t num_of_dirs
+      = (evolver->get_mode() == ONE_FOR_ONE ? bundle_template.size() : bundle.size());
+
+  for (unsigned int j = 0; j < num_of_dirs; j++) {
+    dir_b = (evolver->get_mode() == ONE_FOR_ONE ? bundle_template[j] : j);
+
+    auto &bundle_dir = bundle.get_direction(dir_b);
+
+    auto &symb_coeff = get_symbolic_coefficients(P_cache, genFun_f, P, 
+                                                  evolver->dynamical_system(), 
+                                                  base, alpha, lambda, 
+                                                  bundle_dir);
+          
+    std::vector<Expression<double>> coefficients;
+    coefficients.reserve(symb_coeff.size());
+    for (auto &coeff : symb_coeff) {
+      coefficients.push_back(Expression<double>(coeff).replace(P_rep));
+    }
+
+    std::cout << coefficients << std::endl;
+
+    auto coeff_itvl = (*itvl_finder)(coefficients);
+
+    min_coeffs[dir_b].update(coeff_itvl.first);
+    max_coeffs[dir_b].update(coeff_itvl.second);
+  }
+}
+*/
+
 template<>
 Bundle
-DynamicalSystem<double>::cached_transform(const Bundle &bundle,
-                                          const Polytope &parameter_set,
-                                          const evolver_mode t_mode)
+CachedEvolver<double>::operator()(const Bundle &bundle,
+                                  const Polytope &parameter_set)
 {
 
   using namespace std;
   using namespace SymbolicAlgebra;
   using namespace LinearAlgebra;
 
-  if (bundle.dim() != _variables.size()) {
+  if (bundle.dim() != _ds.variables().size()) {
     throw std::domain_error("The bundle and the dynamic laws must have the "
                             "same number of dimensions.");
   }
 
-  if (_parameters.size() != parameter_set.dim()) {
+  if (parameter_set.dim() != _ds.parameters().size()) {
     throw std::domain_error("The vector of parameters and the parameter "
                             "set must have same number of dimensions.");
   }
@@ -577,45 +671,55 @@ DynamicalSystem<double>::cached_transform(const Bundle &bundle,
       bundle.size());
   MinMaxCoeffFinder *itvl_finder;
 
-  if (_parameters.size() == 0) {
+  if (_ds.parameters().size() == 0) {
     itvl_finder = new MinMaxCoeffFinder();
   } else {
-    itvl_finder = new ParamMinMaxCoeffFinder(_parameters, parameter_set);
+    itvl_finder = new ParamMinMaxCoeffFinder(_ds.parameters(), parameter_set);
   }
 
-  std::vector<Symbol<double>> alpha = get_symbol_vector("alpha", dim());
-  std::vector<Symbol<double>> lambda = get_symbol_vector("lambda", dim());
-  std::vector<Symbol<double>> base = get_symbol_vector("base", dim());
+  auto alpha = get_symbol_vector<double>("alpha", _ds.dim());
+  auto lambda = get_symbol_vector<double>("lambda", _ds.dim());
+  auto base = get_symbol_vector<double>("base", _ds.dim());
 
   auto refine_coeff_itvl =
-      [&max_coeffs, &min_coeffs, &bundle, &alpha, &lambda, &base, &itvl_finder,
-       &t_mode](const DynamicalSystem<double> *ds,
+      [&max_coeffs, &min_coeffs, &bundle, &alpha, &lambda, &base, &itvl_finder](
+                CachedEvolver<double> *evolver,
                 const std::vector<unsigned int> &bundle_template) {
         Parallelotope P = bundle.get_parallelotope(bundle_template);
 
-        const auto &genFun = build_generator_functs(base, alpha, lambda,
-P.generators()); const auto genFun_f = replace_in(ds->dynamics(),
-ds->variables(), genFun);
+        Expression<double>::replacement_type P_rep;
 
+        for (size_t i=0; i<P.dim(); ++i) {
+          P_rep[base[i]] = P.base_vertex()[i];
+          P_rep[lambda[i]] = P.lengths()[i];
+        }
 
-        auto &cache_P = cache[P.generators];
+        auto &P_cache = evolver->get_cached_coefficients(P);
+        
+        std::vector<SymbolicAlgebra::Expression<double>> genFun_f;
 
         unsigned int dir_b;
 
         // for each direction
         const size_t num_of_dirs
-            = (t_mode == ONE_FOR_ONE ? bundle_template.size() : bundle.size());
+            = (evolver->get_mode() == ONE_FOR_ONE ? bundle_template.size() : bundle.size());
 
         for (unsigned int j = 0; j < num_of_dirs; j++) {
-          dir_b = (t_mode == ONE_FOR_ONE ? bundle_template[j] : j);
+          dir_b = (evolver->get_mode() == ONE_FOR_ONE ? bundle_template[j] : j);
 
-          auto coefficients = compute_Bern_coefficients(
-              alpha, genFun_f_test, bundle.get_direction(dir_b));
+          auto &bundle_dir = bundle.get_direction(dir_b);
 
-          cache_P[bundle.get_direction(dir_b)] = coefficients;
+          auto symb_coeff = get_symbolic_coefficients(P_cache, genFun_f, P, 
+                                                      evolver->dynamical_system(), 
+                                                      base, alpha, lambda, 
+                                                      bundle_dir);
 
+          std::vector<Expression<double>> coefficients;
 
-          // QUI
+          coefficients.reserve(symb_coeff.size());
+          for (auto &coeff : symb_coeff) {
+            coefficients.push_back(Expression<double>(coeff).replace(P_rep));
+          }
 
           auto coeff_itvl = (*itvl_finder)(coefficients);
 
@@ -668,13 +772,12 @@ ds->variables(), genFun);
   Bundle res(bundle.directions(), lower_bounds, upper_bounds,
              bundle.templates());
 
-  if (t_mode == ONE_FOR_ONE) {
+  if (get_mode() == ONE_FOR_ONE) {
     res.canonize();
   }
 
   return res;
 }
-*/
 
 SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
                                const Bundle &bundle,
@@ -698,7 +801,7 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
 
   SetsUnion<Polytope> result = parameter_set;
 
-  std::vector<Symbol<>> alpha = get_symbol_vector("f", bundle.dim());
+  std::vector<Symbol<>> alpha = get_symbol_vector<double>("f", bundle.dim());
 
   for (auto t_it = std::begin(bundle.templates());
        t_it != std::end(bundle.templates());
