@@ -32,8 +32,11 @@ Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
 {
   Sapo sapo(model);
 
-  sapo.t_mode = (data.getTransValue() == AbsSyn::transType::OFO ? ONE_FOR_ONE
-                                                               : ALL_FOR_ONE);
+  if (data.getTransValue() == AbsSyn::transType::OFO) {
+    sapo.set_evolver_mode(Evolver<double>::ONE_FOR_ONE);
+  } else {
+    sapo.set_evolver_mode(Evolver<double>::ALL_FOR_ONE);
+  }
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();

@@ -6,7 +6,7 @@ if(${Boost_unit_test_framework_FOUND})
 
     set(LIBSAPO_TESTS linear_algebra symbolic_algebra linear_systems
                     polytopes parallelotopes bundles dynamical_systems
-                    sets_unions sticky_unions)
+                    evolver sets_unions sticky_unions)
     foreach(TEST ${LIBSAPO_TESTS})
         ADD_EXECUTABLE( test_${TEST} ${TEST}.cpp )
         target_link_libraries(test_${TEST} Sapo ${Boost_LIBRARIES})

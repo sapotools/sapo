@@ -321,11 +321,11 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression 
-   * 
+   * @brief Numerically evaluate the expression
+   *
    * This method evaluate the expression using the symbol interpretation
    * provided as parameter.
-   * 
+   *
    * @param interpretation is an interpretation for the symbols
    * @return The numeric evaluation of the expression
    */
@@ -1441,15 +1441,16 @@ public:
   virtual C evaluate() const = 0;
 
   /**
-   * @brief Numerically evaluate the expression 
-   * 
+   * @brief Numerically evaluate the expression
+   *
    * This method evaluate the expression using the symbol interpretation
    * provided as parameter.
-   * 
+   *
    * @param interpretation is an interpretation for the symbols
    * @return The numeric evaluation of the expression
    */
-  virtual C evaluate(const std::map<SymbolIdType, C> &interpretation) const = 0;
+  virtual C
+  evaluate(const std::map<SymbolIdType, C> &interpretation) const = 0;
 
   /**
    * @brief Get the coefficient of a term having a given degree
@@ -1858,11 +1859,11 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression 
-   * 
+   * @brief Numerically evaluate the expression
+   *
    * This method evaluate the expression using the symbol interpretation
    * provided as parameter.
-   * 
+   *
    * @param interpretation is an interpretation for the symbols
    * @return The numeric evaluation of the expression
    */
@@ -2341,11 +2342,11 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression 
-   * 
+   * @brief Numerically evaluate the expression
+   *
    * This method evaluate the expression using the symbol interpretation
    * provided as parameter.
-   * 
+   *
    * @param interpretation is an interpretation for the symbols
    * @return The numeric evaluation of the expression
    */
@@ -2904,11 +2905,11 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression 
-   * 
+   * @brief Numerically evaluate the expression
+   *
    * This method evaluate the expression using the symbol interpretation
    * provided as parameter.
-   * 
+   *
    * @param interpretation is an interpretation for the symbols
    * @return The numeric evaluation of the expression
    */
@@ -3343,15 +3344,15 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression 
-   * 
+   * @brief Numerically evaluate the expression
+   *
    * This method evaluate the expression using the symbol interpretation
    * provided as parameter.
-   * 
+   *
    * @param interpretation is an interpretation for the symbols
    * @return The numeric evaluation of the expression
    */
-  C evaluate(const std::map<SymbolIdType, C>  &interpretation) const
+  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
   {
     auto found = interpretation.find(_id);
 
@@ -3489,14 +3490,16 @@ Expression<C>::replace(const Expression<C>::replacement_type &replacement)
 }
 
 template<typename C>
-C Expression<C>::evaluate(const Expression<C>::interpretation_type &interpretation) const
+C Expression<C>::evaluate(
+    const Expression<C>::interpretation_type &interpretation) const
 {
   if (this->_ex == nullptr) {
     return 0;
   }
   std::map<typename Symbol<C>::SymbolIdType, C> base_interpretation;
 
-  for (auto it = std::begin(interpretation); it != std::end(interpretation); ++it) {
+  for (auto it = std::begin(interpretation); it != std::end(interpretation);
+       ++it) {
     base_interpretation[it->first.get_id()] = it->second;
   }
 

@@ -29,7 +29,7 @@
 #include "STL/STL.h"
 #include "STL/Until.h"
 
-#include "DynamicalSystem.h"
+#include "Evolver.h"
 
 #include "ProgressAccounter.h"
 
@@ -50,10 +50,9 @@ class Sapo
 {
 
 public:
-  transformation_mode t_mode; //!< transformation mode (OFO or AFO)
-  double decomp_weight;       //!< decomposition weight
-  unsigned int decomp;        //!< number of decompositions (0: none, >0: yes)
-  std::string plot; //!< the name of the file were to plot the reach set
+  double decomp_weight; //!< decomposition weight
+  unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
+  std::string plot;     //!< the name of the file were to plot the reach set
   unsigned int time_horizon;      //!< the computation time horizon
   unsigned int max_param_splits;  //!< maximum number of splits in synthesis
   unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis
@@ -71,8 +70,7 @@ public:
   invariantApproxType inv_approximation;
 
 private:
-  const DynamicalSystem<double>
-      _dynamical_system; //!< the investigated dynamical system
+  Evolver<double> _evolver; //!< the dynamical system evolver
 
   const LinearSystem assumptions;
 
@@ -98,7 +96,7 @@ private:
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle reached_set = _dynamical_system.transform(init_set, *p_it);
+      Bundle reached_set = _evolver(init_set, *p_it);
 
       // guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
@@ -200,7 +198,27 @@ public:
    */
   inline const DynamicalSystem<double> &dynamical_system() const
   {
-    return _dynamical_system;
+    return _evolver.dynamical_system();
+  }
+
+  /**
+   * @brief Get the dynamical system evolver
+   *
+   * @return the dynamical system evolver
+   */
+  inline const Evolver<double> &evolver() const
+  {
+    return _evolver;
+  }
+
+  /**
+   * @brief Set the evolver mode
+   *
+   * @param mode is the to-be-set evolver mode
+   */
+  inline void set_evolver_mode(const Evolver<double>::evolver_mode mode)
+  {
+    _evolver.mode = mode;
   }
 
   /**

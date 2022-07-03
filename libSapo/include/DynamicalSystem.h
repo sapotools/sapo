@@ -15,32 +15,9 @@
 #include <vector>
 #include <sstream>
 
-#include "Bundle.h"
 #include "SymbolicAlgebra.h"
-#include "Polytope.h"
-#include "SetsUnion.h"
 
 #include "LinearAlgebraIO.h"
-
-#include "STL/Atom.h"
-
-/**
- * @brief Approach to evaluate the image of a bundle
- *
- * The are two different approaches to evaluate the
- * image of a bundle through a polynomial function:
- * 1. One-For-One: the boundaries of any parallelotope
- *                 image in the bundle are evaluated by
- *                 exclusively considering the original
- *                 parallelotope itself
- * 2. All-For-One: the boundaries of any parallelotope
- *                 image in the bundle are evaluated by
- *                 exploiting all the bundle templates
- */
-typedef enum {
-  ONE_FOR_ONE, /* One-For-One */
-  ALL_FOR_ONE  /* All-For-One */
-} transformation_mode;
 
 /**
  * @brief This class represents dynamical systems
@@ -343,7 +320,7 @@ public:
    *
    * @return a reference to the vector of the system variables
    */
-  const std::vector<SymbolicAlgebra::Symbol<T>> &variables() const
+  inline const std::vector<SymbolicAlgebra::Symbol<T>> &variables() const
   {
     return _variables;
   }
@@ -353,7 +330,7 @@ public:
    *
    * @return a reference to the vector of the system parameters
    */
-  const std::vector<SymbolicAlgebra::Symbol<T>> &parameters() const
+  inline const std::vector<SymbolicAlgebra::Symbol<T>> &parameters() const
   {
     return _parameters;
   }
@@ -363,7 +340,7 @@ public:
    *
    * @return a reference to the system dynamic law vector
    */
-  const std::vector<SymbolicAlgebra::Expression<T>> &dynamics() const
+  inline const std::vector<SymbolicAlgebra::Expression<T>> &dynamics() const
   {
     return _dynamics;
   }
@@ -373,7 +350,7 @@ public:
    *
    * @return a reference to the i-th variable
    */
-  const SymbolicAlgebra::Symbol<T> &variable(const unsigned int i) const
+  inline const SymbolicAlgebra::Symbol<T> &variable(const unsigned int i) const
   {
     return _variables[i];
   }
@@ -383,7 +360,8 @@ public:
    *
    * @return a reference to the i-th parameter
    */
-  const SymbolicAlgebra::Symbol<T> &parameter(const unsigned int i) const
+  inline const SymbolicAlgebra::Symbol<T> &
+  parameter(const unsigned int i) const
   {
     return _parameters[i];
   }
@@ -393,7 +371,8 @@ public:
    *
    * @return a reference to the i-th dynamic law
    */
-  const SymbolicAlgebra::Expression<T> &dynamic(const unsigned int i) const
+  inline const SymbolicAlgebra::Expression<T> &
+  dynamic(const unsigned int i) const
   {
     return _dynamics[i];
   }
@@ -403,139 +382,11 @@ public:
    *
    * @return a reference to the dynamic law associated to a variable
    */
-  const SymbolicAlgebra::Expression<T> &
+  inline const SymbolicAlgebra::Expression<T> &
   operator[](const SymbolicAlgebra::Symbol<T> &variable) const
   {
     return _dynamics[_var_index.at[variable.get_id()]];
   }
-
-  /**
-   * @brief Transform a bundle according with the system dynamics
-   *
-   * @param bundle is the bundle to be transformed
-   * @param t_mode is the mode used to compute the transformation
-   * @return an over-approximation of the bundle transformed
-   *         by the dynamic laws
-   */
-  inline Bundle transform(const Bundle &bundle,
-                          const transformation_mode t_mode = ALL_FOR_ONE) const
-  {
-    if (_parameters.size() != 0) {
-      throw std::domain_error("The parameter set has not been specified");
-    }
-
-    return this->transform(bundle, Polytope(), t_mode);
-  }
-
-  /**
-   * @brief Transform a bundle according with the system dynamics
-   *
-   * @param bundle is the bundle to be transformed
-   * @param parameter_set is the parameter set
-   * @param t_mode is the mode used to compute the transformation
-   * @return an over-approximation of the bundle transformed
-   *         by the dynamic laws
-   */
-  Bundle transform(const Bundle &bundle, const Polytope &parameter_set,
-                   const transformation_mode t_mode = ALL_FOR_ONE) const;
-
-  /**
-   * @brief Transform a bundles union according with the system dynamics
-   *
-   * @param bundles_union is the set of bundles to be transformed
-   * @param t_mode is the mode used to compute the transformation
-   * @return an over-approximation of set reached from `bundles_union`
-   *         by the dynamic laws
-   */
-  SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
-                              const transformation_mode t_mode
-                              = ALL_FOR_ONE) const
-  {
-    if (_parameters.size() != 0) {
-      throw std::domain_error("The parameter set has not been specified");
-    }
-
-    SetsUnion<Bundle> result;
-
-    for (auto b_it = std::begin(bundles_union);
-         b_it != std::end(bundles_union); ++b_it) {
-
-      result.add(transform(*b_it, t_mode));
-    }
-
-    return result;
-  }
-
-  /**
-   * @brief Transform a bundles union according with the system dynamics
-   *
-   * @param bundles_union is the set of bundles to be transformed
-   * @param parameter_set is the parameter set
-   * @param t_mode is the mode used to compute the transformation
-   * @return an over-approximation of set reached from `bundles_union`
-   *         by the dynamic laws
-   */
-  SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
-                              const Polytope &parameter_set,
-                              const transformation_mode t_mode
-                              = ALL_FOR_ONE) const
-  {
-    SetsUnion<Bundle> result;
-
-    for (auto it = std::begin(bundles_union); it != std::end(bundles_union);
-         ++it) {
-      result.add(transform(*it, parameter_set, t_mode));
-    }
-
-    return result;
-  }
-
-  /**
-   * @brief Transform a bundles union according with the system dynamics
-   *
-   * @param bundles_union is the set of bundles to be transformed
-   * @param parameter_set is the parameter set
-   * @param t_mode is the mode used to compute the transformation
-   * @return an over-approximation of set reached from `bundles_union`
-   *         by the dynamic laws
-   */
-  SetsUnion<Bundle> transform(const SetsUnion<Bundle> &bundles_union,
-                              const SetsUnion<Polytope> &parameter_set,
-                              const transformation_mode t_mode
-                              = ALL_FOR_ONE) const
-  {
-    SetsUnion<Bundle> result;
-
-    for (auto p_it = std::begin(parameter_set);
-         p_it != std::end(parameter_set); ++p_it) {
-      for (auto b_it = std::begin(bundles_union);
-           b_it != std::end(bundles_union); ++b_it) {
-        result.add(transform(*b_it, *p_it, t_mode));
-      }
-    }
-
-    return result;
-  }
 };
-
-/**
- * @brief Perform the parametric synthesis for an atom
- *
- * This method computes a set of parameters such that the
- * transformation from a bundle satisfies the provided atom.
- *
- * @param[in] ds is the dynamical system
- * @param[in] bundle is the set from which the evolution occurs
- * @param[in] parameter_set is the initial parameter set
- * @param[in] atom is the specification to be satisfied
- * @return a subset of `parameter_set` such that the
- *         transformation from `bundle` through the dynamical
- *         system when the parameters are in the returned set
- *         satisfies the atomic formula
- */
-SetsUnion<Polytope> synthesize(const DynamicalSystem<double> &ds,
-                               const Bundle &bundle,
-                               const SetsUnion<Polytope> &parameter_set,
-                               const std::shared_ptr<STL::Atom> atom);
 
 #endif // DYNAMICS_H_
