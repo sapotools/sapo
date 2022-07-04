@@ -2,6 +2,7 @@
 #define __DIRECTION_H__
 
 #include <cmath>
+#include <limits>
 
 #include "SymbolicAlgebra.h"
 #include "Expr.h"

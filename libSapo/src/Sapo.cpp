@@ -427,7 +427,7 @@ synthesize_list(const Sapo &sapo, const Bundle &init_set,
 
   for (auto ps_it = std::begin(pSetList); ps_it != std::end(pSetList);
        ++ps_it) {
-    results.push_back(sapo.synthesize(reachSet, *ps_it, formula));
+    results.push_back(sapo.synthesize(init_set, *ps_it, formula));
     if (accounter != NULL) {
       accounter->increase_performed(formula->time_bounds().end());
     }

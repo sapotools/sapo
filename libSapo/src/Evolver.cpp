@@ -519,7 +519,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 #else  // WITH_THREADS
     for (auto t_it = std::begin(bundle.templates());
          t_it != std::end(bundle.templates()); ++t_it) {
-      refine_coeff_itvl(std::ref(_ds), std::ref(*t_it), mode);
+      refine_coeff_itvl(std::ref(_ds), std::ref(*t_it), _mode);
     }
 #endif // WITH_THREADS
     delete itvl_finder;

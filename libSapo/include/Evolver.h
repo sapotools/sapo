@@ -268,7 +268,9 @@ protected:
    */
   dir2coeffs_type& get_cached_coefficients(const Parallelotope &P)
   {
+#ifdef WITH_THREADS
     std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
+#endif // WITH_THREADS
 
     return _cache[P.generators()];
   }

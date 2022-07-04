@@ -557,7 +557,7 @@ public:
     return result.get();
 #else  // WITH_THREADS
     for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-      if (set_obj.is_subset_of(*this)) {
+      if (set_obj.is_subset_of(*it)) {
         return true;
       }
     }
