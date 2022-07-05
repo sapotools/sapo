@@ -97,7 +97,7 @@ public:
 
   /**
    * @brief Get the evolver mode
-   * 
+   *
    * @return evolver mode
    */
   inline evolver_mode get_mode() const
@@ -222,14 +222,14 @@ public:
 };
 
 /**
-* @brief Handle evolution of geometric sets subject to a dynamical system
+ * @brief Handle evolution of geometric sets subject to a dynamical system
  *
  * The objects of this class let geometric objects, such as
  * `Parallelotope` or `Bundle`, subject to a dynamical system evolve.
- * This class computes the symbolic Bernstein coefficients of the 
- * associated dynamical system and the evolving geometric set and 
- * store them in a cache. When needed the computed symbolic 
- * coefficient are recovered and instantiated for the specific 
+ * This class computes the symbolic Bernstein coefficients of the
+ * associated dynamical system and the evolving geometric set and
+ * store them in a cache. When needed the computed symbolic
+ * coefficient are recovered and instantiated for the specific
  * geometric set.
  *
  * @tparam T is the type of expression value domain
@@ -246,27 +246,30 @@ protected:
   /**
    * @brief Maps that associate directions to Bernstein coefficients
    */
-  typedef std::map<dir_type, std::vector<SymbolicAlgebra::Expression<T>>> dir2coeffs_type;
+  typedef std::map<dir_type, std::vector<SymbolicAlgebra::Expression<T>>>
+      dir2coeffs_type;
 
   /**
-   * @brief Maps that associate generators to direction to Bernstein coefficient map
+   * @brief Maps that associate generators to direction to Bernstein
+   * coefficient map
    */
-  typedef std::map<LinearAlgebra::Dense::Matrix<T>, dir2coeffs_type> cache_type;
+  typedef std::map<LinearAlgebra::Dense::Matrix<T>, dir2coeffs_type>
+      cache_type;
 
   cache_type _cache; //!< The evolver cache for symbolic Bernstein coefficients
 
 #ifdef WITH_THREADS
   mutable std::shared_timed_mutex _cache_mutex; //!< Cache mutex
-#endif // WITH_THREADS
+#endif                                          // WITH_THREADS
 
   /**
    * @brief Get the cached Bernstein coefficients of a parallelotope
-   * 
+   *
    * @param P is a parallelotope
-   * @return the cached symbolic Bernstein coefficients for `P` and 
+   * @return the cached symbolic Bernstein coefficients for `P` and
    *         the current evolver
    */
-  dir2coeffs_type& get_cached_coefficients(const Parallelotope &P)
+  dir2coeffs_type &get_cached_coefficients(const Parallelotope &P)
   {
 #ifdef WITH_THREADS
     std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
@@ -276,7 +279,6 @@ protected:
   }
 
 public:
-
   /**
    * @brief A constructor
    *
@@ -284,8 +286,10 @@ public:
    * @param mode is the mode used to compute the evolution
    */
   CachedEvolver(const DynamicalSystem<T> &dynamical_system,
-                const typename Evolver<T>::evolver_mode mode = Evolver<T>::ALL_FOR_ONE):
-      Evolver<T>(dynamical_system, mode), _cache()
+                const typename Evolver<T>::evolver_mode mode
+                = Evolver<T>::ALL_FOR_ONE):
+      Evolver<T>(dynamical_system, mode),
+      _cache()
   {
   }
 
@@ -296,8 +300,10 @@ public:
    * @param mode is the mode used to compute the evolution
    */
   CachedEvolver(DynamicalSystem<T> &&dynamical_system,
-                const typename Evolver<T>::evolver_mode mode = Evolver<T>::ALL_FOR_ONE):
-      Evolver<T>(std::move(dynamical_system), mode), _cache()
+                const typename Evolver<T>::evolver_mode mode
+                = Evolver<T>::ALL_FOR_ONE):
+      Evolver<T>(std::move(dynamical_system), mode),
+      _cache()
   {
   }
 
@@ -306,16 +312,17 @@ public:
    *
    * @param evolver is the original evolver
    */
-  CachedEvolver(const Evolver<T> &evolver): Evolver<T>(evolver), _cache() 
-  {}
+  CachedEvolver(const Evolver<T> &evolver): Evolver<T>(evolver), _cache() {}
 
   /**
    * @brief A copy constructor
    *
    * @param orig is the template object
    */
-  CachedEvolver(const CachedEvolver<T> &orig): Evolver<T>(orig), _cache(orig._cache) 
-  {}
+  CachedEvolver(const CachedEvolver<T> &orig):
+      Evolver<T>(orig), _cache(orig._cache)
+  {
+  }
 
   /**
    * @brief Let a bundle evolve according with the dynamical system
