@@ -48,8 +48,7 @@ Parallelotope::Parallelotope(
     throw std::domain_error(oss.str());
   }
 
-  const Sparse::Matrix<double> dmatrix(directions);
-  Sparse::LUP_Factorization<double> factorization(dmatrix);
+  Dense::LUP_Factorization<double> factorization(directions);
 
   try {
     // store the base vertex
@@ -64,11 +63,7 @@ Parallelotope::Parallelotope(
   std::vector<double> offset(upper_bound.size(), 0);
   for (unsigned int k = 0; k < upper_bound.size(); k++) {
     const double delta_k = upper_bound[k] - lower_bound[k];
-    if (delta_k != 0) {
-      offset[k] = delta_k;
-    } else {
-      offset[k] = -1;
-    }
+    offset[k] = (delta_k != 0 ? 1 : -1);
 
     const std::vector<double> tensor = factorization.solve(offset);
     offset[k] = 0;
@@ -76,7 +71,7 @@ Parallelotope::Parallelotope(
     // compute its length and store it
     const double length = norm_2(tensor);
     if (delta_k != 0) {
-      _lengths.push_back(length);
+      _lengths.push_back(delta_k * length);
     } else {
       _lengths.push_back(0);
     }
