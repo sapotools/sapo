@@ -569,7 +569,7 @@ void init_genFun_if_necessary(std::vector<SymbolicAlgebra::Expression<T>> &genFu
 template<typename T>
 const std::vector<SymbolicAlgebra::Expression<T>> &
 get_symbolic_coefficients(std::map<LinearAlgebra::Vector<T>, 
-          std::vector<SymbolicAlgebra::Expression<T>>> P_cache,
+          std::vector<SymbolicAlgebra::Expression<T>>> &P_cache,
           std::vector<SymbolicAlgebra::Expression<T>> &genFun_f,
           const Parallelotope &P, const DynamicalSystem<T> &ds, 
           const std::vector<SymbolicAlgebra::Symbol<T>> &base, 
