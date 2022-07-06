@@ -63,7 +63,7 @@ Parallelotope::Parallelotope(
   std::vector<double> offset(upper_bound.size(), 0);
   for (unsigned int k = 0; k < upper_bound.size(); k++) {
     const double delta_k = upper_bound[k] - lower_bound[k];
-    offset[k] = (delta_k != 0 ? 1 : -1);
+    offset[k] = 1;
 
     const std::vector<double> tensor = factorization.solve(offset);
     offset[k] = 0;
