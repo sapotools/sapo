@@ -84,6 +84,7 @@ k_induction_join return yy::parser::make_K_IND_JOIN(loc);
 listing			return yy::parser::make_LISTING(loc);
 packaging			return yy::parser::make_PACKAGING(loc);
 merging			return yy::parser::make_MERGING(loc);
+no_caching		return yy::parser::make_NO_CACHE(loc);
 
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);

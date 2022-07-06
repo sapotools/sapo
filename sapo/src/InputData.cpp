@@ -17,8 +17,8 @@ InputData::InputData():
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
     decomp(false), decomp_defined(false), alpha(0.5), alphaDefined(false),
-    compose_dynamic(false), dynamic_degree(1),
-    approx_type(Sapo::NO_APPROX)
+    compose_dynamic(false), dynamic_degree(1), approx_type(Sapo::NO_APPROX),
+    bern_caching(true)
 {
 }
 
@@ -92,7 +92,8 @@ ostream &operator<<(ostream &os, const InputData &m)
   os << endl;
 
   os << "assumptions: ";
-  for (auto it=std::begin(m.getAssumptions()); it != std::end(m.getAssumptions()); ++it) {
+  for (auto it = std::begin(m.getAssumptions());
+       it != std::end(m.getAssumptions()); ++it) {
     os << **it << std::endl;
   }
   os << endl;
@@ -108,7 +109,8 @@ ostream &operator<<(ostream &os, const InputData &m)
 
   os << std::endl;
   os << "invariant:" << std::endl << "{" << endl;
-  for (auto it=std::begin(m.getInvariant()); it != std::end(m.getInvariant()); ++it) {
+  for (auto it = std::begin(m.getInvariant());
+       it != std::end(m.getInvariant()); ++it) {
     os << "\t" << **it << std::endl;
   }
   os << "}" << endl;
@@ -648,11 +650,9 @@ bool InputData::check()
 
   // specs
   if (problem == problemType::INVARIANT && invariant.size() == 0) {
-    cerr << "Invariant validation requires invariant specification"
-         << endl;
+    cerr << "Invariant validation requires invariant specification" << endl;
     res = false;
   }
-
 
   // trans type (AFO or OFO), if undefined set to AFO
   if (trans == transType::T_UNDEF) {

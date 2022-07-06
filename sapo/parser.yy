@@ -105,6 +105,7 @@
 	LISTING
 	PACKAGING
 	MERGING
+	NO_CACHE
 	TRANS
 	AFO
 	OFO
@@ -1095,6 +1096,10 @@ option	: TRANS transType ";"
 		| K_IND_JOIN MERGING ";"
 		{
 			drv.data.setApproxType(Sapo::CHAIN_JOIN);
+		}
+		| NO_CACHE ";"
+		{
+			drv.data.setBernsteinCaching(false);
 		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }

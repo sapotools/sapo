@@ -61,16 +61,17 @@ public:
   /**
    * @brief Approximation used during invariant validation
    */
-  enum invariantApproxType {
+  enum joinApproxType {
     NO_APPROX,  // no approximation is used (listing)
     CHAIN_JOIN, // chain-join approximation (packaging)
     FULL_JOIN   // full-join approximation (merging)
   };
 
-  invariantApproxType inv_approximation;
+  joinApproxType join_approx; //!< join approximation type for `k`-induction
+                              //!< invariant proof
 
 private:
-  Evolver<double> _evolver; //!< the dynamical system evolver
+  Evolver<double> *_evolver; //!< the dynamical system evolver
 
   const LinearSystem assumptions;
 
@@ -88,7 +89,7 @@ private:
   SetsUnion<Polytope>
   transition_and_synthesis(Bundle init_set, const SetsUnion<Polytope> &pSet,
                            const std::shared_ptr<T> formula,
-                           const int epoch_horizon) const
+                           const int epoch_horizon)
   {
     SetsUnion<Polytope> result;
 
@@ -96,7 +97,7 @@ private:
 
     for (auto p_it = pSet.begin(); p_it != pSet.end(); ++p_it) {
       // transition by using the n-th polytope of the parameter set
-      Bundle reached_set = _evolver(init_set, *p_it);
+      Bundle reached_set = _evolver->operator()(init_set, *p_it);
 
       // guarantee the assumptions
       reached_set.intersect_with(this->assumptions);
@@ -115,9 +116,9 @@ private:
    * @param[in] formula is an STL atomic formula providing the specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope>
-  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-             const std::shared_ptr<STL::Atom> formula) const;
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
+                                 const SetsUnion<Polytope> &pSet,
+                                 const std::shared_ptr<STL::Atom> formula);
 
   /**
    * Parameter synthesis for conjunctions
@@ -129,7 +130,7 @@ private:
    */
   SetsUnion<Polytope>
   synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-             const std::shared_ptr<STL::Conjunction> formula) const;
+             const std::shared_ptr<STL::Conjunction> formula);
 
   /**
    * Parameter synthesis for disjunctions
@@ -141,7 +142,7 @@ private:
    */
   SetsUnion<Polytope>
   synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-             const std::shared_ptr<STL::Disjunction> formula) const;
+             const std::shared_ptr<STL::Disjunction> formula);
 
   /**
    * Parameter synthesis for until formulas
@@ -155,7 +156,7 @@ private:
   SetsUnion<Polytope> synthesize(const Bundle &reachSet,
                                  const SetsUnion<Polytope> &pSet,
                                  const std::shared_ptr<STL::Until> formula,
-                                 const int time) const;
+                                 const int time);
 
   /**
    * Parameter synthesis for always formulas
@@ -169,7 +170,7 @@ private:
   SetsUnion<Polytope> synthesize(const Bundle &reachSet,
                                  const SetsUnion<Polytope> &pSet,
                                  const std::shared_ptr<STL::Always> formula,
-                                 const int time) const;
+                                 const int time);
   /**
    * Parameter synthesis for the eventually formulas
    *
@@ -179,17 +180,18 @@ private:
    * specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope>
-  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
-             const std::shared_ptr<STL::Eventually> ev) const;
+  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
+                                 const SetsUnion<Polytope> &pSet,
+                                 const std::shared_ptr<STL::Eventually> ev);
 
 public:
   /**
-   * Constructor that instantiates Sapo
+   * Constructor
    *
-   * @param[in] model model to analyze
+   * @param[in] model is the model to analyze
+   * @param[in] cached is a flag to cache Bernstein coefficients
    */
-  Sapo(const Model &model);
+  Sapo(const Model &model, bool cached = true);
 
   /**
    * @brief Get the dynamical system
@@ -198,7 +200,7 @@ public:
    */
   inline const DynamicalSystem<double> &dynamical_system() const
   {
-    return _evolver.dynamical_system();
+    return _evolver->dynamical_system();
   }
 
   /**
@@ -206,7 +208,7 @@ public:
    *
    * @return the dynamical system evolver
    */
-  inline const Evolver<double> &evolver() const
+  inline Evolver<double> *evolver()
   {
     return _evolver;
   }
@@ -218,7 +220,7 @@ public:
    */
   inline void set_evolver_mode(const Evolver<double>::evolver_mode mode)
   {
-    _evolver.set_mode(mode);
+    _evolver->set_mode(mode);
   }
 
   /**
@@ -230,7 +232,7 @@ public:
    * @returns the reached flowpipe
    */
   Flowpipe reach(Bundle init_set, unsigned int epoch_horizon,
-                 ProgressAccounter *accounter = NULL) const;
+                 ProgressAccounter *accounter = NULL);
 
   /**
    * Reachable set computation for parametric dynamical systems
@@ -243,7 +245,7 @@ public:
    */
   Flowpipe reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
                  unsigned int epoch_horizon,
-                 ProgressAccounter *accounter = NULL) const;
+                 ProgressAccounter *accounter = NULL);
 
   /**
    * Parameter synthesis method
@@ -257,7 +259,7 @@ public:
   SetsUnion<Polytope> synthesize(Bundle init_set,
                                  const SetsUnion<Polytope> &pSet,
                                  const std::shared_ptr<STL::STL> formula,
-                                 ProgressAccounter *accounter = NULL) const;
+                                 ProgressAccounter *accounter = NULL);
 
   /**
    * Parameter synthesis with splits
@@ -277,7 +279,7 @@ public:
              const std::shared_ptr<STL::STL> formula,
              const unsigned int max_splits,
              const unsigned int num_of_pre_splits = 0,
-             ProgressAccounter *accounter = NULL) const;
+             ProgressAccounter *accounter = NULL);
 
   /**
    * @brief Try to establish whether a set is an invariant
@@ -288,17 +290,28 @@ public:
    * @param epoch_horizon is the maximum investigated epoch.
    *        If `epoch_horizon` is set to be 0, then the
    *        computation does not end until the correct
-   *        answer has been found (potentially, forever).
-   *        The default value is 0
+   *        answer has been found (potentially, forever)
    * @param accounter accounts for the computation progress
-   * @return an object of the type `InvariantValidationResult`
+   * @return a pair<bool, unsigned>. The first value
+   * is `true` if and only if the method has identified
+   * a `k` such that `invariant_candidate` is a `k`-invariant
+   * for the investigated model. In such a case, the second
+   * returned value is such a `k`. Whenever the first value
+   * is `false`, then the second value report the epoch
+   * in which `invariant_candidate` has been disproved to be
+   * a `k`-invariant
    */
   InvariantValidationResult
   check_invariant(const SetsUnion<Bundle> &init_set,
                   const SetsUnion<Polytope> &pSet,
                   const LinearSystem &invariant_candidate,
                   const unsigned int epoch_horizon = 0,
-                  ProgressAccounter *accounter = NULL) const;
+                  ProgressAccounter *accounter = NULL);
+
+  /**
+   * @brief Destroyer
+   */
+  ~Sapo();
 };
 
 /**

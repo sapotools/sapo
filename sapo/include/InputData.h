@@ -4,7 +4,6 @@
 #include <vector>
 #include <algorithm>
 
-
 #include <STL/STL.h>
 #include <STL/Conjunction.h>
 
@@ -250,7 +249,7 @@ public:
   {
     return directions;
   }
-  const Direction *getDirection(const unsigned int& i) const
+  const Direction *getDirection(const unsigned int &i) const
   {
     return directions[i];
   }
@@ -266,12 +265,12 @@ public:
     return invariant;
   }
 
-  inline void setApproxType(const Sapo::invariantApproxType type)
+  inline void setApproxType(const Sapo::joinApproxType type)
   {
     approx_type = type;
   }
 
-  inline const Sapo::invariantApproxType &getApproxType() const 
+  inline const Sapo::joinApproxType &getApproxType() const
   {
     return approx_type;
   }
@@ -373,6 +372,16 @@ public:
     dynamic_degree = d;
   }
 
+  void setBernsteinCaching(bool flag)
+  {
+    bern_caching = flag;
+  }
+
+  bool useBernsteinCaching() const
+  {
+    return bern_caching;
+  }
+
   /**
    * @brief Fix boundaries according to the whole input
    *
@@ -429,7 +438,8 @@ protected:
   bool alphaDefined;
   bool compose_dynamic;
   unsigned dynamic_degree;
-  Sapo::invariantApproxType approx_type;
+  Sapo::joinApproxType approx_type;
+  bool bern_caching;
 
   // addition of direction to params or vars
   void addDirectionConstraint(Direction *d, bool isVar);

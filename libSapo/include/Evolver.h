@@ -132,7 +132,7 @@ public:
    * @return an over-approximation of the bundle transformed
    *         by the dynamic laws
    */
-  inline Bundle operator()(const Bundle &bundle) const
+  inline Bundle operator()(const Bundle &bundle)
   {
     if (_ds.parameters().size() != 0) {
       throw std::domain_error("The parameter set has not been specified");
@@ -149,7 +149,8 @@ public:
    * @return an over-approximation of the bundle transformed
    *         by the dynamic laws
    */
-  Bundle operator()(const Bundle &bundle, const Polytope &parameter_set) const;
+  virtual Bundle operator()(const Bundle &bundle,
+                            const Polytope &parameter_set);
 
   /**
    * @brief Transform a bundles union according with the system dynamics
@@ -158,7 +159,7 @@ public:
    * @return an over-approximation of set reached from `bundles_union`
    *         by the dynamic laws
    */
-  SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union) const
+  SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union)
   {
     if (_ds.parameters().size() != 0) {
       throw std::domain_error("The parameter set has not been specified");
@@ -184,7 +185,7 @@ public:
    *         by the dynamic laws
    */
   SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union,
-                               const Polytope &parameter_set) const
+                               const Polytope &parameter_set)
   {
     SetsUnion<Bundle> result;
 
@@ -205,7 +206,7 @@ public:
    *         by the dynamic laws
    */
   SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union,
-                               const SetsUnion<Polytope> &parameter_set) const
+                               const SetsUnion<Polytope> &parameter_set)
   {
     SetsUnion<Bundle> result;
 
@@ -219,7 +220,32 @@ public:
 
     return result;
   }
+
+  /**
+   * @brief Destroyer
+   */
+  virtual ~Evolver() {}
 };
+
+/**
+ * @brief Perform the parametric synthesis for an atom
+ *
+ * This method computes a set of parameters such that the
+ * evolution of a bundle satisfies the provided atom.
+ *
+ * @param[in] evolver is the dynamical system evolver
+ * @param[in] bundle is the set from which the evolution occurs
+ * @param[in] parameter_set is the initial parameter set
+ * @param[in] atom is the specification to be satisfied
+ * @return a subset of `parameter_set` such that the
+ *         evolution of a `bundle` through the dynamical
+ *         system when the parameters are in the returned set
+ *         satisfies the atomic formula
+ */
+SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
+                               const Bundle &bundle,
+                               const SetsUnion<Polytope> &parameter_set,
+                               const std::shared_ptr<STL::Atom> atom);
 
 /**
  * @brief Handle evolution of geometric sets subject to a dynamical system
@@ -262,23 +288,105 @@ protected:
   mutable std::shared_timed_mutex _cache_mutex; //!< Cache mutex
 #endif                                          // WITH_THREADS
 
+public:
+  /**
+   * @brief Check whether the Bernstein coefficients are cached
+   *
+   * @param P is a parallelotope
+   * @param direction is a direction
+   * @return `true` if and only if the coefficients for `P` and
+   *         `direction` are cached
+   */
+  bool coefficients_in_cache(const Parallelotope &P,
+                             const LinearAlgebra::Vector<T> &direction) const
+  {
+#ifdef WITH_THREADS
+    std::shared_lock<std::shared_timed_mutex> readlock(_cache_mutex);
+#endif // WITH_THREADS
+
+    auto P_found = _cache.find(P.generators());
+
+    if (P_found == std::end(_cache)) {
+      return false;
+    }
+
+    auto dir_found = P_found->second.find(direction);
+
+    return dir_found != std::end(P_found->second);
+  }
+
   /**
    * @brief Get the cached Bernstein coefficients of a parallelotope
    *
    * @param P is a parallelotope
-   * @return the cached symbolic Bernstein coefficients for `P` and
-   *         the current evolver
+   * @param direction is a direction
+   * @return the cached symbolic Bernstein coefficients for `P`,
+   *         `direction`, and the current evolver
    */
-  dir2coeffs_type &get_cached_coefficients(const Parallelotope &P)
+  const std::vector<SymbolicAlgebra::Expression<T>> &
+  get_cached_coefficients(const Parallelotope &P,
+                          const LinearAlgebra::Vector<T> &direction) const
+  {
+#ifdef WITH_THREADS
+    std::shared_lock<std::shared_timed_mutex> readlock(_cache_mutex);
+#endif // WITH_THREADS
+
+    return _cache.at(P.generators()).at(direction);
+  }
+
+  /**
+   * @brief Cache the Bernstein coefficients
+   *
+   * This method saves the Bernstein coefficients
+   * of a parallelotope, a direction, and the
+   * dynamics of the current evaluator in the cache.
+   *
+   * @param[in] P is a parallelotope
+   * @param[in] direction is a direction
+   * @param[in] coeffs is the vector of Bernstein coefficients
+   */
+  const std::vector<SymbolicAlgebra::Expression<T>> &set_cache_coefficients(
+      const Parallelotope &P, const LinearAlgebra::Vector<T> &direction,
+      const std::vector<SymbolicAlgebra::Expression<T>> &coeffs)
   {
 #ifdef WITH_THREADS
     std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
 #endif // WITH_THREADS
 
-    return _cache[P.generators()];
+    auto &cache = _cache[P.generators()][direction];
+
+    cache = coeffs;
+
+    return cache;
   }
 
-public:
+  /**
+   * @brief Cache the Bernstein coefficients
+   *
+   * This method saves the Bernstein coefficients
+   * of a parallelotope, a direction, and the
+   * dynamics of the current evaluator in the cache.
+   *
+   * @param P is a parallelotope
+   * @param direction is a direction
+   * @param coeffs is the vector of Bernstein coefficients
+   */
+  const std::vector<SymbolicAlgebra::Expression<T>> &
+  set_cache_coefficients(const Parallelotope &P,
+                         const LinearAlgebra::Vector<T> &direction,
+                         std::vector<SymbolicAlgebra::Expression<T>> &&coeffs)
+  {
+#ifdef WITH_THREADS
+    std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
+#endif // WITH_THREADS
+
+    // auto & cache = _cache[P.generators()][direction];
+
+    _cache[P.generators()][direction] = std::move(coeffs);
+
+    return _cache[P.generators()][direction];
+  }
+
   /**
    * @brief A constructor
    *
@@ -334,25 +442,5 @@ public:
    */
   Bundle operator()(const Bundle &bundle, const Polytope &parameter_set);
 };
-
-/**
- * @brief Perform the parametric synthesis for an atom
- *
- * This method computes a set of parameters such that the
- * evolution of a bundle satisfies the provided atom.
- *
- * @param[in] evolver is the dynamical system evolver
- * @param[in] bundle is the set from which the evolution occurs
- * @param[in] parameter_set is the initial parameter set
- * @param[in] atom is the specification to be satisfied
- * @return a subset of `parameter_set` such that the
- *         evolution of a `bundle` through the dynamical
- *         system when the parameters are in the returned set
- *         satisfies the atomic formula
- */
-SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
-                               const Bundle &bundle,
-                               const SetsUnion<Polytope> &parameter_set,
-                               const std::shared_ptr<STL::Atom> atom);
 
 #endif // EVOLVER_H_

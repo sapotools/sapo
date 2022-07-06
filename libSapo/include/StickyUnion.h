@@ -500,16 +500,45 @@ public:
     return _classes.front().over_approx.dim();
   }
 
+  /**
+   * @brief Compute the intersection of two sticky unions
+   *
+   * @tparam BASIC_SET_TYPE2 is the basic set type, e.g., Polytope or
+   * Bundle
+   * @param A is a sticky union of sets
+   * @param B is a sticky union of sets
+   * @return the intersection of `A` and `B`
+   */
   template<class BASIC_SET_TYPE2>
   friend SetsUnion<BASIC_SET_TYPE2>
   intersect(const StickyUnion<BASIC_SET_TYPE2> &A,
             const StickyUnion<BASIC_SET_TYPE2> &B);
 
+  /**
+   * @brief Compute the intersection of a set and a sticky union
+   *
+   * @tparam BASIC_SET_TYPE2 is the basic set type, e.g., Polytope or
+   * Bundle
+   * @tparam SET_TYPE is a set type, e.g., SetsUnion or Bundle
+   * @param sticky_union is a sticky union of sets
+   * @param set_obj is a set
+   * @return the intersection of the two parameters
+   */
   template<class BASIC_SET_TYPE2, class SET_TYPE>
   friend SetsUnion<BASIC_SET_TYPE2>
   intersect(const StickyUnion<BASIC_SET_TYPE2> &sticky_union,
             const SET_TYPE &set_obj);
 
+  /**
+   * @brief Compute the intersection of a sticky union and a set
+   *
+   * @tparam BASIC_SET_TYPE is the basic set type, e.g., Polytope or
+   * Bundle
+   * @tparam SET_TYPE is a set type, e.g., SetsUnion or Bundle
+   * @param sticky_union is a sticky union of sets
+   * @param set_obj is a set
+   * @return the intersection of the two parameters
+   */
   template<class BASIC_SET_TYPE2, class SET_TYPE>
   friend SetsUnion<BASIC_SET_TYPE2>
   intersect(const StickyUnion<BASIC_SET_TYPE2> &sticky_union,

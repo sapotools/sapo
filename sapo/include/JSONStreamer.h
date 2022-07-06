@@ -166,7 +166,8 @@ public:
    * @param value is an unsigned interger value
    * @return a reference to the JSON output stream
    */
-  friend JSON::ostream &operator<<(JSON::ostream &out, const unsigned int value)
+  friend JSON::ostream &operator<<(JSON::ostream &out,
+                                   const unsigned int value)
   {
     dynamic_cast<std::ostream &>(out) << value;
 

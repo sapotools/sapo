@@ -4,7 +4,7 @@
  * @brief Functions printing on a JSON stream
  * @version 0.1
  * @date 2022-06-08
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 

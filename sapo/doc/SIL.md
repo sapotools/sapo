@@ -302,7 +302,7 @@ All of them are optional.
 We can define
 - how we compute the image of a polytope (optional)
 	
-	```option transformation AFO | OFO;```
+	```option transformation [AFO | OFO];```
 	In general, `AFO` gives more accurate results but `OFO` is faster.
 	The default value is ```AFO```.
 
@@ -312,9 +312,22 @@ We can define
 
 - set a weigth `alpha` in `[0,1]` used in decomposition, to define the importance given to polytope volume over maximum side length in the cost function.
 	
-	``` option sapo_alpha num;```
+	```option sapo_alpha num;```
 	
 	The default value is `0.5`.
+
+- set an approximation technique for set join in `k`-induction invariant proof.
+
+	```option k_induction_join [listing|packaging|merging];```
+
+	The default value is `listing`.
+
+- avoid Bernstein coefficients caching during computation. If this option is selected, Bernstein coefficients are numerically evaluated on-the-fly at 
+each epoch instead of being symbollically computed for a generic parallotope with specific generators and cached once and then recovered 
+and instanciated when needed. The default behaviour is more convenient when the time overhead due to the symbolic computation is balanced by 
+the savings due to using the same coefficients for many evolution epochs. 
+
+	```option no_caching;``` 
 
 ## Comments
 SIL understands C/C++ like comments, both sigle and multi-line

@@ -4,9 +4,9 @@
  * @brief Format the sapo application output
  * @version 0.1
  * @date 2022-04-12
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 #ifndef OUTPUTFORMATER_H_
 #define OUTPUTFORMATER_H_

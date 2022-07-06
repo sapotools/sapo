@@ -455,7 +455,7 @@ public:
    * @brief Test whether a sets union is subset of a sets union
    *
    * @tparam BASIC_SET_TYPE2 is the type of the tested set
-   * @param set_obj sets_union is the tested sets union
+   * @param sets_union is the tested sets union
    * @return `true` if and only if the current bundle is a
    *         subset of `sets_union`
    */
@@ -919,7 +919,7 @@ subtract_and_close(const SetsUnion<BASIC_SET_TYPE> &minuend,
  * @brief Over-approximate the union of a union of sets
  *
  * @tparam BASIC_SET_TYPE is the type of the closed sets
- * @param container is the container of the closed sets
+ * @param sets_union is the union of basic sets
  * @return an over-approximation of the union of the
  *    sets in `sets_union`
  */

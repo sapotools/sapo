@@ -27,10 +27,10 @@ using namespace std;
 
 #define BAR_LENGTH 50
 
-Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
+Sapo init_sapo(const Model &model, const AbsSyn::InputData &data,
                const unsigned int num_of_pre_splits)
 {
-  Sapo sapo(model);
+  Sapo sapo(model, data.useBernsteinCaching());
 
   if (data.getTransValue() == AbsSyn::transType::OFO) {
     sapo.set_evolver_mode(Evolver<double>::ONE_FOR_ONE);
@@ -47,7 +47,7 @@ Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
     sapo.num_of_pre_splits = 0;
   }
   sapo.max_bundle_magnitude = data.getMaxVersorMagnitude();
-  sapo.inv_approximation = data.getApproxType();
+  sapo.join_approx = data.getApproxType();
 
   return sapo;
 }
@@ -77,7 +77,7 @@ void print_symbol_vector(OSTREAM &os,
 }
 
 template<typename OSTREAM>
-void print_variables_and_parameters(OSTREAM &os, const Model& model)
+void print_variables_and_parameters(OSTREAM &os, const Model &model)
 {
   using OF = OutputFormater<OSTREAM>;
 
@@ -92,7 +92,7 @@ void print_variables_and_parameters(OSTREAM &os, const Model& model)
 }
 
 template<typename OSTREAM>
-void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
+void reach_analysis(OSTREAM &os, Sapo &sapo, const Model &model,
                     const bool display_progress)
 {
   using OF = OutputFormater<OSTREAM>;
@@ -101,8 +101,7 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
   print_variables_and_parameters(os, model);
   os << OF::field_separator() << OF::field_begin("data");
 
-  os << OF::list_begin() << OF::object_header()
-     << OF::field_begin("flowpipe");
+  os << OF::list_begin() << OF::object_header() << OF::field_begin("flowpipe");
 
   ProgressAccounter *accounter = NULL;
   if (display_progress) {
@@ -131,7 +130,7 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
 }
 
 template<typename OSTREAM>
-void output_synthesis(OSTREAM &os, const Model& model,
+void output_synthesis(OSTREAM &os, const Model &model,
                       const std::list<SetsUnion<Polytope>> &synth_params,
                       const std::vector<Flowpipe> &flowpipes)
 {
@@ -167,7 +166,7 @@ void output_synthesis(OSTREAM &os, const Model& model,
   os << OF::field_end() << OF::object_footer();
 }
 
-unsigned int get_max_steps(const Sapo &sapo, const Model& model)
+unsigned int get_max_steps(const Sapo &sapo, const Model &model)
 // const unsigned int &max_param_splits, const unsigned int &num_of_params,
 // const unsigned int &time_horizon)
 {
@@ -184,7 +183,7 @@ unsigned int get_max_steps(const Sapo &sapo, const Model& model)
 }
 
 template<typename OSTREAM>
-void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
+void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
                         const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
@@ -195,20 +194,19 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
 
   InvariantValidationResult result;
 
-  result = sapo.check_invariant(*(model.initial_set()), model.parameter_set(), 
-                                model.invariant(), sapo.time_horizon, accounter);
+  result
+      = sapo.check_invariant(*(model.initial_set()), model.parameter_set(),
+                             model.invariant(), sapo.time_horizon, accounter);
 
   using OF = OutputFormater<OSTREAM>;
 
-  os << OF::object_header() 
-     << OF::field_begin("validated") << result.validated << OF::field_end() 
-     << OF::field_separator()
-     << OF::field_begin("k-induction") << result.k_induction << OF::field_end() 
-     << OF::field_separator()   
-     << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end() 
-     << OF::field_separator()   
+  os << OF::object_header() << OF::field_begin("validated") << result.validated
+     << OF::field_end() << OF::field_separator()
+     << OF::field_begin("k-induction") << result.k_induction << OF::field_end()
+     << OF::field_separator() << OF::field_begin("flowpipe") << result.flowpipe
+     << OF::field_end() << OF::field_separator()
      << OF::field_begin("reached approx") << result.r_approx << OF::field_end()
-     << OF::object_footer() << std::endl; 
+     << OF::object_footer() << std::endl;
 
   if (display_progress) {
     delete accounter;
@@ -216,7 +214,7 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
 }
 
 template<typename OSTREAM>
-void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
+void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
                const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
@@ -243,8 +241,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
   if (!every_set_is_empty(synth_params)) {
 #ifdef WITH_THREADS
     auto compute_reachability
-        = [&flowpipes, &sapo, &model, &accounter](const SetsUnion<Polytope> &pSet,
-                                                  unsigned int params_idx) {
+        = [&flowpipes, &sapo, &model, &accounter](
+              const SetsUnion<Polytope> &pSet, unsigned int params_idx) {
             flowpipes[params_idx] = sapo.reach(*(model.initial_set()), pSet,
                                                sapo.time_horizon, accounter);
           };
@@ -285,7 +283,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
 }
 
 template<typename OSTREAM>
-void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo, const Model& model,
+void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo,
+                                        const Model &model,
                                         const AbsSyn::problemType &type,
                                         const bool display_progress)
 {
