@@ -321,15 +321,16 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression
+   * @brief Apply a symbolic interpretation to an expression
    *
-   * This method evaluate the expression using the symbol interpretation
+   * This method evaluates the expression using the symbol interpretation
    * provided as parameter.
    *
    * @param interpretation is an interpretation for the symbols
-   * @return The numeric evaluation of the expression
+   * @return the expression obtained from the current object
+   *         and `interpretation`
    */
-  C evaluate(const interpretation_type &interpretation) const;
+  Expression<C> apply(const interpretation_type &interpretation) const;
 
   /**
    * @brief Get the coefficient of a term having a given degree
@@ -1441,16 +1442,17 @@ public:
   virtual C evaluate() const = 0;
 
   /**
-   * @brief Numerically evaluate the expression
+   * @brief Apply a symbolic interpretation to an expression
    *
-   * This method evaluate the expression using the symbol interpretation
+   * This method evaluates the expression using the symbol interpretation
    * provided as parameter.
    *
    * @param interpretation is an interpretation for the symbols
-   * @return The numeric evaluation of the expression
+   * @return the expression obtained from the current object
+   *         and `interpretation`
    */
-  virtual C
-  evaluate(const std::map<SymbolIdType, C> &interpretation) const = 0;
+  virtual base_expression_type<C> *
+  apply(const std::map<SymbolIdType, C> &interpretation) const = 0;
 
   /**
    * @brief Get the coefficient of a term having a given degree
@@ -1859,19 +1861,21 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression
+   * @brief Apply a symbolic interpretation to an expression
    *
-   * This method evaluate the expression using the symbol interpretation
+   * This method evaluates the expression using the symbol interpretation
    * provided as parameter.
    *
    * @param interpretation is an interpretation for the symbols
-   * @return The numeric evaluation of the expression
+   * @return the expression obtained from the current object
+   *         and `interpretation`
    */
-  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  base_expression_type<C> *
+  apply(const std::map<SymbolIdType, C> &interpretation) const
   {
     (void)interpretation;
 
-    return _value;
+    return this->clone();
   }
 
   /**
@@ -2342,19 +2346,21 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression
+   * @brief Apply a symbolic interpretation to an expression
    *
-   * This method evaluate the expression using the symbol interpretation
+   * This method evaluates the expression using the symbol interpretation
    * provided as parameter.
    *
    * @param interpretation is an interpretation for the symbols
-   * @return The numeric evaluation of the expression
+   * @return the expression obtained from the current object
+   *         and `interpretation`
    */
-  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  base_expression_type<C> *
+  apply(const std::map<SymbolIdType, C> &interpretation) const
   {
-    C total = _constant;
+    base_expression_type<C> *total = new constant_type<C>(_constant);
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
-      total += (*it)->evaluate(interpretation);
+      total = total->add((*it)->apply(interpretation));
     }
 
     return total;
@@ -2859,8 +2865,7 @@ public:
   low_level::base_expression_type<C> *replace(
       const std::map<SymbolIdType, base_expression_type<C> *> &replacements)
   {
-    low_level::base_expression_type<C> *result
-        = new constant_type<C>(this->_constant);
+    base_expression_type<C> *result = new constant_type<C>(this->_constant);
     for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
       if (!(*it)->is_zero()) {
         result = result->multiply((*it)->replace(replacements));
@@ -2905,23 +2910,26 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression
+   * @brief Apply a symbolic interpretation to an expression
    *
-   * This method evaluate the expression using the symbol interpretation
+   * This method evaluates the expression using the symbol interpretation
    * provided as parameter.
    *
    * @param interpretation is an interpretation for the symbols
-   * @return The numeric evaluation of the expression
+   * @return the expression obtained from the current object
+   *         and `interpretation`
    */
-  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  base_expression_type<C> *
+  apply(const std::map<SymbolIdType, C> &interpretation) const
   {
-    C prod = this->_constant;
+    base_expression_type<C> *prod = new constant_type<C>(_constant);
+
     for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
-      prod *= (*it)->evaluate(interpretation);
+      prod = prod->multiply((*it)->apply(interpretation));
     }
     for (auto it = std::begin(_denominator); it != std::end(_denominator);
          ++it) {
-      prod /= (*it)->evaluate(interpretation);
+      prod = prod->divided_by((*it)->apply(interpretation));
     }
 
     return prod;
@@ -3344,23 +3352,25 @@ public:
   }
 
   /**
-   * @brief Numerically evaluate the expression
+   * @brief Apply a symbolic interpretation to an expression
    *
-   * This method evaluate the expression using the symbol interpretation
+   * This method evaluates the expression using the symbol interpretation
    * provided as parameter.
    *
    * @param interpretation is an interpretation for the symbols
-   * @return The numeric evaluation of the expression
+   * @return the expression obtained from the current object
+   *         and `interpretation`
    */
-  C evaluate(const std::map<SymbolIdType, C> &interpretation) const
+  base_expression_type<C> *
+  apply(const std::map<SymbolIdType, C> &interpretation) const
   {
     auto found = interpretation.find(_id);
 
     if (found == std::end(interpretation)) {
-      throw symbol_evaluation_error(*this);
+      return this->clone();
     }
 
-    return found->second;
+    return new constant_type<C>(found->second);
   }
 
   /**
@@ -3490,7 +3500,7 @@ Expression<C>::replace(const Expression<C>::replacement_type &replacement)
 }
 
 template<typename C>
-C Expression<C>::evaluate(
+Expression<C> Expression<C>::apply(
     const Expression<C>::interpretation_type &interpretation) const
 {
   if (this->_ex == nullptr) {
@@ -3503,9 +3513,7 @@ C Expression<C>::evaluate(
     base_interpretation[it->first.get_id()] = it->second;
   }
 
-  const C value = _ex->evaluate(base_interpretation);
-
-  return value == 0 ? 0 : value;
+  return Expression<C>(_ex->apply(base_interpretation));
 }
 
 template<typename C>

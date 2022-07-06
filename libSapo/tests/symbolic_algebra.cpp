@@ -240,12 +240,16 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_equivalence, T, test_types)
     }
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_evaluate, T, test_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_apply, T, test_types)
 {
     Symbol<T> x("x"), y("y"), z("z");
 
     std::vector<std::pair<std::pair<Expression<T>, std::map<Symbol<T>,T>>, T>> tests
     {
+        {{3+x, {{x, 1},{y, 0},{z, 2}}}, 4},
+        {{3+4*x, {{x, 1},{y, 0},{z, 2}}}, 7},
+        {{3+4*x-x*y, {{x, 1},{y, 0},{z, 2}}}, 7},
+        {{z*z, {{x, 1},{y, 0},{z, 2}}}, 4},
         {{3+4*y-x*y+z*(z*y)*z, {{x, 1},{y, 0},{z, 2}}}, 3},
         {{3+4*y-x*y+z*(z*y)*z, {{x, 1},{y, 1},{z, 2}}}, 14},
         {{-y*(x-z*(z*z)-4)+3, {{x, 1},{y, 0},{z, 2}}}, 3},
@@ -261,9 +265,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_evaluate, T, test_types)
     };
 
     for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
-        auto eval = t_it->first.first.evaluate(t_it->first.second);
+        auto eval = t_it->first.first.apply(t_it->first.second);
         std::ostringstream ss;
-        ss << "("<< t_it->first.first << ").evalute(" << t_it->first.second<< ") == "<< eval << "!=" << t_it->second;
+        ss << "("<< t_it->first.first << ").apply(" << t_it->first.second<< ") == "<< eval << "!=" << t_it->second;
         BOOST_REQUIRE_MESSAGE((eval == t_it->second), ss.str());
     }
 }
