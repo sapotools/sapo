@@ -629,11 +629,11 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
                      const std::vector<unsigned int> &bundle_template) {
         Parallelotope P = bundle.get_parallelotope(bundle_template);
 
-        Expression<double>::replacement_type P_rep;
+        Expression<double>::interpretation_type P_interpretation;
 
         for (size_t i = 0; i < P.dim(); ++i) {
-          P_rep[base[i]] = P.base_vertex()[i];
-          P_rep[lambda[i]] = P.lengths()[i];
+          P_interpretation[base[i]] = P.base_vertex()[i];
+          P_interpretation[lambda[i]] = P.lengths()[i];
         }
 
         std::vector<SymbolicAlgebra::Expression<double>> genFun_f;
@@ -656,7 +656,7 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
 
           coefficients.reserve(symb_coeff.size());
           for (auto &coeff: symb_coeff) {
-            coefficients.push_back(Expression<double>(coeff).replace(P_rep));
+            coefficients.push_back(coeff.apply(P_interpretation));
           }
 
           auto coeff_itvl = (*itvl_finder)(coefficients);
