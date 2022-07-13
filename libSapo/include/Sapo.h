@@ -15,7 +15,7 @@
 #include <string>
 #include <climits>
 
-#include "BaseConverter.h"
+#include "Bernstein.h"
 #include "Bundle.h"
 #include "Flowpipe.h"
 #include "Polytope.h"

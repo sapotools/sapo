@@ -291,10 +291,6 @@ compose_dynamics(const std::vector<Symbol<>> &variables,
     }
   }
 
-  for (unsigned v = 0; v < variables.size(); v++) {
-    dynamics[v] = simplify(dynamics[v]);
-  }
-
   return dynamics;
 }
 
@@ -377,7 +373,7 @@ Model get_model(const InputData &id)
   // dynamics
   std::vector<Expression<>> dynamics(id.getVarNum());
   for (unsigned v = 0; v < id.getVarNum(); v++) {
-    dynamics[v] = simplify(id.getVar(v)->getDynamic());
+    dynamics[v] = id.getVar(v)->getDynamic();
   }
 
   // compose dynamics

@@ -19,7 +19,7 @@
 #include "SapoThreads.h"
 #endif // WITH_THREADS
 
-#include "BaseConverter.h"
+#include "Bernstein.h"
 #include "VarsGenerator.h"
 
 /**
@@ -28,6 +28,48 @@
  * This macro avoids \f$-0\f$ by replacing it by \f$0\f$.
  */
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
+
+/**
+ * @brief Replace some variables in expression numerators
+ *
+ * This function replaces all the occurrences of the variable `vars[i]`
+ * in `expressions` numerators with `subs[i]`.
+ *
+ * @param expressions is the vector of expressions whose variable
+ *                    occurrences must be replaced
+ * @param vars is the vector variables whose occurrences must be
+ *             replaced
+ * @param subs is the vector of expressions that must replace
+ *             variable occurrences
+ * @return A vector of the containing `expressions` numerators
+ *         in which each occurrence of the variables in `vars`
+ *         have been replaced by the expressions in `subs`
+ */
+template<typename T>
+std::pair<std::vector<SymbolicAlgebra::Expression<T>>,
+          std::vector<SymbolicAlgebra::Expression<T>>>
+replace_in_rational(
+    const std::vector<SymbolicAlgebra::Expression<T>> &expressions,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &vars,
+    const std::vector<SymbolicAlgebra::Expression<T>> &subs)
+{
+  using namespace SymbolicAlgebra;
+
+  Expression<>::replacement_type repl;
+
+  for (unsigned int k = 0; k < vars.size(); ++k) {
+    repl[vars[k]] = subs[k];
+  }
+
+  std::pair<std::vector<Expression<T>>, std::vector<Expression<T>>> results;
+  for (auto ex_it = std::begin(expressions); ex_it != std::end(expressions);
+       ++ex_it) {
+    results.first.push_back(ex_it->get_numerator().replace(repl));
+    results.second.push_back(ex_it->get_denominator().replace(repl));
+  }
+
+  return results;
+}
 
 /**
  * @brief Replace some variables in expressions by other expressions
@@ -70,10 +112,10 @@ replace_in(const std::vector<SymbolicAlgebra::Expression<>> &expressions,
 /**
  * @brief Compute the Bernstein coefficients for a direction
  *
- * @param alpha
- * @param f
- * @param direction
- * @return std::vector<SymbolicAlgebra::Expression<>>
+ * @param alpha is the vector of the variables
+ * @param f is the function whose Bernstein coefficients must be computed
+ * @param direction is the direction along
+ * @return the Bernstein coefficients for `f` on `direction`
  */
 std::vector<SymbolicAlgebra::Expression<>>
 compute_Bern_coefficients(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
@@ -88,7 +130,7 @@ compute_Bern_coefficients(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
     }
   }
 
-  return BaseConverter(alpha, Lfog).getBernCoeffsMatrix();
+  return get_Bernstein_coefficients(alpha, Lfog);
 }
 
 /**
@@ -552,6 +594,47 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 }
 
 template<typename T>
+inline void init_genFun_if_necessary(
+    std::pair<std::vector<SymbolicAlgebra::Expression<T>>,
+              std::vector<SymbolicAlgebra::Expression<T>>> &genFun_f,
+    const Parallelotope &P, const DynamicalSystem<T> &ds,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &base,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &lambda)
+{
+  if (genFun_f.first.size() == 0) { // not initialized yet
+    auto genFun = build_generator_functs(base, alpha, lambda, P.generators());
+
+    genFun_f = replace_in_rational(ds.dynamics(), ds.variables(), genFun);
+  }
+}
+
+template<typename T>
+const std::vector<SymbolicAlgebra::Expression<T>> &get_symbolic_coefficients(
+    CachedEvolver<T> *evolver, const Parallelotope &P,
+    std::pair<std::vector<SymbolicAlgebra::Expression<T>>,
+              std::vector<SymbolicAlgebra::Expression<T>>> &genFun_f,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &base,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &lambda,
+    const LinearAlgebra::Vector<double> &bundle_dir)
+{
+  if (evolver->coefficients_in_cache(P,
+                                     bundle_dir)) { // Bernstein coefficients
+                                                    // have been computed
+
+    return evolver->get_cached_coefficients(P, bundle_dir);
+  }
+
+  init_genFun_if_necessary(genFun_f, P, evolver->dynamical_system(), base,
+                           alpha, lambda);
+
+  auto coeff = compute_Bern_coefficients(alpha, genFun_f, bundle_dir);
+
+  return evolver->set_cache_coefficients(P, bundle_dir, std::move(coeff));
+}
+
+template<typename T>
 inline void
 init_genFun_if_necessary(std::vector<SymbolicAlgebra::Expression<T>> &genFun_f,
                          const Parallelotope &P, const DynamicalSystem<T> &ds,
@@ -593,7 +676,6 @@ template<>
 Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
                                          const Polytope &parameter_set)
 {
-
   using namespace std;
   using namespace SymbolicAlgebra;
   using namespace LinearAlgebra;
@@ -749,8 +831,7 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
     std::vector<Expression<>> genFun
         = build_instantiated_generator_functs(alpha, P);
 
-    const std::vector<Expression<>> fog
-        = replace_in(ds.dynamics(), ds.variables(), genFun);
+    const auto fog = replace_in(ds.dynamics(), ds.variables(), genFun);
 
     // compose sigma(f(gamma(x)))
     Expression<>::replacement_type repl;
@@ -762,8 +843,7 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
     sofog.replace(repl);
 
     // compute the Bernstein control points
-    std::vector<Expression<>> controlPts
-        = BaseConverter(alpha, sofog).getBernCoeffsMatrix();
+    auto controlPts = get_Bernstein_coefficients(alpha, sofog);
 
     Polytope constraints(ds.parameters(), controlPts);
     result = ::intersect(result, constraints);
