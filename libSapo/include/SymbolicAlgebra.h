@@ -333,6 +333,49 @@ public:
   Expression<C> apply(const interpretation_type &interpretation) const;
 
   /**
+   * @brief Get the rational polynomial representation of an expression
+   *
+   * @return the rational polynomial representation of this expression
+   */
+  Expression<C> get_rational_form() const;
+
+  /**
+   * @brief Establish whether is a polynomial expression
+   *
+   * @return `true` if and only if the expression is a polynomial
+   */
+  bool is_a_polynomial() const;
+
+  /**
+   * @brief Establish whether is in rational polynomial form
+   *
+   * @return `true` if and only if the expression is either
+   *        polynomial or the ratio between two polynomials
+   */
+  bool is_in_rational_form() const;
+
+  /**
+   * @brief Establish whether this expression is a constant
+   *
+   * @return `true` if and only if the expression is a constant
+   */
+  bool is_a_constant() const;
+
+  /**
+   * @brief Get the numerator of the expression
+   *
+   * @return the numerator of the expression
+   */
+  Expression<C> get_numerator() const;
+
+  /**
+   * @brief Get the denominator of the expression
+   *
+   * @return the denominator of the expression
+   */
+  Expression<C> get_denominator() const;
+
+  /**
    * @brief Get the coefficient of a term having a given degree
    *
    * @param symbol is the symbol whose term coefficient is aimed
@@ -1345,6 +1388,28 @@ public:
   }
 
   /**
+   * @brief Get the rational polynomial representation of an expression
+   *
+   * @return the rational polynomial representation of this expression
+   */
+  virtual base_expression_type<C> *get_rational_form() const = 0;
+
+  /**
+   * @brief Establish whether is a polynomial expression
+   *
+   * @return `true` if and only if the expression is a polynomial
+   */
+  virtual bool is_a_polynomial() const = 0;
+
+  /**
+   * @brief Establish whether is in rational polynomial form
+   *
+   * @return `true` if and only if the expression is either
+   *        polynomial or the ratio between two polynomials
+   */
+  virtual bool is_in_rational_form() const = 0;
+
+  /**
    * @brief Complement the expression
    *
    * @return the complement expression
@@ -1532,7 +1597,7 @@ public:
    * @param orig is the model for the new constant
    */
   constant_type(const constant_type<C> &orig):
-      low_level::base_expression_type<C>(), _value(orig._value)
+      base_expression_type<C>(), _value(orig._value)
   {
   }
 
@@ -1569,7 +1634,7 @@ public:
    * @return a pointer to an expression that represents the sum among
    *         the current object and the parameter
    */
-  low_level::base_expression_type<C> *add(base_expression_type<C> *op)
+  base_expression_type<C> *add(base_expression_type<C> *op)
   {
     if (this->evaluate() == 0) {
       delete this;
@@ -1602,7 +1667,7 @@ public:
    * @return a pointer to an expression that represents the subtraction
    *         of the parameter from the current object
    */
-  low_level::base_expression_type<C> *subtract(base_expression_type<C> *op)
+  base_expression_type<C> *subtract(base_expression_type<C> *op)
   {
     if (this->evaluate() == 0) {
       delete this;
@@ -1638,7 +1703,7 @@ public:
    * @return a pointer to an expression that represents the multiplication
    *         of the parameter and the current object
    */
-  low_level::base_expression_type<C> *multiply(base_expression_type<C> *op)
+  base_expression_type<C> *multiply(base_expression_type<C> *op)
   {
     if (this->evaluate() == 0) {
       delete op;
@@ -1676,7 +1741,7 @@ public:
    * @return a pointer to an expression that represents the division
    *         of the current object by the parameter
    */
-  low_level::base_expression_type<C> *divided_by(base_expression_type<C> *op)
+  base_expression_type<C> *divided_by(base_expression_type<C> *op)
   {
     if (this->evaluate() == 0) {
       delete op;
@@ -1691,11 +1756,13 @@ public:
 
       return this;
 
-    default:
-      finite_prod_type<C> *prod = new finite_prod_type<C>();
+    default: {
+      base_expression_type<C> *prod = new finite_prod_type<C>();
 
-      prod->multiply(this);
-      return prod->divided_by(op);
+      prod = prod->divided_by(op);
+
+      return prod->multiply(this);
+    }
     }
   }
 
@@ -1711,7 +1778,7 @@ public:
    * @return a pointer to an expression that represents the sum among
    *         the current object and the constant value
    */
-  low_level::base_expression_type<C> *add(const C &value)
+  base_expression_type<C> *add(const C &value)
   {
     _value += value;
 
@@ -1730,7 +1797,7 @@ public:
    * @return a pointer to an expression that represents the subtraction
    *         of the constant value from the current object
    */
-  low_level::base_expression_type<C> *subtract(const C &value)
+  base_expression_type<C> *subtract(const C &value)
   {
     _value -= value;
 
@@ -1749,7 +1816,7 @@ public:
    * @return a pointer to an expression that represents the product
    *         between the current object and the constant value
    */
-  low_level::base_expression_type<C> *multiply(const C &value)
+  base_expression_type<C> *multiply(const C &value)
   {
     _value *= value;
 
@@ -1768,7 +1835,7 @@ public:
    * @return a pointer to an expression that represents the division
    *         of the current object by the constant value
    */
-  low_level::base_expression_type<C> *divided_by(const C &value)
+  base_expression_type<C> *divided_by(const C &value)
   {
     _value /= value;
 
@@ -1776,11 +1843,42 @@ public:
   }
 
   /**
+   * @brief Get the rational polynomial representation of an expression
+   *
+   * @return the rational polynomial representation of this expression
+   */
+  base_expression_type<C> *get_rational_form() const
+  {
+    return this->clone();
+  }
+
+  /**
+   * @brief Establish whether is a polynomial expression
+   *
+   * @return `true` if and only if the expression is a polynomial
+   */
+  bool is_a_polynomial() const
+  {
+    return true;
+  }
+
+  /**
+   * @brief Establish whether is in rational polynomial form
+   *
+   * @return `true` if and only if the expression is either
+   *        polynomial or the ratio between two polynomials
+   */
+  bool is_in_rational_form() const
+  {
+    return true;
+  }
+
+  /**
    * @brief Complement the expression
    *
    * @return the complement expression
    */
-  low_level::base_expression_type<C> *complement()
+  base_expression_type<C> *complement()
   {
     _value = -_value;
 
@@ -1797,7 +1895,7 @@ public:
    * @param replacements associates symbol ids to their replacements
    * @return A pointer to the updated object
    */
-  low_level::base_expression_type<C> *replace(
+  base_expression_type<C> *replace(
       const std::map<SymbolIdType, base_expression_type<C> *> &replacements)
   {
     (void)replacements;
@@ -1810,7 +1908,7 @@ public:
    *
    * @return A clone of the current object
    */
-  low_level::base_expression_type<C> *clone() const
+  base_expression_type<C> *clone() const
   {
     return new constant_type<C>(*this);
   }
@@ -1886,8 +1984,8 @@ public:
    * @return The coefficient of the term in which the symbol having id
    *         `symbol_id` has degree `degree`
    */
-  low_level::base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
-                                                const int &degree) const
+  base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                     const int &degree) const
   {
     (void)symbol_id;
 
@@ -1964,7 +2062,7 @@ public:
    * @param orig is the model for the new finite sum
    */
   finite_sum_type(const finite_sum_type<C> &orig):
-      low_level::base_expression_type<C>(), _constant(orig._constant), _sum()
+      base_expression_type<C>(), _constant(orig._constant), _sum()
   {
     for (auto it = std::begin(orig._sum); it != std::end(orig._sum); ++it) {
       _sum.push_back((*it)->clone());
@@ -1977,7 +2075,7 @@ public:
    * @param orig is a list of products that must be added
    */
   finite_sum_type(std::list<base_expression_type<C> *> &model):
-      low_level::base_expression_type<C>(), _constant(0), _sum()
+      base_expression_type<C>(), _constant(0), _sum()
   {
     for (auto it = std::begin(model); it != std::end(model); ++it) {
       _sum.push_back(*it);
@@ -2009,7 +2107,7 @@ public:
    * @return a pointer to an expression that represents the sum among
    *         the current object and the parameter
    */
-  low_level::base_expression_type<C> *add(base_expression_type<C> *op)
+  base_expression_type<C> *add(base_expression_type<C> *op)
   {
     switch (op->type()) {
     case FINITE_SUM: {
@@ -2055,7 +2153,7 @@ public:
    * @return a pointer to an expression that represents the sum among
    *         the current object and the constant value
    */
-  low_level::base_expression_type<C> *add(const C &value)
+  base_expression_type<C> *add(const C &value)
   {
     _constant += value;
 
@@ -2074,7 +2172,7 @@ public:
    * @return a pointer to an expression that represents the sum among
    *         the current object and the constant value
    */
-  low_level::base_expression_type<C> *subtract(const C &value)
+  base_expression_type<C> *subtract(const C &value)
   {
     _constant -= value;
 
@@ -2099,7 +2197,7 @@ public:
 
     for (auto s_it = std::begin(_sum); s_it != std::end(_sum); ++s_it) {
       for (auto p_it = std::begin(prods); p_it != std::end(prods); ++p_it) {
-        low_level::base_expression_type<C> *p_clone = (*p_it)->clone();
+        base_expression_type<C> *p_clone = (*p_it)->clone();
 
         result.push_back(p_clone->multiply((*s_it)->clone()));
       }
@@ -2118,11 +2216,116 @@ public:
   }
 
   /**
+   * @brief Get the rational polynomial representation of an expression
+   *
+   * @return the rational polynomial representation of this expression
+   */
+  base_expression_type<C> *get_rational_form() const
+  {
+    std::vector<base_expression_type<C> *> numerators;
+    std::vector<base_expression_type<C> *> denominators;
+
+    numerators.reserve(_sum.size() + 1);
+    denominators.reserve(_sum.size() + 1);
+
+    numerators.push_back(new constant_type<C>(_constant));
+    denominators.push_back(new constant_type<C>(1));
+
+    unsigned int real_denoms = 0;
+
+    for (const auto &term: _sum) {
+
+      base_expression_type<C> *rational_term = term->get_rational_form();
+
+      if (rational_term->type() == FINITE_PROD) {
+        auto r_term_prod = static_cast<finite_prod_type<C> *>(rational_term);
+
+        if (r_term_prod->_denominator.size() > 0) {
+          auto den = new finite_prod_type<C>(1);
+
+          std::swap(den->_numerator, r_term_prod->_denominator);
+
+          denominators.push_back(den);
+          real_denoms += 1;
+        } else {
+          denominators.push_back(new constant_type<C>(1));
+        }
+        if (r_term_prod->_numerator.size() == 1
+            && r_term_prod->_constant == 1) {
+          numerators.push_back(r_term_prod->_numerator.front());
+
+          r_term_prod->_numerator.clear();
+
+          delete rational_term;
+        } else {
+          numerators.push_back(r_term_prod);
+        }
+      } else {
+        numerators.push_back(rational_term);
+        denominators.push_back(new constant_type<C>(1));
+      }
+    }
+
+    if (real_denoms > 0) {
+      auto prod = new finite_prod_type<C>();
+
+      for (size_t j = 0; j < denominators.size(); ++j) {
+        for (size_t i = 0; i < numerators.size(); ++i) {
+          if (i != j) {
+            numerators[i] = numerators[i]->multiply(denominators[j]->clone());
+          }
+        }
+
+        prod = static_cast<finite_prod_type<C> *>(
+            prod->divided_by(denominators[j]));
+      }
+
+      base_expression_type<C> *num_sum = new finite_sum_type<C>();
+      for (base_expression_type<C> *num: numerators) {
+        num_sum = num_sum->add(num);
+      }
+
+      prod->_numerator.push_back(num_sum);
+
+      return prod;
+    }
+
+    return this->clone();
+  }
+
+  /**
+   * @brief Establish whether is a polynomial expression
+   *
+   * @return `true` if and only if the expression is a polynomial
+   */
+  bool is_a_polynomial() const
+  {
+    for (const auto term: _sum) {
+      if (!term->is_a_polynomial()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * @brief Establish whether is in rational polynomial form
+   *
+   * @return `true` if and only if the expression is either
+   *        polynomial or the ratio between two polynomials
+   */
+  bool is_in_rational_form() const
+  {
+    return this->is_a_polynomial();
+  }
+
+  /**
    * @brief Complement the expression
    *
    * @return the complement expression
    */
-  low_level::base_expression_type<C> *complement()
+  base_expression_type<C> *complement()
   {
     _constant = -_constant;
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
@@ -2141,7 +2344,7 @@ public:
    *
    * @return A sum of products, a constant, or a symbol
    */
-  low_level::base_expression_type<C> *expand() const
+  base_expression_type<C> *expand() const
   {
     finite_sum_type<C> *new_obj = new finite_sum_type<C>();
     std::list<base_expression_type<C> *> &new_sum = new_obj->_sum;
@@ -2150,7 +2353,7 @@ public:
     constant = _constant;
 
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
-      low_level::base_expression_type<C> *ex_it = (*it)->expand();
+      base_expression_type<C> *ex_it = (*it)->expand();
 
       switch (ex_it->type()) {
       case FINITE_SUM: {
@@ -2189,7 +2392,7 @@ public:
    *
    * @return A clone of the current object
    */
-  low_level::base_expression_type<C> *clone() const
+  base_expression_type<C> *clone() const
   {
     return new finite_sum_type<C>(*this);
   }
@@ -2265,12 +2468,12 @@ public:
    * @param replacements associates symbol ids to their replacements
    * @return A pointer to the updated object
    */
-  low_level::base_expression_type<C> *replace(
+  base_expression_type<C> *replace(
       const std::map<SymbolIdType, base_expression_type<C> *> &replacements)
   {
     std::list<base_expression_type<C> *> new_sum;
     for (auto it = std::begin(_sum); it != std::end(_sum); ++it) {
-      low_level::base_expression_type<C> *r_it = (*it)->replace(replacements);
+      base_expression_type<C> *r_it = (*it)->replace(replacements);
       switch (r_it->type()) {
       case FINITE_SUM: {
         finite_sum_type<C> *r_it_sum = (finite_sum_type<C> *)r_it;
@@ -2374,10 +2577,10 @@ public:
    * @return The coefficient of the term in which the symbol having id
    *         `symbol_id` has degree `degree`
    */
-  low_level::base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
-                                                const int &degree) const
+  base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                     const int &degree) const
   {
-    low_level::base_expression_type<C> *total_coeff = new finite_sum_type<C>();
+    base_expression_type<C> *total_coeff = new finite_sum_type<C>();
 
     if (degree == 0) {
       ((finite_sum_type<C> *)total_coeff)->_constant = this->_constant;
@@ -2488,6 +2691,9 @@ public:
 
   template<typename T>
   friend class base_expression_type;
+
+  template<typename T>
+  friend struct less;
 };
 
 /**
@@ -2534,7 +2740,7 @@ class finite_prod_type : public base_expression_type<C>
    * @param constant is a constant to initialize the new product
    */
   finite_prod_type(const C &constant):
-      low_level::base_expression_type<C>(), _constant(constant), _numerator(),
+      base_expression_type<C>(), _constant(constant), _numerator(),
       _denominator()
   {
   }
@@ -2546,8 +2752,7 @@ public:
    * @brief Build an empty finite product
    */
   finite_prod_type():
-      low_level::base_expression_type<C>(), _constant(1), _numerator(),
-      _denominator()
+      base_expression_type<C>(), _constant(1), _numerator(), _denominator()
   {
   }
 
@@ -2557,8 +2762,8 @@ public:
    * @param orig is a model for the new finite product
    */
   finite_prod_type(const finite_prod_type<C> &orig):
-      low_level::base_expression_type<C>(), _constant(orig._constant),
-      _numerator(), _denominator()
+      base_expression_type<C>(), _constant(orig._constant), _numerator(),
+      _denominator()
   {
     for (auto it = std::begin(orig._numerator);
          it != std::end(orig._numerator); ++it) {
@@ -2594,7 +2799,7 @@ public:
    * @return a pointer to an expression that represents the multiplication
    *         of the parameter and the current object
    */
-  low_level::base_expression_type<C> *multiply(base_expression_type<C> *op)
+  base_expression_type<C> *multiply(base_expression_type<C> *op)
   {
     switch (op->type()) {
     case FINITE_PROD: {
@@ -2630,9 +2835,10 @@ public:
 
         return result;
       }
+
       if (_constant == 1 && _numerator.size() == 1) {
 
-        low_level::base_expression_type<C> *result = _numerator.front();
+        base_expression_type<C> *result = _numerator.front();
 
         _numerator.clear();
 
@@ -2658,7 +2864,7 @@ public:
    * @return a pointer to an expression that represents the division
    *         of the current object by the parameter
    */
-  low_level::base_expression_type<C> *divided_by(base_expression_type<C> *op)
+  base_expression_type<C> *divided_by(base_expression_type<C> *op)
   {
     switch (op->type()) {
     case FINITE_PROD: {
@@ -2701,7 +2907,7 @@ public:
    * @return a pointer to an expression that represents the product
    *         between the current object and the constant value
    */
-  low_level::base_expression_type<C> *multiply(const C &value)
+  base_expression_type<C> *multiply(const C &value)
   {
     _constant *= value;
 
@@ -2720,7 +2926,7 @@ public:
    * @return a pointer to an expression that represents the division
    *         of the current object by the constant value
    */
-  low_level::base_expression_type<C> *divided_by(const C &value)
+  base_expression_type<C> *divided_by(const C &value)
   {
     _constant /= value;
 
@@ -2728,11 +2934,70 @@ public:
   }
 
   /**
+   * @brief Get the rational polynomial representation of an expression
+   *
+   * @return the rational polynomial representation of this expression
+   */
+  base_expression_type<C> *get_rational_form() const
+  {
+    base_expression_type<C> *prod = new finite_prod_type<C>(_constant);
+
+    for (const auto &term: _numerator) {
+      prod = prod->multiply(term->get_rational_form());
+    }
+
+    for (const auto &term: _denominator) {
+      prod = prod->divided_by(term->get_rational_form());
+    }
+
+    return prod;
+  }
+
+  /**
+   * @brief Establish whether is a polynomial expression
+   *
+   * @return `true` if and only if the expression is a polynomial
+   */
+  bool is_a_polynomial() const
+  {
+    for (const auto term: _denominator) {
+      if (term->type() != CONSTANT) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * @brief Establish whether is in rational polynomial form
+   *
+   * @return `true` if and only if the expression is either
+   *        polynomial or the ratio between two polynomials
+   */
+  bool is_in_rational_form() const
+  {
+    for (const auto term: _numerator) {
+      if (!term->is_a_polynomial()) {
+        return false;
+      }
+    }
+
+    for (const auto term: _denominator) {
+      if (!term->is_a_polynomial()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * @brief Complement the expression
    *
    * @return the complement expression
    */
-  low_level::base_expression_type<C> *complement()
+  base_expression_type<C> *complement()
   {
     _constant = -_constant;
 
@@ -2748,25 +3013,20 @@ public:
    *
    * @return A sum of products, a constant, or a symbol
    */
-  low_level::base_expression_type<C> *expand() const
+  base_expression_type<C> *expand() const
   {
-    C base_const = this->_constant;
+    base_expression_type<C> *base = new finite_prod_type<C>(this->_constant);
 
-    try {
-      for (auto it = std::begin(_denominator); it != std::begin(_denominator);
-           ++it) {
-        base_const /= (*it)->evaluate();
-      }
-    } catch (std::runtime_error &) {
-      throw std::runtime_error("Non-constant denominator not supported.");
+    for (const auto &div: _denominator) {
+      base = base->divided_by(div->clone());
     }
 
     std::list<base_expression_type<C> *> result;
 
-    result.push_back(new constant_type<C>(base_const));
+    result.push_back(base);
 
     for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
-      low_level::base_expression_type<C> *new_it = (*it)->expand();
+      base_expression_type<C> *new_it = (*it)->expand();
 
       result = new_it->multiply(result);
 
@@ -2776,11 +3036,47 @@ public:
   }
 
   /**
+   * @brief Get the numerator of the product
+   *
+   * @return the numerator of the product
+   */
+  base_expression_type<C> *get_numerator() const
+  {
+    base_expression_type<C> *prod = new finite_prod_type<C>(_constant);
+
+    for (const auto term: _numerator) {
+      prod = prod->multiply(term->clone());
+    }
+
+    return prod;
+  }
+
+  /**
+   * @brief Get the denominator of the product
+   *
+   * @return the denominator of the product
+   */
+  base_expression_type<C> *get_denominator() const
+  {
+    if (_denominator.size() == 0) {
+      return new constant_type<C>(1);
+    }
+
+    base_expression_type<C> *prod = new finite_prod_type<C>();
+
+    for (const auto term: _denominator) {
+      prod = prod->multiply(term->clone());
+    }
+
+    return prod;
+  }
+
+  /**
    * @brief Clone the current object
    *
    * @return A clone of the current object
    */
-  low_level::base_expression_type<C> *clone() const
+  base_expression_type<C> *clone() const
   {
     return new finite_prod_type<C>(*this);
   }
@@ -2862,7 +3158,7 @@ public:
    * @param replacements associates symbol ids to their replacements
    * @return A pointer to the updated object
    */
-  low_level::base_expression_type<C> *replace(
+  base_expression_type<C> *replace(
       const std::map<SymbolIdType, base_expression_type<C> *> &replacements)
   {
     base_expression_type<C> *result = new constant_type<C>(this->_constant);
@@ -2878,7 +3174,7 @@ public:
     for (auto it = std::begin(_denominator); it != std::end(_denominator);
          ++it) {
       if (!(*it)->is_zero()) {
-        result->divided_by((*it)->replace(replacements));
+        result = result->divided_by((*it)->replace(replacements));
       } else {
         delete *it;
       }
@@ -2943,8 +3239,8 @@ public:
    * @return The coefficient of the term in which the symbol having id
    *         `symbol_id` has degree `degree`
    */
-  low_level::base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
-                                                const int &degree) const
+  base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                     const int &degree) const
   {
     C constant = this->_constant;
 
@@ -2957,7 +3253,7 @@ public:
       throw std::runtime_error("Non-constant denominator not supported.");
     }
 
-    low_level::base_expression_type<C> *res = new constant_type<C>(constant);
+    base_expression_type<C> *res = new constant_type<C>(constant);
 
     int degree_counter = 0;
     for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
@@ -2981,7 +3277,7 @@ public:
       case FINITE_SUM:
       default:
         throw std::runtime_error(
-            "'coeff' call only admitted after 'expand' call.");
+            "'get_coeff' call only admitted after 'expand' call.");
       }
     }
 
@@ -3097,23 +3393,11 @@ public:
     }
 
     if (_numerator.size() > 0 || constant != 1) {
-      if (_denominator.size() > 0) {
-        os << "(";
-        print_list(os, _numerator, constant);
-        os << ")";
-      } else {
-        print_list(os, _numerator, constant);
-      }
+      print_list(os, _numerator, constant);
     }
     if (_denominator.size() > 0) {
       os << "/";
-      if (_denominator.size() > 1) {
-        os << "(";
-        print_list(os, _denominator);
-        os << ")";
-      } else {
-        print_list(os, _denominator);
-      }
+      print_list(os, _denominator);
     }
   }
 
@@ -3131,6 +3415,12 @@ public:
 
   template<typename T>
   friend class base_expression_type;
+
+  template<typename T>
+  friend class finite_sum_type;
+
+  template<typename T>
+  friend struct less;
 };
 
 /**
@@ -3232,7 +3522,7 @@ public:
    * @param orig is the model for the new symbol
    */
   symbol_type(const symbol_type<C> &orig):
-      low_level::base_expression_type<C>(), _id(orig._id)
+      base_expression_type<C>(), _id(orig._id)
   {
   }
 
@@ -3257,11 +3547,42 @@ public:
   }
 
   /**
+   * @brief Get the rational polynomial representation of an expression
+   *
+   * @return the rational polynomial representation of this expression
+   */
+  base_expression_type<C> *get_rational_form() const
+  {
+    return this->clone();
+  }
+
+  /**
+   * @brief Establish whether is a polynomial expression
+   *
+   * @return `true` if and only if the expression is a polynomial
+   */
+  bool is_a_polynomial() const
+  {
+    return true;
+  }
+
+  /**
+   * @brief Establish whether is in rational polynomial form
+   *
+   * @return `true` if and only if the expression is either
+   *        polynomial or the ratio between two polynomials
+   */
+  bool is_in_rational_form() const
+  {
+    return true;
+  }
+
+  /**
    * @brief Complement the expression
    *
    * @return the complement expression
    */
-  low_level::base_expression_type<C> *complement()
+  base_expression_type<C> *complement()
   {
     return this->multiply(new constant_type<C>(static_cast<C>(-1)));
   }
@@ -3271,7 +3592,7 @@ public:
    *
    * @return A clone of the current object
    */
-  low_level::base_expression_type<C> *clone() const
+  base_expression_type<C> *clone() const
   {
     return new symbol_type(*this);
   }
@@ -3327,7 +3648,7 @@ public:
    * @param replacements associates symbol ids to their replacements
    * @return A pointer to the updated object
    */
-  low_level::base_expression_type<C> *replace(
+  base_expression_type<C> *replace(
       const std::map<SymbolIdType, base_expression_type<C> *> &replacements)
   {
     auto it = replacements.find(_id);
@@ -3381,8 +3702,8 @@ public:
    * @return The coefficient of the term in which the symbol having id
    *         `symbol_id` has degree `degree`
    */
-  low_level::base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
-                                                const int &degree) const
+  base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
+                                     const int &degree) const
   {
     if (symbol_id == _id) {
       return new constant_type<C>(degree == 1 ? 1 : 0);
@@ -3439,16 +3760,6 @@ public:
 };
 
 }
-#ifdef __GMP_PLUSPLUS__
-template<>
-template<>
-inline double Expression<mpq_class>::evaluate<double>() const
-{
-  mpq_class value = _ex->evaluate();
-
-  return value.get_d();
-}
-#endif
 
 template<typename C>
 Expression<C>::Expression(low_level::base_expression_type<C> *ex): _ex(ex)
@@ -3500,6 +3811,52 @@ Expression<C>::replace(const Expression<C>::replacement_type &replacement)
 }
 
 template<typename C>
+Expression<C> Expression<C>::get_rational_form() const
+{
+  return Expression<C>(_ex->get_rational_form());
+}
+
+template<typename C>
+bool Expression<C>::is_a_polynomial() const
+{
+  return _ex->is_a_polynomial();
+}
+
+template<typename C>
+bool Expression<C>::is_in_rational_form() const
+{
+  return _ex->is_in_rational_form();
+}
+
+template<typename C>
+bool Expression<C>::is_a_constant() const
+{
+  return _ex->type() == CONSTANT;
+}
+
+template<typename C>
+Expression<C> Expression<C>::get_numerator() const
+{
+  if (_ex->type() == FINITE_PROD) {
+    const auto prod = static_cast<const low_level::finite_prod_type<C> *>(_ex);
+    return Expression<C>(prod->get_numerator());
+  }
+
+  return Expression<C>(_ex->clone());
+}
+
+template<typename C>
+Expression<C> Expression<C>::get_denominator() const
+{
+  if (_ex->type() == FINITE_PROD) {
+    const auto prod = static_cast<const low_level::finite_prod_type<C> *>(_ex);
+    return Expression<C>(prod->get_denominator());
+  }
+
+  return Expression<C>(1);
+}
+
+template<typename C>
 Expression<C> Expression<C>::apply(
     const Expression<C>::interpretation_type &interpretation) const
 {
@@ -3535,6 +3892,21 @@ Expression<C>::~Expression()
     delete _ex;
     _ex = nullptr;
   }
+}
+
+template<typename C>
+constexpr Expression<C> pow(const Expression<C> &base, unsigned int exp)
+{
+  if (exp == 0) {
+    return 1;
+  }
+  Expression<C> res = pow(base, exp / 2);
+  res *= res;
+  if (exp % 2 == 0) {
+    return res;
+  }
+
+  return res * base;
 }
 
 template<typename C>
