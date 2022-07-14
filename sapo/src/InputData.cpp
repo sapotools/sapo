@@ -438,42 +438,6 @@ double typeCoeff(const Direction::Type &type)
   return 1;
 }
 
-/**
- * @brief Build a constraints linear system from a set of constraints
- *
- * @tparam T is the type of the symbol domain
- * @param constraints the set of constraints
- * @param symbols the order of the constraint symbols in the linear system
- * @return A linear system representing the provided linear systems
- */
-template<typename T>
-LinearSystem
-getConstraintsSystem(const std::vector<Direction *> &constraints,
-                     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
-{
-  using namespace LinearAlgebra;
-
-  vector<vector<T>> A{};
-  vector<T> b{};
-
-  for (auto dir_it = std::cbegin(constraints);
-       dir_it != std::cend(constraints); ++dir_it) {
-    const AbsSyn::Direction &dir = **dir_it;
-
-    double coeff = typeCoeff(dir.getType());
-    auto systemRow = dir.getConstraintVector(symbols);
-    // add only bounded constraints
-    if (dir.hasUB()) {
-      A.push_back(coeff * systemRow);
-      b.push_back(coeff * dir.getUB());
-    }
-    if (dir.hasLB()) {
-      A.push_back(-coeff * systemRow);
-      b.push_back(-coeff * dir.getLB());
-    }
-  }
-  return LinearSystem(A, b);
-}
 
 /**
  * @brief Optimize the boundaries of a constraints set
@@ -486,7 +450,7 @@ getConstraintsSystem(const std::vector<Direction *> &constraints,
 template<typename T>
 void optimizeConstraintsBoundaries(
     std::vector<Direction *> &constraints,
-    const std::vector<SymbolicAlgebra::Symbol<>> &symbols)
+    const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
 {
   using namespace LinearAlgebra;
 
@@ -498,25 +462,19 @@ void optimizeConstraintsBoundaries(
        ++c_it) {
     AbsSyn::Direction &constr = **c_it;
 
-    // coeff belongs to {1,-1} and depends on the
-    // constrain type
-    const double coeff = typeCoeff(constr.getType());
-
-    std::vector<double> constrVector
-        = coeff * constr.getConstraintVector(symbols);
+    auto constrVector = constr.getConstraintVector(symbols);
 
     OptimizationResult<double> opt_res = constrSystem.minimize(constrVector);
 
     if (opt_res.status() == GLP_NOFEAS) {
-      throw std::domain_error("Infeasable system");
+      throw std::domain_error("Infeasible system");
     }
-
     constr.setLB(opt_res.optimum());
 
     opt_res = constrSystem.maximize(constrVector);
 
     if (opt_res.status() == GLP_NOFEAS) {
-      throw std::domain_error("Infeasable system");
+      throw std::domain_error("Infeasible system");
     }
     constr.setUB(opt_res.optimum());
   }

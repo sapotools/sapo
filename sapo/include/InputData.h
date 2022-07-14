@@ -435,6 +435,43 @@ protected:
   void addDirectionConstraint(Direction *d, bool isVar);
 };
 
+
+/**
+ * @brief Build a constraints linear system from a set of constraints
+ *
+ * @tparam T is the type of the symbol domain
+ * @param constraints the set of constraints
+ * @param symbols the order of the constraint symbols in the linear system
+ * @return A linear system representing the provided linear systems
+ */
+template<typename T, template<class, class> class CONTAINER>
+LinearSystem
+getConstraintsSystem(const CONTAINER<Direction *, std::allocator<Direction *>> &constraints,
+                     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
+{
+  using namespace LinearAlgebra;
+
+  std::vector<std::vector<T>> A;
+  std::vector<T> b;
+
+  for (auto dir_it = std::cbegin(constraints);
+       dir_it != std::cend(constraints); ++dir_it) {
+    const AbsSyn::Direction &dir = **dir_it;
+
+    auto systemRow = dir.getConstraintVector(symbols);
+    // add only bounded constraints
+    if (dir.hasUB()) {
+      A.push_back(systemRow);
+      b.push_back(dir.getUB());
+    }
+    if (dir.hasLB()) {
+      A.push_back(-systemRow);
+      b.push_back(-dir.getLB());
+    }
+  }
+  return LinearSystem(A, b);
+}
+
 }
 
 #endif

@@ -322,44 +322,6 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
   return SetsUnion<Polytope>(Polytope(pA, pb));
 }
 
-LinearSystem getLinearSystem(const std::vector<SymbolicAlgebra::Symbol<>> &variables, 
-                             const std::list<Direction *> constraints)
-{
-  using namespace LinearAlgebra;
-
-  // directions affected by constraints, and their offsets
-  std::vector<std::vector<double>> constrDirs{};
-  std::vector<double> constrOffsets{};
-
-  // new directions to be added
-  std::vector<std::vector<double>> C{};
-
-  for (auto it=std::begin(constraints); it!=std::end(constraints); ++it) {
-    switch ((*it)->getType()) {
-      case Direction::LE:
-      case Direction::GE:
-        constrDirs.push_back((*it)->getConstraintVector(variables));
-        constrOffsets.push_back((*it)->getOffset());
-        break;
-      case Direction::EQ:
-        constrDirs.push_back((*it)->getConstraintVector(variables));
-        constrOffsets.push_back((*it)->getOffset());
-        constrDirs.push_back(-(*it)->getConstraintVector(variables));
-        constrOffsets.push_back(-(*it)->getOffset());
-        break;
-      case Direction::IN:
-        constrDirs.push_back((*it)->getConstraintVector(variables));
-        constrOffsets.push_back((*it)->getUB());
-        constrDirs.push_back(-(*it)->getConstraintVector(variables));
-        constrOffsets.push_back(-(*it)->getLB());
-        break;
-      default:
-        throw std::domain_error("Unsupported relation in linear systems");
-    }
-  }
-
-  return LinearSystem(constrDirs, constrOffsets);
-}
 
 Model get_model(const InputData &id)
 {
@@ -394,10 +356,11 @@ Model get_model(const InputData &id)
     model.set_specification(id.specification());
   }
 
-  auto ls = getLinearSystem(variables, id.getAssumptions());
+  auto ls = getConstraintsSystem(id.getAssumptions(), variables);
+
   model.set_assumptions(ls);
 
-  ls = getLinearSystem(variables, id.getInvariant());
+  ls = getConstraintsSystem(id.getInvariant(), variables);
   model.set_invariant(ls);
 
   return model;

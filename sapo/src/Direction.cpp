@@ -143,24 +143,10 @@ bool Direction::compare(Direction *d) const
 std::vector<double> Direction::getConstraintVector(
     std::vector<SymbolicAlgebra::Symbol<>> symbols) const
 {
-  std::vector<double> res{};
-
-  // if inequality is > or >=, flip sign
-  int coeff;
-  if (type == Type::LE || type == Type::LT) {
-    coeff = 1;
-  } else if (type == Type::GE || type == Type::GT) {
-    coeff = -1;
-  } else if (type == Type::IN) {
-    coeff = 1;
-  } else if (type == Type::EQ) {
-    coeff = 1;
-  } else {
-    throw std::logic_error("Unsupported inequality type");
-  }
+  std::vector<double> res(symbols.size());
 
   for (unsigned i = 0; i < symbols.size(); i++) {
-    res.push_back(coeff * getCoefficient(lhs - rhs, symbols[i]));
+    res[i] = getCoefficient(lhs - rhs, symbols[i]);
   }
 
   return res;
@@ -188,32 +174,4 @@ bool Direction::covers(const SymbolicAlgebra::Symbol<> &s) const
   return getCoefficient(e, s) != 0;
 }
 
-}
-
-std::ostream &operator<<(std::ostream &out, const AbsSyn::Direction &direction)
-{
-  out << direction.getLHS();
-
-  switch (direction.getType()) {
-  case AbsSyn::Direction::Type::EQ:
-    out << " = " << direction.getLB();
-    break;
-  case AbsSyn::Direction::Type::LE:
-    out << " <= " << direction.getUB();
-    break;
-  case AbsSyn::Direction::Type::LT:
-    out << " < " << direction.getUB();
-    break;
-  case AbsSyn::Direction::Type::GE:
-    out << " >= " << direction.getLB();
-    break;
-  case AbsSyn::Direction::Type::GT:
-    out << " > " << direction.getLB();
-    break;
-  case AbsSyn::Direction::Type::IN:
-    out << " in [" << direction.getLB() << "," << direction.getUB() << "]";
-    break;
-  }
-
-  return out;
 }

@@ -48,7 +48,7 @@ public:
             Type t):
       lhs(e1 - e2),
       rhs(), type(t), LB(-std::numeric_limits<double>::infinity()),
-      UB(std::numeric_limits<double>::infinity())
+      UB(std::numeric_limits<double>::infinity()), s(NULL)
   {
     rhs = -lhs.get_constant_term();
     lhs += rhs;
@@ -159,8 +159,5 @@ protected:
 };
 
 }
-
-std::ostream &operator<<(std::ostream &out,
-                         const AbsSyn::Direction &direction);
 
 #endif

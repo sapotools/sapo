@@ -11,6 +11,6 @@ dynamic(x) = x;
 dynamic(y) = y + x*x*timestep;
 
 direction x + y <= 10;
-direction x >= 0;
-direction y >= 0;
+direction x >= 1;
+direction y >= 1;
 
