@@ -804,7 +804,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
       for (unsigned int k = 0; k < A[row_idx].size(); ++k) {
         value += A[row_idx][k] * B[k][col_idx];
       }
-      res[row_idx][col_idx] = value;
+      res[row_idx][col_idx] = std::move(value);
     }
   }
 

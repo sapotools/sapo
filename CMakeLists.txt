@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -Wpedantic -Werror")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -Wpedantic -Werror ${CMAKE_CXX_FLAGS}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 

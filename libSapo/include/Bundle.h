@@ -15,7 +15,7 @@
 #include <set>
 
 #include "LinearAlgebra.h"
-#include "BaseConverter.h"
+#include "Bernstein.h"
 #include "Polytope.h"
 #include "Parallelotope.h"
 

@@ -8,9 +8,9 @@ namespace AbsSyn
 
 // defines the types of problems solved by SAPO
 enum problemType {
-  P_UNDEF, // undefined
-  REACH,   // reachability
-  SYNTH,   // parameter synthesis
+  P_UNDEF,  // undefined
+  REACH,    // reachability
+  SYNTH,    // parameter synthesis
   INVARIANT // invariant validation
 };
 
@@ -36,22 +36,22 @@ namespace std
 
 inline ostream &operator<<(ostream &os, const AbsSyn::problemType t)
 {
-  switch(t) {
-    case AbsSyn::problemType::P_UNDEF:
-      os << "Undefined";
-      break;
-    case AbsSyn::problemType::REACH:
-      os << "reachability";
-      break;
-    case AbsSyn::problemType::SYNTH:
-      os << "synthesis";
-      break;
-    case AbsSyn::problemType::INVARIANT:
-      os << "invariant validation";
-      break;
-    default:
-      os << "Unknown problem type ("<< (unsigned int)t << ")";
-      break;
+  switch (t) {
+  case AbsSyn::problemType::P_UNDEF:
+    os << "Undefined";
+    break;
+  case AbsSyn::problemType::REACH:
+    os << "reachability";
+    break;
+  case AbsSyn::problemType::SYNTH:
+    os << "synthesis";
+    break;
+  case AbsSyn::problemType::INVARIANT:
+    os << "invariant validation";
+    break;
+  default:
+    os << "Unknown problem type (" << (unsigned int)t << ")";
+    break;
   }
 
   return os;
@@ -59,22 +59,22 @@ inline ostream &operator<<(ostream &os, const AbsSyn::problemType t)
 
 inline ostream &operator<<(ostream &os, const AbsSyn::modeType t)
 {
-  switch(t) {
-    case AbsSyn::modeType::M_UNDEF:
-      os << "Undefined";
-      break;
-    case AbsSyn::modeType::BOX:
-      os << "boxes";
-      break;
-    case AbsSyn::modeType::PARAL:
-      os << "parallelotopes";
-      break;
-    case AbsSyn::modeType::POLY:
-      os << "polytopes";
-      break;
-    default:
-      os << "Unknown mode type ("<< (unsigned int)t << ")";
-      break;
+  switch (t) {
+  case AbsSyn::modeType::M_UNDEF:
+    os << "Undefined";
+    break;
+  case AbsSyn::modeType::BOX:
+    os << "boxes";
+    break;
+  case AbsSyn::modeType::PARAL:
+    os << "parallelotopes";
+    break;
+  case AbsSyn::modeType::POLY:
+    os << "polytopes";
+    break;
+  default:
+    os << "Unknown mode type (" << (unsigned int)t << ")";
+    break;
   }
 
   return os;

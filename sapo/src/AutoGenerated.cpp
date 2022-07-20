@@ -45,12 +45,10 @@ void directionUseConstraints(glp_prob **lp,
 
 // adds to lp the constraints that fix directions in parallelotopes according
 // to old template
-void oldTemplateConstraints(glp_prob **lp,
-                            const std::vector<std::vector<double>> A,
-                            const std::vector<std::vector<double>> C,
-                            unsigned *startingIndex,
-                            const std::vector<std::vector<unsigned int>> &oldTemplate,
-                            unsigned Pn);
+void oldTemplateConstraints(
+    glp_prob **lp, const std::vector<std::vector<double>> A,
+    const std::vector<std::vector<double>> C, unsigned *startingIndex,
+    const std::vector<std::vector<unsigned int>> &oldTemplate, unsigned Pn);
 
 // adds to lp the constraints that each parallelotope has linearly independent
 // rows
@@ -69,9 +67,10 @@ double findDirectionBound(std::vector<std::vector<double>> A,
                           std::vector<double> LB, std::vector<double> UB,
                           std::vector<double> dir, bool minimize);
 
-void trim_unused_directions(std::vector<std::vector<double>> &directions,
-                            std::vector<double> &LB, std::vector<double> &UB,
-                            std::vector<std::vector<unsigned int>> &template_matrix)
+void trim_unused_directions(
+    std::vector<std::vector<double>> &directions, std::vector<double> &LB,
+    std::vector<double> &UB,
+    std::vector<std::vector<unsigned int>> &template_matrix)
 {
   /* init new_pos by assigning 1 to any useful direction and
    * 0 to those not mentioned by any template */
@@ -238,8 +237,7 @@ Bundle getBundle(const InputData &id)
 
   // get directions and boundaries from input data
   for (unsigned i = 0; i < id.getDirectionsNum(); i++) {
-    directions.push_back(
-        id.getDirection(i)->getConstraintVector(variables));
+    directions.push_back(id.getDirection(i)->getConstraintVector(variables));
     UB.push_back(id.getDirection(i)->getUB());
     LB.push_back(id.getDirection(i)->getLB());
   }
@@ -256,12 +254,14 @@ Bundle getBundle(const InputData &id)
     trim_unused_directions(directions, LB, UB, template_matrix);
   }
 
-  return Bundle(directions, LB, UB, computeTemplate(directions, {}, template_matrix));
+  return Bundle(directions, LB, UB,
+                computeTemplate(directions, {}, template_matrix));
 }
 
-std::vector<Expression<>> &compose_dynamics(const std::vector<Symbol<>>& variables,
-                                            std::vector<Expression<>>& dynamics,
-                                            const unsigned int dynamic_degree)
+std::vector<Expression<>> &
+compose_dynamics(const std::vector<Symbol<>> &variables,
+                 std::vector<Expression<>> &dynamics,
+                 const unsigned int dynamic_degree)
 {
   std::vector<Expression<>> orig_dynamics(dynamics);
 
@@ -291,10 +291,6 @@ std::vector<Expression<>> &compose_dynamics(const std::vector<Symbol<>>& variabl
     }
   }
 
-  for (unsigned v = 0; v < variables.size(); v++) {
-    dynamics[v] = simplify(dynamics[v]);
-  }
-
   return dynamics;
 }
 
@@ -322,6 +318,45 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
   return SetsUnion<Polytope>(Polytope(pA, pb));
 }
 
+LinearSystem
+getLinearSystem(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+                const std::list<Direction *> constraints)
+{
+  using namespace LinearAlgebra;
+
+  // directions affected by constraints, and their offsets
+  std::vector<std::vector<double>> constrDirs{};
+  std::vector<double> constrOffsets{};
+
+  // new directions to be added
+  std::vector<std::vector<double>> C{};
+
+  for (auto it = std::begin(constraints); it != std::end(constraints); ++it) {
+    switch ((*it)->getType()) {
+    case Direction::LE:
+    case Direction::GE:
+      constrDirs.push_back((*it)->getConstraintVector(variables));
+      constrOffsets.push_back((*it)->getOffset());
+      break;
+    case Direction::EQ:
+      constrDirs.push_back((*it)->getConstraintVector(variables));
+      constrOffsets.push_back((*it)->getOffset());
+      constrDirs.push_back(-(*it)->getConstraintVector(variables));
+      constrOffsets.push_back(-(*it)->getOffset());
+      break;
+    case Direction::IN:
+      constrDirs.push_back((*it)->getConstraintVector(variables));
+      constrOffsets.push_back((*it)->getUB());
+      constrDirs.push_back(-(*it)->getConstraintVector(variables));
+      constrOffsets.push_back(-(*it)->getLB());
+      break;
+    default:
+      throw std::domain_error("Unsupported relation in linear systems");
+    }
+  }
+
+  return LinearSystem(constrDirs, constrOffsets);
+}
 
 Model get_model(const InputData &id)
 {
@@ -338,7 +373,7 @@ Model get_model(const InputData &id)
   // dynamics
   std::vector<Expression<>> dynamics(id.getVarNum());
   for (unsigned v = 0; v < id.getVarNum(); v++) {
-    dynamics[v] = simplify(id.getVar(v)->getDynamic());
+    dynamics[v] = id.getVar(v)->getDynamic();
   }
 
   // compose dynamics
@@ -629,12 +664,10 @@ void directionUseConstraints(glp_prob **lp, std::vector<std::vector<double>> A,
   *startingIndex = index;
 }
 
-void oldTemplateConstraints(glp_prob **lp,
-                            const std::vector<std::vector<double>> A,
-                            const std::vector<std::vector<double>> C,
-                            unsigned *startingIndex,
-                            const std::vector<std::vector<unsigned int>> &oldTemplate,
-                            unsigned Pn)
+void oldTemplateConstraints(
+    glp_prob **lp, const std::vector<std::vector<double>> A,
+    const std::vector<std::vector<double>> C, unsigned *startingIndex,
+    const std::vector<std::vector<unsigned int>> &oldTemplate, unsigned Pn)
 {
   unsigned m = A.size(); // dirs num = rows of A
   unsigned c = C.size(); // constr num = assumptions = rows of C

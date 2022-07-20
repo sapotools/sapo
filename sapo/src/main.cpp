@@ -27,13 +27,16 @@ using namespace std;
 
 #define BAR_LENGTH 50
 
-Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
+Sapo init_sapo(const Model &model, const AbsSyn::InputData &data,
                const unsigned int num_of_pre_splits)
 {
-  Sapo sapo(model);
+  Sapo sapo(model, data.useBernsteinCaching());
 
-  sapo.t_mode = (data.getTransValue() == AbsSyn::transType::OFO ? ONE_FOR_ONE
-                                                               : ALL_FOR_ONE);
+  if (data.getTransValue() == AbsSyn::transType::OFO) {
+    sapo.set_evolver_mode(Evolver<double>::ONE_FOR_ONE);
+  } else {
+    sapo.set_evolver_mode(Evolver<double>::ALL_FOR_ONE);
+  }
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();
@@ -44,7 +47,7 @@ Sapo init_sapo(const Model& model, const AbsSyn::InputData &data,
     sapo.num_of_pre_splits = 0;
   }
   sapo.max_bundle_magnitude = data.getMaxVersorMagnitude();
-  sapo.inv_approximation = data.getApproxType();
+  sapo.join_approx = data.getApproxType();
 
   return sapo;
 }
@@ -74,7 +77,7 @@ void print_symbol_vector(OSTREAM &os,
 }
 
 template<typename OSTREAM>
-void print_variables_and_parameters(OSTREAM &os, const Model& model)
+void print_variables_and_parameters(OSTREAM &os, const Model &model)
 {
   using OF = OutputFormater<OSTREAM>;
 
@@ -89,7 +92,7 @@ void print_variables_and_parameters(OSTREAM &os, const Model& model)
 }
 
 template<typename OSTREAM>
-void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
+void reach_analysis(OSTREAM &os, Sapo &sapo, const Model &model,
                     const bool display_progress)
 {
   using OF = OutputFormater<OSTREAM>;
@@ -97,12 +100,9 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
   os << OF::object_header();
   print_variables_and_parameters(os, model);
 
-  os << OF::field_separator()
-     << OF::field_begin("task") << "reachability" << OF::field_end() 
-     << OF::field_separator()
-     << OF::field_begin("data")
-     << OF::list_begin() << OF::object_header()
-     << OF::field_begin("flowpipe");
+  os << OF::field_separator() << OF::field_begin("task") << "reachability"
+     << OF::field_end() << OF::field_separator() << OF::field_begin("data")
+     << OF::list_begin() << OF::object_header() << OF::field_begin("flowpipe");
 
   ProgressAccounter *accounter = NULL;
   if (display_progress) {
@@ -131,7 +131,7 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
 }
 
 template<typename OSTREAM>
-void output_synthesis(OSTREAM &os, const Model& model,
+void output_synthesis(OSTREAM &os, const Model &model,
                       const std::list<SetsUnion<Polytope>> &synth_params,
                       const std::vector<Flowpipe> &flowpipes)
 {
@@ -139,9 +139,8 @@ void output_synthesis(OSTREAM &os, const Model& model,
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator()
-     << OF::field_begin("task") << "synthesis" << OF::field_end() 
-     << OF::field_separator() << OF::field_begin("data");
+  os << OF::field_separator() << OF::field_begin("task") << "synthesis"
+     << OF::field_end() << OF::field_separator() << OF::field_begin("data");
 
   if (every_set_is_empty(synth_params)) {
     os << OF::empty_list();
@@ -169,7 +168,7 @@ void output_synthesis(OSTREAM &os, const Model& model,
   os << OF::field_end() << OF::object_footer();
 }
 
-unsigned int get_max_steps(const Sapo &sapo, const Model& model)
+unsigned int get_max_steps(const Sapo &sapo, const Model &model)
 // const unsigned int &max_param_splits, const unsigned int &num_of_params,
 // const unsigned int &time_horizon)
 {
@@ -186,7 +185,7 @@ unsigned int get_max_steps(const Sapo &sapo, const Model& model)
 }
 
 template<typename OSTREAM>
-void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
+void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
                         const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
@@ -197,47 +196,43 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
 
   InvariantValidationResult result;
 
-  result = sapo.check_invariant(*(model.initial_set()), model.parameter_set(), 
-                                model.invariant(), sapo.time_horizon, accounter);
+  result
+      = sapo.check_invariant(*(model.initial_set()), model.parameter_set(),
+                             model.invariant(), sapo.time_horizon, accounter);
 
   using OF = OutputFormater<OSTREAM>;
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator()
-     << OF::field_begin("task") << "invariant validation" << OF::field_end()
-     << OF::field_separator()   
-     << OF::field_begin("epochs") 
-     << static_cast<unsigned int>(result.flowpipe.size()) << OF::field_end() 
-     << OF::field_separator()
-     << OF::field_begin("result");
-  
-  switch(result.result_type) {
-    case InvariantValidationResult::DISPROVED:
-      os << "disproved";
-      break;
-    case InvariantValidationResult::PROVED:
-      os << "proved"<< OF::field_end() 
-         << OF::field_separator()
-         << OF::field_begin("k-induction level")
-         << static_cast<unsigned int>(result.k_induction_proof.size()-1);
-      break;
-    case InvariantValidationResult::EPOCH_LIMIT_REACHED:
-      os << "epoch limit reached";
-      break;
+  os << OF::field_separator() << OF::field_begin("task")
+     << "invariant validation" << OF::field_end() << OF::field_separator()
+     << OF::field_begin("epochs")
+     << static_cast<unsigned int>(result.flowpipe.size()) << OF::field_end()
+     << OF::field_separator() << OF::field_begin("result");
+
+  switch (result.result_type) {
+  case InvariantValidationResult::DISPROVED:
+    os << "disproved";
+    break;
+  case InvariantValidationResult::PROVED:
+    os << "proved" << OF::field_end() << OF::field_separator()
+       << OF::field_begin("k-induction level")
+       << static_cast<unsigned int>(result.k_induction_proof.size() - 1);
+    break;
+  case InvariantValidationResult::EPOCH_LIMIT_REACHED:
+    os << "epoch limit reached";
+    break;
   }
 
-  os << OF::field_end()
-     << OF::field_separator()   
-     << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end();
-    
-  if (result.result_type==InvariantValidationResult::PROVED) {
-    os << OF::field_separator()
-       << OF::field_begin("k-induction proof") 
+  os << OF::field_end() << OF::field_separator() << OF::field_begin("flowpipe")
+     << result.flowpipe << OF::field_end();
+
+  if (result.result_type == InvariantValidationResult::PROVED) {
+    os << OF::field_separator() << OF::field_begin("k-induction proof")
        << result.k_induction_proof << OF::field_end();
   }
 
-  os << OF::object_footer() << std::endl; 
+  os << OF::object_footer() << std::endl;
 
   if (display_progress) {
     delete accounter;
@@ -245,7 +240,7 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
 }
 
 template<typename OSTREAM>
-void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
+void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
                const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
@@ -272,8 +267,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
   if (!every_set_is_empty(synth_params)) {
 #ifdef WITH_THREADS
     auto compute_reachability
-        = [&flowpipes, &sapo, &model, &accounter](const SetsUnion<Polytope> &pSet,
-                                                  unsigned int params_idx) {
+        = [&flowpipes, &sapo, &model, &accounter](
+              const SetsUnion<Polytope> &pSet, unsigned int params_idx) {
             flowpipes[params_idx] = sapo.reach(*(model.initial_set()), pSet,
                                                sapo.time_horizon, accounter);
           };
@@ -314,7 +309,8 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model& model,
 }
 
 template<typename OSTREAM>
-void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo, const Model& model,
+void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo,
+                                        const Model &model,
                                         const AbsSyn::problemType &type,
                                         const bool display_progress)
 {

@@ -105,6 +105,7 @@
 	LISTING
 	PACKAGING
 	MERGING
+	NO_CACHE
 	TRANS
 	AFO
 	OFO
@@ -961,12 +962,7 @@ expr		: number	{ $$ = $1; }
 				}
 				| expr "/" expr
 				{
-					if (!AbsSyn::isNumeric($3)) {
-						ERROR(@3, "cannot divide by non--numeric expression");
-						$$ = $1 / 1;
-					} else {
-						$$ = $1 / $3;
-					}
+					$$ = $1 / $3;
 				}
 				| expr "+" expr { $$ = $1 + $3; }
 				| expr "-" expr { $$ = $1 - $3; }
@@ -1095,6 +1091,10 @@ option	: TRANS transType ";"
 		| K_IND_JOIN MERGING ";"
 		{
 			drv.data.setApproxType(Sapo::CHAIN_JOIN);
+		}
+		| NO_CACHE ";"
+		{
+			drv.data.setBernsteinCaching(false);
 		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
