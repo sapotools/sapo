@@ -37,10 +37,13 @@
  * @brief Result of an invariant validation
  */
 typedef struct {
-  bool validated;             //!< invariant candidate has been validated
-  unsigned int k_induction;   //!< k-induction level
+  enum {
+    DISPROVED = 0,
+    PROVED = 1,
+    EPOCH_LIMIT_REACHED = 2
+  } result_type;              //!< result type
   Flowpipe flowpipe;          //!< system flowpipe
-  SetsUnion<Bundle> r_approx; //!< over-approximation of the reached set
+  Flowpipe k_induction_proof; //!< flowpipe of k-induction proof
 } InvariantValidationResult;
 
 /**

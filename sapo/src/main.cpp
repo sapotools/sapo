@@ -205,16 +205,39 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
   os << OF::object_header();
   print_variables_and_parameters(os, model);
   os << OF::field_separator()
-     << OF::field_begin("task") << "invariant_validation" << OF::field_end()
-     << OF::field_separator()
-     << OF::field_begin("validated") << result.validated << OF::field_end() 
-     << OF::field_separator()
-     << OF::field_begin("k-induction") << result.k_induction << OF::field_end() 
+     << OF::field_begin("task") << "invariant validation" << OF::field_end()
      << OF::field_separator()   
-     << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end() 
+     << OF::field_begin("epochs") 
+     << static_cast<unsigned int>(result.flowpipe.size()) << OF::field_end() 
+     << OF::field_separator()
+     << OF::field_begin("result");
+  
+  switch(result.result_type) {
+    case InvariantValidationResult::DISPROVED:
+      os << "disproved";
+      break;
+    case InvariantValidationResult::PROVED:
+      os << "proved"<< OF::field_end() 
+         << OF::field_separator()
+         << OF::field_begin("k-induction level")
+         << static_cast<unsigned int>(result.k_induction_proof.size()-1);
+      break;
+    case InvariantValidationResult::EPOCH_LIMIT_REACHED:
+      os << "epoch limit reached";
+      break;
+  }
+
+  os << OF::field_end()
      << OF::field_separator()   
-     << OF::field_begin("reached approx") << result.r_approx << OF::field_end()
-     << OF::object_footer() << std::endl; 
+     << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end();
+    
+  if (result.result_type==InvariantValidationResult::PROVED) {
+    os << OF::field_separator()
+       << OF::field_begin("k-induction proof") 
+       << result.k_induction_proof << OF::field_end();
+  }
+
+  os << OF::object_footer() << std::endl; 
 
   if (display_progress) {
     delete accounter;

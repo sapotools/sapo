@@ -812,6 +812,54 @@ bool is_k_invariant(const DynamicalSystem<double> &ds,
   return reached_set.includes(T_reached);
 }
 
+Flowpipe get_k_invariant_proof(const DynamicalSystem<double> &ds,
+                               const SetsUnion<Bundle> &reached_set, 
+                               const unsigned int k)
+{
+  // alias the transformation function
+  auto T = [&ds](const SetsUnion<Bundle> &set) { return ds.transform(set); };
+
+  Flowpipe k_induction_proof;
+
+  auto T_reached = reached_set;
+  k_induction_proof.push_back(T_reached);
+  for (unsigned int i = 1; i < k; ++i) {
+    T_reached = intersect(reached_set, T(T_reached));
+    k_induction_proof.push_back(T_reached);
+  }
+
+  T_reached = T(T_reached);
+
+  k_induction_proof.push_back(T_reached);
+
+  return k_induction_proof;
+}
+
+Flowpipe get_k_invariant_proof(const DynamicalSystem<double> &ds,
+                    const SetsUnion<Bundle> &reached_set,
+                    const SetsUnion<Polytope> &param_set, const unsigned int k)
+{
+  // alias the transformation function
+  auto T = [&ds, &param_set](const SetsUnion<Bundle> &set) {
+    return ds.transform(set, param_set);
+  };
+
+  Flowpipe k_induction_proof;
+
+  auto T_reached = reached_set;
+  k_induction_proof.push_back(T_reached);
+  for (unsigned int i = 1; i < k; ++i) {
+    T_reached = intersect(reached_set, T(T_reached));
+    k_induction_proof.push_back(T_reached);
+  }
+
+  T_reached = T(T_reached);
+
+  k_induction_proof.push_back(T_reached);
+
+  return k_induction_proof;
+}
+
 bool is_k_invariant_exact(const DynamicalSystem<double> &ds,
                           const SetsUnion<Bundle> &reached_set,
                           const SetsUnion<Bundle> &Tk, const unsigned int k)
@@ -906,7 +954,8 @@ InvariantValidationResult Sapo::check_invariant(
 
     // if init_set does not satisfies the invariant candidate
     // return false, 0
-    return {false, 0, std::move(flowpipe), std::move(reached_set)};
+    return {InvariantValidationResult::DISPROVED, 
+            std::move(flowpipe), Flowpipe()};
   }
 
   approx_funct_type approximate_Tk = select_approx(inv_approximation);
@@ -942,7 +991,16 @@ InvariantValidationResult Sapo::check_invariant(
   while (epoch_horizon == 0 || flowpipe.size() < epoch_horizon) {
 
     if (is_k_inv(reached_set, Tk_approx, k)) {
-      return {true, k, std::move(flowpipe), std::move(reached_set)};
+      if (dynamical_system().parameters().size() > 0) {
+        return {InvariantValidationResult::PROVED, 
+                std::move(flowpipe),
+                get_k_invariant_proof(dynamical_system(), reached_set,
+                                      pSet, k)};
+      }
+      return {InvariantValidationResult::PROVED, 
+              std::move(flowpipe), 
+              get_k_invariant_proof(dynamical_system(), 
+                                    reached_set, k)};
     }
 
     // update TK
@@ -954,7 +1012,8 @@ InvariantValidationResult Sapo::check_invariant(
 
       // if Tk(init_set) does not satisfies the invariant candidate
       // return false, k
-      return {false, k, std::move(flowpipe), std::move(reached_set)};
+      return {InvariantValidationResult::DISPROVED,
+              std::move(flowpipe), Flowpipe()};
     }
 
     // update reached_set
@@ -971,5 +1030,6 @@ InvariantValidationResult Sapo::check_invariant(
     }
   }
 
-  return {false, k, std::move(flowpipe), std::move(reached_set)};
+  return {InvariantValidationResult::EPOCH_LIMIT_REACHED, 
+          std::move(flowpipe), Flowpipe()};
 }
