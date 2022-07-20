@@ -1,6 +1,9 @@
 VARIABLES
 ["pn","pe","h","u","v","w","q0v","q1v","q2v","q3v","p","q","r","hI","uI","vI","psiI"]
 
+TASK
+reachability
+
 DATA
 FLOWPIPE
 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 <= 0

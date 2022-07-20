@@ -1,3 +1,9 @@
+VARIABLES
+["x","y"]
+
+TASK
+invariant_validation
+
 VALIDATED
 0
 

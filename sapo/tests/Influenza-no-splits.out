@@ -4,5 +4,8 @@ VARIABLES
 PARAMETERS
 ["beta","mu","gamma","alpha"]
 
+TASK
+synthesis
+
 DATA
 ==========empty list==========

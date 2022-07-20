@@ -828,8 +828,6 @@ bool is_k_invariant_exact(const DynamicalSystem<double> &ds,
       return false;
     }
 
-    T_reached = intersect(T_reached, reached_set);
-
     if (T_reached.is_empty()) {
       return true;
     }
@@ -858,8 +856,6 @@ bool is_k_invariant_exact(const DynamicalSystem<double> &ds,
     if (!reached_set.includes(T_reached)) {
       return false;
     }
-
-    T_reached = intersect(T_reached, reached_set);
 
     if (T_reached.is_empty()) {
       return true;

@@ -4,6 +4,9 @@ VARIABLES
 PARAMETERS
 ["beta","gamma"]
 
+TASK
+synthesis
+
 DATA
 PARAMETER SET
 1 0 <= 0.2

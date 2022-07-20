@@ -1,6 +1,9 @@
 VARIABLES
 ["s","i","r"]
 
+TASK
+reachability
+
 DATA
 FLOWPIPE
 1 0 0 <= 0.8

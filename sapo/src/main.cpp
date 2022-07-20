@@ -96,9 +96,12 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model& model,
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator() << OF::field_begin("data");
 
-  os << OF::list_begin() << OF::object_header()
+  os << OF::field_separator()
+     << OF::field_begin("task") << "reachability" << OF::field_end() 
+     << OF::field_separator()
+     << OF::field_begin("data")
+     << OF::list_begin() << OF::object_header()
      << OF::field_begin("flowpipe");
 
   ProgressAccounter *accounter = NULL;
@@ -136,7 +139,9 @@ void output_synthesis(OSTREAM &os, const Model& model,
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator() << OF::field_begin("data");
+  os << OF::field_separator()
+     << OF::field_begin("task") << "synthesis" << OF::field_end() 
+     << OF::field_separator() << OF::field_begin("data");
 
   if (every_set_is_empty(synth_params)) {
     os << OF::empty_list();
@@ -197,7 +202,11 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model& model,
 
   using OF = OutputFormater<OSTREAM>;
 
-  os << OF::object_header() 
+  os << OF::object_header();
+  print_variables_and_parameters(os, model);
+  os << OF::field_separator()
+     << OF::field_begin("task") << "invariant_validation" << OF::field_end()
+     << OF::field_separator()
      << OF::field_begin("validated") << result.validated << OF::field_end() 
      << OF::field_separator()
      << OF::field_begin("k-induction") << result.k_induction << OF::field_end() 

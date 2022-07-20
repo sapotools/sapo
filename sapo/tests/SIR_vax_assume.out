@@ -4,6 +4,9 @@ VARIABLES
 PARAMETERS
 ["beta","mu","gamma","alpha"]
 
+TASK
+reachability
+
 DATA
 FLOWPIPE
 -0 -0 -1 <= -0.7
