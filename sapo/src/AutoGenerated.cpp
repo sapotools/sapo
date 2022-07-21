@@ -263,31 +263,15 @@ compose_dynamics(const std::vector<Symbol<>> &variables,
                  std::vector<Expression<>> &dynamics,
                  const unsigned int dynamic_degree)
 {
-  std::vector<Expression<>> orig_dynamics(dynamics);
-
-  // new symbols for variables, to perform replacement
-  std::vector<SymbolicAlgebra::Symbol<>> new_var_symbols(variables.size());
-  for (unsigned v = 0; v < variables.size(); v++) {
-    std::string new_name = variables[v].get_name() + "_2";
-    new_var_symbols[v] = SymbolicAlgebra::Symbol<>(new_name);
+  // replace each variable with its dynamic law
+  SymbolicAlgebra::Expression<>::replacement_type rep_symb;
+  for (unsigned var = 0; var < variables.size(); var++) {
+    rep_symb[variables[var]] = dynamics[var];
   }
 
   for (unsigned i = 1; i < dynamic_degree; i++) {
-    for (unsigned v = 0; v < variables.size(); v++) {
-
-      // replace each variable with its new symbol
-      SymbolicAlgebra::Expression<>::replacement_type rep_symb{};
-      for (unsigned var = 0; var < variables.size(); var++) {
-        rep_symb[variables[var]] = new_var_symbols[var];
-      }
-      dynamics[v].replace(rep_symb);
-
-      // replace new symbol with dynamic for variable
-      SymbolicAlgebra::Expression<>::replacement_type rep_dyn{};
-      for (unsigned var = 0; var < variables.size(); var++) {
-        rep_dyn[new_var_symbols[var]] = orig_dynamics[var];
-      }
-      dynamics[v].replace(rep_dyn).expand();
+    for (auto &dyn: dynamics) {
+      dyn.replace(rep_symb);
     }
   }
 
