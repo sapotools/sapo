@@ -5,7 +5,7 @@ PARAMETERS
 ["tau","dist"]
 
 TASK
-synthesis
+"synthesis"
 
 DATA
 PARAMETER SET

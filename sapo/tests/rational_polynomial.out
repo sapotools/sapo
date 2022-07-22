@@ -2,7 +2,7 @@ VARIABLES
 ["x","y"]
 
 TASK
-reachability
+"reachability"
 
 DATA
 FLOWPIPE

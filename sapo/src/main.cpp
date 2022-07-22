@@ -100,7 +100,7 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model &model,
   os << OF::object_header();
   print_variables_and_parameters(os, model);
 
-  os << OF::field_separator() << OF::field_begin("task") << "reachability"
+  os << OF::field_separator() << OF::field_begin("task") << "\"reachability\""
      << OF::field_end() << OF::field_separator() << OF::field_begin("data")
      << OF::list_begin() << OF::object_header() << OF::field_begin("flowpipe");
 
@@ -139,7 +139,7 @@ void output_synthesis(OSTREAM &os, const Model &model,
 
   os << OF::object_header();
   print_variables_and_parameters(os, model);
-  os << OF::field_separator() << OF::field_begin("task") << "synthesis"
+  os << OF::field_separator() << OF::field_begin("task") << "\"synthesis\""
      << OF::field_end() << OF::field_separator() << OF::field_begin("data");
 
   if (every_set_is_empty(synth_params)) {
@@ -205,27 +205,31 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
   os << OF::object_header();
   print_variables_and_parameters(os, model);
   os << OF::field_separator() << OF::field_begin("task")
-     << "invariant validation" << OF::field_end() << OF::field_separator()
+     << "\"invariant validation\"" << OF::field_end() << OF::field_separator()
      << OF::field_begin("epochs")
      << static_cast<unsigned int>(result.flowpipe.size()) << OF::field_end()
      << OF::field_separator() << OF::field_begin("result");
 
   switch (result.result_type) {
   case InvariantValidationResult::DISPROVED:
-    os << "disproved";
+    os << "\"disproved\"";
     break;
   case InvariantValidationResult::PROVED:
-    os << "proved" << OF::field_end() << OF::field_separator()
+    os << "\"proved\"" << OF::field_end() << OF::field_separator()
        << OF::field_begin("k-induction level")
        << static_cast<unsigned int>(result.k_induction_proof.size() - 1);
     break;
   case InvariantValidationResult::EPOCH_LIMIT_REACHED:
-    os << "epoch limit reached";
+    os << "\"epoch limit reached\"";
     break;
   }
 
-  os << OF::field_end() << OF::field_separator() << OF::field_begin("flowpipe")
-     << result.flowpipe << OF::field_end();
+  os << OF::field_end() << OF::field_separator();
+  if (model.parameters().size() != 0) {
+    os << OF::field_begin("parameter set") << model.parameter_set() << OF::field_end()
+       << OF::field_separator();
+  }
+  os << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end();
 
   if (result.result_type == InvariantValidationResult::PROVED) {
     os << OF::field_separator() << OF::field_begin("k-induction proof")

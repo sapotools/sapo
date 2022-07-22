@@ -2,13 +2,13 @@ VARIABLES
 ["x","y"]
 
 TASK
-invariant validation
+"invariant validation"
 
 EPOCHS
 6
 
 RESULT
-proved
+"proved"
 
 K-INDUCTION LEVEL
 4

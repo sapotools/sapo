@@ -5,7 +5,7 @@ PARAMETERS
 ["kappa1","gamma1"]
 
 TASK
-synthesis
+"synthesis"
 
 DATA
 PARAMETER SET
