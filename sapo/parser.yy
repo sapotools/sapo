@@ -169,8 +169,8 @@
 %nterm <std::vector<std::vector<unsigned int>>> rowList
 %nterm <std::shared_ptr<STL::STL> > formula
 %nterm <AbsSyn::transType> transType
-%nterm <AbsSyn::Direction *> direction
-%nterm <AbsSyn::Direction::Type> directionType
+%nterm <AbsSyn::Direction *> constraint
+%nterm <AbsSyn::Direction::Type> constraintType
 %nterm <bool> presplits_value
 
 %printer { yyo << $$; } <*>;
@@ -504,53 +504,33 @@ symbol			: VAR identList IN doubleInterval ";"
 						{
 							MISSING_SC(@3);
 						}
-						| ASSUME direction ";"
-						{
-							if ($2->contains(drv.data.getParamSymbols())) {
-								ERROR(@2, "Expressions in assumptions cannot contain parameters");
-								$2 = 0;
-							}
-							
-							if (AbsSyn::getDegree($2->getLHS() - $2->getRHS(), drv.data.getVarSymbols()) > 1) {
-								ERROR(@2, "Assumption must be linear");
-								$2 = 0;
-							}
-							
-							if (drv.data.getProblem() == AbsSyn::problemType::SYNTH) {
-								ERROR(@1, "Assumptions are not supported for synthesis yet");
-							} else if ($2->getType() == AbsSyn::Direction::Type::EQ) {
-								ERROR(@2, "Directions with \"=\" are not supported yet in assumptions");
-							} else if ($2->getType() == AbsSyn::Direction::Type::IN) {
-								ERROR(@2, "Directions with intervals are not supported yet in assumptions");
-							} else {
-								drv.data.addAssumption($2);
-							}
-						}
-						| ASSUME direction error
+						| ASSUME assumption ";"
+						{}
+						| ASSUME assumption error
 						{
 							MISSING_SC(@2);
 						}
 
-matrices		: var_direction {}
+matrices		: var_constraint {}
 				| template {}
-				| param_direction {}
+				| param_constraint {}
 
-direction	: expr directionType expr
+constraint	: expr constraintType expr
 						{
 							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
-								ERROR(@1, "Expression in directions must be at most linear");
+								ERROR(@1, "Expression in constraints must be at most linear");
 								$1 = 0;
 							}
 							if (AbsSyn::getDegree($3, drv.data.getVarSymbols()) > 1) {
-								ERROR(@3, "Expression in directions must be at most linear");
+								ERROR(@3, "Expression in constraints must be at most linear");
 								$3 = 0;
 							}
 							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
-								ERROR(@1, "Expression in directions cannot contain parameters");
+								ERROR(@1, "Expression in constraints cannot contain parameters");
 								$1 = 0;
 							}
 							if (AbsSyn::getDegree($3, drv.data.getParamSymbols()) > 0) {
-								ERROR(@3, "Expression in directions cannot contain parameters");
+								ERROR(@3, "Expression in constraints cannot contain parameters");
 								$3 = 0;
 							}
 							$$ = new AbsSyn::Direction($1, $3, $2);
@@ -558,17 +538,17 @@ direction	: expr directionType expr
 						| expr IN doubleInterval
 						{
 							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
-								ERROR(@1, "Expression in directions must be at most linear");
+								ERROR(@1, "Expression in constraints must be at most linear");
 							}
 							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
-								ERROR(@1, "Expression in directions cannot contain parameters");
+								ERROR(@1, "Expression in constraints cannot contain parameters");
 								$$ = new AbsSyn::Direction(0, $3.first, $3.second);
 							} else {
 								$$ = new AbsSyn::Direction($1, $3.first, $3.second);
 							}
 						}
 
-directionType		: "<"
+constraintType		: "<"
 						{
 							$$ = AbsSyn::Direction::Type::LT;
 						}
@@ -589,14 +569,14 @@ directionType		: "<"
 							$$ = AbsSyn::Direction::Type::EQ;
 						}
 
-invariant 	: 	direction
+invariant 	: 	constraint
 				{
 					if ($1->contains(drv.data.getParamSymbols())) {
 						ERROR(@1, "Invariant formula cannot contain parameters");
 					}
 					drv.data.addInvariantConstraint($1);
 				}
-			|	invariant AND direction
+			|	invariant AND constraint
 				{
 					if ($3->contains(drv.data.getParamSymbols())) {
 						ERROR(@3, "Invariant formula cannot contain parameters");
@@ -604,29 +584,44 @@ invariant 	: 	direction
 					drv.data.addInvariantConstraint($3);
 				}
 
-var_direction	: DIR direction ";"
+assumption 	: 	constraint
+				{
+					if ($1->contains(drv.data.getParamSymbols())) {
+						ERROR(@1, "Assumption formula cannot contain parameters");
+					}
+					drv.data.addAssumption($1);
+				}
+			|	assumption AND constraint
+				{
+					if ($3->contains(drv.data.getParamSymbols())) {
+						ERROR(@3, "Assumption formula cannot contain parameters");
+					}
+					drv.data.addAssumption($3);
+				}
+
+var_constraint	: DIR constraint ";"
 							{
 								if ($2->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable directions cannot contain parameters");
+									ERROR(@2, "Variable constraints cannot contain parameters");
 								}
 								drv.data.addVarDirectionConstraint($2);
 							}
-							| DIR direction error
+							| DIR constraint error
 							{
 								MISSING_SC(@2);
 								if ($2->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable directions cannot contain parameters");
+									ERROR(@2, "Variable constraints cannot contain parameters");
 								}
 								drv.data.addVarDirectionConstraint($2);
 							}
 							| DIR error ";"
 							{
-								ERROR(@2, "Error in direction");
+								ERROR(@2, "Error in constraint");
 							}
-							| DIR IDENT ":" direction ";"
+							| DIR IDENT ":" constraint ";"
 							{
 								if ($4->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable directions cannot contain parameters");
+									ERROR(@2, "Variable constraints cannot contain parameters");
 								}
 								if (drv.data.isSymbolDefined($2)) {
 									ERROR(@2, "Symbol '" + $2 + "' already defined");
@@ -635,11 +630,11 @@ var_direction	: DIR direction ";"
 								$4->setSymbol(s);
 								drv.data.addVarDirectionConstraint($4);
 							}
-							| DIR IDENT ":" direction error
+							| DIR IDENT ":" constraint error
 							{
 								MISSING_SC(@3);
 								if ($4->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable directions cannot contain parameters");
+									ERROR(@2, "Variable constraints cannot contain parameters");
 								}
 								if (drv.data.isSymbolDefined($2)) {
 									ERROR(@2, "Symbol '" + $2 + "' already defined");
@@ -648,13 +643,13 @@ var_direction	: DIR direction ";"
 								$4->setSymbol(s);
 								drv.data.addVarDirectionConstraint($4);
 							}
-							| DIR IDENT error direction ";"
+							| DIR IDENT error constraint ";"
 							{
 								ERROR(@2, "Missing \":\"");
 							}
 							| DIR IDENT error ";"
 							{
-								ERROR(@3, "Error in direction");
+								ERROR(@3, "Error in constraint");
 							}
 
 template		: TEMPL "=" "{" rowList "}" ";"
@@ -769,31 +764,31 @@ matrixRow	: matrixRow "," IDENT
 						$$ = {};
 					}
 
-param_direction	: PDIR direction ";"
+param_constraint	: PDIR constraint ";"
 								{
 									if ($2->contains(drv.data.getVarSymbols())) {
-										ERROR(@2, "Parameter directions cannot contain variables");
+										ERROR(@2, "Parameter constraints cannot contain variables");
 									}
 									
 									drv.data.addParamDirectionConstraint($2);
 								}
-								| PDIR direction error
+								| PDIR constraint error
 								{
 									MISSING_SC(@2);
 									if ($2->contains(drv.data.getVarSymbols())) {
-										ERROR(@2, "Parameter directions cannot contain variables");
+										ERROR(@2, "Parameter constraints cannot contain variables");
 									}
 									
 									drv.data.addParamDirectionConstraint($2);
 								}
 								| PDIR error ";"
 								{
-									ERROR(@2, "Error in parameter direction");
+									ERROR(@2, "Error in parameter constraint");
 								}
-								| PDIR IDENT ":" direction ";"
+								| PDIR IDENT ":" constraint ";"
 								{
 									if ($4->contains(drv.data.getVarSymbols())) {
-										ERROR(@2, "Parameter directions cannot contain variables");
+										ERROR(@2, "Parameter constraints cannot contain variables");
 										
 									}
 									
@@ -804,11 +799,11 @@ param_direction	: PDIR direction ";"
 									$4->setSymbol(s);
 									drv.data.addParamDirectionConstraint($4);
 								}
-								| PDIR IDENT ":" direction error
+								| PDIR IDENT ":" constraint error
 								{
 									MISSING_SC(@4);
 									if ($4->contains(drv.data.getVarSymbols())) {
-										ERROR(@2, "Parameter directions cannot contain variables");
+										ERROR(@2, "Parameter constraints cannot contain variables");
 										
 									}
 									
@@ -819,13 +814,13 @@ param_direction	: PDIR direction ";"
 									$4->setSymbol(s);
 									drv.data.addParamDirectionConstraint($4);
 								}
-								| PDIR IDENT error direction ";"
+								| PDIR IDENT error constraint ";"
 								{
 									ERROR(@2, "Missing \":\"");
 								}
 								| PDIR IDENT error ";"
 								{
-									ERROR(@3, "Error in parameter direction");
+									ERROR(@3, "Error in parameter constraint");
 								}
 
 problemType	: REACH { $$ = AbsSyn::problemType::REACH; }

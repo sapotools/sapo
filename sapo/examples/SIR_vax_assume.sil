@@ -15,15 +15,6 @@ dynamic(s) = s - beta*s*i - mu*s + gamma*r;
 dynamic(i) = i + beta*s*i - alpha*i;
 dynamic(r) = r + mu*s - gamma*r + alpha*i;
 
+assume s in [0, 1] && i in [0, 1] && r in [0, 1];
 
-assume s <= 1;
-assume i <= 1;
-assume r <= 1;
-
-assume s >= 0;
-assume i >= 0;
-assume r >= 0;
-
-
-assume s + i + r <= 1;
-assume s + i + r >= 0;
+assume s + i + r in [0, 1];

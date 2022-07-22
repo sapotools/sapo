@@ -1,11 +1,11 @@
 problem: reachability;
 
-iterations: 1;
+iterations: 117;
 
 const a0 = -0.25;
 const b0 = -0.775;
 
-const epsilon = 0;
+const epsilon = 0.000000001;
 
 var a in [a0-epsilon, a0+epsilon];
 var b in [b0-epsilon, b0+epsilon];
@@ -19,4 +19,10 @@ dynamic(b) = b*b*b - 3*a*a*b + beta;
 
 spec: a <= 4;
 
-option compose_dynamic 3;
+// the following assumption is to constrain the 
+// reachable set as it diverges. In these cases, 
+// the computation significantly slows down
+//assume a in [-1000, 1000] && b in [-1000, 1000];
+
+//option compose_dynamic 2;
+option no_caching;
