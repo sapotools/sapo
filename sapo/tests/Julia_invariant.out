@@ -4,6 +4,9 @@ VARIABLES
 TASK
 "invariant validation"
 
+INVARIANT
+1 1 <= 0.6
+
 EPOCHS
 6
 
