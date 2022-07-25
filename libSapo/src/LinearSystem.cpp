@@ -114,7 +114,7 @@ optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
   }
 
   glp_load_matrix(lp, size_lp, ia, ja, ar);
-  //glp_exact(lp, &lp_param);
+  // glp_exact(lp, &lp_param);
   glp_simplex(lp, &lp_param);
 
   double res;
@@ -233,7 +233,7 @@ bool disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
   }
 
   glp_load_matrix(lp, size_lp, ia, ja, ar);
-  //glp_exact(lp, &lp_param);
+  // glp_exact(lp, &lp_param);
   glp_simplex(lp, &lp_param);
 
   auto status = glp_get_status(lp);
