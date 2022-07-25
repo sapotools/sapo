@@ -94,8 +94,6 @@
 	ITER
 	PSPLITS
 	PRESPLITS
-	ON
-	OFF
 	MAX_MAGNITUDE
 	DIR
 	TEMPL
@@ -171,7 +169,6 @@
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction *> constraint
 %nterm <AbsSyn::Direction::Type> constraintType
-%nterm <bool> presplits_value
 
 %printer { yyo << $$; } <*>;
 
@@ -258,19 +255,6 @@ header			: PROB ":" problemType ";"
 						{
 							MISSING_SC(@3);
 						}
-						| PRESPLITS ":" presplits_value ";"
-						{
-							drv.data.setPreSplits($3);
-						}
-						| PRESPLITS ":" presplits_value error
-						{
-							MISSING_SC(@3);
-						}
-						| PRESPLITS ":" error ";"
-						{
-							ERROR(@3, "Value for presplits is either \"on\" or \"off\"");
-							yyerrok;
-						}
 						| MAX_MAGNITUDE ":" DOUBLE ";"
 						{
 							drv.data.setMaxVersorMagnitude($3);
@@ -279,9 +263,6 @@ header			: PROB ":" problemType ";"
 						{
 							MISSING_SC(@3);
 						}
-
-presplits_value	: ON { $$ = true; }
-								| OFF { $$ = false; }
 
 symbol			: VAR identList IN doubleInterval ";"
 						{
@@ -1090,6 +1071,14 @@ option	: TRANS transType ";"
 		| NO_CACHE ";"
 		{
 			drv.data.setBernsteinCaching(false);
+		}
+		| PRESPLITS ";"
+		{
+			drv.data.setPreSplits(true);
+		}
+		| PRESPLITS error
+		{
+			MISSING_SC(@2);
 		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
