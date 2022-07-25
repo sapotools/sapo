@@ -382,6 +382,16 @@ public:
     return bern_caching;
   }
 
+  void setUseInvariantDirections(bool flag)
+  {
+    use_invariant_directions = flag;
+  }
+
+  bool getUseInvariantDirections() const
+  {
+    return use_invariant_directions;
+  }
+
   /**
    * @brief Fix boundaries according to the whole input
    *
@@ -440,6 +450,7 @@ protected:
   unsigned dynamic_degree;
   Sapo::joinApproxType approx_type;
   bool bern_caching;
+  bool use_invariant_directions;
 
   // addition of direction to params or vars
   void addDirectionConstraint(Direction *d, bool isVar);

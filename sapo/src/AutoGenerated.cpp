@@ -254,6 +254,27 @@ Bundle getBundle(const InputData &id)
     trim_unused_directions(directions, LB, UB, template_matrix);
   }
 
+  Bundle bundle(directions, LB, UB,
+                computeTemplate(directions, {}, template_matrix));
+
+  if (!id.getUseInvariantDirections()) {
+    return bundle;
+  }
+
+  // add invariant directions to the initial set
+  Polytope P = bundle;
+
+  for (const auto &dir: id.getInvariant()) {
+    auto invVector = dir->getConstraintVector(id.getVarSymbols());
+
+    directions.push_back(std::move(invVector));
+    auto opt_res = P.minimize(directions.back());
+    LB.push_back(opt_res.optimum());
+
+    opt_res = P.maximize(directions.back());
+    UB.push_back(opt_res.optimum());
+  }
+
   return Bundle(directions, LB, UB,
                 computeTemplate(directions, {}, template_matrix));
 }

@@ -83,6 +83,7 @@ listing			return yy::parser::make_LISTING(loc);
 packaging			return yy::parser::make_PACKAGING(loc);
 merging			return yy::parser::make_MERGING(loc);
 no_caching		return yy::parser::make_NO_CACHE(loc);
+use_invariant_dirs		return yy::parser::make_USE_INVARIANT_DIRS(loc);
 
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);

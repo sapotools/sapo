@@ -94,6 +94,7 @@
 	ITER
 	PSPLITS
 	PRESPLITS
+	USE_INVARIANT_DIRS
 	MAX_MAGNITUDE
 	DIR
 	TEMPL
@@ -1077,6 +1078,14 @@ option	: TRANS transType ";"
 			drv.data.setPreSplits(true);
 		}
 		| PRESPLITS error
+		{
+			MISSING_SC(@2);
+		}
+		| USE_INVARIANT_DIRS ";"
+		{
+			drv.data.setUseInvariantDirections(true);
+		}
+		| USE_INVARIANT_DIRS error
 		{
 			MISSING_SC(@2);
 		}
