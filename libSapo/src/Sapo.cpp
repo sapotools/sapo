@@ -782,23 +782,33 @@ approx_funct_type select_approx(Sapo::joinApproxType approx)
 }
 
 /// @ private
-bool is_k_invariant(Evolver<double> *evolver,
-                    const SetsUnion<Bundle> &reached_set, const unsigned int k)
+unsigned int is_max_k_invariant(Evolver<double> *evolver,
+                                const SetsUnion<Bundle> &reached_set,
+                                const unsigned int max_k)
 {
   auto T_reached = reached_set;
-  for (unsigned int i = 1; i < k; ++i) {
-    T_reached = intersect(reached_set, evolver->operator()(T_reached));
+  for (unsigned int k = 1; k < max_k; ++k) {
+    T_reached = evolver->operator()(T_reached);
+    if (reached_set.includes(T_reached)) {
+      return k;
+    }
+    T_reached = intersect(reached_set, T_reached);
   }
 
   T_reached = evolver->operator()(T_reached);
 
-  return reached_set.includes(T_reached);
+  if (reached_set.includes(T_reached)) {
+    return max_k;
+  }
+
+  return 0;
 }
 
 /// @ private
-bool is_k_invariant(Evolver<double> *evolver,
-                    const SetsUnion<Bundle> &reached_set,
-                    const SetsUnion<Polytope> &param_set, const unsigned int k)
+unsigned int is_max_k_invariant(Evolver<double> *evolver,
+                                const SetsUnion<Bundle> &reached_set,
+                                const SetsUnion<Polytope> &param_set,
+                                const unsigned int max_k)
 {
   // alias the transformation function
   auto T = [&evolver, &param_set](const SetsUnion<Bundle> &set) {
@@ -806,13 +816,21 @@ bool is_k_invariant(Evolver<double> *evolver,
   };
 
   auto T_reached = reached_set;
-  for (unsigned int i = 1; i < k; ++i) {
-    T_reached = intersect(reached_set, T(T_reached));
+  for (unsigned int k = 1; k < max_k; ++k) {
+    T_reached = T(T_reached);
+    if (reached_set.includes(T_reached)) {
+      return k;
+    }
+    T_reached = intersect(reached_set, T_reached);
   }
 
   T_reached = T(T_reached);
 
-  return reached_set.includes(T_reached);
+  if (reached_set.includes(T_reached)) {
+    return max_k;
+  }
+
+  return 0;
 }
 
 /// @ private
@@ -825,8 +843,9 @@ Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
   auto T_reached = reached_set;
   k_induction_proof.push_back(T_reached);
   for (unsigned int i = 1; i < k; ++i) {
-    T_reached = intersect(reached_set, evolver->operator()(T_reached));
+    T_reached = evolver->operator()(T_reached);
     k_induction_proof.push_back(T_reached);
+    T_reached = intersect(reached_set, T_reached);
   }
 
   T_reached = evolver->operator()(T_reached);
@@ -864,57 +883,25 @@ Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
 }
 
 /// @ private
-bool is_k_invariant_exact(Evolver<double> *evolver,
-                          const SetsUnion<Bundle> &reached_set,
-                          const SetsUnion<Bundle> &Tk, const unsigned int k)
+inline bool is_reached_set_invariant(Evolver<double> *evolver,
+                                     const SetsUnion<Bundle> &reached_set,
+                                     const SetsUnion<Bundle> &Tk)
 {
-  auto T_reached = Tk;
-
-  for (unsigned int i = 1; i < k; ++i) {
-    T_reached = evolver->operator()(T_reached);
-
-    if (!reached_set.includes(T_reached)) {
-      return false;
-    }
-
-    if (T_reached.is_empty()) {
-      return true;
-    }
-  }
-
-  T_reached = evolver->operator()(T_reached);
-
-  return reached_set.includes(T_reached);
+  return reached_set.includes(evolver->operator()(Tk));
 }
 
 /// @ private
-bool is_k_invariant_exact(Evolver<double> *evolver,
-                          const SetsUnion<Bundle> &reached_set,
-                          const SetsUnion<Polytope> &param_set,
-                          const SetsUnion<Bundle> &Tk, const unsigned int k)
+bool is_reached_set_invariant(Evolver<double> *evolver,
+                              const SetsUnion<Bundle> &reached_set,
+                              const SetsUnion<Polytope> &param_set,
+                              const SetsUnion<Bundle> &Tk)
 {
   // alias the transformation function
   auto T = [&evolver, &param_set](const SetsUnion<Bundle> &set) {
     return evolver->operator()(set, param_set);
   };
 
-  auto T_reached = Tk;
-
-  for (unsigned int i = 1; i < k; ++i) {
-    T_reached = T(T_reached);
-
-    if (!reached_set.includes(T_reached)) {
-      return false;
-    }
-
-    if (T_reached.is_empty()) {
-      return true;
-    }
-  }
-
-  T_reached = T(T_reached);
-
-  return reached_set.includes(T_reached);
+  return reached_set.includes(T(Tk));
 }
 
 /**
@@ -972,31 +959,38 @@ InvariantValidationResult Sapo::check_invariant(
     }
   };
 
-  auto is_k_inv = [&sapo, &pSet](const SetsUnion<Bundle> &reached_set,
-                                 const SetsUnion<Bundle> &Tk,
-                                 const unsigned &k) {
+  auto is_max_k_inv = [&sapo, &pSet](const SetsUnion<Bundle> &reached_set,
+                                     const SetsUnion<Bundle> &Tk,
+                                     const unsigned int &max_k) {
     if (sapo->join_approx == Sapo::NO_APPROX) {
+      bool invariant;
       if (sapo->dynamical_system().parameters().size() > 0) {
-        return is_k_invariant_exact(sapo->evolver(), reached_set, pSet, Tk, k);
+        invariant
+            = is_reached_set_invariant(sapo->evolver(), reached_set, pSet, Tk);
+      } else {
+        invariant = is_reached_set_invariant(sapo->evolver(), reached_set, Tk);
       }
-      return is_k_invariant_exact(sapo->evolver(), reached_set, Tk, k);
+
+      return static_cast<unsigned int>(invariant ? 1 : 0);
     }
 
     if (sapo->dynamical_system().parameters().size() > 0) {
-      return is_k_invariant(sapo->evolver(), reached_set, pSet, k);
+      return is_max_k_invariant(sapo->evolver(), reached_set, pSet, max_k);
+    } else {
+      return is_max_k_invariant(sapo->evolver(), reached_set, max_k);
     }
-    return is_k_invariant(sapo->evolver(), reached_set, k);
   };
 
   while (epoch_horizon == 0 || flowpipe.size() < epoch_horizon) {
+    auto real_k = is_max_k_inv(reached_set, Tk_approx, k);
 
-    if (is_k_inv(reached_set, Tk_approx, k)) {
+    if (real_k > 0) {
       if (dynamical_system().parameters().size() > 0) {
         return {InvariantValidationResult::PROVED, std::move(flowpipe),
-                get_k_invariant_proof(evolver(), reached_set, pSet, k)};
+                get_k_invariant_proof(evolver(), reached_set, pSet, real_k)};
       }
       return {InvariantValidationResult::PROVED, std::move(flowpipe),
-              get_k_invariant_proof(evolver(), reached_set, k)};
+              get_k_invariant_proof(evolver(), reached_set, real_k)};
     }
 
     // update TK
