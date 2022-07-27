@@ -48,7 +48,7 @@ void directionUseConstraints(glp_prob **lp,
 void oldTemplateConstraints(
     glp_prob **lp, const std::vector<std::vector<double>> A,
     const std::vector<std::vector<double>> C, unsigned *startingIndex,
-    const std::vector<std::vector<unsigned int>> &oldTemplate, unsigned Pn);
+    const std::set<std::vector<unsigned int>> &oldTemplate, unsigned Pn);
 
 // adds to lp the constraints that each parallelotope has linearly independent
 // rows
@@ -67,15 +67,16 @@ double findDirectionBound(std::vector<std::vector<double>> A,
                           std::vector<double> LB, std::vector<double> UB,
                           std::vector<double> dir, bool minimize);
 
-void trim_unused_directions(
+std::set<std::vector<unsigned int>> 
+trim_unused_directions(
     std::vector<std::vector<double>> &directions, std::vector<double> &LB,
     std::vector<double> &UB,
-    std::vector<std::vector<unsigned int>> &template_matrix)
+    const std::set<std::vector<unsigned int>> &templates)
 {
   /* init new_pos by assigning 1 to any useful direction and
    * 0 to those not mentioned by any template */
   std::vector<int> new_pos(directions.size(), 0);
-  for (const std::vector<unsigned int> &T: template_matrix) {
+  for (const std::vector<unsigned int> &T: templates) {
     for (const unsigned int &dir: T) {
       new_pos[dir] = 1;
     }
@@ -110,11 +111,18 @@ void trim_unused_directions(
   UB.resize(num_of_directions);
 
   /* re-map the template matrix */
-  for (std::vector<unsigned int> &T: template_matrix) {
-    for (unsigned int &dir: T) {
+
+  std::set<std::vector<unsigned int>> output;
+  for (const std::vector<unsigned int> &T: templates) {
+    auto new_T = T;
+    for (unsigned int &dir: new_T) {
       dir = new_pos[dir] - 1;
     }
+
+    output.insert(new_T);
   }
+
+  return output;
 }
 
 /*
@@ -142,14 +150,14 @@ void trim_unused_directions(
  * interested in satisfiability and not in optimization
  */
 std::set<std::vector<unsigned int>>
-computeTemplate(const std::vector<std::vector<double>> A,
+computeTemplate(const std::vector<std::vector<double>> &A,
                 const std::vector<std::vector<double>> C,
-                const std::vector<std::vector<unsigned int>> oldTemplate)
+                const std::set<std::vector<unsigned int>> &oldTemplate)
 {
   std::vector<bool> dirCovered(A.size(), false);
-  for (unsigned i = 0; i < oldTemplate.size(); i++) {
-    for (unsigned j = 0; j < oldTemplate[i].size(); j++) {
-      dirCovered[oldTemplate[i][j]] = true;
+  for (const auto &b_template: oldTemplate) {
+    for (const auto &dir: b_template) {
+      dirCovered[dir] = true;
     }
   }
 
@@ -226,57 +234,159 @@ computeTemplate(const std::vector<std::vector<double>> A,
   return std::set<std::vector<unsigned int>>(std::begin(T), std::end(T));
 }
 
-Bundle getBundle(const InputData &id)
+size_t find_linearly_dependent_row(const std::vector<std::vector<double>>& A, 
+                                   const std::vector<double> &v)
+{
+  for (size_t i=0; i<A.size(); ++i) {
+    if (LinearAlgebra::are_linearly_dependent(A[i], v)) {
+      return i;
+    }
+  }
+
+  return A.size();
+}
+
+std::set<std::vector<unsigned int>> 
+get_templates(const InputData &id, const std::vector<size_t> &template_id)
+{
+  std::set<std::vector<unsigned int>> templates;
+
+  // map templates on the filtered directions set
+  for (std::vector<unsigned int> b_template: id.getTemplate()) {
+    for (auto &dir_id: b_template) {
+      dir_id = template_id[dir_id];
+    }
+
+    templates.insert(b_template);
+  }
+
+  return templates;
+}
+
+/**
+ * @brief Collect directions and boundaries
+ * 
+ * This method collects directions and boundaries and removes 
+ * all the linearly equivalent directions. This method 
+ * returns the template set.
+ * 
+ * @param[out] directions is the vector of the collected directions
+ * @param[out] LB is the vector of the lower bounds
+ * @param[out] UB is the vector of the upper bounds
+ * @param[in] id is the input data object
+ * @return the template set
+ */
+std::set<std::vector<unsigned int>>
+collect_constraints(std::vector<std::vector<double>> &directions,
+                    std::vector<double> &LB, std::vector<double> &UB, const InputData &id)
 {
   using namespace LinearAlgebra;
 
   auto variables = id.getVarSymbols();
 
-  std::vector<std::vector<double>> directions;
-  std::vector<double> LB, UB;
+  std::vector<size_t> template_ids(id.getDirectionsNum());
 
   // get directions and boundaries from input data
   for (unsigned i = 0; i < id.getDirectionsNum(); i++) {
-    directions.push_back(id.getDirection(i)->getConstraintVector(variables));
-    UB.push_back(id.getDirection(i)->getUB());
-    LB.push_back(id.getDirection(i)->getLB());
-  }
-  std::vector<std::vector<unsigned int>> template_matrix = id.getTemplate();
+    auto dir = id.getDirection(i)->getConstraintVector(variables);
+    auto pos = find_linearly_dependent_row(directions, dir);
 
+    template_ids[i] = pos;
+    if (pos == directions.size()) {
+      directions.push_back(std::move(dir));
+      UB.push_back(id.getDirection(i)->getUB());
+      LB.push_back(id.getDirection(i)->getLB());
+    } else {  // not necessary if we assume that bound
+              // optimization has been performed
+      double coeff = directions[pos]/dir;
+
+      auto new_UB = coeff * id.getDirection(i)->getUB();
+      auto new_LB = coeff * id.getDirection(i)->getLB();
+
+      if (coeff<0) {
+        std::swap(new_UB, new_LB);
+      } 
+
+      if (LB[pos]>new_LB) {
+        LB[pos] = new_LB;
+      }
+
+      if (UB[pos]<new_UB) {
+        UB[pos] = new_UB;
+      }
+
+    }
+  }
+
+  return get_templates(id, template_ids);
+}
+
+Bundle addInvariantDirections(const InputData &id, const Bundle& bundle)
+{
+  // add invariant directions to the initial set
+  Polytope P = bundle;
+
+  auto directions = bundle.directions();
+  auto LB = bundle.lower_bounds();
+  auto UB = bundle.upper_bounds();
+
+  bool added_dirs = false;
+
+  for (const auto &dir: id.getInvariant()) {
+    auto invVector = dir->getConstraintVector(id.getVarSymbols());
+    auto pos = find_linearly_dependent_row(directions, invVector);
+
+    // if the direction is already in the bundle avoid to insert it
+    if (pos == directions.size()) {
+      added_dirs = true;
+      directions.push_back(std::move(invVector));
+      auto opt_res = P.minimize(directions.back());
+      LB.push_back(opt_res.optimum());
+
+      opt_res = P.maximize(directions.back());
+      UB.push_back(opt_res.optimum());
+    }
+  }
+
+  if (added_dirs) {
+    return Bundle(directions, LB, UB,
+                  computeTemplate(directions, {}, bundle.templates()));
+  }
+
+  return bundle;
+}
+
+Bundle getBundle(const InputData &id)
+{
+  using namespace LinearAlgebra;
+
+  std::vector<std::vector<double>> directions;
+  std::vector<double> LB, UB;
+
+  // the following call also filter linearly dependent direction.
+  // These should be already removed by InputData methods, but 
+  // better check twice that none 
+  auto templates = collect_constraints(directions, LB, UB, id);
+  
   /* if users have specified at least one template, ... */
-  if (template_matrix.size() > 0) {
+  if (templates.size() > 0) {
     /* ... they really want to exclusively use those templates.
        Thus, trim the unused directions. */
 
     /* Why can't simply uses the template themselve?
        Because Bundle:transform in AFO mode assumes that
        each of the directions belongs to a template at least. */
-    trim_unused_directions(directions, LB, UB, template_matrix);
+    templates = trim_unused_directions(directions, LB, UB, templates);
   }
 
   Bundle bundle(directions, LB, UB,
-                computeTemplate(directions, {}, template_matrix));
+                computeTemplate(directions, {}, templates));
 
-  if (!id.getUseInvariantDirections()) {
-    return bundle;
+  if (id.getUseInvariantDirections()) {
+    return addInvariantDirections(id, bundle);
   }
 
-  // add invariant directions to the initial set
-  Polytope P = bundle;
-
-  for (const auto &dir: id.getInvariant()) {
-    auto invVector = dir->getConstraintVector(id.getVarSymbols());
-
-    directions.push_back(std::move(invVector));
-    auto opt_res = P.minimize(directions.back());
-    LB.push_back(opt_res.optimum());
-
-    opt_res = P.maximize(directions.back());
-    UB.push_back(opt_res.optimum());
-  }
-
-  return Bundle(directions, LB, UB,
-                computeTemplate(directions, {}, template_matrix));
+  return bundle;
 }
 
 std::vector<Expression<>> &
@@ -672,7 +782,7 @@ void directionUseConstraints(glp_prob **lp, std::vector<std::vector<double>> A,
 void oldTemplateConstraints(
     glp_prob **lp, const std::vector<std::vector<double>> A,
     const std::vector<std::vector<double>> C, unsigned *startingIndex,
-    const std::vector<std::vector<unsigned int>> &oldTemplate, unsigned Pn)
+    const std::set<std::vector<unsigned int>> &oldTemplate, unsigned Pn)
 {
   unsigned m = A.size(); // dirs num = rows of A
   unsigned c = C.size(); // constr num = assumptions = rows of C
@@ -681,14 +791,15 @@ void oldTemplateConstraints(
 
   unsigned index = *startingIndex;
 
-  for (unsigned P = 0; P < oldTemplate.size(); P++) {
-    for (unsigned d = 0; d < oldTemplate[P].size(); d++) {
+  unsigned int P = 0;
+  for (const auto &b_template: oldTemplate) {
+    for (const auto &dir: b_template) {
       int *indeces = (int *)malloc((cols + 1) * sizeof(int));
       double *constr = (double *)malloc((cols + 1) * sizeof(double));
       int len = 1;
       indeces[0] = 0;
       constr[0] = 0;
-      indeces[1] = map_paral(oldTemplate[P][d], P, Pn) + 1;
+      indeces[1] = map_paral(dir, P, Pn) + 1;
       constr[1] = 1;
       glp_add_rows(*lp, 1);
       glp_set_row_bnds(*lp, index, GLP_FX, 1, 1);
@@ -697,6 +808,7 @@ void oldTemplateConstraints(
       free(indeces);
       index++;
     }
+    ++P;
   }
 
   *startingIndex = index;
