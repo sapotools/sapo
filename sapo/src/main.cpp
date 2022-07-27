@@ -206,9 +206,8 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
   print_variables_and_parameters(os, model);
   os << OF::field_separator() << OF::field_begin("task")
      << "\"invariant validation\"" << OF::field_end() << OF::field_separator()
-     << OF::field_begin("invariant")
-     << model.invariant() << OF::field_end() << OF::field_separator()
-     << OF::field_begin("epochs")
+     << OF::field_begin("invariant") << model.invariant() << OF::field_end()
+     << OF::field_separator() << OF::field_begin("epochs")
      << static_cast<unsigned int>(result.flowpipe.size()) << OF::field_end()
      << OF::field_separator() << OF::field_begin("result");
 
@@ -228,8 +227,8 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
 
   os << OF::field_end() << OF::field_separator();
   if (model.parameters().size() != 0) {
-    os << OF::field_begin("parameter set") << model.parameter_set() << OF::field_end()
-       << OF::field_separator();
+    os << OF::field_begin("parameter set") << model.parameter_set()
+       << OF::field_end() << OF::field_separator();
   }
   os << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end();
 

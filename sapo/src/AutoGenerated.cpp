@@ -67,11 +67,10 @@ double findDirectionBound(std::vector<std::vector<double>> A,
                           std::vector<double> LB, std::vector<double> UB,
                           std::vector<double> dir, bool minimize);
 
-std::set<std::vector<unsigned int>> 
-trim_unused_directions(
-    std::vector<std::vector<double>> &directions, std::vector<double> &LB,
-    std::vector<double> &UB,
-    const std::set<std::vector<unsigned int>> &templates)
+std::set<std::vector<unsigned int>>
+trim_unused_directions(std::vector<std::vector<double>> &directions,
+                       std::vector<double> &LB, std::vector<double> &UB,
+                       const std::set<std::vector<unsigned int>> &templates)
 {
   /* init new_pos by assigning 1 to any useful direction and
    * 0 to those not mentioned by any template */
@@ -234,10 +233,10 @@ computeTemplate(const std::vector<std::vector<double>> &A,
   return std::set<std::vector<unsigned int>>(std::begin(T), std::end(T));
 }
 
-size_t find_linearly_dependent_row(const std::vector<std::vector<double>>& A, 
+size_t find_linearly_dependent_row(const std::vector<std::vector<double>> &A,
                                    const std::vector<double> &v)
 {
-  for (size_t i=0; i<A.size(); ++i) {
+  for (size_t i = 0; i < A.size(); ++i) {
     if (LinearAlgebra::are_linearly_dependent(A[i], v)) {
       return i;
     }
@@ -246,7 +245,7 @@ size_t find_linearly_dependent_row(const std::vector<std::vector<double>>& A,
   return A.size();
 }
 
-std::set<std::vector<unsigned int>> 
+std::set<std::vector<unsigned int>>
 get_templates(const InputData &id, const std::vector<size_t> &template_id)
 {
   std::set<std::vector<unsigned int>> templates;
@@ -265,11 +264,11 @@ get_templates(const InputData &id, const std::vector<size_t> &template_id)
 
 /**
  * @brief Collect directions and boundaries
- * 
- * This method collects directions and boundaries and removes 
- * all the linearly equivalent directions. This method 
+ *
+ * This method collects directions and boundaries and removes
+ * all the linearly equivalent directions. This method
  * returns the template set.
- * 
+ *
  * @param[out] directions is the vector of the collected directions
  * @param[out] LB is the vector of the lower bounds
  * @param[out] UB is the vector of the upper bounds
@@ -278,7 +277,8 @@ get_templates(const InputData &id, const std::vector<size_t> &template_id)
  */
 std::set<std::vector<unsigned int>>
 collect_constraints(std::vector<std::vector<double>> &directions,
-                    std::vector<double> &LB, std::vector<double> &UB, const InputData &id)
+                    std::vector<double> &LB, std::vector<double> &UB,
+                    const InputData &id)
 {
   using namespace LinearAlgebra;
 
@@ -296,32 +296,31 @@ collect_constraints(std::vector<std::vector<double>> &directions,
       directions.push_back(std::move(dir));
       UB.push_back(id.getDirection(i)->getUB());
       LB.push_back(id.getDirection(i)->getLB());
-    } else {  // not necessary if we assume that bound
-              // optimization has been performed
-      double coeff = directions[pos]/dir;
+    } else { // not necessary if we assume that bound
+             // optimization has been performed
+      double coeff = directions[pos] / dir;
 
       auto new_UB = coeff * id.getDirection(i)->getUB();
       auto new_LB = coeff * id.getDirection(i)->getLB();
 
-      if (coeff<0) {
+      if (coeff < 0) {
         std::swap(new_UB, new_LB);
-      } 
+      }
 
-      if (LB[pos]>new_LB) {
+      if (LB[pos] > new_LB) {
         LB[pos] = new_LB;
       }
 
-      if (UB[pos]<new_UB) {
+      if (UB[pos] < new_UB) {
         UB[pos] = new_UB;
       }
-
     }
   }
 
   return get_templates(id, template_ids);
 }
 
-Bundle addInvariantDirections(const InputData &id, const Bundle& bundle)
+Bundle addInvariantDirections(const InputData &id, const Bundle &bundle)
 {
   // add invariant directions to the initial set
   Polytope P = bundle;
@@ -364,10 +363,10 @@ Bundle getBundle(const InputData &id)
   std::vector<double> LB, UB;
 
   // the following call also filter linearly dependent direction.
-  // These should be already removed by InputData methods, but 
-  // better check twice that none 
+  // These should be already removed by InputData methods, but
+  // better check twice that none
   auto templates = collect_constraints(directions, LB, UB, id);
-  
+
   /* if users have specified at least one template, ... */
   if (templates.size() > 0) {
     /* ... they really want to exclusively use those templates.
