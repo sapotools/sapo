@@ -552,10 +552,12 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
  */
 OptimizationResult<double>
 LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
-                       const SymbolicAlgebra::Expression<> &obj_fun) const
+                       SymbolicAlgebra::Expression<> obj_fun) const
 {
   using namespace SymbolicAlgebra;
 
+  obj_fun.expand();
+  
   LinearAlgebra::Vector<double> obj_fun_coeffs;
   Expression<> const_term(obj_fun);
 
@@ -586,9 +588,11 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
  */
 OptimizationResult<double>
 LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
-                       const SymbolicAlgebra::Expression<> &obj_fun) const
+                       SymbolicAlgebra::Expression<> obj_fun) const
 {
   using namespace SymbolicAlgebra;
+
+  obj_fun.expand();
 
   LinearAlgebra::Vector<double> obj_fun_coeffs;
   Expression<> const_term(obj_fun);

@@ -303,7 +303,7 @@ public:
    */
   OptimizationResult<double>
   minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
-           const SymbolicAlgebra::Expression<> &obj_fun) const;
+           SymbolicAlgebra::Expression<> obj_fun) const;
 
   /**
    * Maximize the linear system
@@ -314,7 +314,7 @@ public:
    */
   OptimizationResult<double>
   maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
-           const SymbolicAlgebra::Expression<> &obj_fun) const;
+           SymbolicAlgebra::Expression<> obj_fun) const;
 
   /**
    * Establish whether a linear system has solutions
