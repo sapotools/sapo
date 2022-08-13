@@ -66,8 +66,8 @@ public:
    */
   enum joinApproxType {
     NO_APPROX,  // no approximation is used (listing)
-    CHAIN_JOIN, // chain-join approximation (packaging)
-    FULL_JOIN   // full-join approximation (merging)
+    CHAIN_JOIN, // chain-join approximation (merging)
+    FULL_JOIN   // full-join approximation (packaging)
   };
 
   joinApproxType join_approx; //!< join approximation type for `k`-induction

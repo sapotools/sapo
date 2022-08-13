@@ -1063,11 +1063,11 @@ option	: TRANS transType ";"
 		}
 		| K_IND_JOIN PACKAGING ";"
 		{
-			drv.data.setApproxType(Sapo::CHAIN_JOIN);
+			drv.data.setApproxType(Sapo::FULL_JOIN);
 		}
 		| K_IND_JOIN MERGING ";"
 		{
-			drv.data.setApproxType(Sapo::FULL_JOIN);
+			drv.data.setApproxType(Sapo::CHAIN_JOIN);
 		}
 		| NO_CACHE ";"
 		{
