@@ -302,3 +302,34 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_apply, T, test_types)
         BOOST_REQUIRE_MESSAGE((eval == t_it->second), ss.str());
     }
 }
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_derivative, T, test_types)
+{
+    Symbol<T> x("x"), y("y"), z("z");
+
+    std::list<std::pair<Expression<T>, std::list<std::pair<Symbol<T>, Expression<T>>>>> tests
+    {
+        {3+x, {{x, 1}, {y, 0}, {z, 0}}},
+        {3+4*x, {{x, 4}, {y, 0}, {z, 0}}},
+        {-x*y, {{x, -y}, {y, -x}, {z, 0}}},
+        {3+4*x-x*y, {{x, 4-y}, {y, -x}, {z, 0}}},
+        {z*z, {{x, 0}, {y, 0}, {z, 2*z}}},
+        {3+4*y-x*y+z*(z*y)*z, {{x, -y}, {y, 4-x+z*z*z}, {z, 3*z*z*y}}},
+        {-y*(x-z*(z*z)-4)+3, {{x, -y}, {y, 4-x+z*z*z}, {z, 3*z*z*y}}},
+        {2*(y + z*y), {{x, 0}, {y, 2+2*z}, {z, 2*y}}},
+        /* libSapo also supports quotient derivatives, but `are_equivalent`
+           does not support rational expressions yet
+        {x/y, {{x, 1/y}, {y, -x/(2*y*y)}, {z, 0}}},
+        {2*(x*y + x*z*y)/(z+x), {{x, 0}, {y, 2+2*z}, {z, 2*y}}},
+        */
+    };
+
+    for (auto t_it = std::begin(tests); t_it != std::end(tests); ++t_it) {
+        for (auto d_it = std::begin(t_it->second); d_it != std::end(t_it->second); ++d_it) {
+            auto eval = t_it->first.get_derivative_wrt(d_it->first);
+            std::ostringstream ss;
+            ss << "("<< t_it->first << ").get_derivative_wrt(" << d_it->first<< ") == "<< eval << "!=" << d_it->second;
+            BOOST_REQUIRE_MESSAGE(are_equivalent(eval,d_it->second), ss.str());
+        }
+    }
+}

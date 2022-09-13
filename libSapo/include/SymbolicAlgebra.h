@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <iterator>
 #include <type_traits>
 
 #ifdef WITH_THREADS
@@ -374,6 +375,16 @@ public:
    * @return the denominator of the expression
    */
   Expression<C> get_denominator() const;
+
+  /**
+   * @brief Get the derivative of the expression
+   *
+   * @param symbol is the symbol with respect to the derivative should be
+   * computed
+   * @return the derivative of the current expression with respect to
+   *        `symbol`
+   */
+  Expression<C> get_derivative_wrt(const Symbol<C> &symbol) const;
 
   /**
    * @brief Get the coefficient of a term having a given degree
@@ -1567,6 +1578,20 @@ public:
   }
 
   /**
+   * @brief Compute the derivative of an expression
+   *
+   * This method computes the derivative of the current expression
+   * with respect to a symbol provided as the parameter.
+   *
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @return the derivative of the current expression with respect
+   *         to the symbol associated to `symbol_id`
+   */
+  virtual base_expression_type<C> *
+  get_derivative_wrt(const SymbolIdType &symbol_id) const = 0;
+
+  /**
    * @brief Destroy the base expression type object
    */
   virtual ~base_expression_type() {}
@@ -2022,6 +2047,25 @@ public:
     (void)symbol_id;
 
     return 0;
+  }
+
+  /**
+   * @brief Compute the derivative of an expression
+   *
+   * This method computes the derivative of the current expression
+   * with respect to a symbol provided as the parameter.
+   *
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @return the derivative of the current expression with respect
+   *         to the symbol associated to `symbol_id`
+   */
+  base_expression_type<C> *
+  get_derivative_wrt(const SymbolIdType &symbol_id) const
+  {
+    (void)symbol_id;
+
+    return new constant_type<C>(0);
   }
 
   /**
@@ -2654,6 +2698,29 @@ public:
   }
 
   /**
+   * @brief Compute the derivative of an expression
+   *
+   * This method computes the derivative of the current expression
+   * with respect to a symbol provided as the parameter.
+   *
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @return the derivative of the current expression with respect
+   *         to the symbol associated to `symbol_id`
+   */
+  base_expression_type<C> *
+  get_derivative_wrt(const SymbolIdType &symbol_id) const
+  {
+    base_expression_type<C> *res = new constant_type<C>(0);
+
+    for (const auto &term: _sum) {
+      res = res->add(term->get_derivative_wrt(symbol_id));
+    }
+
+    return res;
+  }
+
+  /**
    * @brief Print the expression in an output stream
    *
    * @param os is the output stream in which the expression must be printed
@@ -2710,6 +2777,10 @@ class finite_prod_type : public base_expression_type<C>
   std::list<base_expression_type<C> *>
       _denominator; //!< The denominator list of this product.
 
+public:
+  typedef typename Symbol<C>::SymbolIdType SymbolIdType;
+
+private:
   static void print_list(std::ostream &os,
                          const std::list<base_expression_type<C> *> &_list,
                          const C constant = 1)
@@ -2745,9 +2816,63 @@ class finite_prod_type : public base_expression_type<C>
   {
   }
 
-public:
-  typedef typename Symbol<C>::SymbolIdType SymbolIdType;
+  /**
+   * @brief Compute the derivative of a partial product list
+   *
+   * @param list of terms whose derivative must be computed
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @param pos initial position in the list to be considered
+   * @return the derivative with respect to the symbol associated to
+   *    `symbol_id` of the product of the expressions in the list
+   */
+  static base_expression_type<C> *_prod_list_derivative(
+      const std::list<base_expression_type<C> *> &list,
+      const SymbolIdType &symbol_id,
+      typename std::list<base_expression_type<C> *>::const_iterator pos)
+  {
+    base_expression_type<C> *term1 = (*pos)->get_derivative_wrt(symbol_id);
 
+    if (std::next(pos) == std::end(list)) {
+      return term1;
+    }
+
+    for (auto pos2 = std::next(pos); pos2 != std::end(list); ++pos2) {
+      term1 = term1->multiply((*pos2)->clone());
+    }
+
+    base_expression_type<C> *term2 = (*pos)->clone();
+    term2 = term2->multiply(_prod_list_derivative(list, symbol_id, ++pos));
+
+    return term1->add(term2);
+  }
+
+  /**
+   * @brief Compute the derivative of a product list
+   *
+   * @param list of terms whose derivative must be computed
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @param pos initial position in the list to be considered
+   * @return the derivative with respect to the symbol associated to
+   *    `symbol_id` of the product of the expressions in the list
+   */
+  static base_expression_type<C> *
+  _prod_list_derivative(const std::list<base_expression_type<C> *> &list,
+                        const SymbolIdType &symbol_id)
+  {
+    if (list.size() == 0) {
+      return new constant_type<C>(0);
+    }
+
+    if (list.size() == 1) {
+      return list.front()->get_derivative_wrt(symbol_id);
+    }
+
+    return _prod_list_derivative(list, symbol_id, std::begin(list));
+  }
+
+public:
   /**
    * @brief Build an empty finite product
    */
@@ -3380,6 +3505,62 @@ public:
   }
 
   /**
+   * @brief Compute the derivative of an expression
+   *
+   * This method computes the derivative of the current expression
+   * with respect to a symbol provided as the parameter.
+   *
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @return the derivative of the current expression with respect
+   *         to the symbol associated to `symbol_id`
+   */
+  base_expression_type<C> *
+  get_derivative_wrt(const SymbolIdType &symbol_id) const
+  {
+    // let be c*f(symbol)/g(symbol) the expression where c is a constant
+    // and f and g are products of expressions in symbol
+
+    base_expression_type<C> *res = new constant_type<C>(_constant);
+
+    // evaluate the derivative of f(symbol)
+    base_expression_type<C> *num_dev
+        = _prod_list_derivative(_numerator, symbol_id);
+
+    // if the denominator is empty, i.e., g(symbol) == 1
+    if (_denominator.size() == 0) {
+
+      // then the derivative is c*f'(symbol)
+      return res->multiply(num_dev);
+    }
+
+    // otherwise, compute the derivative of f(symbol)
+    base_expression_type<C> *denom_dev
+        = _prod_list_derivative(_denominator, symbol_id);
+
+    // evaluate g'*f
+    for (const auto &term: _numerator) {
+      denom_dev = denom_dev->multiply(term->clone());
+    }
+
+    // evaluate f'*g
+    for (const auto &term: _denominator) {
+      num_dev = num_dev->multiply(term->clone());
+    }
+
+    // compute c*( g'*f + f'*g )
+    res = res->multiply(num_dev->subtract(denom_dev));
+
+    // divide everything by g^2
+    for (const auto &term: _denominator) {
+      res = res->divided_by(term->clone());
+      res = res->divided_by(term->clone());
+    }
+
+    return res;
+  }
+
+  /**
    * @brief Print the expression in an output stream
    *
    * @param os is the output stream in which the expression must be printed
@@ -3748,6 +3929,28 @@ public:
   {
     return ((((const symbol_type<C> *)this)->_id == symbol_id) ? 1 : 0);
   }
+
+  /**
+   * @brief Compute the derivative of an expression
+   *
+   * This method computes the derivative of the current expression
+   * with respect to a symbol provided as the parameter.
+   *
+   * @param symbol_id is the id of the symbol with respect to the
+   *               derivative must be computed
+   * @return the derivative of the current expression with respect
+   *         to the symbol associated to `symbol_id`
+   */
+  base_expression_type<C> *
+  get_derivative_wrt(const SymbolIdType &symbol_id) const
+  {
+    if (symbol_id == this->_id) {
+      return new constant_type<C>(1);
+    }
+
+    return new constant_type<C>(0);
+  }
+
   /**
    * @brief Print the expression in an output stream
    *
@@ -3843,6 +4046,12 @@ Expression<C> Expression<C>::get_numerator() const
   }
 
   return Expression<C>(_ex->clone());
+}
+
+template<typename C>
+Expression<C> Expression<C>::get_derivative_wrt(const Symbol<C> &symbol) const
+{
+  return Expression<C>(_ex->get_derivative_wrt(symbol.get_id()));
 }
 
 template<typename C>
