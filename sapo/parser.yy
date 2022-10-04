@@ -92,6 +92,7 @@
 	SPEC
 	ASSUME
 	ITER
+	MAX_K_INDUCTION
 	PSPLITS
 	PRESPLITS
 	USE_INVARIANT_DIRS
@@ -1089,6 +1090,18 @@ option	: TRANS transType ";"
 		{
 			MISSING_SC(@2);
 		}
+		| MAX_K_INDUCTION NATURAL ";"
+		{
+			drv.data.setMaxKInduction($2);
+		}
+		| MAX_K_INDUCTION NATURAL error
+		{
+			MISSING_SC(@3);
+		}
+		| MAX_K_INDUCTION error
+		{
+			MISSING_SC(@2);
+		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
 					| OFO { $$ = AbsSyn::transType::OFO; }
@@ -1167,6 +1180,7 @@ std::string possibleStatements(std::string s)
 		"spec",
 		"assume",
 		"iterations",
+		"max_k_induction"
 		"max_parameter_splits",
 		"presplit_parameters",
 		"max_bundle_magnitude",

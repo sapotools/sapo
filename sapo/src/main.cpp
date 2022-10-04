@@ -40,6 +40,7 @@ Sapo init_sapo(const Model &model, const AbsSyn::InputData &data,
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();
+  sapo.max_k_induction = data.getMaxKInduction();
   sapo.max_param_splits = data.getMaxParameterSplits();
   if (data.isPreSplitsSet()) {
     sapo.num_of_pre_splits = num_of_pre_splits;
@@ -196,9 +197,9 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
 
   InvariantValidationResult result;
 
-  result
-      = sapo.check_invariant(*(model.initial_set()), model.parameter_set(),
-                             model.invariant(), sapo.time_horizon, accounter);
+  result = sapo.check_invariant(*(model.initial_set()), model.parameter_set(),
+                                model.invariant(), sapo.time_horizon,
+                                sapo.max_k_induction, accounter);
 
   using OF = OutputFormater<OSTREAM>;
 

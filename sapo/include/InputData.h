@@ -87,6 +87,16 @@ public:
     iterations = n;
   }
 
+  const unsigned int &getMaxKInduction() const
+  {
+    return max_k_induction;
+  }
+
+  void setMaxKInduction(unsigned int n)
+  {
+    max_k_induction = n;
+  }
+
   const double &getMaxVersorMagnitude() const
   {
     return max_bundle_magnitude;
@@ -419,6 +429,8 @@ protected:
 
   unsigned int iterations;
   bool iter_set;
+
+  unsigned int max_k_induction;
 
   unsigned int max_param_splits;
   bool presplits;

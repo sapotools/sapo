@@ -12,7 +12,7 @@ namespace AbsSyn
 InputData::InputData():
     problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
     paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
-    max_param_splits(0), presplits(false),
+    max_k_induction(0), max_param_splits(0), presplits(false),
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
@@ -55,6 +55,7 @@ ostream &operator<<(ostream &os, const InputData &m)
 {
   os << "Problem: " << m.problem << endl;
   os << "Iterations: " << m.iterations << endl;
+  os << "Max k-induction: " << m.max_k_induction << endl;
 
   os << endl;
   os << "Variables: " << endl;

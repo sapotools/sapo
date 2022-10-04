@@ -914,6 +914,9 @@ bool is_reached_set_invariant(Evolver<double> *evolver,
  *        If `epoch_horizon` is set to be 0, then the
  *        computation does not end until the correct
  *        answer has been found (potentially, forever)
+ * @param max_k_induction is the maximum `k` for
+ *        `k`-induction. When set to 0, `k` is not
+ *        upper-bounded and grows as the epoch increases
  * @param accounter accounts for the computation progress
  * @return a pair<bool, unsigned>. The first value
  * is `true` if and only if the method has identified
@@ -927,7 +930,7 @@ bool is_reached_set_invariant(Evolver<double> *evolver,
 InvariantValidationResult Sapo::check_invariant(
     const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
     const LinearSystem &invariant_candidate, const unsigned int epoch_horizon,
-    ProgressAccounter *accounter)
+    const unsigned int max_k_induction, ProgressAccounter *accounter)
 {
   using namespace LinearAlgebra;
 
@@ -984,6 +987,7 @@ InvariantValidationResult Sapo::check_invariant(
   while (epoch_horizon == 0 || flowpipe.size() < epoch_horizon) {
     auto real_k = is_max_k_inv(reached_set, Tk_approx, k);
 
+    // when reached_set is k-inductive
     if (real_k > 0) {
       if (dynamical_system().parameters().size() > 0) {
         return {InvariantValidationResult::PROVED, std::move(flowpipe),
@@ -994,9 +998,19 @@ InvariantValidationResult Sapo::check_invariant(
     }
 
     // update TK
-    Tk = T(Tk);
+    auto new_Tk = T(Tk);
+    flowpipe.push_back(new_Tk);
 
-    flowpipe.push_back(Tk);
+    // when the last reached region is included in the previous one
+    if (Tk.includes(new_Tk)) {
+      if (dynamical_system().parameters().size() > 0) {
+        return {InvariantValidationResult::PROVED, std::move(flowpipe),
+                get_k_invariant_proof(evolver(), Tk, pSet, 0)};
+      }
+      return {InvariantValidationResult::PROVED, std::move(flowpipe),
+              get_k_invariant_proof(evolver(), Tk, 0)};
+    }
+    std::swap(Tk, new_Tk);
 
     if (!Tk.satisfies(invariant_candidate)) {
 
@@ -1014,9 +1028,15 @@ InvariantValidationResult Sapo::check_invariant(
       reached_set = Tk;
       k = 0;
     }
-    ++k;
+
+    // if k is smaller than the maximum admitted k for the tested
+    // k-induction or there is no maximum
+    if (max_k_induction == 0 || k < max_k_induction) {
+      ++k;
+    }
+
     if (accounter != NULL) {
-      accounter->increase_performed_to(k);
+      accounter->increase_performed_to(flowpipe.size());
     }
   }
 
