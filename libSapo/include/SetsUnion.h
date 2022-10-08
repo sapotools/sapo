@@ -308,6 +308,26 @@ public:
   }
 
   /**
+   * @brief Get the first set in the union
+   *
+   * @return A reference to the first set in the union
+   */
+  inline BASIC_SET_TYPE &front()
+  {
+    return static_cast<std::list<BASIC_SET_TYPE> *>(this)->front();
+  }
+
+  /**
+   * @brief Get the first set in the union
+   *
+   * @return A constant reference to the first set in the union
+   */
+  inline const BASIC_SET_TYPE &front() const
+  {
+    return static_cast<const std::list<BASIC_SET_TYPE> *>(this)->front();
+  }
+
+  /**
    * @brief Add a set to the union
    *
    * This method adds a set `set_obj` to a union of closed sets.

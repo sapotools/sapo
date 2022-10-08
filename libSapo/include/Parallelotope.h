@@ -66,10 +66,17 @@ public:
    *
    * @return a reference to the base vertex
    */
-  const LinearAlgebra::Vector<double> &base_vertex() const
+  inline const LinearAlgebra::Vector<double> &base_vertex() const
   {
     return this->_base_vertex;
   }
+
+  /**
+   * @brief Get the parallelotope's center
+   *
+   * @return the parallelotope's center
+   */
+  LinearAlgebra::Vector<double> center() const;
 
   /**
    * @brief Get the generator lengths

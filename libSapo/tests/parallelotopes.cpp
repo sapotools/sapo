@@ -74,3 +74,30 @@ BOOST_AUTO_TEST_CASE(test_parallelotope_error)
     BOOST_REQUIRE_THROW(Parallelotope(A, {-3,-2}, {1,2,5}), std::domain_error);
     BOOST_REQUIRE_THROW(Parallelotope(A, {-3,-2,2}, {1,2,5}), std::domain_error);
 }
+
+
+BOOST_AUTO_TEST_CASE(test_parallelotope_centers)
+{
+    using namespace LinearAlgebra;
+
+    std::vector<Vector<double>> A = {
+        {1,0,0},
+        {0,1,0},
+        {0,0,1}
+    };
+ 
+    std::vector<Vector<double>> B = {
+        {3,4,0}, // {4.5, 6, 0}
+        {4,-3,0}, // {12, -9, 0}
+        {0,0,1}   // {0, 0, 2}
+    };
+
+    Parallelotope p1(A, {-3,-2,-1}, {1,2,3}),
+                  p2(B, {1,1,1}, {2,5,3});
+    
+    Vector<double> p1_real_center({-1,0,1}),
+                   p2_real_center({0.66,-0.12,2});
+
+    BOOST_CHECK(norm_2(p1.center()-p1_real_center)<1e-15);
+    BOOST_CHECK(norm_2(p2.center()-p2_real_center)<1e-15);
+}

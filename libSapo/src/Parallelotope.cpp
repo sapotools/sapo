@@ -105,6 +105,24 @@ Parallelotope::operator Polytope() const
   return Polytope(A, b);
 }
 
+/**
+ * @brief Get the parallelotope's center
+ *
+ * @return the parallelotope's center
+ */
+LinearAlgebra::Vector<double> Parallelotope::center() const
+{
+  using namespace LinearAlgebra;
+
+  Vector<double> c{base_vertex()};
+
+  for (size_t i = 0; i < dim(); ++i) {
+    c = c + _lengths[i] / 2 * _generators[i];
+  }
+
+  return c;
+}
+
 void swap(Parallelotope &A, Parallelotope &B)
 {
   std::swap(A._generators, B._generators);
