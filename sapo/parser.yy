@@ -93,6 +93,7 @@
 	ASSUME
 	ITER
 	MAX_K_INDUCTION
+	DELTA_THICKNESS
 	PSPLITS
 	PRESPLITS
 	USE_INVARIANT_DIRS
@@ -1102,6 +1103,45 @@ option	: TRANS transType ";"
 		{
 			MISSING_SC(@2);
 		}
+		| DELTA_THICKNESS DOUBLE IN NATURAL ";"
+		{
+			unsigned int missed = $4;
+			if (missed == 0) {
+				WARNING(@4, "The number of missed thresholds before expansion must be positive. Set to 1.");
+
+				missed = 1;
+			}
+
+			if ($2 < 0) {
+				ERROR(@2, "The delta thickness threshold parameter must be non-negative");
+			}
+
+			drv.data.setDeltaThickness($2, missed);
+		}
+		| DELTA_THICKNESS DOUBLE ";"
+		{
+			if ($2 < 0) {
+				ERROR(@2, "The delta thickness threshold parameter must be non-negative");
+			}
+
+			drv.data.setDeltaThickness($2, 1);
+		}
+		| DELTA_THICKNESS DOUBLE IN NATURAL error
+		{
+			MISSING_SC(@5);
+		}
+		| DELTA_THICKNESS DOUBLE IN error
+		{
+			MISSING_SC(@4);
+		}
+		| DELTA_THICKNESS DOUBLE error
+		{
+			MISSING_SC(@3);
+		}
+		| DELTA_THICKNESS error
+		{
+			MISSING_SC(@2);
+		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
 					| OFO { $$ = AbsSyn::transType::OFO; }
@@ -1180,7 +1220,6 @@ std::string possibleStatements(std::string s)
 		"spec",
 		"assume",
 		"iterations",
-		"max_k_induction"
 		"max_parameter_splits",
 		"presplit_parameters",
 		"max_bundle_magnitude",

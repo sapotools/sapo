@@ -1,0 +1,30 @@
+problem: invariant_validation;
+iterations: 300000;
+max_parameter_splits: 0;
+
+
+// variables
+var x;
+var y;
+
+// constants
+const delta = 0.01;
+
+// parameters
+
+// dynamics
+dynamic(x) = x + (x - x*x*x/3 - y + 0.875 ) * delta;
+dynamic(y) = y + 0.08 * ( x + 0.7 - 0.8 * y ) * delta;
+
+// initial set
+direction x in [2.7, 2.8];
+direction y in [-1.1, -1];
+
+
+// invariant
+invariant: y >= -5;
+
+option k_induction_join packaging;
+option max_k_induction 1;
+//option delta_thickness_threshold 5e-3;
+

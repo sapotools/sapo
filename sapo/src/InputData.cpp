@@ -12,7 +12,8 @@ namespace AbsSyn
 InputData::InputData():
     problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
     paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
-    max_k_induction(0), max_param_splits(0), presplits(false),
+    max_k_induction(0), delta_thickness_threshold(0),
+    missed_thickness_threshold(1), max_param_splits(0), presplits(false),
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),

@@ -97,6 +97,22 @@ public:
     max_k_induction = n;
   }
 
+  void setDeltaThickness(const double delta, const unsigned int n = 1)
+  {
+    delta_thickness_threshold = delta;
+    missed_thickness_threshold = n;
+  }
+
+  const double &getDeltaThickness() const
+  {
+    return delta_thickness_threshold;
+  }
+
+  const unsigned int &getMissedThickness() const
+  {
+    return missed_thickness_threshold;
+  }
+
   const double &getMaxVersorMagnitude() const
   {
     return max_bundle_magnitude;
@@ -431,6 +447,9 @@ protected:
   bool iter_set;
 
   unsigned int max_k_induction;
+
+  double delta_thickness_threshold;
+  unsigned int missed_thickness_threshold;
 
   unsigned int max_param_splits;
   bool presplits;

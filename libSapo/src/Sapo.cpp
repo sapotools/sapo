@@ -34,8 +34,9 @@
 Sapo::Sapo(const Model &model, bool cached):
     decomp(0), max_param_splits(0), num_of_pre_splits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
-    join_approx(joinApproxType::NO_APPROX), _evolver(nullptr),
-    assumptions(model.assumptions())
+    max_k_induction(0), delta_thickness_threshold(0),
+    missed_thickness_threshold(1), join_approx(joinApproxType::NO_APPROX),
+    _evolver(nullptr), assumptions(model.assumptions())
 {
   if (cached) {
     _evolver = new CachedEvolver<double>(model.dynamical_system());
@@ -904,19 +905,94 @@ bool is_reached_set_invariant(Evolver<double> *evolver,
   return reached_set.includes(T(Tk));
 }
 
+/// @ private
+double difference_max_thickness(const Bundle &A, const Bundle &B)
+{
+  if (A.directions() != B.directions()) {
+    throw std::runtime_error("difference_max_direction_delta: the "
+                             "two parameters must have the same "
+                             "directions");
+  }
+
+  auto AB = over_approximate_union(A, B);
+
+  double delta = 0;
+
+  for (size_t i = 0; i < AB.size(); ++i) {
+    using namespace LinearAlgebra;
+
+    auto dir_norm = norm_2(AB.get_direction(i));
+
+    delta = std::max(
+        delta, dir_norm * (AB.get_upper_bound(i) - B.get_upper_bound(i)));
+    delta = std::max(
+        delta, dir_norm * (B.get_lower_bound(i) - AB.get_lower_bound(i)));
+  }
+
+  return delta;
+}
+
+/**
+ * @brief Update the reached set and expand Tk when necessary
+ *
+ * After computing the last Tk, the reached set and the Tk approximation
+ * must be updated. When packaging (FULL_JOIN) is used, this method
+ * tests whether the maximal thickness of the difference between new Tk
+ * approximation and the old Tk approximation is under the threshold
+ * specified by `sapo.delta_thickness_threshold`. If this is the case
+ * for more than `sapo.missed_thickness_threshold` times, then `Tk` is
+ * expanded and both `Tk_approx` and `reached_set` are updated.
+ *
+ *
+ * @param[in, out] Tk_approx is the last Tk approximation
+ * @param[in, out] reached_set is the reached set
+ * @param[in, out] Tk is the set reached after `k` steps
+ * @param[in, out] over_Tk_approx is the last Tk approximation whose delta
+ *                  thickness passes the threshold
+ * @param[in, out] cse counts how many epochs elapse from the
+ *                 last Tk approximation whose delta thickness passes
+ *                 the threshold
+ * @param[in] sapo is a `Sapo` instance
+ */
+void update_reached_set_and_approx(SetsUnion<Bundle> &Tk_approx,
+                                   SetsUnion<Bundle> &reached_set,
+                                   SetsUnion<Bundle> &Tk,
+                                   SetsUnion<Bundle> &over_Tk_approx,
+                                   unsigned int &cse, const Sapo &sapo)
+{
+  auto approximate_Tk = select_approx(sapo.join_approx);
+
+  Tk_approx = approximate_Tk(reached_set, Tk);
+
+  if (sapo.join_approx == Sapo::FULL_JOIN) {
+    auto max_thickness
+        = difference_max_thickness(Tk_approx.front(), over_Tk_approx.front());
+
+    if (0 < max_thickness && max_thickness < sapo.delta_thickness_threshold) {
+      ++cse;
+
+      if (cse >= sapo.missed_thickness_threshold) {
+        Tk.expand_by(sapo.delta_thickness_threshold);
+        Tk_approx = approximate_Tk(reached_set, Tk);
+
+        over_Tk_approx = Tk_approx;
+        cse = 0;
+      }
+    } else {
+      over_Tk_approx = Tk_approx;
+      cse = 0;
+    }
+  }
+
+  reached_set.update(Tk_approx);
+}
+
 /**
  * @brief Try to establish whether a set is an invariant
  *
  * @param init_set is the initial set
  * @param pSet is the parameter set
  * @param invariant_candidate is the candidate invariant
- * @param epoch_horizon is the maximum investigated epoch.
- *        If `epoch_horizon` is set to be 0, then the
- *        computation does not end until the correct
- *        answer has been found (potentially, forever)
- * @param max_k_induction is the maximum `k` for
- *        `k`-induction. When set to 0, `k` is not
- *        upper-bounded and grows as the epoch increases
  * @param accounter accounts for the computation progress
  * @return a pair<bool, unsigned>. The first value
  * is `true` if and only if the method has identified
@@ -929,15 +1005,17 @@ bool is_reached_set_invariant(Evolver<double> *evolver,
  */
 InvariantValidationResult Sapo::check_invariant(
     const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
-    const LinearSystem &invariant_candidate, const unsigned int epoch_horizon,
-    const unsigned int max_k_induction, ProgressAccounter *accounter)
+    const LinearSystem &invariant_candidate, ProgressAccounter *accounter)
 {
   using namespace LinearAlgebra;
 
   unsigned int k = 1;
-  SetsUnion<Bundle> Tk = init_set;
-  SetsUnion<Bundle> Tk_approx = init_set;
-  SetsUnion<Bundle> reached_set = Tk;
+  unsigned int cse = 0; // consecutive small expansions
+  auto Tk{init_set};
+  auto Tk_approx{init_set};
+  auto over_Tk_approx{init_set}; /* last Tk approximation whose delta
+                                    thickness passes the threshold */
+  auto reached_set{Tk};
   Flowpipe flowpipe;
 
   flowpipe.push_back(init_set);
@@ -950,7 +1028,7 @@ InvariantValidationResult Sapo::check_invariant(
             Flowpipe()};
   }
 
-  approx_funct_type approximate_Tk = select_approx(join_approx);
+  // approx_funct_type approximate_Tk = select_approx(this->join_approx);
 
   // alias the transformation function
   Sapo *sapo = this;
@@ -984,7 +1062,7 @@ InvariantValidationResult Sapo::check_invariant(
     }
   };
 
-  while (epoch_horizon == 0 || flowpipe.size() < epoch_horizon) {
+  while (this->time_horizon == 0 || flowpipe.size() < this->time_horizon) {
     auto real_k = is_max_k_inv(reached_set, Tk_approx, k);
 
     // when reached_set is k-inductive
@@ -1012,6 +1090,34 @@ InvariantValidationResult Sapo::check_invariant(
     }
     std::swap(Tk, new_Tk);
 
+    // update reached_set
+
+    /*
+    if (join_approx==Sapo::FULL_JOIN) {
+      auto new_Tk_approx = approximate_Tk(reached_set, Tk);
+
+      if (difference_max_direction_delta(new_Tk_approx.front(),
+                                         Tk_approx.front())<5e-3) {
+        ++cse;
+
+        if (cse == 1) {
+          Tk.expand_by(5e-3);
+          new_Tk_approx = approximate_Tk(reached_set, Tk);
+
+          cse = 0;
+        }
+      }
+      std::swap(new_Tk_approx, Tk_approx);
+    } else {
+      Tk_approx = approximate_Tk(reached_set, Tk);
+    }
+
+    reached_set.update(Tk_approx);
+    */
+
+    update_reached_set_and_approx(Tk_approx, reached_set, Tk, over_Tk_approx,
+                                  cse, *this);
+
     if (!Tk.satisfies(invariant_candidate)) {
 
       // if Tk(init_set) does not satisfies the invariant candidate
@@ -1020,10 +1126,6 @@ InvariantValidationResult Sapo::check_invariant(
               Flowpipe()};
     }
 
-    // update reached_set
-    Tk_approx = approximate_Tk(reached_set, Tk);
-    reached_set.update(Tk_approx);
-
     if (!reached_set.satisfies(invariant_candidate)) {
       reached_set = Tk;
       k = 0;
@@ -1031,7 +1133,7 @@ InvariantValidationResult Sapo::check_invariant(
 
     // if k is smaller than the maximum admitted k for the tested
     // k-induction or there is no maximum
-    if (max_k_induction == 0 || k < max_k_induction) {
+    if (this->max_k_induction == 0 || k < this->max_k_induction) {
       ++k;
     }
 

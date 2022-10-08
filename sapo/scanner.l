@@ -16,7 +16,7 @@ whitespace	[ \t\r\n]
 
 digit				[0-9]
 natural			{digit}+
-double			([-]?({natural})\.{natural})
+double			([-]?(({natural})\.{natural}|({natural}(\.{natural})?e[-]?{natural})))
 
 letter			[a-zA-Z]
 
@@ -70,7 +70,6 @@ dynamic			return yy::parser::make_DYN(loc);
 spec			return yy::parser::make_SPEC(loc);
 assume			return yy::parser::make_ASSUME(loc);
 iterations		return yy::parser::make_ITER(loc);
-max_k_induction	return yy::parser::make_MAX_K_INDUCTION(loc);
 max_parameter_splits	return yy::parser::make_PSPLITS(loc);
 presplit_parameters return yy::parser::make_PRESPLITS(loc);
 max_bundle_magnitude return yy::parser::make_MAX_MAGNITUDE(loc);
@@ -85,6 +84,8 @@ packaging			return yy::parser::make_PACKAGING(loc);
 merging			return yy::parser::make_MERGING(loc);
 no_caching		return yy::parser::make_NO_CACHE(loc);
 use_invariant_dirs		return yy::parser::make_USE_INVARIANT_DIRS(loc);
+max_k_induction	return yy::parser::make_MAX_K_INDUCTION(loc);
+delta_thickness_threshold	return yy::parser::make_DELTA_THICKNESS(loc);
 
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);

@@ -57,10 +57,18 @@ public:
   unsigned int decomp;  //!< number of decompositions (0: none, >0: yes)
   std::string plot;     //!< the name of the file were to plot the reach set
   unsigned int time_horizon;      //!< the computation time horizon
-  unsigned int max_k_induction;   //!< maximum k to be tested for k-induction
   unsigned int max_param_splits;  //!< maximum number of splits in synthesis
   unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis
   double max_bundle_magnitude; //!< maximum versor magnitude for single bundle
+
+  // invariant fields
+
+  unsigned int max_k_induction;     //!< maximum k to be tested for k-induction
+  double delta_thickness_threshold; //!< the minimum thickness difference
+                                    //!< between evolution steps
+  unsigned int
+      missed_thickness_threshold; //!< how many times the thickness threshold
+                                  //!< must be missed before an expansion
 
   /**
    * @brief Approximation used during invariant validation
@@ -291,13 +299,6 @@ public:
    * @param init_set is the initial set
    * @param pSet is the parameter set
    * @param invariant_candidate is the candidate invariant
-   * @param epoch_horizon is the maximum investigated epoch.
-   *        If `epoch_horizon` is set to be 0, then the
-   *        computation does not end until the correct
-   *        answer has been found (potentially, forever)
-   * @param max_k_induction is the maximum `k` for
-   *        `k`-induction. When set to 0, `k` is not
-   *        upper-bounded and grows as the epoch increases
    * @param accounter accounts for the computation progress
    * @return a pair<bool, unsigned>. The first value
    * is `true` if and only if the method has identified
@@ -312,8 +313,6 @@ public:
   check_invariant(const SetsUnion<Bundle> &init_set,
                   const SetsUnion<Polytope> &pSet,
                   const LinearSystem &invariant_candidate,
-                  const unsigned int epoch_horizon = 0,
-                  const unsigned int max_k_induction = 0,
                   ProgressAccounter *accounter = NULL);
 
   /**
