@@ -223,7 +223,8 @@ public:
    * @param i is the index of the aimed direction
    * @return  a reference to the i-th direction in the bundle
    */
-  const LinearAlgebra::Vector<double> &get_direction(unsigned int i) const
+  const LinearAlgebra::Vector<double> &
+  get_direction(const unsigned int &i) const
   {
     return _directions[i];
   }
@@ -235,7 +236,7 @@ public:
    *        upper bound must be returned
    * @return a reference to the upper bound of the i-th direction
    */
-  const double &get_upper_bound(unsigned int i) const
+  const double &get_upper_bound(const unsigned int &i) const
   {
     return _upper_bounds[i];
   }
@@ -247,7 +248,7 @@ public:
    *        lower bound must be returned
    * @return a reference to the lower bound of the i-th direction
    */
-  const double &get_lower_bound(unsigned int i) const
+  const double &get_lower_bound(const unsigned int &i) const
   {
     return _lower_bounds[i];
   }
@@ -463,7 +464,7 @@ public:
    * @brief Expand the bundle
    *
    * This method expands the bundle so that each of its boundaries
-   * is moved by a value `epsilon`.
+   * is moved by a value `delta`.
    *
    * @param delta is the aimed expansion
    * @return a reference to the updated bundle
