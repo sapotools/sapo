@@ -340,6 +340,10 @@ void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo,
       exit(EXIT_FAILURE);
     }
   } catch (std::exception &e) {
+    if (display_progress) {
+      std::cerr << std::endl;
+    }
+
     std::cerr << e.what() << std::endl;
 
     exit(EXIT_FAILURE);

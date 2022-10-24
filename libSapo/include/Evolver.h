@@ -59,8 +59,9 @@ public:
 protected:
   DynamicalSystem<T> _ds; //!< The dynamical system
 
-public:
+  const T _edge_threshold{static_cast<T>(1e18)};
 
+public:
   evolver_mode mode; //!< the mode used to compute the evolution
 
   bool dynamic_directions; //!< update the directions during the computation
@@ -92,16 +93,19 @@ public:
           const bool dynamic_directions = false):
       _ds(std::move(dynamical_system)),
       mode(mode), dynamic_directions(dynamic_directions)
-  {}
+  {
+  }
 
   /**
    * @brief A copy constructor
    *
    * @param orig is the template object
    */
-  Evolver(const Evolver<T> &orig): _ds(orig._ds), mode(orig.mode),
-      dynamic_directions(orig.dynamic_directions) 
-  {}
+  Evolver(const Evolver<T> &orig):
+      _ds(orig._ds), mode(orig.mode),
+      dynamic_directions(orig.dynamic_directions)
+  {
+  }
 
   /**
    * @brief Return the dynamical system
