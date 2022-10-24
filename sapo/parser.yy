@@ -107,6 +107,7 @@
 	PACKAGING
 	MERGING
 	NO_CACHE
+	DYN_DIRS
 	TRANS
 	AFO
 	OFO
@@ -1075,6 +1076,10 @@ option	: TRANS transType ";"
 		{
 			drv.data.setBernsteinCaching(false);
 		}
+		| DYN_DIRS ";"
+		{
+			drv.data.setDynamicDirections(true);
+		}
 		| PRESPLITS ";"
 		{
 			drv.data.setPreSplits(true);
@@ -1220,6 +1225,7 @@ std::string possibleStatements(std::string s)
 		"spec",
 		"assume",
 		"iterations",
+		"max_k_induction"
 		"max_parameter_splits",
 		"presplit_parameters",
 		"max_bundle_magnitude",

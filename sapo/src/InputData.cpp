@@ -19,7 +19,8 @@ InputData::InputData():
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
     decomp(false), decomp_defined(false), alpha(0.5), alphaDefined(false),
     compose_dynamic(false), dynamic_degree(1), approx_type(Sapo::NO_APPROX),
-    bern_caching(true), use_invariant_directions(false)
+    bern_caching(true), dynamic_directions(false),
+    use_invariant_directions(false)
 {
 }
 

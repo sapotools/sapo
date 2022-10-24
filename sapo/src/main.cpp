@@ -37,6 +37,9 @@ Sapo init_sapo(const Model &model, const AbsSyn::InputData &data,
   } else {
     sapo.set_evolver_mode(Evolver<double>::ALL_FOR_ONE);
   }
+
+  sapo.evolver()->dynamic_directions = data.useDynamicDirections();
+
   sapo.decomp = data.getDecomposition() ? 1 : 0;
   sapo.decomp_weight = data.getAlpha();
   sapo.time_horizon = data.getIterations();

@@ -182,7 +182,7 @@ Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
     throw std::domain_error("Bundle::Bundle: directions and lower_bounds "
                             "must have the same size");
   }
-  if (_templates.size() == 0) {
+  if (templates.size() == 0) {
     throw std::domain_error("Bundle::Bundle: templates must be non empty");
   }
 
@@ -273,6 +273,37 @@ Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
   }
 
   // add missing templates
+  std::set<unsigned int> missing;
+
+  for (unsigned int i = 0; i < _directions.size(); ++i) {
+    missing.insert(i);
+  }
+
+  add_templates_for(missing);
+}
+
+Bundle::Bundle(const Polytope &P)
+{
+  using namespace LinearAlgebra;
+
+  std::vector<size_t> double_row(P.size(), false);
+
+  for (size_t i = 0; i < P.size(); ++i) {
+    if (!double_row[i]) {
+      const auto &Ai = P.A(i);
+      const auto nAi = -P.A(i);
+      for (size_t j = i + 1; j < P.size(); ++j) {
+        if (!double_row[j] && (P.A(j) == Ai || P.A(j) == nAi)) {
+          double_row[j] = true;
+        }
+      }
+      _directions.push_back(P.A(i));
+      _upper_bounds.push_back(P.maximize(P.A(i)).optimum());
+      _lower_bounds.push_back(P.minimize(P.A(i)).optimum());
+    }
+  }
+
+  // add missing template
   std::set<unsigned int> missing;
 
   for (unsigned int i = 0; i < _directions.size(); ++i) {
@@ -952,7 +983,7 @@ Bundle Bundle::decompose(double dec_weight, int max_iters)
  *
  * @returns vector of distances
  */
-LinearAlgebra::Vector<double> Bundle::edge_lengths()
+LinearAlgebra::Vector<double> Bundle::edge_lengths() const
 {
   using namespace LinearAlgebra;
 

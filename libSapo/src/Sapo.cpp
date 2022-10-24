@@ -784,6 +784,58 @@ approx_funct_type select_approx(Sapo::joinApproxType approx)
 
 /// @ private
 unsigned int is_max_k_invariant(Evolver<double> *evolver,
+                                const Bundle &reached_set,
+                                const unsigned int max_k)
+{
+  auto T_reached = reached_set;
+  for (unsigned int k = 1; k < max_k; ++k) {
+    T_reached = evolver->operator()(T_reached);
+    if (reached_set.includes(T_reached)) {
+      return k;
+    }
+    T_reached = intersect(reached_set, T_reached);
+  }
+
+  T_reached = evolver->operator()(T_reached);
+
+  if (reached_set.includes(T_reached)) {
+    return max_k;
+  }
+
+  return 0;
+}
+
+/// @ private
+unsigned int is_max_k_invariant(Evolver<double> *evolver,
+                                const Bundle &reached_set,
+                                const Polytope &param_set,
+                                const unsigned int max_k)
+{
+  // alias the transformation function
+  auto T = [&evolver, &param_set](const Bundle &set) {
+    return evolver->operator()(set, param_set);
+  };
+
+  auto T_reached = reached_set;
+  for (unsigned int k = 1; k < max_k; ++k) {
+    T_reached = T(T_reached);
+    if (reached_set.includes(T_reached)) {
+      return k;
+    }
+    T_reached = intersect(reached_set, T_reached);
+  }
+
+  T_reached = T(T_reached);
+
+  if (reached_set.includes(T_reached)) {
+    return max_k;
+  }
+
+  return 0;
+}
+
+/// @ private
+unsigned int is_max_k_invariant(Evolver<double> *evolver,
                                 const SetsUnion<Bundle> &reached_set,
                                 const unsigned int max_k)
 {
@@ -1089,31 +1141,6 @@ InvariantValidationResult Sapo::check_invariant(
               get_k_invariant_proof(evolver(), Tk, 0)};
     }
     std::swap(Tk, new_Tk);
-
-    // update reached_set
-
-    /*
-    if (join_approx==Sapo::FULL_JOIN) {
-      auto new_Tk_approx = approximate_Tk(reached_set, Tk);
-
-      if (difference_max_direction_delta(new_Tk_approx.front(),
-                                         Tk_approx.front())<5e-3) {
-        ++cse;
-
-        if (cse == 1) {
-          Tk.expand_by(5e-3);
-          new_Tk_approx = approximate_Tk(reached_set, Tk);
-
-          cse = 0;
-        }
-      }
-      std::swap(new_Tk_approx, Tk_approx);
-    } else {
-      Tk_approx = approximate_Tk(reached_set, Tk);
-    }
-
-    reached_set.update(Tk_approx);
-    */
 
     update_reached_set_and_approx(Tk_approx, reached_set, Tk, over_Tk_approx,
                                   cse, *this);

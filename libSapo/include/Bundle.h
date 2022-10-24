@@ -57,16 +57,6 @@ private:
   std::set<std::vector<unsigned int>> _templates; //!< templates matrix
 
   /**
-   * Compute the edge lengths
-   *
-   * This method compute the edge lengths, i.e., the distances between the
-   * half-spaces bounding the bundle.
-   *
-   * @returns the vector of the edge lengths
-   */
-  LinearAlgebra::Vector<double> edge_lengths();
-
-  /**
    * @brief Add to the bundle templates for some directions
    *
    * @param missing_template_dirs the indices of the directions whose
@@ -150,6 +140,15 @@ public:
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds);
+
+  /**
+   * @brief A constructor
+   *
+   * Build the bundle representing a polytope
+   *
+   * @param P is the polytope whose bundle representation is aimed
+   */
+  explicit Bundle(const Polytope &P);
 
   /**
    * @brief Assignment operator
@@ -470,6 +469,16 @@ public:
    * @return a reference to the updated bundle
    */
   Bundle &expand_by(const double delta);
+
+  /**
+   * Compute the edge lengths
+   *
+   * This method compute the edge lengths, i.e., the distances between the
+   * half-spaces bounding the bundle.
+   *
+   * @returns the vector of the edge lengths
+   */
+  LinearAlgebra::Vector<double> edge_lengths() const;
 
   virtual ~Bundle();
 

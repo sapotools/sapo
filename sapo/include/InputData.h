@@ -403,9 +403,19 @@ public:
     bern_caching = flag;
   }
 
-  bool useBernsteinCaching() const
+  const bool &useBernsteinCaching() const
   {
     return bern_caching;
+  }
+
+  void setDynamicDirections(bool flag)
+  {
+    dynamic_directions = flag;
+  }
+
+  const bool &useDynamicDirections() const
+  {
+    return dynamic_directions;
   }
 
   void setUseInvariantDirections(bool flag)
@@ -481,6 +491,7 @@ protected:
   unsigned dynamic_degree;
   Sapo::joinApproxType approx_type;
   bool bern_caching;
+  bool dynamic_directions;
   bool use_invariant_directions;
 
   // addition of direction to params or vars

@@ -13,7 +13,7 @@ const delta = 0.01;
 // parameters
 
 // dynamics
-dynamic(x) = x + (x - x*x*x/3 - y + 0.875 ) * delta;
+dynamic(x) = x + (x - (x^3)/3 - y + 0.875 ) * delta;
 dynamic(y) = y + 0.08 * ( x + 0.7 - 0.8 * y ) * delta;
 
 // initial set

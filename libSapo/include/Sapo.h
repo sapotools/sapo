@@ -232,7 +232,7 @@ public:
    */
   inline void set_evolver_mode(const Evolver<double>::evolver_mode mode)
   {
-    _evolver->set_mode(mode);
+    _evolver->mode = mode;
   }
 
   /**
@@ -299,6 +299,9 @@ public:
    * @param init_set is the initial set
    * @param pSet is the parameter set
    * @param invariant_candidate is the candidate invariant
+   * @param max_k_induction is the maximum `k` for
+   *        `k`-induction. When set to 0, `k` is not
+   *        upper-bounded and grows as the epoch increases
    * @param accounter accounts for the computation progress
    * @return a pair<bool, unsigned>. The first value
    * is `true` if and only if the method has identified

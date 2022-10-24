@@ -413,40 +413,40 @@ public:
 
 /**
  * @brief Integrate an ODE by using the 4th degree Runge-Kutta method
- * 
+ *
  * @tparam T is the constant type in the dynamical system
  * @tparam DELTA_TYPE is the type of the delta step
  * @param variables is the variable vector
  * @param ODE is the ODE vector
  * @param time is the time variable
  * @param timestep is the integration time step
- * @return the integration of `ODE` according to the 4th degree 
+ * @return the integration of `ODE` according to the 4th degree
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>>& variables, 
-                  const std::vector<SymbolicAlgebra::Expression<T>>& ODE,
-                  const SymbolicAlgebra::Symbol<T>* time,
-                  const DELTA_TYPE& timestep)
+auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+                  const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
+                  const SymbolicAlgebra::Symbol<T> *time,
+                  const DELTA_TYPE &timestep)
 {
   using namespace SymbolicAlgebra;
   using namespace LinearAlgebra;
 
-  const auto& k1 = ODE;
+  const auto &k1 = ODE;
 
   // get k2
   auto k2 = ODE;
   {
     Expression<>::replacement_type repl;
-    for (size_t i=0; i<variables.size(); ++i) {
-        repl[variables[i]] = variables[i] + k1[i]*timestep/2;
+    for (size_t i = 0; i < variables.size(); ++i) {
+      repl[variables[i]] = variables[i] + k1[i] * timestep / 2;
     }
     if (time != nullptr) {
-      repl[*time] = *time + timestep/2;
+      repl[*time] = *time + timestep / 2;
     }
 
-    for (auto& k: k2) {
-        k.replace(repl);
+    for (auto &k: k2) {
+      k.replace(repl);
     }
   }
 
@@ -454,15 +454,15 @@ auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>>& variables,
   auto k3 = ODE;
   {
     Expression<>::replacement_type repl;
-    for (size_t i=0; i<variables.size(); ++i) {
-        repl[variables[i]] = variables[i] + k2[i]*timestep/2;
+    for (size_t i = 0; i < variables.size(); ++i) {
+      repl[variables[i]] = variables[i] + k2[i] * timestep / 2;
     }
     if (time != nullptr) {
-      repl[*time] = *time + timestep/2;
+      repl[*time] = *time + timestep / 2;
     }
 
-    for (auto& k: k3) {
-        k.replace(repl);
+    for (auto &k: k3) {
+      k.replace(repl);
     }
   }
 
@@ -470,62 +470,66 @@ auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>>& variables,
   auto k4 = ODE;
   {
     Expression<>::replacement_type repl;
-    for (size_t i=0; i<variables.size(); ++i) {
-        repl[variables[i]] = variables[i] + k3[i]*timestep;
+    for (size_t i = 0; i < variables.size(); ++i) {
+      repl[variables[i]] = variables[i] + k3[i] * timestep;
     }
     if (time != nullptr) {
       repl[*time] = *time + timestep;
     }
 
-    for (auto& k: k4) {
-        k.replace(repl);
+    for (auto &k: k4) {
+      k.replace(repl);
     }
   }
 
   std::vector<Expression<>> rk_dyn(variables.size());
 
-  for (size_t i=0; i<variables.size(); ++i) {
-    rk_dyn[i] = variables[i] + (k1[i] + 2*k2[i] + 2*k3[i] + k4[i])*timestep/6;
+  for (size_t i = 0; i < variables.size(); ++i) {
+    rk_dyn[i] = variables[i]
+                + (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) * timestep / 6;
   }
 
   return rk_dyn;
 }
 /**
  * @brief Integrate an ODE by using the 4th degree Runge-Kutta method
- * 
+ *
  * @tparam T is the constant type in the dynamical system
  * @tparam DELTA_TYPE is the type of the delta step
  * @param variables is the variable vector
  * @param ODE is the ODE vector
  * @param time is the time variable
  * @param timestep is the integration time step
- * @return the integration of `ODE` according to the 4th degree 
+ * @return the integration of `ODE` according to the 4th degree
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-inline auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>>& variables, 
-                  const std::vector<SymbolicAlgebra::Expression<T>>& ODE,
-                  const SymbolicAlgebra::Symbol<T>& time,
-                  const DELTA_TYPE& timestep)
+inline auto
+runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+             const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
+             const SymbolicAlgebra::Symbol<T> &time,
+             const DELTA_TYPE &timestep)
 {
   return runge_kutta4<T, DELTA_TYPE>(variables, ODE, &time, timestep);
 }
 
 /**
- * @brief Integrate an time-invariant ODE by using the 4th degree Runge-Kutta method
- * 
+ * @brief Integrate an time-invariant ODE by using the 4th degree Runge-Kutta
+ * method
+ *
  * @tparam T is the constant type in the dynamical system
  * @tparam DELTA_TYPE is the type of the delta step
  * @param variables is the variable vector
  * @param ODE is the ODE vector
  * @param timestep is the integration time step
- * @return the integration of `ODE` according to the 4th degree 
+ * @return the integration of `ODE` according to the 4th degree
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-inline auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>>& variables, 
-                  const std::vector<SymbolicAlgebra::Expression<T>>& ODE,
-                  const DELTA_TYPE& timestep)
+inline auto
+runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+             const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
+             const DELTA_TYPE &timestep)
 {
   return runge_kutta4<T, DELTA_TYPE>(variables, ODE, nullptr, timestep);
 }

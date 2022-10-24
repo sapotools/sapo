@@ -83,6 +83,7 @@ listing			return yy::parser::make_LISTING(loc);
 packaging			return yy::parser::make_PACKAGING(loc);
 merging			return yy::parser::make_MERGING(loc);
 no_caching		return yy::parser::make_NO_CACHE(loc);
+dynamic_directions		return yy::parser::make_DYN_DIRS(loc);
 use_invariant_dirs		return yy::parser::make_USE_INVARIANT_DIRS(loc);
 max_k_induction	return yy::parser::make_MAX_K_INDUCTION(loc);
 delta_thickness_threshold	return yy::parser::make_DELTA_THICKNESS(loc);

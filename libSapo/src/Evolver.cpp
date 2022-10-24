@@ -479,11 +479,122 @@ std::pair<double, double> ParamMinMaxCoeffFinder::operator()(
   return std::pair<double, double>(min_value, max_value);
 }
 
+template<typename T>
+inline typename SymbolicAlgebra::Expression<T>::interpretation_type
+make_interpretation(const std::vector<SymbolicAlgebra::Symbol<T>>& symbols,
+                    const std::vector<T>& values)
+{
+  if (symbols.size() != values.size()) {
+    throw std::runtime_error("make_interpretation: symbols and values "
+                             "sizes are not the same");
+  }
+
+  typename SymbolicAlgebra::Expression<T>::interpretation_type inter;
+  for (size_t i=0; i<symbols.size(); ++i) {
+    inter[symbols[i]] = values[i];
+  }
+
+  return inter;
+}
+
+LinearAlgebra::Vector<double> 
+get_approx_center(const Bundle& bundle)
+{
+  using namespace LinearAlgebra;
+  std::vector<double> approx_c;
+
+  if (bundle.dim()==0) {
+    return approx_c;
+  }
+
+  for (const auto& b_template: bundle.templates()) {
+    if (approx_c.size()==0) {
+      approx_c = (bundle.get_parallelotope(b_template)).center();
+    } else {
+      approx_c = approx_c + (bundle.get_parallelotope(b_template)).center();
+    }
+  }
+
+  return approx_c / (double)bundle.num_of_templates();
+}
+
+std::vector<SymbolicAlgebra::Expression<double>>
+average_dynamics(const DynamicalSystem<double>& ds, const Polytope &parameter_set)
+{
+  using namespace SymbolicAlgebra;
+
+  std::vector<double> approx_c = get_approx_center(Bundle(parameter_set));
+
+  auto inter{make_interpretation(ds.parameters(), approx_c)};
+
+  std::vector<SymbolicAlgebra::Expression<>> avg_ds;
+  for (const auto& dyn: ds.dynamics()) {
+    avg_ds.emplace_back(dyn.apply(inter));
+  }
+
+  return avg_ds;
+}
+
+/**
+ * @brief Evaluate a vector of expressions over an interpretation
+ * 
+ * @tparam T is the type of the expression constants
+ * @param expressions is the vector of expressions to be evaluated
+ * @param inter is the interpretation to be applied
+ * @return the vector of evaluations of the expressions in the 
+ *         input vector
+ */
+template<typename T>
+LinearAlgebra::Vector<T>
+evaluate(const LinearAlgebra::Vector<SymbolicAlgebra::Expression<T>>& expressions,
+         const typename SymbolicAlgebra::Expression<T>::interpretation_type& inter)
+{
+  LinearAlgebra::Vector<T> result;
+
+  for (const auto& e: expressions) {
+    result.emplace_back(e.apply(inter).evaluate());
+  }
+
+  return result;
+}
+
+std::vector<LinearAlgebra::Vector<double>>
+get_new_directions(const Bundle &bundle,
+                   const DynamicalSystem<double>& ds, const Polytope &parameter_set)
+{
+  std::vector<LinearAlgebra::Vector<double>> A;
+
+  auto avg_ds = average_dynamics(ds, parameter_set);
+
+  auto approx_c = get_approx_center(bundle);
+
+  const auto lengths = bundle.edge_lengths();
+  for (size_t i = 0; i < bundle.size(); ++i) {
+    using namespace LinearAlgebra;
+
+    const auto& dir = bundle.get_direction(i);
+    Vector<double> delta = (lengths[i] * dir)/norm_2(dir);
+
+    auto inter = make_interpretation(ds.variables(), approx_c + delta);
+
+    const auto up{evaluate(ds.dynamics(), inter)};
+
+    inter = make_interpretation(ds.variables(), approx_c - delta);
+
+    const auto down{evaluate(ds.dynamics(), inter)};
+
+    const auto new_dir{up-down};
+
+    A.push_back(new_dir);
+  }
+
+  return A;
+}
+
 template<>
 Bundle Evolver<double>::operator()(const Bundle &bundle,
                                    const Polytope &parameter_set)
 {
-
   using namespace std;
   using namespace SymbolicAlgebra;
   using namespace LinearAlgebra;
@@ -496,6 +607,17 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   if (parameter_set.dim() != _ds.parameters().size()) {
     throw std::domain_error("The vector of parameters and the parameter "
                             "set must have same number of dimensions.");
+  }
+
+  std::vector<LinearAlgebra::Vector<double>> new_dirs; 
+  if (this->dynamic_directions) { // if dynamic directions is enabled
+
+    // compute new directions
+    new_dirs = get_new_directions(bundle, _ds, parameter_set);
+  } else {  // if dynamic directions is *not* enabled
+
+    // use old directions
+    new_dirs = bundle.directions();
   }
 
   vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
@@ -513,7 +635,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
       = get_symbol_vector<double>("alpha", _ds.dim());
 
   auto refine_coeff_itvl =
-      [&max_coeffs, &min_coeffs, &bundle, &alpha,
+      [&max_coeffs, &min_coeffs, &bundle, &new_dirs, &alpha,
        &itvl_finder](const DynamicalSystem<double> &ds,
                      const std::vector<unsigned int> &bundle_template,
                      const evolver_mode t_mode) {
@@ -532,10 +654,10 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
         for (unsigned int j = 0; j < num_of_dirs; j++) {
           dir_b = (t_mode == ONE_FOR_ONE ? bundle_template[j] : j);
 
-          auto coefficients = compute_Bern_coefficients(
-              alpha, genFun_f, bundle.get_direction(dir_b));
+          const auto coefficients = compute_Bern_coefficients(
+                    alpha, genFun_f, new_dirs[dir_b]); 
 
-          auto coeff_itvl = (*itvl_finder)(coefficients);
+          const auto coeff_itvl = (*itvl_finder)(coefficients);
 
           min_coeffs[dir_b].update(coeff_itvl.first);
           max_coeffs[dir_b].update(coeff_itvl.second);
@@ -551,7 +673,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 
       // submit the task to the thread pool
       thread_pool.submit_to_batch(batch_id, refine_coeff_itvl, std::ref(_ds),
-                                  std::ref(*t_it), _mode);
+                                  std::ref(*t_it), this->mode);
     }
 
     // join to the pool threads
@@ -583,10 +705,10 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res(bundle.directions(), lower_bounds, upper_bounds,
-             bundle.templates());
+  Bundle res(std::move(new_dirs), std::move(lower_bounds),
+             std::move(upper_bounds), bundle.templates());
 
-  if (_mode == ONE_FOR_ONE) {
+  if (this->mode == ONE_FOR_ONE) {
     res.canonize();
   }
 
@@ -689,6 +811,17 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
     throw std::domain_error("The vector of parameters and the parameter "
                             "set must have same number of dimensions.");
   }
+  
+  std::vector<LinearAlgebra::Vector<double>> new_dirs; 
+  if (this->dynamic_directions) { // if dynamic directions is enabled
+
+    // compute new directions
+    new_dirs = get_new_directions(bundle, _ds, parameter_set);
+  } else {  // if dynamic directions is *not* enabled
+
+    // use old directions
+    new_dirs = bundle.directions();
+  }
 
   vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
   vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
@@ -706,7 +839,7 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
   auto base = get_symbol_vector<double>("base", _ds.dim());
 
   auto refine_coeff_itvl =
-      [&max_coeffs, &min_coeffs, &bundle, &alpha, &lambda, &base,
+      [&max_coeffs, &min_coeffs, &bundle, &new_dirs, &alpha, &lambda, &base,
        &itvl_finder](CachedEvolver<double> *evolver,
                      const std::vector<unsigned int> &bundle_template) {
         Parallelotope P = bundle.get_parallelotope(bundle_template);
@@ -722,17 +855,15 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
 
         // for each direction
         const size_t num_of_dirs
-            = (evolver->get_mode() == ONE_FOR_ONE ? bundle_template.size()
-                                                  : bundle.size());
+            = (evolver->mode == ONE_FOR_ONE ? bundle_template.size()
+                                            : bundle.size());
 
         for (unsigned int j = 0; j < num_of_dirs; j++) {
           auto dir_b
-              = (evolver->get_mode() == ONE_FOR_ONE ? bundle_template[j] : j);
-
-          auto &bundle_dir = bundle.get_direction(dir_b);
+              = (evolver->mode == ONE_FOR_ONE ? bundle_template[j] : j);
 
           auto symb_coeff = get_symbolic_coefficients(
-              evolver, P, genFun_f, base, alpha, lambda, bundle_dir);
+              evolver, P, genFun_f, base, alpha, lambda, new_dirs[dir_b]);
 
           std::vector<Expression<double>> coefficients;
 
@@ -789,10 +920,10 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res(bundle.directions(), lower_bounds, upper_bounds,
-             bundle.templates());
+  Bundle res(std::move(new_dirs), std::move(lower_bounds),
+             std::move(upper_bounds), bundle.templates());
 
-  if (get_mode() == ONE_FOR_ONE) {
+  if (this->mode == ONE_FOR_ONE) {
     res.canonize();
   }
 
