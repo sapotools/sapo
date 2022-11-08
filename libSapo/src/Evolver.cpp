@@ -975,6 +975,11 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
                             "must have the same number of dimensions.");
   }
 
+  if (ds.parameters().size() == 0) {
+    throw std::domain_error("Nothing to synthesize: the parameter set "
+                            "is empty.");
+  }
+
   SetsUnion<Polytope> result = parameter_set;
 
   std::vector<Symbol<>> alpha = get_symbol_vector<double>("f", bundle.dim());
