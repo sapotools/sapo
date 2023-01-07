@@ -22,7 +22,7 @@ int driver::parse(const std::string &f)
   } catch (std::domain_error &e) {
     // the parameter set is empty
 
-    std::cerr << "The paramter set cannot be empty." << std::endl;
+    std::cerr << "The parameter set cannot be empty." << std::endl;
 
     return 1;
   }
