@@ -12,7 +12,7 @@
 #ifndef ATOM_H_
 #define ATOM_H_
 
-#include "SymbolicAlgebra.h"
+#include "../SymbolicAlgebra.h"
 
 #include "STL.h"
 

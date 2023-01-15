@@ -16,7 +16,8 @@
 #include <string>
 #include <memory>
 
-#include "SymbolicAlgebra.h"
+#include "../SymbolicAlgebra.h"
+
 #include "TimeInterval.h"
 
 namespace STL {
