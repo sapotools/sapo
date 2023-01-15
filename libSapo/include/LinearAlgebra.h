@@ -812,6 +812,73 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
 }
 
 /**
+ * @brief Find the first independent rows in a matrix
+ * 
+ * This is quite similar to what is done by LU_Factorization. 
+ * However, LU_Factorization goal is to factorize a matrix 
+ * minimizing the error, while here we are searching for 
+ * the first independent column. Thus, the former always 
+ * chooses as pivot the row whose j-th entry is nearest to 
+ * 1 in absolute value as opposed to this function which 
+ * simply search for the first row whose j-th element is 
+ * different from 0.
+ * 
+ * @tparam T the scalar type of the input matrix
+ * @param A is the input matrix
+ * @return The index vector of the first independent rows 
+ *      in the input matrix A
+ */
+template<typename T>
+Vector<size_t> find_first_independent_rows(Matrix<T> A)
+{
+  const size_t num_of_columns = A.front().size();
+  const size_t num_of_rows = A.size();
+
+  Vector<size_t> res(num_of_columns);
+
+  std::iota(std::begin(res), std::end(res), 0);
+
+  for (size_t j = 0; j < A.size(); ++j) {
+    if (j == num_of_columns) {
+      return res;
+    }
+    
+    // find the first row k whose j-th column is not null
+    size_t k = j;
+    while (k < num_of_rows && A[k][j] == 0) {
+      k++;
+    }
+
+    // if it does not exist, skip to the next row/column
+    if (k < num_of_rows) {
+      // otherwise, swap rows
+      if (j != k) {
+        std::swap(A[j], A[k]);
+        std::swap(res[j], res[k]);
+      }
+
+      // nullify all the values below A[j][j]
+      const Vector<T> &row_j = A[j];
+      const T &v = row_j[j];
+      k = j + 1;
+      while (k < A.size()) {
+        Vector<T> &row_k = A[k];
+        if (row_k[j] != 0) {
+          const T ratio = -row_k[j] / v;
+          for (unsigned int i = j + 1; i < row_j.size(); ++i) {
+            row_k[i] += ratio * row_j[i];
+          }
+          row_k[j] = -ratio;
+        }
+        ++k;
+      }
+    }
+  }
+  
+  return res;
+}
+
+/**
  * @brief A LUP factorization for dense matrices
  *
  * This class represents a Permutation, Lower-triangular,
@@ -911,16 +978,16 @@ public:
       throw std::domain_error("The parameter is an empty matrix.");
     }
 
-    for (unsigned int j = 0; j < _LU.size(); ++j) {
+    for (size_t j = 0; j < _LU.size(); ++j) {
       if (j == M.front().size()) {
         return;
       }
 
       // find the non-null value below A[j-1][j] whose absolute value
       // is the nearest to 1
-      unsigned int k = _LU.size();
+      size_t k = _LU.size();
       T delta = 1;
-      unsigned int l = j;
+      size_t l = j;
       while (l < _LU.size() && delta > 0) {
         if (_LU[l][j] != 0) {
           T new_delta = std::abs(1 - std::abs(_LU[l][j]));
