@@ -147,7 +147,7 @@ public:
 
   Direction *getComplementary() const; // returns the negated direction
 
-  bool compare(Direction *d) const; // comparison between directions
+  bool compare(const Direction *d) const; // comparison between directions
 
   bool covers(const Symbol<> &s)
       const; // checks if the symbol named "name" is present in the direction

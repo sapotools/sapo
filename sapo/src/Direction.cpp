@@ -103,7 +103,7 @@ Direction *Direction::getComplementary() const
   return new Direction(-new_lhs, -new_rhs, newType, -UB, -LB, s);
 }
 
-bool Direction::compare(Direction *d) const
+bool Direction::compare(const Direction *d) const
 {
   std::vector<SymbolicAlgebra::Symbol<>> symbols{};
   std::set<SymbolicAlgebra::Symbol<>> ids
