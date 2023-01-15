@@ -58,25 +58,18 @@ BOOST_AUTO_TEST_CASE(test_runge_kutta)
     Symbol<> timestep{"timestep"};
 
     // variable vector
-    /*
-    DynamicalSystem<double> ds({
-        {x, 2*x*(x*x-3)*(4*(x*x)-3)*(x*x+21*(y*y)-12)},
-        {y, y*(35*(x*x*x*x*x*x)+105*(x*x*x*x)*(y*y*y*y*y)-315*(x*x*x*x)-63*(x*x)*(y*y*y*y)+378*(x*x)+27*(y*y*y*y*y*y)-189*(y*y*y*y)+378*(y*y)-216)}
-    });
-    */
-    
     DynamicalSystem<double> ODE({
-        {x, -y},
-        {y, x}
-    });
-    
-    DynamicalSystem<double> ds({
         {x, -y},
         {y, x}
     });
 
     auto rk_system = runge_kutta4(ODE.variables(), ODE.dynamics(), timestep);
 
-    
+    std::vector<Expression<double>> ds{
+        timestep*(-2*(0.5*timestep*x + y) + -y + -2*(0.5*timestep*(-0.5*y*timestep + x) + y) + -(timestep*(-0.5*(0.5*timestep*x + y)*timestep + x) + y))/6 + x,
+        timestep*(2*(-0.5*y*timestep + x) + x + 2*(-0.5*(0.5*timestep*x + y)*timestep + x) + -(0.5*timestep*(-0.5*y*timestep + x) + y)*timestep + x)/6 + y
+    };
 
+    BOOST_REQUIRE(rk_system[0] - ds[0] == 0);
+    BOOST_REQUIRE(rk_system[1] - ds[1] == 0);
 }

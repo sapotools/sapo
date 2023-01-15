@@ -424,10 +424,11 @@ public:
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
-                  const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
-                  const SymbolicAlgebra::Symbol<T> *time,
-                  const DELTA_TYPE &timestep)
+std::vector<SymbolicAlgebra::Expression<T>>
+runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+             const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
+             const SymbolicAlgebra::Symbol<T> *time,
+             const DELTA_TYPE &timestep)
 {
   using namespace SymbolicAlgebra;
   using namespace LinearAlgebra;
@@ -482,7 +483,7 @@ auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
     }
   }
 
-  std::vector<Expression<>> rk_dyn(variables.size());
+  std::vector<Expression<T>> rk_dyn(variables.size());
 
   for (size_t i = 0; i < variables.size(); ++i) {
     rk_dyn[i] = variables[i]
@@ -491,6 +492,7 @@ auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
 
   return rk_dyn;
 }
+
 /**
  * @brief Integrate an ODE by using the 4th degree Runge-Kutta method
  *
@@ -504,7 +506,8 @@ auto runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-inline auto
+inline
+std::vector<SymbolicAlgebra::Expression<T>>
 runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
              const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
              const SymbolicAlgebra::Symbol<T> &time,
@@ -526,7 +529,8 @@ runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-inline auto
+inline
+std::vector<SymbolicAlgebra::Expression<T>>
 runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
              const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
              const DELTA_TYPE &timestep)
