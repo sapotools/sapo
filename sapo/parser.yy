@@ -107,7 +107,7 @@
 	PACKAGING
 	MERGING
 	NO_CACHE
-	DYN_DIRS
+	ALL_DIRS_DYN
 	TRANS
 	AFO
 	OFO
@@ -584,58 +584,57 @@ assumption 	: 	constraint
 					drv.data.addAssumption($3);
 				}
 
-var_constraint	: DIR constraint ";"
-							{
-								if ($2->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable constraints cannot contain parameters");
-								}
-								drv.data.addVarDirectionConstraint($2);
-							}
-							| DIR constraint error
-							{
-								MISSING_SC(@2);
-								if ($2->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable constraints cannot contain parameters");
-								}
-								drv.data.addVarDirectionConstraint($2);
-							}
-							| DIR error ";"
-							{
-								ERROR(@2, "Error in constraint");
-							}
-							| DIR IDENT ":" constraint ";"
-							{
-								if ($4->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable constraints cannot contain parameters");
-								}
-								if (drv.data.isSymbolDefined($2)) {
-									ERROR(@2, "Symbol '" + $2 + "' already defined");
-								}
-								SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
-								$4->setSymbol(s);
-								drv.data.addVarDirectionConstraint($4);
-							}
-							| DIR IDENT ":" constraint error
-							{
-								MISSING_SC(@3);
-								if ($4->contains(drv.data.getParamSymbols())) {
-									ERROR(@2, "Variable constraints cannot contain parameters");
-								}
-								if (drv.data.isSymbolDefined($2)) {
-									ERROR(@2, "Symbol '" + $2 + "' already defined");
-								}
-								SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
-								$4->setSymbol(s);
-								drv.data.addVarDirectionConstraint($4);
-							}
-							| DIR IDENT error constraint ";"
-							{
-								ERROR(@2, "Missing \":\"");
-							}
-							| DIR IDENT error ";"
-							{
-								ERROR(@3, "Error in constraint");
-							}
+var_constraint	:   DIR constraint ";"
+					{
+						if ($2->contains(drv.data.getParamSymbols())) {
+							ERROR(@2, "Variable constraints cannot contain parameters");
+						}
+						drv.data.addVarDirectionConstraint($2);
+					}
+					| DIR constraint error
+					{
+						MISSING_SC(@2);
+						if ($2->contains(drv.data.getParamSymbols())) {
+							ERROR(@2, "Variable constraints cannot contain parameters");
+						}
+					}
+					| DIR error ";"
+					{
+						ERROR(@2, "Error in constraint");
+					}
+					| DIR IDENT ":" constraint ";"
+					{
+						if ($4->contains(drv.data.getParamSymbols())) {
+							ERROR(@2, "Variable constraints cannot contain parameters");
+						}
+						if (drv.data.isSymbolDefined($2)) {
+							ERROR(@2, "Symbol '" + $2 + "' already defined");
+						}
+						SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
+						$4->setSymbol(s);
+						drv.data.addVarDirectionConstraint($4);
+					}
+					| DIR IDENT ":" constraint error
+					{
+						MISSING_SC(@3);
+						if ($4->contains(drv.data.getParamSymbols())) {
+							ERROR(@2, "Variable constraints cannot contain parameters");
+						}
+						if (drv.data.isSymbolDefined($2)) {
+							ERROR(@2, "Symbol '" + $2 + "' already defined");
+						}
+						SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
+						$4->setSymbol(s);
+						drv.data.addVarDirectionConstraint($4);
+					}
+					| DIR IDENT error constraint ";"
+					{
+						ERROR(@2, "Missing \":\"");
+					}
+					| DIR IDENT error ";"
+					{
+						ERROR(@3, "Error in constraint");
+					}
 
 template		: TEMPL "=" "{" rowList "}" ";"
 						{
@@ -1076,9 +1075,9 @@ option	: TRANS transType ";"
 		{
 			drv.data.setBernsteinCaching(false);
 		}
-		| DYN_DIRS ";"
+		| ALL_DIRS_DYN ";"
 		{
-			drv.data.setDynamicDirections(true);
+			drv.data.setAllDirsDynamics(true);
 		}
 		| PRESPLITS ";"
 		{
@@ -1232,6 +1231,7 @@ std::string possibleStatements(std::string s)
 		"direction",
 		"parameter_direction",
 		"template",
+		"all_dirs_dynamic",
 		"option"
 	};
 	

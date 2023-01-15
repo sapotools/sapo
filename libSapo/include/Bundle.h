@@ -49,22 +49,109 @@ class SetsUnion;
  */
 class Bundle
 {
+public:
+  /**
+   * @brief Fate type for template-less directions
+   */
+  enum template_less_fate_type {
+    REMOVE_DIRECTION,  //!< template-less directions will be removed
+    STATIC_TEMPLATES,  //!< template-less directions will be added to static templates
+    DYNAMIC_TEMPLATES  //!< template-less directions will be added to dynamic templates
+  };
+
 private:
   std::vector<LinearAlgebra::Vector<double>>
-      _directions;                                //!< the vector of directions
-  LinearAlgebra::Vector<double> _lower_bounds;    //!< direction upper bounds
-  LinearAlgebra::Vector<double> _upper_bounds;    //!< direction lower bounds
-  std::set<std::vector<unsigned int>> _templates; //!< templates matrix
+      _directions;                                  //!< the vector of directions
+  LinearAlgebra::Vector<double> _lower_bounds;      //!< direction upper bounds
+  LinearAlgebra::Vector<double> _upper_bounds;      //!< direction lower bounds
+  std::set<std::vector<unsigned int>> _templates;   //!< templates
+  std::vector<bool> _dynamic_dirs;                  //!< dynamic directions
 
   /**
-   * @brief Add to the bundle templates for some directions
+   * @brief A draft horse function to split a bundle
    *
-   * @param missing_template_dirs the indices of the directions whose
-   *                              templates we are missing
+   * This recursive function is a private draft horse to
+   * split a bundle whose maximal magnitude, the maximal
+   * length of its generators, is greater than
+   * `max_magnitude`. The bundle is split into a
+   * list of sub-bundles whose maximal magnitude is
+   * \f$\textrm{max_magnitude}*\textrm{split_ratio}\f$.
+   * Each sub-bundle in the output list is built recursively
+   * by considering one bundle direction per time and:
+   * 1. splitting the direction in the opportune number of
+   *    chunks, so to satisfy the sub-bundle maximal
+   *    magnitude request;
+   * 2. for each of the chunks, setting the sub-bundle
+   *    boundaries of the selected direction according
+   *    with the considered chunk and recursively
+   *    consider the remaining directions.
+   *
+   * If \f$m\f$ in the maximal magnitude of the input bundle
+   * and the bundle itself has \f$d\f$ directions,
+   * this method may produces upto
+   * \f$(\frac{m}{\textrm{max_magnitude}})^d\f$
+   * sub-bundles.
+   *
+   * @param[out] res is the list of the resulting sub-bundles
+   * @param[in, out] lower_bounds is the lower boundary vector
+   *                              of the in-building sub-bundles
+   * @param[in, out] upper_bounds is the upper boundary vector
+   *                              of the in-building sub-bundles
+   * @param[in] idx is the index of the direction to be split
+   * @param[in] max_magnitude is the maximal magnitude that
+   *                          triggers the split
+   * @param[in] split_ratio is the ratio between maximal
+   *                        magnitude of the output bundles and
+   *                        that that triggers the split
+   * @return a reference to the list of sub-bundles produced
+   *         splitting the input bundle
    */
-  void add_templates_for(std::set<unsigned int> &missing_template_dirs);
+  std::list<Bundle> &
+  split_bundle(std::list<Bundle> &res,
+                     LinearAlgebra::Vector<double> &lower_bounds,
+                     LinearAlgebra::Vector<double> &upper_bounds,
+                     const size_t idx,
+                     const double &max_magnitude,
+                     const double &split_ratio) const;
+
+  /**
+   * @brief A constructor
+   *
+   * This constructor does not perform any check on the parameter 
+   * consistency.
+   * 
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
+   * @param[in] templates is the set of the templates
+   * @param[in] dynamic_dirs is the vector of the dynamic directions
+   */
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+         const LinearAlgebra::Vector<double> &lower_bounds,
+         const LinearAlgebra::Vector<double> &upper_bounds,
+         const std::set<std::vector<unsigned int>> &templates,
+         const std::vector<bool>& dynamic_dirs);
+
+  /**
+   * @brief A constructor
+   *
+   * This constructor does not perform any check on the parameter 
+   * consistency.
+   * 
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
+   * @param[in] templates is the set of the templates
+   * @param[in] dynamic_dirs is the vector of the dynamic directions
+   */
+  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+         LinearAlgebra::Vector<double> &&lower_bounds,
+         LinearAlgebra::Vector<double> &&upper_bounds,
+         const std::set<std::vector<unsigned int>> &templates,
+         const std::vector<bool>& dynamic_dirs);
 
 public:
+
   /**
    * @brief A constructor
    *
@@ -87,16 +174,37 @@ public:
 
   /**
    * @brief A constructor
+   * 
+   * @param[in] directions is the direction vector
+   * @param[in] lower_bounds is the vector of direction lower bounds
+   * @param[in] upper_bounds is the vector of direction upper bounds
+   * @param[in] static_templates is the set of the static templates
+   * @param[in] dynamic_templates is the set of the dynamic templates
+   * @param[in] template_less_fate is the fate of the directions not 
+   *                  belonging to any template 
+   */
+  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+               const LinearAlgebra::Vector<double> &lower_bounds,
+               const LinearAlgebra::Vector<double> &upper_bounds,
+               std::set<std::vector<unsigned int>> static_templates,
+               std::set<std::vector<unsigned int>> dynamic_templates,
+               const template_less_fate_type template_less_fate=REMOVE_DIRECTION);
+
+  /**
+   * @brief A constructor
    *
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] templates is the set of the templates
+   * @param[in] static_templates is the set of the static templates
+   * @param[in] template_less_fate is the fate of the directions not 
+   *                  belonging to any template 
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
-         const std::set<std::vector<unsigned int>> &templates);
+         const std::set<std::vector<unsigned int>> &static_templates,
+         const template_less_fate_type template_less_fate=REMOVE_DIRECTION);
 
   /**
    * @brief A move constructor
@@ -104,12 +212,15 @@ public:
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] templates is the set of the templates
+   * @param[in] static_templates is the set of the static templates
+   * @param[in] template_less_fate is the fate of the directions not 
+   *                  belonging to any template 
    */
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds,
-         const std::set<std::vector<unsigned int>> &templates);
+         const std::set<std::vector<unsigned int>> &static_templates,
+         const template_less_fate_type template_less_fate=REMOVE_DIRECTION);
 
   /**
    * @brief A constructor
@@ -171,7 +282,8 @@ public:
    *
    * @return the number of dimensions of the bundle space
    */
-  unsigned int dim() const
+  inline
+  size_t dim() const
   {
     return (_directions.size() == 0 ? 0 : _directions.front().size());
   }
@@ -181,7 +293,8 @@ public:
    *
    * @return the number of templates in the bundle
    */
-  unsigned int num_of_templates() const
+  inline
+  size_t num_of_templates() const
   {
     return _templates.size();
   }
@@ -191,7 +304,8 @@ public:
    *
    * @return the number of directions in the bundle
    */
-  unsigned int size() const
+  inline
+  size_t size() const
   {
     return _directions.size();
   }
@@ -201,9 +315,32 @@ public:
    *
    * @return a reference to the template vector
    */
+  inline
   const std::set<std::vector<unsigned int>> &templates() const
   {
     return _templates;
+  }
+
+  /**
+   * @brief Get the dynamic direction flag vector
+   *
+   * @return a reference to the dynamic direction flag vector
+   */
+  const std::vector<bool> &dynamic_directions() const
+  {
+    return _dynamic_dirs;
+  }
+
+  /**
+   * @brief Check whether the i-th direction is dynamic
+   * 
+   * @param i is the tested direction
+   * @return true if and only if the i-th direction is dynamic
+   */
+  inline
+  bool is_direction_dynamic(const size_t i) const
+  {
+    return _dynamic_dirs[i];
   }
 
   /**
@@ -289,7 +426,7 @@ public:
    */
   inline bool is_interior_empty() const
   {
-    return ((Polytope) * this).is_interior_empty();
+    return static_cast<Polytope>(*this).is_interior_empty();
   }
 
   /**
@@ -488,6 +625,9 @@ public:
 
   friend SetsUnion<Bundle> subtract_and_close(const Bundle &b1,
                                               const Bundle &b2);
+
+  template<typename T> friend class Evolver;
+  template<typename T>  friend class CachedEvolver;
 };
 
 /**

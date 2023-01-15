@@ -177,7 +177,8 @@ get_subs_from(const Parallelotope &P,
  * @param P is the considered parallelotope
  * @return The generator function of `P`
  */
-std::vector<SymbolicAlgebra::Expression<>> build_instantiated_generator_functs(
+std::vector<SymbolicAlgebra::Expression<>> 
+build_instantiated_generator_functs(
     const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
     const Parallelotope &P)
 {
@@ -559,36 +560,147 @@ LinearAlgebra::Vector<T> evaluate(
 }
 
 std::vector<LinearAlgebra::Vector<double>>
-get_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
+collect_dir_images(const Bundle &bundle, const DynamicalSystem<double> &ds,
                    const Polytope &parameter_set)
 {
-  std::vector<LinearAlgebra::Vector<double>> A;
+  std::vector<LinearAlgebra::Vector<double>> dir_images;
 
   auto avg_ds = average_dynamics(ds, parameter_set);
 
   auto approx_c = get_approx_center(bundle);
 
   const auto lengths = bundle.edge_lengths();
+
+  auto inter = make_interpretation(ds.variables(), approx_c);
+  const auto ac_image{evaluate(avg_ds, inter)};
+
   for (size_t i = 0; i < bundle.size(); ++i) {
     using namespace LinearAlgebra;
 
     const auto &dir = bundle.get_direction(i);
-    Vector<double> delta = (lengths[i] * dir) / norm_2(dir);
 
-    auto inter = make_interpretation(ds.variables(), approx_c + delta);
+    if (lengths[i] != 0) {
+      Vector<double> delta = (lengths[i]/2 * dir) / norm_2(dir);
 
-    const auto up{evaluate(ds.dynamics(), inter)};
+      inter = make_interpretation(ds.variables(), approx_c + delta);
 
-    inter = make_interpretation(ds.variables(), approx_c - delta);
+      const auto dir_image{evaluate(avg_ds, inter) - ac_image};
 
-    const auto down{evaluate(ds.dynamics(), inter)};
-
-    const auto new_dir{up - down};
-
-    A.push_back(new_dir);
+      const auto dir_image_norm{norm_2(dir_image)};
+      if (dir_image_norm != 0) {
+        dir_images.push_back(dir_image/norm_2(dir_image));
+      } else {
+        dir_images.push_back(dir);
+      }
+    } else {
+      dir_images.push_back(dir);
+    }
   }
 
-  return A;
+  return dir_images;
+}
+
+/**
+ * @brief Compute a unit vector orthogonal to n-1 vectors
+ * 
+ * This function computes a unit vector orthogonal to n-1 linearly independent 
+ * vectors in $\mathbb{R}^n$, $v_1$, $v_{2}$, ..., $v_{n-1}$ by evaluating the 
+ * determinant of the matrix $M = [e; v_1; v_2; \ldots; v_{n-1}]$ where 
+ * $e=[e_1, \ldots, e_{n-1}]$ and $e_1$, ..., $e_{n-1}$ is a canonical base for 
+ * $\mathbb{R}^n$. This determinant has the form $d_1*e_1 + \ldots + d_{n}*e_{n}$ 
+ * and can be written as the vector $d = [d_1, \ldots, d_n]$. By construction,
+ * $d$ is orthogonal to any $v_i$ and the function returns $d/||d||_2$.
+ * The determinant of $M$ can be computed as 
+ * $$det(M) = \sum_{j=1}^n e_j*(-1)^{1+j}*det(M_{1,j})$$
+ * where $M_{1,j}$ is the minor of the entry in the 1st row and $j$th column.
+ * Thus, $d_j = (-1)^{1+j}*det(M_{1,j})$. We know that 
+ * $det(M_{1,j})=det(M_{1,j}^T)$ and $M_{1,j}^T$ is the matrix 
+ * $M' = [v_1; v_2; \ldots; v_{n-1}]^T$ without the $j$th row; let us denote 
+ * it by ${M'}_{j}$.
+ * This function iteratively builds ${M'}_{n-1}$, ${M'}_{n-2}$, ..., 
+ * ${M'}_{1}$ and computes their determinants to return $d$.
+ * 
+ * @param vectors is a vector of n-1 linearly independent vectors in $\mathbb{R}^n$
+ * @return a unit vector orthogonal to all the vectors in vectors
+ */
+LinearAlgebra::Vector<double>
+compute_orthogonal_direction(const std::vector<LinearAlgebra::Vector<double>>& vectors)
+{
+  using namespace LinearAlgebra;
+  using namespace LinearAlgebra::Dense;
+
+  // orth_vector will eventually store the aimed orthogonal vector 
+  LinearAlgebra::Vector<double> orth_vector(vectors[0].size());
+
+  // build ${M'}_{n-1}$ and save the missing row in missing
+  auto Mp_j = transpose(vectors);
+  auto missing = std::move(Mp_j[orth_vector.size()-1]);
+  Mp_j.pop_back();
+
+  // for all the rows in $M'$
+  for (size_t j=orth_vector.size()-1; j>0; --j) {
+    orth_vector[j] = determinant(Mp_j)*(j%2==0?1:-1);
+
+    // swap the missing row and the (j-1)-th
+    swap(Mp_j[j-1], missing);
+  }
+  orth_vector[0] = determinant(Mp_j);
+
+  return orth_vector/norm_2(orth_vector);
+}
+
+inline
+void
+adjust_new_dir_verse(LinearAlgebra::Vector<double>& new_dir,
+                     const LinearAlgebra::Vector<double>& dir_image)
+{
+  using namespace LinearAlgebra;
+
+  if (new_dir*dir_image<0) {
+    for (auto& value: new_dir) {
+      value *= -1;
+    }
+  }
+}
+
+std::vector<LinearAlgebra::Vector<double>>
+compute_new_dirs(const Bundle &bundle, const DynamicalSystem<double> &ds,
+                 const Polytope &parameter_set)
+{
+  std::vector<LinearAlgebra::Vector<double>> new_dirs(bundle.directions());
+
+  auto dir_images = collect_dir_images(bundle, ds, parameter_set);
+  for (const auto& b_template: bundle.templates()) {
+    // build the vector of direction images excluding the 
+    // image of direction 0
+    std::vector<LinearAlgebra::Vector<double>> t_dir_images;
+    t_dir_images.reserve(b_template.size()-1);
+    for (size_t i=1; i<b_template.size(); ++i) {
+      t_dir_images.push_back(dir_images[b_template[i]]);
+    }
+
+    // since the new directions depends on the other dir_images
+    // of the current template, every dynamic direction should 
+    // exclusively belong to one template
+    if (bundle.is_direction_dynamic(b_template[0])) {
+      new_dirs[b_template[0]] = compute_orthogonal_direction(t_dir_images);
+
+      adjust_new_dir_verse(new_dirs[b_template[0]], dir_images[b_template[0]]);
+    }
+
+    for (size_t i=0; i<b_template.size()-1; ++i) {
+      t_dir_images[i] = dir_images[b_template[i]];
+
+      const size_t idx = b_template[i+1];
+      if (bundle.is_direction_dynamic(idx)) {
+        new_dirs[idx] = compute_orthogonal_direction(t_dir_images);
+
+        adjust_new_dir_verse(new_dirs[idx], dir_images[idx]);
+      }
+    }
+  }
+
+  return new_dirs;
 }
 
 template<>
@@ -609,16 +721,8 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
                             "set must have same number of dimensions.");
   }
 
-  std::vector<LinearAlgebra::Vector<double>> new_dirs;
-  if (this->dynamic_directions) { // if dynamic directions is enabled
-
-    // compute new directions
-    new_dirs = get_new_directions(bundle, _ds, parameter_set);
-  } else { // if dynamic directions is *not* enabled
-
-    // use old directions
-    new_dirs = bundle.directions();
-  }
+  // compute new directions
+  const auto new_dirs = compute_new_dirs(bundle, _ds, parameter_set);
 
   vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
   vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
@@ -684,7 +788,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 #else  // WITH_THREADS
     for (auto t_it = std::begin(bundle.templates());
          t_it != std::end(bundle.templates()); ++t_it) {
-      refine_coeff_itvl(std::ref(_ds), std::ref(*t_it), _mode);
+      refine_coeff_itvl(std::ref(_ds), std::ref(*t_it), this->mode);
     }
 #endif // WITH_THREADS
     delete itvl_finder;
@@ -706,7 +810,8 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   }
 
   Bundle res(std::move(new_dirs), std::move(lower_bounds),
-             std::move(upper_bounds), bundle.templates());
+             std::move(upper_bounds), bundle.templates(), 
+             bundle.dynamic_directions());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {
@@ -825,16 +930,8 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
                             "set must have same number of dimensions.");
   }
 
-  std::vector<LinearAlgebra::Vector<double>> new_dirs;
-  if (this->dynamic_directions) { // if dynamic directions is enabled
-
-    // compute new directions
-    new_dirs = get_new_directions(bundle, _ds, parameter_set);
-  } else { // if dynamic directions is *not* enabled
-
-    // use old directions
-    new_dirs = bundle.directions();
-  }
+  // compute new directions
+  const auto new_dirs = compute_new_dirs(bundle, _ds, parameter_set);
 
   vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
   vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
@@ -933,7 +1030,8 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
   }
 
   Bundle res(std::move(new_dirs), std::move(lower_bounds),
-             std::move(upper_bounds), bundle.templates());
+             std::move(upper_bounds), bundle.templates(), 
+             bundle.dynamic_directions());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {

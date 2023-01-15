@@ -9,6 +9,14 @@
 
 #define APPROX_ERR 1e-14
 
+
+inline bool epsilon_equivalent(const Polytope& synthesized,
+                               const Polytope& expected, const double epsilon)
+{
+    return ((expand(synthesized, epsilon).includes(expected)) && 
+            (expand(expected, epsilon).includes(synthesized)));    
+}
+
 BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
 {
     using namespace SymbolicAlgebra;
@@ -87,11 +95,35 @@ BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
     BOOST_REQUIRE_THROW(T(rSet, errParam2), std::domain_error);
 }
 
-inline bool epsilon_equivalent(const Polytope& synthesized,
-                               const Polytope& expected, const double epsilon)
+BOOST_AUTO_TEST_CASE(test_transform_dynamic_bundle)
 {
-    return ((expand(synthesized, epsilon).includes(expected)) && 
-            (expand(expected, epsilon).includes(synthesized)));    
+    using namespace SymbolicAlgebra;
+    using namespace LinearAlgebra;
+
+    Symbol<> x("x"), y("y");
+
+    // variable vector
+    DynamicalSystem<double> ODE({
+        {x, -y},
+        {y, x}
+    });
+
+    auto rk_system = runge_kutta4(ODE.variables(), ODE.dynamics(), 0.011990811705);
+
+    Evolver<double> T(DynamicalSystem<double>(ODE.variables(), rk_system));
+
+    Dense::Matrix<double> rA{
+        {1,0},
+        {0,1}
+    };
+
+    Bundle rSet(rA, {-0.05,0.05}, {9.95,10.05},{},{{0,1}}, Bundle::REMOVE_DIRECTION);
+
+    Bundle next = T(rSet);
+    for (size_t i=0; i<523; ++i) {
+        next = T(next);
+    }
+    BOOST_CHECK(epsilon_equivalent(rSet, next, 1e-7));
 }
 
 BOOST_AUTO_TEST_CASE(test_synthesis_bundle)

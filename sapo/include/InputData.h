@@ -265,7 +265,7 @@ public:
   }
 
   // add direction with specified name
-  void addVarDirectionConstraint(Direction *d);
+  size_t addVarDirectionConstraint(Direction *d);
 
   unsigned int getDirectionsNum() const
   {
@@ -303,7 +303,8 @@ public:
 
   unsigned int findDirectionPos(const std::string &name) const;
 
-  unsigned templateRows() const
+  inline
+  size_t templateRows() const
   {
     return templateMatrix.size();
   }
@@ -311,16 +312,19 @@ public:
   {
     return templateMatrix[0].size();
   }
+
   void setTemplate(const std::vector<std::vector<unsigned int>> &m)
   {
     templateMatrix = m;
   }
+
   const std::vector<std::vector<unsigned int>> &getTemplate() const
   {
     return templateMatrix;
   }
 
-  void addParamDirectionConstraint(Direction *d);
+  size_t addParamDirectionConstraint(Direction *d);
+
   unsigned paramDirectionsNum() const
   {
     return paramDirections.size();
@@ -408,21 +412,25 @@ public:
     return bern_caching;
   }
 
-  void setDynamicDirections(bool flag)
+  inline
+  void setAllDirsDynamics(const bool flag)
   {
-    dynamic_directions = flag;
+    all_dirs_dynamic = flag;
   }
 
-  const bool &useDynamicDirections() const
+  inline
+  bool areAllDirsDynamics() const
   {
-    return dynamic_directions;
+    return all_dirs_dynamic;
   }
 
+  inline
   void setUseInvariantDirections(bool flag)
   {
     use_invariant_directions = flag;
   }
 
+  inline
   bool getUseInvariantDirections() const
   {
     return use_invariant_directions;
@@ -491,11 +499,8 @@ protected:
   unsigned dynamic_degree;
   Sapo::joinApproxType approx_type;
   bool bern_caching;
-  bool dynamic_directions;
+  bool all_dirs_dynamic;
   bool use_invariant_directions;
-
-  // addition of direction to params or vars
-  void addDirectionConstraint(Direction *d, bool isVar);
 };
 
 /**

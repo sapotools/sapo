@@ -378,8 +378,15 @@ Bundle getBundle(const InputData &id)
     templates = trim_unused_directions(directions, LB, UB, templates);
   }
 
-  Bundle bundle(directions, LB, UB,
-                computeTemplate(directions, {}, templates));
+  std::set<std::vector<unsigned int>> static_templates, dynamic_templates;
+
+  if (id.areAllDirsDynamics()) {
+    dynamic_templates = computeTemplate(directions, {}, templates);
+  } else {
+    static_templates = computeTemplate(directions, {}, templates);
+  }
+
+  Bundle bundle(directions, LB, UB, static_templates, dynamic_templates);
 
   if (id.getUseInvariantDirections()) {
     return addInvariantDirections(id, bundle);

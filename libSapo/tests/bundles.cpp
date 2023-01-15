@@ -32,8 +32,25 @@ BOOST_AUTO_TEST_CASE(test_bundle)
     };
 
     Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}, T),
-           b2(B,{0,0,0,0,0},{3,5,5,7,5}, {{2,1,4}}),
-           b3(B,{0,0,0,0,0},{3,5,5,2,5}, {{2,1,4}});
+           b2(B,{0,0,0,0,0},{3,5,5,7,5}, 
+              {{2,1,4}},  // static templates
+              Bundle::STATIC_TEMPLATES),
+           b3(B,{0,0,0,0,0},{3,5,5,7,5}, 
+              {{2,1,4}},  // static templates
+              Bundle::DYNAMIC_TEMPLATES),
+           b4(B,{0,0,0,0,0},{3,5,5,2,5}, 
+              {{2,1,4}},  // static templates
+              Bundle::STATIC_TEMPLATES),
+           b5(B,{0,0,0,0,0},{3,5,5,2,5}, 
+              {{2,1,4}},  // static templates
+              Bundle::DYNAMIC_TEMPLATES),
+           b6(B,{0,0,0,0,0},{3,5,5,7,5}, 
+              {{2,1,4}},  // static templates
+              Bundle::REMOVE_DIRECTION),
+           b7(B,{0,0,0,0,0},{3,5,5,7,5}, 
+              {{2,1,4}},  // static templates
+              {{0,1,4}},  // dynamic templates
+              Bundle::REMOVE_DIRECTION);
 
 
     BOOST_CHECK(b1.dim()==3);
@@ -53,8 +70,26 @@ BOOST_AUTO_TEST_CASE(test_bundle)
 
     BOOST_CHECK(b1==Polytope(Ap, {5,5,5,3,7,0,0,0,0,0}));
     BOOST_CHECK(b1==b2);
-    BOOST_CHECK(b1!=b3);
+    BOOST_CHECK(b1==b3);
+    BOOST_CHECK(b1!=b4);
+    BOOST_CHECK(b1!=b5);
+    BOOST_CHECK(b1!=b6);
+    BOOST_CHECK(b4==b5);
     BOOST_CHECK(b1!=Polytope(Ap, {5,5,5,10,7,0,0,0,0,0}));
+    BOOST_CHECK(b4.size()==B.size());
+    BOOST_CHECK(b4.templates().size()==2);
+
+    const auto num_b5_templates = ceil(float(B.size())/b5.dim());
+    BOOST_CHECK(b5.size()==num_b5_templates*b5.dim());
+    BOOST_CHECK(b5.templates().size()==num_b5_templates);
+
+    const auto num_b6_templates = 1;
+    BOOST_CHECK(b6.size()==num_b6_templates*b6.dim());
+    BOOST_CHECK(b6.templates().size()==num_b6_templates);
+
+    const auto num_b7_templates = 2;
+    BOOST_CHECK(b7.size()==num_b7_templates*b7.dim());
+    BOOST_CHECK(b7.templates().size()==num_b7_templates);
 }
 
 BOOST_AUTO_TEST_CASE(test_bundle_error)

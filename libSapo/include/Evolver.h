@@ -64,20 +64,16 @@ protected:
 public:
   evolver_mode mode; //!< the mode used to compute the evolution
 
-  bool dynamic_directions; //!< update the directions during the computation
 
   /**
    * @brief A constructor
    *
    * @param dynamical_system is the investigated dynamical system
    * @param mode is the mode used to compute the evolution
-   * @param dynamic_directions is a flag to dynamical update directions
    */
   Evolver(const DynamicalSystem<T> &dynamical_system,
-          const evolver_mode mode = ALL_FOR_ONE,
-          const bool dynamic_directions = false):
-      _ds(dynamical_system),
-      mode(mode), dynamic_directions(dynamic_directions)
+          const evolver_mode mode = ALL_FOR_ONE):
+      _ds(dynamical_system), mode(mode)
   {
   }
 
@@ -86,13 +82,10 @@ public:
    *
    * @param dynamical_system is the investigated dynamical system
    * @param mode is the mode used to compute the evolution
-   * @param dynamic_directions is a flag to dynamical update directions
    */
-  Evolver(DynamicalSystem<T> &&dynamical_system,
-          const evolver_mode mode = ALL_FOR_ONE,
-          const bool dynamic_directions = false):
-      _ds(std::move(dynamical_system)),
-      mode(mode), dynamic_directions(dynamic_directions)
+  Evolver(const DynamicalSystem<T> &&dynamical_system,
+          const evolver_mode mode = ALL_FOR_ONE):
+      _ds(std::move(dynamical_system)), mode(mode)
   {
   }
 
@@ -102,8 +95,7 @@ public:
    * @param orig is the template object
    */
   Evolver(const Evolver<T> &orig):
-      _ds(orig._ds), mode(orig.mode),
-      dynamic_directions(orig.dynamic_directions)
+      _ds(orig._ds), mode(orig.mode)
   {
   }
 

@@ -1,8 +1,10 @@
+#include <memory>
+
+#include <glpk.h>
+
 #include <LinearAlgebraIO.h>
 
 #include "InputData.h"
-
-#include <glpk.h>
 
 using namespace std;
 
@@ -19,7 +21,7 @@ InputData::InputData():
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
     decomp(false), decomp_defined(false), alpha(0.5), alphaDefined(false),
     compose_dynamic(false), dynamic_degree(1), approx_type(Sapo::NO_APPROX),
-    bern_caching(true), dynamic_directions(false),
+    bern_caching(true), all_dirs_dynamic(false),
     use_invariant_directions(false)
 {
 }
@@ -323,18 +325,16 @@ int InputData::getDefPos(const string &name) const
   return -1;
 }
 
-int find(std::vector<Direction *> M, Direction *v)
+size_t find(const std::vector<Direction *>& M, const Direction *v)
 {
-  unsigned pos = 0;
-  while (pos < M.size()) {
+  for (size_t pos = 0; pos < M.size(); ++pos) {
     if (M[pos]->compare(v)) {
       return pos;
-    } else {
-      pos++;
     }
   }
+
   // not found
-  return -1;
+  return M.size();
 }
 
 void InputData::addInvariantConstraint(Direction *d)
@@ -342,80 +342,77 @@ void InputData::addInvariantConstraint(Direction *d)
   invariant.push_back(d);
 }
 
-void InputData::addDirectionConstraint(Direction *d, bool isVar)
+void update_dir(Direction * dir, const Direction *new_dir)
 {
-  Direction *new_dir = d;
-  Direction *negated_dir = new_dir->getComplementary();
-
-  std::vector<AbsSyn::Direction *> *dirs;
-  if (isVar) {
-    dirs = &directions;
-  } else {
-    dirs = &paramDirections;
+  if (!dir->hasUB() || new_dir->getUB() < dir->getUB()) {
+    dir->setUB(new_dir->getUB());
+    dir->setSymbol(new_dir->getSymbol());
   }
-
-  // check if new direction is already present
-  int pos = find(*dirs, new_dir);
-  int negated_pos = find(*dirs, negated_dir);
-
-  if (pos != -1) {
-
-    // direction already present
-    if (!(*dirs)[pos]->hasUB() || new_dir->getUB() < (*dirs)[pos]->getUB()) {
-      (*dirs)[pos]->setUB(new_dir->getUB());
-      (*dirs)[pos]->setSymbol(new_dir->getSymbol());
-    }
-    if (!(*dirs)[pos]->hasLB() || new_dir->getLB() > (*dirs)[pos]->getLB()) {
-      (*dirs)[pos]->setLB(new_dir->getLB());
-      (*dirs)[pos]->setSymbol(new_dir->getSymbol());
-    }
-    delete (new_dir);
-    delete (negated_dir);
-
-  } else if (negated_pos != -1) {
-
-    // negation of direction already present
-    if (!(*dirs)[negated_pos]->hasUB()
-        || negated_dir->getUB() < (*dirs)[negated_pos]->getUB()) {
-      (*dirs)[negated_pos]->setUB(negated_dir->getUB());
-      (*dirs)[negated_pos]->setSymbol(negated_dir->getSymbol());
-    }
-    if (!(*dirs)[negated_pos]->hasLB()
-        || negated_dir->getLB() > (*dirs)[negated_pos]->getLB()) {
-      (*dirs)[negated_pos]->setLB(negated_dir->getLB());
-      (*dirs)[negated_pos]->setSymbol(negated_dir->getSymbol());
-    }
-    delete (new_dir);
-    delete (negated_dir);
-
-  } else {
-
-    // new direction
-    (*dirs).push_back(new_dir);
-
-    if (isVar) {
-      // cover variables
-      for (unsigned i = 0; i < vars.size(); i++) {
-        if (new_dir->covers(vars[i]->getSymbol())) {
-          vars[i]->setCovered();
-        }
-      }
-    } else {
-      // cover parameter
-      for (unsigned i = 0; i < params.size(); i++) {
-        if (new_dir->covers(params[i]->getSymbol())) {
-          params[i]->setCovered();
-        }
-      }
-    }
-
-    delete (negated_dir);
+  if (!dir->hasLB() || new_dir->getLB() > dir->getLB()) {
+    dir->setLB(new_dir->getLB());
+    dir->setSymbol(new_dir->getSymbol());
   }
 }
 
-void InputData::addVarDirectionConstraint(Direction *d)
+size_t find_and_update_dir(std::vector<AbsSyn::Direction *>& dirs, Direction* new_dir)
 {
-  return this->addDirectionConstraint(d, true);
+  size_t pos = find(dirs, new_dir);
+  if (pos != dirs.size()) {  // new_dir is already in dirs
+    update_dir(dirs[pos], new_dir);
+
+    delete new_dir;
+
+    return pos;
+  }
+
+  // the new direction is the complementary one
+  std::shared_ptr<Direction> comp_new_dir{new_dir->getComplementary()};
+  pos = find(dirs, comp_new_dir.get());
+  if (pos != dirs.size()) {  // new_dir is already in dirs
+    update_dir(dirs[pos], comp_new_dir.get());
+
+    delete new_dir;
+
+    return pos;
+  }
+
+  return dirs.size();
+}
+
+size_t InputData::addParamDirectionConstraint(Direction *d)
+{  
+  size_t pos = find_and_update_dir(paramDirections, d);
+  if (pos != paramDirections.size()) {
+    return pos;
+  }
+
+  paramDirections.push_back(d);
+
+  for (unsigned i = 0; i < params.size(); i++) {
+    if (d->covers(params[i]->getSymbol())) {
+      params[i]->setCovered();
+    }
+  }
+
+  return pos;
+}
+
+size_t InputData::addVarDirectionConstraint(Direction *d)
+{
+  size_t pos = find_and_update_dir(directions, d);
+  if (pos != directions.size()) {
+    return pos;
+  }
+
+  directions.push_back(d);
+
+  for (unsigned i = 0; i < vars.size(); i++) {
+    if (d->covers(vars[i]->getSymbol())) {
+      vars[i]->setCovered();
+    }
+  }
+
+  return pos;
 }
 
 unsigned int InputData::findDirectionPos(const std::string &name) const
@@ -426,11 +423,6 @@ unsigned int InputData::findDirectionPos(const std::string &name) const
     }
   }
   return -1;
-}
-
-void InputData::addParamDirectionConstraint(Direction *d)
-{
-  return this->addDirectionConstraint(d, false);
 }
 
 double typeCoeff(const Direction::Type &type)
