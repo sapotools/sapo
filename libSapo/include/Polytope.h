@@ -286,7 +286,7 @@ public:
  */
 inline bool are_disjoint(const Polytope &P1, const Polytope &P2)
 {
-  return disjoint_solutions(P1, P2);
+  return have_disjoint_solutions(P1, P2);
 }
 
 /**

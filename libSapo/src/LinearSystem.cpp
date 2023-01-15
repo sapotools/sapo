@@ -166,7 +166,7 @@ LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
   return ::optimize(this->_A, this->_b, obj_fun, maximize);
 }
 
-bool disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
+bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
 {
   if (ls1.dim() != ls2.dim()) {
     throw std::domain_error("The two linear systems must have the "
@@ -322,8 +322,8 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
     std::ostringstream oss;
 
     oss << "The matrix A and the vector b are expected to "
-        << "have the same size: they are " << A.size() << " and " << b.size()
-        << ", respectively.";
+        << "have the same number of rows: they have " << A.size() 
+        << " and " << b.size() << "rows , respectively.";
     throw std::domain_error(oss.str());
   }
 
@@ -368,8 +368,8 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
     std::ostringstream oss;
 
     oss << "The matrix A and the vector b are expected to "
-        << "have the same size: they are " << _A.size() << " and " << _b.size()
-        << ", respectively.";
+        << "have the same number of rows: they have " << A.size() 
+        << " and " << b.size() << "rows , respectively.";
     throw std::domain_error(oss.str());
   }
 

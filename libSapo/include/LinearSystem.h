@@ -395,7 +395,7 @@ public:
  * @return `true` if and only if the solutions of `ls1` and `ls2` are
  *         disjoint
  */
-bool disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2);
+bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2);
 
 /**
  * @brief Test whether two linear systems are the same one
