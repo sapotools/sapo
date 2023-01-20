@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 #include <condition_variable>
+#include <memory> // shared_ptr
 
 /**
  * @brief A thread pool to which task can be submitted
@@ -84,7 +85,7 @@ protected:
 
   std::vector<std::thread> _threads;     //!< The thread list
   std::queue<Task> _queue;               //!< The task queue
-  std::map<BatchId, BatchInfo> _batches; //!< Batch info
+  std::map<BatchId, std::shared_ptr<BatchInfo>> _batches; //!< Batch info
   std::set<BatchId> _unused_batch_ids;   //!< Not used batch ids
   std::mutex _mutex; //!< A mutex for mutual exclusive operations
   std::condition_variable _waiting_task; //!< Testify that a task is waiting
@@ -96,7 +97,7 @@ protected:
    * @param[in] batch_id is the searched batch id
    * @return a reference to the batch information
    */
-  BatchInfo &get_batch_info(const BatchId batch_id);
+  std::shared_ptr<BatchInfo> get_batch_info(const BatchId batch_id);
 
   /**
    * @brief Extract next task from the queue
@@ -164,7 +165,7 @@ public:
    * @param[in] params is the task parameters
    */
   template<typename T, typename... Ts>
-  void submit(T &&routine, Ts &&...params)
+  inline void submit(T &&routine, Ts &&...params)
   {
     submit_to_batch(0, routine, params...);
   }
@@ -186,7 +187,7 @@ public:
       std::unique_lock<std::mutex> lock(_mutex);
 
       // increase the number of tasks in the batch
-      get_batch_info(batch_id).in_queue++;
+      ++(get_batch_info(batch_id)->in_queue);
 
       // enqueue the task together with its batch id
       _queue.emplace(
@@ -223,6 +224,30 @@ public:
    * @param[in] num_of_new_threads is the number of new threads
    */
   void add_new_threads(const unsigned int num_of_new_threads);
+
+  /**
+   * @brief Get the number of pool threads
+   * 
+   * @return the number of threads in the pool
+   */
+  inline size_t num_of_threads()
+  {
+    std::unique_lock<std::mutex> lock(_mutex);
+
+    return _threads.size();
+  }
+
+  /**
+   * @brief Get the number of active tasks
+   * 
+   * @return the number of pool active tasks 
+   */
+  inline size_t num_of_tasks()
+  {
+    std::unique_lock<std::mutex> lock(_mutex);
+
+    return _queue.size();
+  }
 
   /**
    * @brief Destroy the thread pool

@@ -15,11 +15,11 @@ find_package(GMP REQUIRED)
 
 set(THREADED_VERSION TRUE CACHE BOOL "Enable/disable threaded version compilation")
 
-if(THREADED_VERSION)
-if (GLPK_THREADS)
+if(${THREADED_VERSION})
+if (${GLPK_THREADS})
 find_package(Threads)
 
-if(Threads_FOUND)
+if(${Threads_FOUND})
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 
 if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 

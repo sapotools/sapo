@@ -185,7 +185,7 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
   Flowpipe flowpipe;
   flowpipe.push_back(last_step);
 
-#ifdef WITH_THREADS_TEMP_DISABLED
+#ifdef WITH_THREADS
   std::mutex add_mtx;
 
   auto compute_next_bundles_and_add_to_last
@@ -222,7 +222,7 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
                              nbundle.split(sapo->max_bundle_magnitude));
 
         {
-#ifdef WITH_THREADS_TEMP_DISABLED
+#ifdef WITH_THREADS
           std::unique_lock<std::mutex> lock(add_mtx);
 #endif
           last_step.add(bls);
@@ -244,7 +244,7 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
     i++;
 
     unsigned int pSet_idx = 0;
-#ifdef WITH_THREADS_TEMP_DISABLED
+#ifdef WITH_THREADS
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
     // for all the old bundles

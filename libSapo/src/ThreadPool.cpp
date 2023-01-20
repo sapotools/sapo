@@ -6,7 +6,7 @@
  * @param[in] batch_id is the searched batch id
  * @return a reference to the batch information
  */
-ThreadPool::BatchInfo &
+std::shared_ptr<ThreadPool::BatchInfo>
 ThreadPool::get_batch_info(const ThreadPool::BatchId batch_id)
 {
   // search for the batch id in the map
@@ -57,7 +57,7 @@ bool ThreadPool::extract_next_task(ThreadPool::Task &next,
 
   // update the info about the number of tasks
   // of the batch in the queue
-  get_batch_info(next.second).in_queue--;
+  --(get_batch_info(next.second)->in_queue);
 
   if (!owns_lock) {
     lock.unlock();
@@ -91,11 +91,11 @@ void ThreadPool::consumer_loop(unsigned int thread_id)
       return;
     }
 
-    BatchInfo &info = get_batch_info(task.second);
+    auto info = get_batch_info(task.second);
 
     // update the info about the number of
     // running tasks in the batch
-    info.running++;
+    ++(info->running);
 
     // prepare for the task run and
     // exit from the critical region
@@ -109,12 +109,12 @@ void ThreadPool::consumer_loop(unsigned int thread_id)
 
     // update the running tasks in the batch and
     // check for task end
-    if (--info.running == 0 && info.in_queue == 0) {
+    if (--(info->running) == 0 && info->in_queue == 0) {
       lock.unlock();
 
       // notify the waiting threads that
       // this batch has been concluded
-      info.waiting_end.notify_all();
+      info->waiting_end.notify_all();
 
       lock.lock();
     }
@@ -168,7 +168,7 @@ ThreadPool::BatchId ThreadPool::create_batch()
   }
 
   // build an empty info for the new batch id
-  _batches.emplace(batch_id, BatchInfo{});
+  _batches.emplace(batch_id, std::make_shared<BatchInfo>());
 
   return batch_id;
 }
@@ -188,12 +188,12 @@ void ThreadPool::close_batch(const unsigned int batch_id)
   }
 
   // get batch info
-  BatchInfo &info = get_batch_info(batch_id);
+  auto info = get_batch_info(batch_id);
 
   // if the batch has not finished yet
-  while (info.unfinished_tasks() > 0) {
+  while (info->unfinished_tasks() > 0) {
     // wait for its end
-    info.waiting_end.wait(lock);
+    info->waiting_end.wait(lock);
   }
 
   _batches.erase(batch_id);
@@ -223,10 +223,10 @@ void ThreadPool::join_threads(const unsigned int batch_id)
   // repeat forever
   while (true) {
     // get batch info
-    BatchInfo &info = get_batch_info(batch_id);
+    auto info = get_batch_info(batch_id);
 
     // if finished
-    if (info.unfinished_tasks() == 0) {
+    if (info->unfinished_tasks() == 0) {
 
       // end loop and exit
       return;
@@ -237,8 +237,8 @@ void ThreadPool::join_threads(const unsigned int batch_id)
       // some tasks in the batch are still running
       // wait for them
 
-      while (info.unfinished_tasks() > 0) {
-        info.waiting_end.wait(lock);
+      while (info->unfinished_tasks() > 0) {
+        info->waiting_end.wait(lock);
       }
 
       // exit
@@ -250,11 +250,11 @@ void ThreadPool::join_threads(const unsigned int batch_id)
     _queue.pop();
 
     // get info about the extracted task batch
-    BatchInfo &ex_info = get_batch_info(task.second);
+    auto ex_info = get_batch_info(task.second);
 
     // update it
-    --ex_info.in_queue;
-    ++ex_info.running;
+    --(ex_info->in_queue);
+    ++(ex_info->running);
 
     // prepare for the task run and
     // exit from the critical region
@@ -267,12 +267,12 @@ void ThreadPool::join_threads(const unsigned int batch_id)
 
     // decrease the number of running
     // tasks in the batch
-    --ex_info.running;
+    --(ex_info->running);
 
-    if (ex_info.unfinished_tasks() == 0) {
+    if (ex_info->unfinished_tasks() == 0) {
       lock.unlock();
 
-      ex_info.waiting_end.notify_all();
+      ex_info->waiting_end.notify_all();
 
       lock.lock();
     }
@@ -297,9 +297,9 @@ void ThreadPool::terminate()
   // notify the end of all the active batches
   // to all the main threads waiting for it
   for (auto &info: _batches) {
-    info.second.running = 0;
-    info.second.in_queue = 0;
-    info.second.waiting_end.notify_all();
+    info.second->running = 0;
+    info.second->in_queue = 0;
+    info.second->waiting_end.notify_all();
   }
 
   for (std::thread &t: _threads) {
@@ -324,7 +324,7 @@ void ThreadPool::reinit(const unsigned int &num_of_threads)
 
   _terminating = false;
   _batches.clear();
-  _batches.emplace((BatchId)0, BatchInfo{});
+  _batches.emplace((BatchId)0, std::make_shared<BatchInfo>());
 
   _threads = std::vector<std::thread>();
   for (unsigned int i = 0; i < num_of_threads; ++i) {
