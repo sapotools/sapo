@@ -834,13 +834,15 @@ Vector<size_t> find_first_independent_rows(Matrix<T> A)
   const size_t num_of_columns = A.front().size();
   const size_t num_of_rows = A.size();
 
-  Vector<size_t> res(num_of_columns);
+  // initialize a vector of the row positions
+  Vector<size_t> row_pos(num_of_rows);
 
-  std::iota(std::begin(res), std::end(res), 0);
+  std::iota(std::begin(row_pos), std::end(row_pos), 0);
 
   for (size_t j = 0; j < A.size(); ++j) {
     if (j == num_of_columns) {
-      return res;
+      // return the vector of the first n elements in row_pos
+      return Vector<size_t>(std::begin(row_pos), std::begin(row_pos)+num_of_columns);
     }
     
     // find the first row k whose j-th column is not null
@@ -854,7 +856,7 @@ Vector<size_t> find_first_independent_rows(Matrix<T> A)
       // otherwise, swap rows
       if (j != k) {
         std::swap(A[j], A[k]);
-        std::swap(res[j], res[k]);
+        std::swap(row_pos[j], row_pos[k]);
       }
 
       // nullify all the values below A[j][j]
@@ -875,7 +877,8 @@ Vector<size_t> find_first_independent_rows(Matrix<T> A)
     }
   }
   
-  return res;
+  // return the vector of the first n elements in row_pos
+  return Vector<size_t>(std::begin(row_pos), std::begin(row_pos)+num_of_columns);
 }
 
 /**
