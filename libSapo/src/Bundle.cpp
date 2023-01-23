@@ -14,7 +14,7 @@
 
 #include <limits>
 #include <string>
-#include <algorithm>
+#include <algorithm> //!< std::sort
 #include <functional>
 #include <sstream>
 
@@ -41,6 +41,41 @@
  * This macro avoids \f$-0\f$ by replacing it by \f$0\f$.
  */
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
+
+BundleTemplate::BundleTemplate(const BundleTemplate &orig):
+    _dir_indices(orig._dir_indices),
+    _dynamic_directions(orig._dynamic_directions)
+{
+}
+
+BundleTemplate::BundleTemplate(BundleTemplate &&orig):
+    BundleTemplate(std::move(orig._dir_indices), orig._dynamic_directions)
+{
+}
+
+BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices,
+                               const bool dynamic_directions):
+    _dir_indices(dir_indices),
+    _dynamic_directions(dynamic_directions)
+{
+  std::sort(std::begin(_dir_indices), std::end(_dir_indices));
+}
+
+BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices,
+                               const bool dynamic_directions):
+    _dir_indices(std::move(dir_indices)),
+    _dynamic_directions(dynamic_directions)
+{
+  std::sort(std::begin(_dir_indices), std::end(_dir_indices));
+}
+
+bool std::less<BundleTemplate>::operator()(const BundleTemplate &a,
+                                           const BundleTemplate &b)
+{
+  std::less<std::vector<unsigned int>> cmp;
+
+  return cmp(a.get_direction_indices(), b.get_direction_indices());
+}
 
 Bundle::Bundle() {}
 
@@ -103,16 +138,16 @@ bool is_sorted(const std::vector<T> &V)
 
 /**
  * @brief Canonize a template
- * 
- * A template is in canonical form if it is sorted. This function 
- * sorts the direction indices of a template and brings it in 
+ *
+ * A template is in canonical form if it is sorted. This function
+ * sorts the direction indices of a template and brings it in
  * canonical form.
- * 
- * @param bundle_template is the template to be brought in canonical form 
- * @return a reference to the updated template 
+ *
+ * @param bundle_template is the template to be brought in canonical form
+ * @return a reference to the updated template
  */
-std::vector<unsigned int>&
-canonize_template(std::vector<unsigned int>& bundle_template)
+std::vector<unsigned int> &
+canonize_template(std::vector<unsigned int> &bundle_template)
 {
   if (!is_sorted(bundle_template)) {
     std::sort(std::begin(bundle_template), std::end(bundle_template));
@@ -123,16 +158,16 @@ canonize_template(std::vector<unsigned int>& bundle_template)
 
 /**
  * @brief Canonize a set of templates
- * 
- * A template is in canonical form if it is sorted. This function 
- * builds a set of templates in canonical form that is equivalent to 
+ *
+ * A template is in canonical form if it is sorted. This function
+ * builds a set of templates in canonical form that is equivalent to
  * the set in input.
- * 
+ *
  * @param templates is the set of templates to be brought in canonical form
  * @return the set of templates brought in canonical form
  */
 std::set<std::vector<unsigned int>>
-canonize_templates(const std::set<std::vector<unsigned int>>& templates)
+canonize_templates(const std::set<std::vector<unsigned int>> &templates)
 {
   std::set<std::vector<unsigned int>> new_templates;
 
@@ -146,72 +181,74 @@ canonize_templates(const std::set<std::vector<unsigned int>>& templates)
 }
 
 /**
- * @brief Find directions in templates
- * 
- * @param[out] template_directions is the set in which the template directions are placed
+ * @brief Collect directions in templates
+ *
+ * @param[out] template_directions is the set in which the template directions
+ * are placed
  * @param[in] templates is the set of templates whose directions is aimed for
  */
-void
-find_directions_in_templates(std::set<size_t>& template_directions,
-                             const std::set<std::vector<unsigned int>>& templates)
+void collect_directions_in_templates(
+    std::set<size_t> &template_directions,
+    const std::set<std::vector<unsigned int>> &templates)
 {
-  for (const auto& bundle_template: templates) {
-    template_directions.insert(std::begin(bundle_template), std::end(bundle_template));
+  for (const auto &bundle_template: templates) {
+    template_directions.insert(std::begin(bundle_template),
+                               std::end(bundle_template));
   }
 }
 
 /**
- * @brief Find directions in templates
- * 
+ * @brief Collect directions in templates
+ *
  * @param templates is the set of templates whose directions is aimed for
  * @return the set of directions mentioned in the templates
  */
-std::set<size_t>
-find_directions_in_templates(const std::set<std::vector<unsigned int>>& templates)
+std::set<size_t> collect_directions_in_templates(
+    const std::set<std::vector<unsigned int>> &templates)
 {
   std::set<size_t> dirs;
 
-  find_directions_in_templates(dirs, templates);
+  collect_directions_in_templates(dirs, templates);
 
   return dirs;
 }
 
 /**
  * @brief Find new positions for all the positions in a set
- * 
+ *
  * @param positions is the set of position which must be replaced
- * @return a map assigning a new position to each of the old 
+ * @return a map assigning a new position to each of the old
  *        positions
  */
 std::map<size_t, size_t>
-find_new_position_for(const std::set<size_t>& positions)
+find_new_position_for(const std::set<size_t> &positions)
 {
   std::map<size_t, size_t> new_positions;
   size_t new_id = 0;
 
-  // for each of the positions in the set of the positions to 
-  // be reassigned 
-  for (const auto& dir_id : positions) {
+  // for each of the positions in the set of the positions to
+  // be reassigned
+  for (const auto &dir_id: positions) {
 
     // assign a new position
-    new_positions[dir_id] = new_id++; 
+    new_positions[dir_id] = new_id++;
   }
 
   return new_positions;
 }
 
 template<typename T>
-void
-mark_linearly_dep_dirs(std::vector<size_t>& new_pos,
-                       const std::vector<LinearAlgebra::Vector<T>> &directions,
-                       const size_t& dir_idx)
+void mark_linearly_dep_dirs(
+    std::vector<size_t> &new_pos,
+    const std::vector<LinearAlgebra::Vector<T>> &directions,
+    const size_t &dir_idx)
 {
   using namespace LinearAlgebra;
 
   const size_t new_idx = new_pos[dir_idx];
 
-  const auto& dir = directions[dir_idx];
-  for (size_t j=dir_idx+1; j<directions.size(); ++j) {
+  const auto &dir = directions[dir_idx];
+  for (size_t j = dir_idx + 1; j < directions.size(); ++j) {
     if (new_pos[j] == j && are_linearly_dependent(dir, directions[j])) {
       new_pos[j] = new_idx;
     }
@@ -220,12 +257,12 @@ mark_linearly_dep_dirs(std::vector<size_t>& new_pos,
 
 /**
  * @brief Filter duplicate directions
- * 
+ *
  * @tparam T is the scalar type of the directions
  * @param directions is the direction vector
  * @param lower_bounds is the vector of the direction lower bounds
  * @param upper_bounds is the vector of the direction upper bounds
- * @return a vector mapping each index of the input direction vector in the 
+ * @return a vector mapping each index of the input direction vector in the
  *       corresponding index in the final direction vector
  */
 template<typename T>
@@ -240,13 +277,13 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
   std::vector<size_t> new_pos(directions.size());
   std::iota(std::begin(new_pos), std::end(new_pos), 0);
 
-  for (size_t i=0; i<directions.size(); ++i) {
+  for (size_t i = 0; i < directions.size(); ++i) {
 
     // if directions[i] is the first instance of this direction
     // in directions
-    if (new_pos[i]==i) {
+    if (new_pos[i] == i) {
 
-      // get the new index for positions[i] in new_directions 
+      // get the new index for positions[i] in new_directions
       // and set in new_pos[i]
       const size_t new_idx = new_directions.size();
       new_pos[i] = new_idx;
@@ -258,26 +295,26 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
       new_lower_bounds.push_back(lower_bounds[i]);
       new_upper_bounds.push_back(upper_bounds[i]);
 
-      // mark in new_pos directions in direction vector that are 
+      // mark in new_pos directions in direction vector that are
       // linearly dependent to directions[i]
       mark_linearly_dep_dirs(new_pos, directions, i);
     } else {
-      // directions[i] has been already inserted in new_directions 
+      // directions[i] has been already inserted in new_directions
       // in position new_pos[i]
       using namespace LinearAlgebra;
 
       // get the index of directions[i] in new_directions
       const size_t new_idx = new_pos[i];
 
-      const T coeff = new_directions[new_idx]/directions[i];
+      const T coeff = new_directions[new_idx] / directions[i];
 
       // if necessary, increase the lower bound
-      new_lower_bounds[new_idx] = std::max(new_lower_bounds[new_idx],
-                                           lower_bounds[i] * coeff);
+      new_lower_bounds[new_idx]
+          = std::max(new_lower_bounds[new_idx], lower_bounds[i] * coeff);
 
       // if necessary, decrease the upper bound
-      new_upper_bounds[new_idx] = std::min(new_upper_bounds[new_idx],
-                                           upper_bounds[i] * coeff);
+      new_upper_bounds[new_idx]
+          = std::min(new_upper_bounds[new_idx], upper_bounds[i] * coeff);
     }
   }
 
@@ -291,27 +328,26 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
 
 /**
  * @brief Reorganize directions according to a set of new positions
- * 
- * This function reorganizes the directions according to a new set 
- * of positions and removes all the directions that do not have a 
+ *
+ * This function reorganizes the directions according to a new set
+ * of positions and removes all the directions that do not have a
  * new position.
- * 
+ *
  * @tparam T is the scalar type of the directions
  * @param directions is the vector of the directions to be reorganized
  * @param new_positions is the map of the new positions
  */
 template<typename T>
-void
-resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
-                  LinearAlgebra::Vector<T> &lower_bounds,
-                  LinearAlgebra::Vector<T> &upper_bounds,
-                  const std::map<size_t, size_t>& new_positions)
+void resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
+                       LinearAlgebra::Vector<T> &lower_bounds,
+                       LinearAlgebra::Vector<T> &upper_bounds,
+                       const std::map<size_t, size_t> &new_positions)
 {
   std::vector<LinearAlgebra::Vector<T>> new_directions(new_positions.size());
   LinearAlgebra::Vector<T> new_lower_bounds(new_positions.size()),
-                           new_upper_bounds(new_positions.size());
+      new_upper_bounds(new_positions.size());
 
-  for (const auto& new_pos : new_positions) {
+  for (const auto &new_pos: new_positions) {
     std::swap(directions[new_pos.first], new_directions[new_pos.second]);
     std::swap(lower_bounds[new_pos.first], new_lower_bounds[new_pos.second]);
     std::swap(upper_bounds[new_pos.first], new_upper_bounds[new_pos.second]);
@@ -324,27 +360,27 @@ resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
 
 /**
  * @brief Update the direction positions in a set of templates
- * 
- * This function returns a set of templates which are built by updating the 
- * indices of those in the input set indices according to the vector of the new 
- * direction positions. Moreover, the new templates are brought to the 
- * canonical form. 
- * 
- * @param templates is the set of the templates whose direction position 
+ *
+ * This function returns a set of templates which are built by updating the
+ * indices of those in the input set indices according to the vector of the new
+ * direction positions. Moreover, the new templates are brought to the
+ * canonical form.
+ *
+ * @param templates is the set of the templates whose direction position
  *               must be updated
- * @param new_positions is a vector mapping each old direction index in the new 
+ * @param new_positions is a vector mapping each old direction index in the new
  *               direction index
  * @return the updated set of templates
  */
-std::set<std::vector<unsigned int>>
-update_templates_directions(const std::set<std::vector<unsigned int>>& templates,
-                            const std::vector<size_t>& new_positions) 
+std::set<std::vector<unsigned int>> update_templates_directions(
+    const std::set<std::vector<unsigned int>> &templates,
+    const std::vector<size_t> &new_positions)
 {
   std::set<std::vector<unsigned int>> new_templates;
 
-  for (const auto& bundle_template: templates) {
+  for (const auto &bundle_template: templates) {
     std::vector<unsigned int> new_template(bundle_template);
-    for (auto& dir_id: new_template) {
+    for (auto &dir_id: new_template) {
       dir_id = new_positions[dir_id];
     }
     canonize_template(new_template);
@@ -357,26 +393,26 @@ update_templates_directions(const std::set<std::vector<unsigned int>>& templates
 
 /**
  * @brief Update the direction positions in a set of templates
- * 
- * This function returns a set of templates which are built by updating the 
- * indices of those in the input set indices according to the map of the new 
- * direction positions. Moreover, the new templates are brought to the 
- * canonical form. 
- * 
- * @param templates is the set of the templates whose direction position 
+ *
+ * This function returns a set of templates which are built by updating the
+ * indices of those in the input set indices according to the map of the new
+ * direction positions. Moreover, the new templates are brought to the
+ * canonical form.
+ *
+ * @param templates is the set of the templates whose direction position
  *               must be updated
  * @param new_positions is the map of new direction positions
  * @return the updated set of templates
  */
-std::set<std::vector<unsigned int>>
-update_templates_directions(const std::set<std::vector<unsigned int>>& templates,
-                            const std::map<size_t, size_t>& new_positions) 
+std::set<std::vector<unsigned int>> update_templates_directions(
+    const std::set<std::vector<unsigned int>> &templates,
+    const std::map<size_t, size_t> &new_positions)
 {
   std::set<std::vector<unsigned int>> new_templates;
 
-  for (const auto& bundle_template: templates) {
+  for (const auto &bundle_template: templates) {
     std::vector<unsigned int> new_template(bundle_template);
-    for (auto& dir_id: new_template) {
+    for (auto &dir_id: new_template) {
       dir_id = new_positions.at(dir_id);
     }
     canonize_template(new_template);
@@ -388,10 +424,10 @@ update_templates_directions(const std::set<std::vector<unsigned int>>& templates
 }
 
 template<typename T>
-void
-add_templates_for(std::set<std::vector<unsigned int>> &templates,
-                  const std::vector<LinearAlgebra::Vector<T>>& directions,
-                  std::set<size_t> missing_dirs)
+void add_missing_templates(
+    std::set<std::vector<unsigned int>> &templates,
+    const std::vector<LinearAlgebra::Vector<T>> &directions,
+    std::set<size_t> missing_dirs)
 {
   using namespace LinearAlgebra;
   using namespace LinearAlgebra::Dense;
@@ -404,7 +440,7 @@ add_templates_for(std::set<std::vector<unsigned int>> &templates,
     std::iota(std::begin(row_pos), std::end(row_pos), 0);
 
     size_t j = 0;
-    for (const auto& i: missing_dirs) {
+    for (const auto &i: missing_dirs) {
       std::swap(D[i], D[j]);
       std::swap(row_pos[i], row_pos[j]);
       ++j;
@@ -413,36 +449,55 @@ add_templates_for(std::set<std::vector<unsigned int>> &templates,
     auto indep_rows = find_first_independent_rows(D);
     Vector<unsigned int> new_template;
 
-    for (const auto& value: indep_rows) {
+    for (const auto &value: indep_rows) {
       new_template.push_back(row_pos[value]);
     }
 
     canonize_template(new_template);
 
     templates.insert(new_template);
-    for (const auto& idx: new_template) {
+    for (const auto &idx: new_template) {
       missing_dirs.erase(idx);
     }
   }
 }
 
+template<typename T>
+void add_missing_templates(
+    std::set<BundleTemplate> &templates,
+    const std::vector<LinearAlgebra::Vector<T>> &directions,
+    std::set<size_t> missing_dirs,
+    const Bundle::template_less_fate_type template_less_fate
+    = Bundle::STATIC_TEMPLATES)
+{
+  std::set<std::vector<unsigned int>> raw_templates;
+
+  add_missing_templates(raw_templates, directions, missing_dirs);
+
+  for (auto &raw_template: raw_templates) {
+    templates.emplace(std::move(raw_template),
+                      template_less_fate == Bundle::DYNAMIC_TEMPLATES);
+  }
+}
+
 /**
  * @brief Test whether a template is a complete basis for the space
- * 
+ *
  * @tparam T is the scalar type for the directions
  * @param directions is the vector of directions
  * @param bundle_template is the template to be tested
- * @return true if and only if the set of the directions associated to 
+ * @return true if and only if the set of the directions associated to
  *       bundle_template is a complete basis for the space
  */
 template<typename T>
-bool template_is_a_complete_basis(const std::vector<LinearAlgebra::Vector<T>> &directions,
-                                  const std::vector<unsigned int>& bundle_template)
+bool template_is_a_complete_basis(
+    const std::vector<LinearAlgebra::Vector<T>> &directions,
+    const std::vector<unsigned int> &bundle_template)
 {
   using namespace LinearAlgebra;
 
   Dense::Matrix<T> A;
-  for (const auto& dir_idx : bundle_template) {
+  for (const auto &dir_idx: bundle_template) {
     if (dir_idx >= directions.size()) {
       throw std::domain_error("Bundle::Bundle: templates must contains "
                               "as values indices of the directions vector");
@@ -455,8 +510,9 @@ bool template_is_a_complete_basis(const std::vector<LinearAlgebra::Vector<T>> &d
 }
 
 template<typename T>
-void validate_templates(const std::vector<LinearAlgebra::Vector<T>> &directions,
-                        const std::set<std::vector<unsigned int>> &templates)
+void validate_templates(
+    const std::vector<LinearAlgebra::Vector<T>> &directions,
+    const std::set<std::vector<unsigned int>> &templates)
 {
   if (directions.size() == 0) {
     throw std::domain_error("Bundle::Bundle: directions must be non empty");
@@ -464,7 +520,7 @@ void validate_templates(const std::vector<LinearAlgebra::Vector<T>> &directions,
 
   const size_t dim = directions[0].size();
 
-  for (const auto& bundle_template : templates) {
+  for (const auto &bundle_template: templates) {
     if (bundle_template.size() != dim) {
       throw std::domain_error("Bundle::Bundle: templates must have "
                               "as many columns as directions");
@@ -474,7 +530,7 @@ void validate_templates(const std::vector<LinearAlgebra::Vector<T>> &directions,
       std::ostringstream oss;
 
       oss << "Bundle::Bundle: template directions must be linearly "
-              "independent, "
+             "independent, "
           << "but template directions " << bundle_template << " are not.";
       throw std::domain_error(oss.str());
     }
@@ -482,22 +538,23 @@ void validate_templates(const std::vector<LinearAlgebra::Vector<T>> &directions,
 }
 
 template<typename T>
-void validate_directions(const std::vector<LinearAlgebra::Vector<T>> &directions,
-                         const LinearAlgebra::Vector<T> &lower_bounds,
-                         const LinearAlgebra::Vector<T> &upper_bounds)
+void validate_directions(
+    const std::vector<LinearAlgebra::Vector<T>> &directions,
+    const LinearAlgebra::Vector<T> &lower_bounds,
+    const LinearAlgebra::Vector<T> &upper_bounds)
 {
   if (directions.size() == 0) {
     throw std::domain_error("Bundle::Bundle: directions must be non empty");
   }
 
   const size_t dim = directions[0].size();
-  for (const auto& dir: directions) {
+  for (const auto &dir: directions) {
     if (dir.size() != dim) {
       throw std::domain_error("Bundle::Bundle: all the directions must "
                               "have the same dimension");
     }
 
-    if (LinearAlgebra::norm_infinity(dir)==0) {
+    if (LinearAlgebra::norm_infinity(dir) == 0) {
       throw std::domain_error("Bundle::Bundle: all the directions must "
                               "be non-null");
     }
@@ -513,17 +570,17 @@ void validate_directions(const std::vector<LinearAlgebra::Vector<T>> &directions
   }
 }
 
-void
-duplicate_dynamic_directions(std::vector<LinearAlgebra::Vector<double>>& directions,
-                             LinearAlgebra::Vector<double> &lower_bounds,
-                             LinearAlgebra::Vector<double> &upper_bounds,
-                             const std::set<std::vector<unsigned int>>& static_templates,
-                             std::set<std::vector<unsigned int>>& dynamic_templates)
+void duplicate_dynamic_directions(
+    std::vector<LinearAlgebra::Vector<double>> &directions,
+    LinearAlgebra::Vector<double> &lower_bounds,
+    LinearAlgebra::Vector<double> &upper_bounds,
+    const std::set<std::vector<unsigned int>> &static_templates,
+    std::set<std::vector<unsigned int>> &dynamic_templates)
 {
-  // mark as to-be-duplicated all the static directions 
+  // mark as to-be-duplicated all the static directions
   std::vector<bool> require_duplicate(directions.size(), false);
-  for (const auto& bundle_template: static_templates) {
-    for (const auto& idx: bundle_template) {
+  for (const auto &bundle_template: static_templates) {
+    for (const auto &idx: bundle_template) {
       require_duplicate[idx] = true;
     }
   }
@@ -531,10 +588,10 @@ duplicate_dynamic_directions(std::vector<LinearAlgebra::Vector<double>>& directi
   // build a new dynamic template set
   std::set<std::vector<unsigned int>> new_dynamic_templates;
 
-  // for each template in the dynamic template set 
+  // for each template in the dynamic template set
   for (auto bundle_template: dynamic_templates) {
     bool changed = false;
-    for (auto& idx: bundle_template) {
+    for (auto &idx: bundle_template) {
 
       // if one of template directions has been already mentioned
       if (require_duplicate[idx]) {
@@ -548,7 +605,7 @@ duplicate_dynamic_directions(std::vector<LinearAlgebra::Vector<double>>& directi
         upper_bounds.push_back(upper_bounds[idx]);
 
         // change the direction id in the template
-        idx = directions.size()-1;
+        idx = directions.size() - 1;
       } else { // if not yet mentioned, mark as to-be-duplicated
         require_duplicate[idx] = true;
       }
@@ -567,23 +624,25 @@ duplicate_dynamic_directions(std::vector<LinearAlgebra::Vector<double>>& directi
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
-               const std::set<std::vector<unsigned int>> &templates,
-               const std::vector<bool>& dynamic_dirs):
+               const std::set<BundleTemplate> &templates,
+               const std::vector<bool> &dynamic_dirs):
     _directions(directions),
-    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds), _templates(templates),
-    _dynamic_dirs(dynamic_dirs)
-{}
+    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds),
+    _templates(templates), _dynamic_dirs(dynamic_dirs)
+{
+}
 
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds,
-               const std::set<std::vector<unsigned int>> &templates,
-               const std::vector<bool>& dynamic_dirs):
+               const std::set<BundleTemplate> &templates,
+               const std::vector<bool> &dynamic_dirs):
     _directions(std::move(directions)),
     _lower_bounds(std::move(lower_bounds)),
     _upper_bounds(std::move(upper_bounds)), _templates(templates),
     _dynamic_dirs(dynamic_dirs)
-{}
+{
+}
 
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
@@ -599,54 +658,59 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
   validate_templates(_directions, static_templates);
   validate_templates(_directions, dynamic_templates);
 
-  // filter duplicated direction, update templates, and bring them in canonical form
-  auto new_pos = filter_duplicated_directions(_directions, _lower_bounds, _upper_bounds);
+  // filter duplicated direction, update templates, and bring them in canonical
+  // form
+  auto new_pos = filter_duplicated_directions(_directions, _lower_bounds,
+                                              _upper_bounds);
 
   static_templates = update_templates_directions(static_templates, new_pos);
   dynamic_templates = update_templates_directions(dynamic_templates, new_pos);
 
-  auto used_dirs = find_directions_in_templates(static_templates);
-  find_directions_in_templates(used_dirs, dynamic_templates);
+  auto used_dirs = collect_directions_in_templates(static_templates);
+  collect_directions_in_templates(used_dirs, dynamic_templates);
 
   if (template_less_fate != REMOVE_DIRECTION) {
     // add missing directions in templates
     std::set<size_t> missing_dirs;
     for (size_t idx = 0; idx < _directions.size(); ++idx) {
-      if (used_dirs.count(idx)==0) {
+      if (used_dirs.count(idx) == 0) {
         missing_dirs.insert(idx);
       }
     }
     if (template_less_fate == STATIC_TEMPLATES) {
-      add_templates_for(static_templates, _directions, missing_dirs);
+      add_missing_templates(static_templates, _directions, missing_dirs);
     } else {
-      add_templates_for(dynamic_templates, _directions, missing_dirs);
+      add_missing_templates(dynamic_templates, _directions, missing_dirs);
     }
   } else {
     if (static_templates.size() == 0 && dynamic_templates.size() == 0) {
       throw std::domain_error("Bundle::Bundle: templates must be non empty");
     }
 
-    // if the number of directions appearing in the templates is smaller 
-    // than the number of directions 
+    // if the number of directions appearing in the templates is smaller
+    // than the number of directions
     if (used_dirs.size() != directions.size()) {
 
       // find a new position for the used directions
       auto new_pos = find_new_position_for(used_dirs);
 
       resort_directions(_directions, _lower_bounds, _upper_bounds, new_pos);
-      static_templates = update_templates_directions(static_templates, new_pos);
-      dynamic_templates = update_templates_directions(dynamic_templates, new_pos);
+      static_templates
+          = update_templates_directions(static_templates, new_pos);
+      dynamic_templates
+          = update_templates_directions(dynamic_templates, new_pos);
     }
   }
-  duplicate_dynamic_directions(_directions, _lower_bounds, _upper_bounds, 
+  duplicate_dynamic_directions(_directions, _lower_bounds, _upper_bounds,
                                static_templates, dynamic_templates);
 
   _templates.insert(std::begin(static_templates), std::end(static_templates));
-  _templates.insert(std::begin(dynamic_templates), std::end(dynamic_templates));
+  _templates.insert(std::begin(dynamic_templates),
+                    std::end(dynamic_templates));
 
   _dynamic_dirs = std::vector<bool>(_directions.size(), false);
-  for (const auto& bundle_template : dynamic_templates) {
-    for (const auto& dir_idx: bundle_template) {
+  for (const auto &bundle_template: dynamic_templates) {
+    for (const auto &dir_idx: bundle_template) {
       _dynamic_dirs[dir_idx] = true;
     }
   }
@@ -657,19 +721,20 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &upper_bounds,
                const std::set<std::vector<unsigned int>> &static_templates,
                const template_less_fate_type template_less_fate):
-    Bundle(directions, lower_bounds, upper_bounds, static_templates, {}, 
+    Bundle(directions, lower_bounds, upper_bounds, static_templates, {},
            template_less_fate)
-{}
+{
+}
 
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds,
                const std::set<std::vector<unsigned int>> &static_templates,
                const template_less_fate_type template_less_fate):
-    Bundle(std::move(directions), std::move(lower_bounds), 
-           std::move(upper_bounds), static_templates, {}, 
-           template_less_fate)
-{}
+    Bundle(std::move(directions), std::move(lower_bounds),
+           std::move(upper_bounds), static_templates, {}, template_less_fate)
+{
+}
 
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
@@ -681,7 +746,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds):
-    Bundle(std::move(directions), std::move(lower_bounds), 
+    Bundle(std::move(directions), std::move(lower_bounds),
            std::move(upper_bounds), {}, {}, STATIC_TEMPLATES)
 {
 }
@@ -712,7 +777,7 @@ Bundle::Bundle(const Polytope &P)
     missing_dirs.insert(i);
   }
 
-  add_templates_for(_templates, _directions, missing_dirs);
+  add_missing_templates(_templates, _directions, missing_dirs);
 
   _dynamic_dirs = std::vector<bool>(_directions.size(), false);
 }
@@ -728,15 +793,15 @@ Bundle &Bundle::operator=(const Bundle &orig)
   using namespace LinearAlgebra;
 
   this->_directions = std::vector<Vector<double>>();
-  this->_templates = std::set<std::vector<unsigned int>>();
+  this->_templates = std::set<BundleTemplate>();
 
   this->_directions.reserve(orig._directions.size());
 
-  for (const auto& dir : orig._directions) {
+  for (const auto &dir: orig._directions) {
     this->_directions.emplace_back(dir);
   }
 
-  for (const auto& bundle_template : orig._templates) {
+  for (const auto &bundle_template: orig._templates) {
     this->_templates.emplace(bundle_template);
   }
 
@@ -785,15 +850,15 @@ Bundle::operator Polytope() const
   return Polytope(std::move(A), std::move(b));
 }
 
-Parallelotope Bundle::get_parallelotope(
-    const std::vector<unsigned int> &bundle_template) const
+Parallelotope
+Bundle::get_parallelotope(const BundleTemplate &bundle_template) const
 {
   using namespace std;
 
   vector<double> lbound, ubound;
   vector<LinearAlgebra::Vector<double>> Lambda;
 
-  vector<unsigned int>::const_iterator it = std::begin(bundle_template);
+  auto it = std::begin(bundle_template.get_direction_indices());
   // upper facets
   for (unsigned int j = 0; j < this->dim(); j++) {
     const unsigned int idx = *it;
@@ -1270,30 +1335,26 @@ maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
  * @return a reference to the list of sub-bundles produced
  *         splitting the input bundle
  */
-std::list<Bundle> &
-Bundle::split_bundle(std::list<Bundle> &res,
-                     LinearAlgebra::Vector<double> &lower_bounds,
-                     LinearAlgebra::Vector<double> &upper_bounds,
-                     const size_t idx,
-                     const double &max_magnitude,
-                     const double &split_ratio) const
+std::list<Bundle> &Bundle::split_bundle(
+    std::list<Bundle> &res, LinearAlgebra::Vector<double> &lower_bounds,
+    LinearAlgebra::Vector<double> &upper_bounds, const size_t idx,
+    const double &max_magnitude, const double &split_ratio) const
 {
   if (idx == this->size()) {
-    Bundle new_bundle(this->_directions, this->_lower_bounds, this->_upper_bounds,
-                      this->_templates, this->_dynamic_dirs);
+    Bundle new_bundle(this->_directions, this->_lower_bounds,
+                      this->_upper_bounds, this->_templates,
+                      this->_dynamic_dirs);
     res.push_back(std::move(new_bundle));
 
     return res;
   }
 
-  if (std::abs(get_upper_bound(idx) - get_lower_bound(idx))
-      > max_magnitude) {
+  if (std::abs(get_upper_bound(idx) - get_lower_bound(idx)) > max_magnitude) {
     double lower_bound = get_lower_bound(idx);
 
     do {
-      const double upper_bound
-          = std::min(lower_bound + split_ratio * max_magnitude,
-                     get_upper_bound(idx));
+      const double upper_bound = std::min(
+          lower_bound + split_ratio * max_magnitude, get_upper_bound(idx));
 
       lower_bounds[idx] = lower_bound;
       upper_bounds[idx] = upper_bound;
@@ -1305,8 +1366,8 @@ Bundle::split_bundle(std::list<Bundle> &res,
   } else {
     lower_bounds[idx] = get_lower_bound(idx);
     upper_bounds[idx] = get_upper_bound(idx);
-    this->split_bundle(res, lower_bounds, upper_bounds, idx + 1,
-                       max_magnitude, split_ratio);
+    this->split_bundle(res, lower_bounds, upper_bounds, idx + 1, max_magnitude,
+                       split_ratio);
   }
   return res;
 }
@@ -1418,23 +1479,21 @@ bool copy_required(const std::vector<unsigned int> &bundle_template,
  * @param new_direction_indices is the map from source indices
  *                              to destination indices
  */
-void add_missing_templates(
-    std::set<std::vector<unsigned int>> &dest_templates,
-    const std::set<std::vector<unsigned int>> &source_templates,
+void add_mapped_templates(
+    std::set<BundleTemplate> &dest_templates,
+    const std::set<BundleTemplate> &source_templates,
     const std::vector<unsigned int> &new_direction_indices)
 {
   // check whether some of the templates must be copied
-  for (const std::vector<unsigned int> &temp: source_templates) {
+  for (const BundleTemplate &temp: source_templates) {
     // if this is the case, copy and update the template indices
-    std::vector<unsigned int> t_copy(temp);
+    std::vector<unsigned int> t_copy(temp.get_direction_indices());
     for (unsigned int j = 0; j < t_copy.size(); ++j) {
       t_copy[j] = new_direction_indices[t_copy[j]];
     }
 
-    canonize_template(t_copy);
-
     // add the new template to the intersected bundle
-    dest_templates.insert(t_copy);
+    dest_templates.emplace(std::move(t_copy), temp.have_dynamic_directions());
   }
 }
 
@@ -1467,18 +1526,29 @@ Bundle &Bundle::intersect_with(const Bundle &A)
       // compute the dependency coefficient
       const unsigned int &new_i = new_ids[i];
       const double dep_coeff = this->_directions[new_i] / A_dir;
+      double scaled_A_upper_bound, scaled_A_lower_bound;
 
-      // if necessary, increase the lower bound
-      this->_lower_bounds[new_i] = std::max(this->_lower_bounds[new_i],
-                                            A._lower_bounds[i] * dep_coeff);
+      if (dep_coeff > 0) {
+        scaled_A_lower_bound = A._lower_bounds[i] * dep_coeff;
+        scaled_A_upper_bound = A._upper_bounds[i] * dep_coeff;
+      } else {
+        scaled_A_lower_bound = A._upper_bounds[i] * dep_coeff;
+        scaled_A_upper_bound = A._lower_bounds[i] * dep_coeff;
+      }
 
-      // if necessary, decrease the upper bound
-      this->_upper_bounds[new_i] = std::min(this->_upper_bounds[new_i],
-                                            A._upper_bounds[i] * dep_coeff);
+      // increase the lower bound if necessary
+      if (scaled_A_lower_bound > this->_lower_bounds[new_i]) {
+        this->_lower_bounds[new_i] = scaled_A_lower_bound;
+      }
+
+      // decrease the upper bound if necessary
+      if (scaled_A_upper_bound < this->_upper_bounds[new_i]) {
+        this->_upper_bounds[new_i] = scaled_A_upper_bound;
+      }
     }
   }
 
-  add_missing_templates(_templates, A.templates(), new_ids);
+  add_mapped_templates(_templates, A.templates(), new_ids);
 
   return *this;
 }
@@ -1552,7 +1622,7 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   }
 
   // add missing templates
-  add_templates_for(_templates, _directions, outside_templates);
+  add_missing_templates(_templates, _directions, outside_templates);
 
   return *this;
 }
@@ -1652,7 +1722,7 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
     }
   }
 
-  add_missing_templates(res._templates, b2.templates(), new_ids);
+  add_mapped_templates(res._templates, b2.templates(), new_ids);
 
   return res;
 }
