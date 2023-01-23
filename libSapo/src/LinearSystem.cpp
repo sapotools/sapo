@@ -166,6 +166,26 @@ LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
   return ::optimize(this->_A, this->_b, obj_fun, maximize);
 }
 
+LinearSystem& LinearSystem::add_constraint(const LinearAlgebra::Vector<double>& v, const double& b)
+{
+  if (dim() != v.size()) {
+    throw std::domain_error("LinearSystem::add_constraint: incompatible dimensions");
+  }
+
+  _A.push_back(v);
+  _b.push_back(b);
+
+  return *this;
+}
+
+LinearSystem &LinearSystem::operator=(const LinearSystem &orig)
+{
+  _A = orig._A;
+  _b = orig._b;
+
+  return *this;
+}
+
 bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
 {
   if (ls1.dim() != ls2.dim()) {

@@ -217,13 +217,19 @@ public:
    * @param[in] orig is the original model of the linear system
    * @return a reference to the modified object
    */
-  LinearSystem &operator=(const LinearSystem &orig)
-  {
-    _A = orig._A;
-    _b = orig._b;
+  LinearSystem &operator=(const LinearSystem &orig);
 
-    return *this;
-  }
+  /**
+   * @brief Add a new constraint to the system
+   * 
+   * This method add a new linear constraint of the type \f$v\cdot x <= b\f$ to 
+   * the system
+   * 
+   * @param v is the vector of the variable coefficents
+   * @param b is the constant term
+   * @return a reference to the updated linear system
+   */
+  LinearSystem& add_constraint(const LinearAlgebra::Vector<double>& v, const double& b);
 
   /**
    * Return the template matrix
