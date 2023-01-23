@@ -356,7 +356,7 @@ Bundle getBundle(const InputData &id)
     const auto variables = id.getVarSymbols();
     auto ls = getConstraintsSystem(id.getInvariant(),  variables);
 
-    return bundle.intersect_with(ls).canonize();
+    return bundle.intersect_with(ls);
   }
 
   return bundle;

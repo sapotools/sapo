@@ -1592,13 +1592,11 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
 
     // if the direction is not present in this object
     if (new_ids[i] == this->size()) {
-      // compute a non-influent lower bound for the row
-      double lower_bound = ((Polytope) * this).minimize(A_row).optimum();
 
       // add the direction and the corresponding boundaries
       outside_templates.insert(new_ids[i]);
       this->_directions.push_back(A_row);
-      this->_lower_bounds.push_back(lower_bound);
+      this->_lower_bounds.push_back(-std::numeric_limits<double>::infinity());
       this->_upper_bounds.push_back(ls.b(i));
       this->_dynamic_dirs.push_back(false);
     } else {
@@ -1624,7 +1622,7 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   // add missing templates
   add_missing_templates(_templates, _directions, outside_templates);
 
-  return *this;
+  return this->canonize();
 }
 
 Bundle &Bundle::expand_by(const double delta)
