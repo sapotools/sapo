@@ -5,8 +5,8 @@ TASK
 "invariant validation"
 
 INVARIANT
--1 -0 <= -0
--0 -1 <= -0
+-1 -0 <= 0
+-0 -1 <= 0
 0 1 <= 150
 
 EPOCHS

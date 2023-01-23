@@ -126,9 +126,8 @@ trim_unused_directions(std::vector<std::vector<double>> &directions,
 
 /*
  * This method computes a new template for the polytope.
- * The idea is that we want each parallelotope to contain directions covering
- * each variable, so that they are not singular. Moreover, each direction
- * should be used at least once.
+ * Each parallelotope must constraints each variable, so that it is not 
+ * singular. Moreover, each direction should be used at least once.
  *
  * We use a LP problem to compute which direction goes in which parallelotope.
  * We define boolean variables X_i_j where i is a direction and j is a
@@ -288,20 +287,20 @@ collect_constraints(std::vector<std::vector<double>> &directions,
 
   // get directions and boundaries from input data
   for (unsigned i = 0; i < id.getDirectionsNum(); i++) {
-    auto dir = id.getDirection(i)->getConstraintVector(variables);
+    auto dir = id.getDirection(i)->get_variable_coefficients(variables);
     auto pos = find_linearly_dependent_row(directions, dir);
 
     template_ids[i] = pos;
     if (pos == directions.size()) {
       directions.push_back(std::move(dir));
-      UB.push_back(id.getDirection(i)->getUB());
-      LB.push_back(id.getDirection(i)->getLB());
+      UB.push_back(id.getDirection(i)->get_upper_bound());
+      LB.push_back(id.getDirection(i)->get_lower_bound());
     } else { // not necessary if we assume that bound
              // optimization has been performed
       double coeff = directions[pos] / dir;
 
-      auto new_UB = coeff * id.getDirection(i)->getUB();
-      auto new_LB = coeff * id.getDirection(i)->getLB();
+      auto new_UB = coeff * id.getDirection(i)->get_upper_bound();
+      auto new_LB = coeff * id.getDirection(i)->get_lower_bound();
 
       if (coeff < 0) {
         std::swap(new_UB, new_LB);
@@ -318,41 +317,6 @@ collect_constraints(std::vector<std::vector<double>> &directions,
   }
 
   return get_templates(id, template_ids);
-}
-
-Bundle addInvariantDirections(const InputData &id, const Bundle &bundle)
-{
-  // add invariant directions to the initial set
-  Polytope P = bundle;
-
-  auto directions = bundle.directions();
-  auto LB = bundle.lower_bounds();
-  auto UB = bundle.upper_bounds();
-
-  bool added_dirs = false;
-
-  for (const auto &dir: id.getInvariant()) {
-    auto invVector = dir->getConstraintVector(id.getVarSymbols());
-    auto pos = find_linearly_dependent_row(directions, invVector);
-
-    // if the direction is already in the bundle avoid to insert it
-    if (pos == directions.size()) {
-      added_dirs = true;
-      directions.push_back(std::move(invVector));
-      auto opt_res = P.minimize(directions.back());
-      LB.push_back(opt_res.optimum());
-
-      opt_res = P.maximize(directions.back());
-      UB.push_back(opt_res.optimum());
-    }
-  }
-
-  if (added_dirs) {
-    return Bundle(directions, LB, UB,
-                  computeTemplate(directions, {}, bundle.templates()));
-  }
-
-  return bundle;
 }
 
 Bundle getBundle(const InputData &id)
@@ -389,7 +353,10 @@ Bundle getBundle(const InputData &id)
   Bundle bundle(directions, LB, UB, static_templates, dynamic_templates);
 
   if (id.getUseInvariantDirections()) {
-    return addInvariantDirections(id, bundle);
+    const auto variables = id.getVarSymbols();
+    auto ls = getConstraintsSystem(id.getInvariant(),  variables);
+
+    return bundle.intersect_with(ls).canonize();
   }
 
   return bundle;
@@ -425,15 +392,15 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
                             vector<double>(id.getParamNum(), 0));
   for (unsigned i = 0; i < id.paramDirectionsNum(); i++) {
     pA[2 * i]
-        = id.getParamDirection(i)->getConstraintVector(id.getParamSymbols());
+        = id.getParamDirection(i)->get_variable_coefficients(id.getParamSymbols());
     for (unsigned j = 0; j < id.getParamNum(); j++)
       pA[2 * i + 1][j] = -pA[2 * i][j];
   }
 
   vector<double> pb(pA.size(), 0);
   for (unsigned i = 0; i < id.paramDirectionsNum(); i++) {
-    pb[2 * i] = id.getParamDirection(i)->getUB();
-    pb[2 * i + 1] = -id.getParamDirection(i)->getLB();
+    pb[2 * i] = id.getParamDirection(i)->get_upper_bound();
+    pb[2 * i + 1] = -id.getParamDirection(i)->get_lower_bound();
   }
 
   return SetsUnion<Polytope>(Polytope(pA, pb));
@@ -441,7 +408,7 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
 
 LinearSystem
 getLinearSystem(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-                const std::list<Direction *> constraints)
+                const std::list<Direction<> *> constraints)
 {
   using namespace LinearAlgebra;
 
@@ -454,22 +421,20 @@ getLinearSystem(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
 
   for (auto it = std::begin(constraints); it != std::end(constraints); ++it) {
     switch ((*it)->getType()) {
-    case Direction::LE:
-    case Direction::GE:
-      constrDirs.push_back((*it)->getConstraintVector(variables));
-      constrOffsets.push_back((*it)->getOffset());
+    case Direction<>::LE:
+      constrDirs.push_back((*it)->get_variable_coefficients(variables));
+      constrOffsets.push_back((*it)->get_upper_bound());
       break;
-    case Direction::EQ:
-      constrDirs.push_back((*it)->getConstraintVector(variables));
-      constrOffsets.push_back((*it)->getOffset());
-      constrDirs.push_back(-(*it)->getConstraintVector(variables));
-      constrOffsets.push_back(-(*it)->getOffset());
+    case Direction<>::GE:
+      constrDirs.push_back(-(*it)->get_variable_coefficients(variables));
+      constrOffsets.push_back(-(*it)->get_lower_bound());
       break;
-    case Direction::IN:
-      constrDirs.push_back((*it)->getConstraintVector(variables));
-      constrOffsets.push_back((*it)->getUB());
-      constrDirs.push_back(-(*it)->getConstraintVector(variables));
-      constrOffsets.push_back(-(*it)->getLB());
+    case Direction<>::EQ:
+    case Direction<>::IN:
+      constrDirs.push_back((*it)->get_variable_coefficients(variables));
+      constrOffsets.push_back((*it)->get_upper_bound());
+      constrDirs.push_back(-(*it)->get_variable_coefficients(variables));
+      constrOffsets.push_back(-(*it)->get_lower_bound());
       break;
     default:
       throw std::domain_error("Unsupported relation in linear systems");
@@ -528,7 +493,7 @@ std::vector<std::vector<double>> getDirections(const InputData &id)
 
   for (unsigned i = 0; i < id.getDirectionsNum(); i++) {
     directions.push_back(
-        id.getDirection(i)->getConstraintVector(id.getVarSymbols()));
+        id.getDirection(i)->get_variable_coefficients(id.getVarSymbols()));
   }
 
   return directions;

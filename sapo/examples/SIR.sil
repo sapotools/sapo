@@ -10,9 +10,6 @@ dynamic(s) = s - (0.34*s*i)*0.1;
 dynamic(i) = i + (0.34*s*i - 0.05*i)*0.1;
 dynamic(r) = r + 0.05*i*0.1;
 
-direction s in [0.79, 0.8];
-direction i in [0.19, 0.2];
-direction r in [0.000099, 0.0001];
 direction s + 0.5*i in [0, 1];
 direction 0.5*s + 0.5*r in [0, 1];
 

@@ -169,8 +169,8 @@
 %nterm <std::vector<std::vector<unsigned int>>> rowList
 %nterm <std::shared_ptr<STL::STL> > formula
 %nterm <AbsSyn::transType> transType
-%nterm <AbsSyn::Direction *> constraint
-%nterm <AbsSyn::Direction::Type> constraintType
+%nterm <AbsSyn::Direction<>*> constraint
+%nterm <AbsSyn::Direction<>::Type> constraintType
 
 %printer { yyo << $$; } <*>;
 
@@ -278,7 +278,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
 									drv.data.addVarDirectionConstraint(d);
 								}
 							}
@@ -296,7 +296,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
 									drv.data.addVarDirectionConstraint(d);
 								}
 							}
@@ -342,7 +342,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -360,7 +360,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
-									AbsSyn::Direction *d = new AbsSyn::Direction(s, $4.first, $4.second, sym);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -516,7 +516,7 @@ constraint	: expr constraintType expr
 								ERROR(@3, "Expression in constraints cannot contain parameters");
 								$3 = 0;
 							}
-							$$ = new AbsSyn::Direction($1, $3, $2);
+							$$ = new AbsSyn::Direction<>($1, $3, $2);
 						}
 						| expr IN doubleInterval
 						{
@@ -525,43 +525,45 @@ constraint	: expr constraintType expr
 							}
 							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
 								ERROR(@1, "Expression in constraints cannot contain parameters");
-								$$ = new AbsSyn::Direction(0, $3.first, $3.second);
+								$$ = new AbsSyn::Direction<>(0, $3.first, $3.second);
 							} else {
-								$$ = new AbsSyn::Direction($1, $3.first, $3.second);
+								$$ = new AbsSyn::Direction<>($1, $3.first, $3.second);
 							}
 						}
 
 constraintType		: "<"
 						{
-							$$ = AbsSyn::Direction::Type::LT;
+							$$ = AbsSyn::Direction<>::Type::LT;
 						}
 					| "<="
 						{
-							$$ = AbsSyn::Direction::Type::LE;
+							$$ = AbsSyn::Direction<>::Type::LE;
 						}
 					| ">"
 						{
-							$$ = AbsSyn::Direction::Type::GT;
+							$$ = AbsSyn::Direction<>::Type::GT;
 						}
 					| ">="
 						{
-							$$ = AbsSyn::Direction::Type::GE;
+							$$ = AbsSyn::Direction<>::Type::GE;
 						}
 					| "="
 						{
-							$$ = AbsSyn::Direction::Type::EQ;
+							$$ = AbsSyn::Direction<>::Type::EQ;
 						}
 
 invariant 	: 	constraint
 				{
-					if ($1->contains(drv.data.getParamSymbols())) {
+					if (drv.data.getParamSymbols().size()!=0 &&
+					    $1->contains(drv.data.getParamSymbols())) {
 						ERROR(@1, "Invariant formula cannot contain parameters");
 					}
 					drv.data.addInvariantConstraint($1);
 				}
 			|	invariant AND constraint
 				{
-					if ($3->contains(drv.data.getParamSymbols())) {
+					if (drv.data.getParamSymbols().size()!=0 &&
+					    $3->contains(drv.data.getParamSymbols())) {
 						ERROR(@3, "Invariant formula cannot contain parameters");
 					}
 					drv.data.addInvariantConstraint($3);
@@ -569,14 +571,16 @@ invariant 	: 	constraint
 
 assumption 	: 	constraint
 				{
-					if ($1->contains(drv.data.getParamSymbols())) {
+					if (drv.data.getParamSymbols().size()!=0 &&
+					    $1->contains(drv.data.getParamSymbols())) {
 						ERROR(@1, "Assumption formula cannot contain parameters");
 					}
 					drv.data.addAssumption($1);
 				}
 			|	assumption AND constraint
 				{
-					if ($3->contains(drv.data.getParamSymbols())) {
+					if (drv.data.getParamSymbols().size()!=0 &&
+					    $3->contains(drv.data.getParamSymbols())) {
 						ERROR(@3, "Assumption formula cannot contain parameters");
 					}
 					drv.data.addAssumption($3);
@@ -584,7 +588,8 @@ assumption 	: 	constraint
 
 var_constraint	:   DIR constraint ";"
 					{
-						if ($2->contains(drv.data.getParamSymbols())) {
+						if (drv.data.getParamSymbols().size()!=0 &&
+					    	$2->contains(drv.data.getParamSymbols())) {
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
 						drv.data.addVarDirectionConstraint($2);
@@ -592,7 +597,8 @@ var_constraint	:   DIR constraint ";"
 					| DIR constraint error
 					{
 						MISSING_SC(@2);
-						if ($2->contains(drv.data.getParamSymbols())) {
+						if (drv.data.getParamSymbols().size()!=0 &&
+					    	$2->contains(drv.data.getParamSymbols())) {
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
 					}
@@ -602,7 +608,8 @@ var_constraint	:   DIR constraint ";"
 					}
 					| DIR IDENT ":" constraint ";"
 					{
-						if ($4->contains(drv.data.getParamSymbols())) {
+						if (drv.data.getParamSymbols().size()!=0 &&
+					    	$4->contains(drv.data.getParamSymbols())) {
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
 						if (drv.data.isSymbolDefined($2)) {
@@ -615,7 +622,8 @@ var_constraint	:   DIR constraint ";"
 					| DIR IDENT ":" constraint error
 					{
 						MISSING_SC(@3);
-						if ($4->contains(drv.data.getParamSymbols())) {
+						if (drv.data.getParamSymbols().size()!=0 &&
+					    	$4->contains(drv.data.getParamSymbols())) {
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
 						if (drv.data.isSymbolDefined($2)) {
@@ -748,7 +756,8 @@ matrixRow	: matrixRow "," IDENT
 
 param_constraint	: PDIR constraint ";"
 								{
-									if ($2->contains(drv.data.getVarSymbols())) {
+									if (drv.data.getVarSymbols().size()!=0 &&
+					    				$2->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter constraints cannot contain variables");
 									}
 									
@@ -757,7 +766,8 @@ param_constraint	: PDIR constraint ";"
 								| PDIR constraint error
 								{
 									MISSING_SC(@2);
-									if ($2->contains(drv.data.getVarSymbols())) {
+									if (drv.data.getVarSymbols().size()!=0 &&
+					    				$2->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter constraints cannot contain variables");
 									}
 									
@@ -769,7 +779,8 @@ param_constraint	: PDIR constraint ";"
 								}
 								| PDIR IDENT ":" constraint ";"
 								{
-									if ($4->contains(drv.data.getVarSymbols())) {
+									if (drv.data.getVarSymbols().size()!=0 &&
+					    				$4->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter constraints cannot contain variables");
 										
 									}
@@ -784,7 +795,8 @@ param_constraint	: PDIR constraint ";"
 								| PDIR IDENT ":" constraint error
 								{
 									MISSING_SC(@4);
-									if ($4->contains(drv.data.getVarSymbols())) {
+									if (drv.data.getVarSymbols().size()!=0 &&
+					    				$4->contains(drv.data.getVarSymbols())) {
 										ERROR(@2, "Parameter constraints cannot contain variables");
 										
 									}

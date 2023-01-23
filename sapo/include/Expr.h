@@ -14,9 +14,10 @@ namespace AbsSyn
 {
 
 // checks if the expression contains at least one of the symbols
-inline bool contains(const Expression<> &e, const vector<Symbol<>> &symbols)
+template<typename T=double>
+inline bool contains(const Expression<T> &e, const vector<Symbol<T>> &symbols)
 {
-  std::set<Symbol<>> ids = e.get_symbols();
+  std::set<Symbol<T>> ids = e.get_symbols();
 
   for (auto it = ids.begin(); it != ids.end(); it++) {
     for (auto sym = symbols.begin(); sym != symbols.end(); sym++) {
@@ -76,10 +77,11 @@ inline bool isNumeric(const Expression<> &e)
  * returns the coefficient of the symbol "name"
  * Applies only to linear expressions w.r.t the symbol specified
  */
-inline double getCoefficient(const Expression<> &e, const Symbol<> &s)
+template<typename T>
+inline T getCoefficient(const Expression<T> &e, const Symbol<T> &s)
 {
   // avoid -0
-  double val = e.get_coeff(s, 1).evaluate();
+  T val = e.get_coeff(s, 1).evaluate();
   return val == 0 ? 0 : val;
 }
 

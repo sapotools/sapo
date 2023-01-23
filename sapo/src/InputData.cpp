@@ -324,66 +324,25 @@ int InputData::getDefPos(const string &name) const
   return -1;
 }
 
-size_t find(const std::vector<Direction *>& M, const Direction *v)
-{
-  for (size_t pos = 0; pos < M.size(); ++pos) {
-    if (M[pos]->compare(v)) {
-      return pos;
-    }
-  }
-
-  // not found
-  return M.size();
-}
-
-void InputData::addInvariantConstraint(Direction *d)
+void InputData::addInvariantConstraint(Direction<> *d)
 {
   invariant.push_back(d);
 }
 
-void update_dir(Direction * dir, const Direction *new_dir)
+void update_dir(Direction<> * dir, const Direction<> *new_dir)
 {
-  if (!dir->hasUB() || new_dir->getUB() < dir->getUB()) {
-    dir->setUB(new_dir->getUB());
+  if (!dir->has_upper_bound() || new_dir->get_upper_bound() < dir->get_upper_bound()) {
+    dir->set_upper_bound(new_dir->get_upper_bound());
     dir->setSymbol(new_dir->getSymbol());
   }
-  if (!dir->hasLB() || new_dir->getLB() > dir->getLB()) {
-    dir->setLB(new_dir->getLB());
+  if (!dir->has_lower_bound() || new_dir->get_lower_bound() > dir->get_lower_bound()) {
+    dir->set_lower_bound(new_dir->get_lower_bound());
     dir->setSymbol(new_dir->getSymbol());
   }
 }
 
-size_t find_and_update_dir(std::vector<AbsSyn::Direction *>& dirs, Direction* new_dir)
+size_t InputData::addParamDirectionConstraint(Direction<> *d)
 {
-  size_t pos = find(dirs, new_dir);
-  if (pos != dirs.size()) {  // new_dir is already in dirs
-    update_dir(dirs[pos], new_dir);
-
-    delete new_dir;
-
-    return pos;
-  }
-
-  // the new direction is the complementary one
-  std::shared_ptr<Direction> comp_new_dir{new_dir->getComplementary()};
-  pos = find(dirs, comp_new_dir.get());
-  if (pos != dirs.size()) {  // new_dir is already in dirs
-    update_dir(dirs[pos], comp_new_dir.get());
-
-    delete new_dir;
-
-    return pos;
-  }
-
-  return dirs.size();
-}
-
-size_t InputData::addParamDirectionConstraint(Direction *d)
-{  
-  size_t pos = find_and_update_dir(paramDirections, d);
-  if (pos != paramDirections.size()) {
-    return pos;
-  }
 
   paramDirections.push_back(d);
 
@@ -393,15 +352,11 @@ size_t InputData::addParamDirectionConstraint(Direction *d)
     }
   }
 
-  return pos;
+  return paramDirections.size();
 }
 
-size_t InputData::addVarDirectionConstraint(Direction *d)
+size_t InputData::addVarDirectionConstraint(Direction<> *d)
 {
-  size_t pos = find_and_update_dir(directions, d);
-  if (pos != directions.size()) {
-    return pos;
-  }
 
   directions.push_back(d);
 
@@ -411,7 +366,7 @@ size_t InputData::addVarDirectionConstraint(Direction *d)
     }
   }
 
-  return pos;
+  return directions.size();
 }
 
 unsigned int InputData::findDirectionPos(const std::string &name) const
@@ -424,10 +379,10 @@ unsigned int InputData::findDirectionPos(const std::string &name) const
   return -1;
 }
 
-double typeCoeff(const Direction::Type &type)
+double typeCoeff(const Direction<>::Type &type)
 {
-  if (type == AbsSyn::Direction::Type::GE
-      || type == AbsSyn::Direction::Type::GT) {
+  if (type == AbsSyn::Direction<>::Type::GE
+      || type == AbsSyn::Direction<>::Type::GT) {
     return -1;
   }
 
@@ -444,7 +399,7 @@ double typeCoeff(const Direction::Type &type)
  */
 template<typename T>
 void optimizeConstraintsBoundaries(
-    std::vector<Direction *> &constraints,
+    std::vector<Direction<> *> &constraints,
     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
 {
   using namespace LinearAlgebra;
@@ -455,23 +410,23 @@ void optimizeConstraintsBoundaries(
   // for each constraint
   for (auto c_it = std::begin(constraints); c_it != std::end(constraints);
        ++c_it) {
-    AbsSyn::Direction &constr = **c_it;
+    AbsSyn::Direction<> &constr = **c_it;
 
-    auto constrVector = constr.getConstraintVector(symbols);
+    auto constrVector = constr.get_variable_coefficients(symbols);
 
     OptimizationResult<double> opt_res = constrSystem.minimize(constrVector);
 
     if (opt_res.status() == GLP_NOFEAS) {
       throw std::domain_error("Infeasible system");
     }
-    constr.setLB(opt_res.optimum());
+    constr.set_lower_bound(opt_res.optimum());
 
     opt_res = constrSystem.maximize(constrVector);
 
     if (opt_res.status() == GLP_NOFEAS) {
       throw std::domain_error("Infeasible system");
     }
-    constr.setUB(opt_res.optimum());
+    constr.set_upper_bound(opt_res.optimum());
   }
 }
 
@@ -502,7 +457,7 @@ void InputData::optimize_boundaries()
  * @return true if and only if all the symbols are bounded
  */
 template<typename T>
-bool checkFiniteBounds(const char *what, std::vector<Direction *> &constraints,
+bool checkFiniteBounds(const char *what, std::vector<Direction<> *> &constraints,
                        const std::vector<SymbolicAlgebra::Symbol<>> &symbols)
 {
   if (constraints.size() == 0) {
@@ -579,7 +534,7 @@ bool InputData::check()
     for (unsigned i = 0; i < templateMatrix.size(); i++) {
       vector<vector<double>> M{};
       for (unsigned j = 0; j < templateMatrix[i].size(); j++) {
-        M.push_back(directions[templateMatrix[i][j]]->getConstraintVector(
+        M.push_back(directions[templateMatrix[i][j]]->get_variable_coefficients(
             var_symbols));
       }
 

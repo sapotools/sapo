@@ -11,10 +11,9 @@
 namespace AbsSyn
 {
 
+template<typename T=double>
 class Direction
 {
-  friend std::ostream &operator<<(std::ostream &os, const Direction &d);
-
 public:
   enum Type {
     LT, // <
@@ -25,49 +24,105 @@ public:
     IN  // lhs in [a,b]
   };
 
-  Direction(SymbolicAlgebra::Expression<> e1, double lb, double ub,
-            SymbolicAlgebra::Symbol<> *sym = NULL):
-      lhs(e1),
-      rhs(-e1.get_constant_term()), type(AbsSyn::Direction::Type::IN), LB(lb),
-      UB(ub), s(sym)
-  {
-    lhs += rhs;
+protected:
+  SymbolicAlgebra::Expression<T> _linear_expression;
+  const SymbolicAlgebra::Symbol<T> *_symbol;
+  T _lower_bound;
+  T _upper_bound;
+  Type _type;
 
-    const double const_term = rhs.evaluate();
-    LB += const_term;
-    UB += const_term;
+private:
+  Direction(const SymbolicAlgebra::Expression<T>& linear_expression,
+            const SymbolicAlgebra::Symbol<T> *symbol,
+            const T& lower_bound, const T& upper_bound,
+            const Type& type):
+    _linear_expression(linear_expression), _symbol(symbol),
+    _lower_bound(lower_bound), _upper_bound(upper_bound),
+    _type(type)
+  {}
+
+  static Type get_complementary(const Type type)
+  {
+    switch (type) {
+      case Type::LT:
+        return Type::GT;
+      case Type::LE:
+        return Type::GE;
+      case Type::GT:
+        return Type::LT;
+      case Type::GE:
+        return Type::LE;
+      case Type::EQ:
+      case Type::IN:
+        return type;
+      default:
+        throw std::domain_error("Unknown Type");
+    }
+  }
+public:
+
+  Direction(const Direction<T>& orig):
+    _linear_expression(orig._linear_expression),
+    _symbol(orig._symbol), _lower_bound(orig._lower_bound), 
+    _upper_bound(orig._upper_bound), _type(orig._type)
+  {}
+
+  Direction(Direction<T>&& orig):
+    _linear_expression(std::move(orig._linear_expression)),
+    _symbol(orig._symbol), _lower_bound(orig._lower_bound), 
+    _upper_bound(orig._upper_bound), _type(orig._type)
+  {}
+
+  Direction(const SymbolicAlgebra::Expression<T>& linear_expression, 
+            const T& lower_bound, const T& upper_bound,
+            const SymbolicAlgebra::Symbol<T> *symbol = nullptr):
+      _linear_expression(linear_expression), _symbol(symbol),
+      _lower_bound(lower_bound), _upper_bound(upper_bound),
+      _type(Type::IN)
+  {
+    auto const_term = linear_expression.get_constant_term();
+    _linear_expression -= const_term;
+
+    const T value_const_term = const_term.evaluate();
+    _lower_bound -= value_const_term;
+    _upper_bound -= value_const_term;
   }
 
+  /*
   Direction(SymbolicAlgebra::Expression<> e1, SymbolicAlgebra::Expression<> e2,
             Type t, double lb, double ub, SymbolicAlgebra::Symbol<> *sym):
       lhs(e1),
       rhs(e2), type(t), LB(lb), UB(ub), s(sym)
   {
   }
+  */
 
-  Direction(SymbolicAlgebra::Expression<> e1, SymbolicAlgebra::Expression<> e2,
-            Type t):
-      lhs(e1 - e2),
-      rhs(), type(t), LB(-std::numeric_limits<double>::infinity()),
-      UB(std::numeric_limits<double>::infinity()), s(NULL)
+  Direction(const SymbolicAlgebra::Expression<T>& linear_expression1, 
+            const SymbolicAlgebra::Expression<T>& linear_expression2,
+            const Type type):
+      _linear_expression(linear_expression1 - linear_expression2),
+      _symbol(nullptr), 
+      _lower_bound(-std::numeric_limits<T>::infinity()),
+      _upper_bound(std::numeric_limits<T>::infinity()),
+      _type(type)
   {
-    rhs = -lhs.get_constant_term();
-    lhs += rhs;
+    auto const_term = _linear_expression.get_constant_term();
+    _linear_expression -= const_term;  // e1-e2 == _linear_expression+const_term
 
-    const double rhs_value = rhs.evaluate();
+    const T value_const_term = const_term.evaluate();
 
     switch (type) {
-    case Type::LE:
-    case Type::LT:
-      UB = rhs_value;
+    case Type::LE:     // e1 <= e2: _linear_expression <= -const_term  
+    case Type::LT:     // e1 < e2: _linear_expression < -const_term  
+      _upper_bound = -value_const_term;
       break;
-    case Type::GE:
-    case Type::GT:
-      LB = rhs_value;
+    case Type::GE:    // e1 >= e2: _linear_expression >= -const_term    
+    case Type::GT:    // e1 > e2: _linear_expression > -const_term  
+      _lower_bound = -value_const_term;
       break;
-    case Type::EQ:
-      UB = rhs_value;
-      LB = UB;
+    case Type::EQ:    // e1 == e2
+      _upper_bound = -value_const_term;
+      _lower_bound = _upper_bound;
       break;
     case Type::IN:
       throw std::domain_error("Unhandled direction type (IN)");
@@ -77,88 +132,158 @@ public:
     }
   }
 
+  inline
+  Type get_type() const
+  {
+    return _type;
+  }
+
+  inline
+  const SymbolicAlgebra::Expression<T> &
+  get_linear_expression() const
+  {
+    return _linear_expression;
+  }
+
   ~Direction() {}
 
-  std::vector<double>
-  getConstraintVector(std::vector<SymbolicAlgebra::Symbol<>> symbols)
-      const; // returns the vector representing the constraint
+  inline
+  std::set<SymbolicAlgebra::Symbol<T>> get_variables() const
+  {
+    return _linear_expression.get_symbols();
+  }
 
-  double
-  getOffset() const; // return the offset of the direction, if type is not INT
+  std::vector<T> 
+  get_variable_coefficients(const std::vector<SymbolicAlgebra::Symbol<T>>& variables) const
+  {
+    std::vector<T> res;
+
+    for (const auto& var: variables) {
+      res.push_back(getCoefficient(_linear_expression, var));
+    }
+
+    return res;
+  }
 
   std::string getName() const
   {
-    if (s != NULL) {
-      return SymbolicAlgebra::Symbol<>::get_symbol_name(s->get_id());
-    } else {
+    if (_symbol == nullptr) {
       throw std::runtime_error("Direction has no name");
     }
+    return SymbolicAlgebra::Symbol<T>::get_symbol_name(_symbol->get_id());
   }
 
-  SymbolicAlgebra::Symbol<> *getSymbol() const
+  inline
+  const SymbolicAlgebra::Symbol<T> *getSymbol() const
   {
-    return s;
+    return _symbol;
   }
 
-  void setSymbol(SymbolicAlgebra::Symbol<> *sym)
+  inline
+  void setSymbol(const SymbolicAlgebra::Symbol<T> *symbol)
   {
-    s = sym;
+    _symbol = symbol;
   }
 
-  double getLB() const;
-  double getUB() const;
-
-  bool hasLB() const
+  inline T get_lower_bound() const 
   {
-    /* Why must be an interval or an equation? */
-    return LB != -std::numeric_limits<double>::infinity();
+    return _lower_bound;
   }
 
-  bool hasUB() const
+  inline T get_upper_bound() const 
   {
-    return UB != std::numeric_limits<double>::infinity();
+    return _upper_bound;
   }
-
-  void setLB(double val);
-  void setUB(double val);
-
-  const SymbolicAlgebra::Expression<> &getLHS() const
+  
+  inline bool has_lower_bound() const
   {
-    return lhs;
+    return _lower_bound != -std::numeric_limits<T>::infinity();
   }
 
-  const SymbolicAlgebra::Expression<> &getRHS() const
+  inline bool has_upper_bound() const
   {
-    return rhs;
+    return _upper_bound != std::numeric_limits<T>::infinity();
   }
 
+  void set_lower_bound(const T& lower_bound)
+  {
+    if (this->has_upper_bound()) {
+      _type = Type::IN;
+    }
+
+    _lower_bound = (lower_bound == 0 ? 0 : lower_bound);
+  }
+
+  void set_upper_bound(const T& upper_bound)
+  {
+    if (this->has_lower_bound()) {
+      _type = Type::IN;
+    }
+
+    _upper_bound = (upper_bound == 0 ? 0 : upper_bound);
+  }
+
+  inline
   Type getType() const
   {
-    return type;
+    return _type;
   }
 
-  bool contains(std::vector<SymbolicAlgebra::Symbol<>> symbols) const
+  inline
+  bool contains(const std::vector<SymbolicAlgebra::Symbol<T>>& symbols) const
   {
-    return AbsSyn::contains(lhs, symbols)
-           || (type != Type::IN && AbsSyn::contains(rhs, symbols));
+    const auto dir_symbols = _linear_expression.get_symbols();
+
+    std::less<SymbolicAlgebra::Symbol<T>> cmp;
+    return std::includes(std::begin(dir_symbols), std::end(dir_symbols),
+                         std::begin(symbols), std::end(symbols), cmp);
   }
 
-  Direction *copy() const; // deep copy of direction
+  //Direction<T> *copy() const; // deep copy of direction
 
-  Direction *getComplementary() const; // returns the negated direction
+  inline
+  Direction<T> get_complementary() const
+  {
+    return Direction<T>(-_linear_expression, _symbol, -_upper_bound, -_lower_bound, 
+                        Direction<T>::get_complementary(_type));
+  }
 
-  bool compare(const Direction *d) const; // comparison between directions
-
-  bool covers(const Symbol<> &s)
-      const; // checks if the symbol named "name" is present in the direction
-
-protected:
-  SymbolicAlgebra::Expression<> lhs, rhs;
-  Type type;
-  double LB, UB; // used only if type is INT
-  SymbolicAlgebra::Symbol<> *s;
+  // checks if the symbol named "name" is present in the direction
+  inline bool covers(const Symbol<T> &s) const
+  {
+    return _linear_expression.degree(s) != 0;
+  }
 };
 
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const Direction<T> &direction)
+{
+  if (direction.getSymbol() != nullptr) {
+    os << *(direction.getSymbol()) << ": ";
+  }
+
+  os << direction.get_linear_expression();
+
+  switch (direction.get_type()) {
+  case Direction<T>::Type::LT:
+    return os << " < "<< direction.get_upper_bound();
+  case Direction<T>::Type::LE:
+    return os << " <= "<< direction.get_upper_bound();
+  case Direction<T>::Type::GT:
+    return os << " > " << direction.get_lower_bound();
+  case Direction<T>::Type::GE:
+    return os << " >= " << direction.get_lower_bound();
+  case Direction<T>::Type::EQ:
+    return os << " == " << direction.get_lower_bound();
+  case Direction<T>::Type::IN:
+    return os << " in [" << direction.get_lower_bound() << "," 
+                         << direction.get_upper_bound() << "]";
+  default:
+    throw std::logic_error("unsupported direction type");
+  }
+  return os;
+}
 }
 
 #endif

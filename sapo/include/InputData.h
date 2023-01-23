@@ -217,7 +217,7 @@ public:
   int getDefPos(const std::string &name)
       const; // return an index i such that defs[i] has name 'name'
 
-  const std::list<Direction *> &getAssumptions() const
+  const std::list<Direction<> *> &getAssumptions() const
   {
     return assumptions;
   }
@@ -240,7 +240,7 @@ public:
   {
     defs.push_back(d);
   } // adds a new definition, which name is not already used
-  void addAssumption(Direction *d)
+  void addAssumption(Direction<> *d)
   {
     assumptions.push_back(d);
   } // adds a new assumption
@@ -265,28 +265,28 @@ public:
   }
 
   // add direction with specified name
-  size_t addVarDirectionConstraint(Direction *d);
+  size_t addVarDirectionConstraint(Direction<> *d);
 
   unsigned int getDirectionsNum() const
   {
     return directions.size();
   }
-  const std::vector<Direction *> &getDirections() const
+  const std::vector<Direction<> *> &getDirections() const
   {
     return directions;
   }
-  const Direction *getDirection(const unsigned int &i) const
+  const Direction<> *getDirection(const unsigned int &i) const
   {
     return directions[i];
   }
   bool isBounded(const unsigned int &d) const
   {
-    return directions[d]->hasLB() && directions[d]->hasUB();
+    return directions[d]->has_lower_bound() && directions[d]->has_upper_bound();
   }
 
-  void addInvariantConstraint(Direction *d);
+  void addInvariantConstraint(Direction<> *d);
 
-  const std::list<Direction *> &getInvariant() const
+  const std::list<Direction<> *> &getInvariant() const
   {
     return invariant;
   }
@@ -323,19 +323,19 @@ public:
     return templateMatrix;
   }
 
-  size_t addParamDirectionConstraint(Direction *d);
+  size_t addParamDirectionConstraint(Direction<> *d);
 
   unsigned paramDirectionsNum() const
   {
     return paramDirections.size();
   }
 
-  const std::vector<Direction *> &getParameterDirections() const
+  const std::vector<Direction<> *> &getParameterDirections() const
   {
     return paramDirections;
   }
 
-  Direction *getParamDirection(int i) const
+  Direction<> *getParamDirection(int i) const
   {
     return paramDirections[i];
   }
@@ -453,16 +453,16 @@ protected:
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
 
-  std::list<Direction *> assumptions;
-  std::list<Direction *> invariant;
+  std::list<Direction<> *> assumptions;
+  std::list<Direction<> *> invariant;
 
   std::shared_ptr<STL::STL> spec;
 
-  std::vector<Direction *> directions;
+  std::vector<Direction<> *> directions;
 
   std::vector<std::vector<unsigned int>> templateMatrix;
 
-  std::vector<Direction *> paramDirections;
+  std::vector<Direction<> *> paramDirections;
 
   // SAPO options
   transType trans;
@@ -484,7 +484,7 @@ protected:
  */
 template<typename T, template<class, class> class CONTAINER>
 LinearSystem getConstraintsSystem(
-    const CONTAINER<Direction *, std::allocator<Direction *>> &constraints,
+    const CONTAINER<Direction<> *, std::allocator<Direction<> *>> &constraints,
     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
 {
   using namespace LinearAlgebra;
@@ -494,20 +494,20 @@ LinearSystem getConstraintsSystem(
 
   for (auto dir_it = std::cbegin(constraints);
        dir_it != std::cend(constraints); ++dir_it) {
-    const AbsSyn::Direction &dir = **dir_it;
+    const AbsSyn::Direction<> &dir = **dir_it;
 
-    auto systemRow = dir.getConstraintVector(symbols);
+    auto systemRow = dir.get_variable_coefficients(symbols);
     // add only bounded constraints
-    if (dir.hasUB()) {
+    if (dir.has_upper_bound()) {
       A.push_back(systemRow);
-      b.push_back(dir.getUB());
+      b.push_back(dir.get_upper_bound()==0 ? 0: dir.get_upper_bound());
     }
-    if (dir.hasLB()) {
+    if (dir.has_lower_bound()) {
       A.push_back(-systemRow);
-      b.push_back(-dir.getLB());
+      b.push_back(dir.get_lower_bound()==0 ? 0: -dir.get_lower_bound());
     }
   }
-  return LinearSystem(A, b);
+  return LinearSystem(std::move(A), std::move(b));
 }
 
 }
