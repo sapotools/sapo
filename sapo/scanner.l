@@ -91,8 +91,6 @@ delta_thickness_threshold	return yy::parser::make_DELTA_THICKNESS(loc);
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);
 OFO			return yy::parser::make_OFO(loc);
-decompositions		return yy::parser::make_DECOMP(loc);
-sapo_alpha		return yy::parser::make_ALPHA(loc);
 compose_dynamic			return yy::parser::make_COMPOSE(loc);
 &&			return yy::parser::make_AND(loc);
 \|\|			return yy::parser::make_OR(loc);

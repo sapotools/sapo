@@ -1325,64 +1325,6 @@ std::list<Bundle> Bundle::split(const double max_magnitude,
   return split_list;
 }
 
-Bundle Bundle::decompose(double dec_weight, int max_iters)
-{
-  using namespace std;
-  using namespace LinearAlgebra;
-
-  vector<double> off_distances = this->edge_lengths();
-
-  // get current template and try to improve it
-  vector<Vector<unsigned int>> curT(std::begin(this->_templates),
-                                    std::end(this->_templates));
-
-  // get current template and try to improve it
-  vector<Vector<unsigned int>> bestT(std::begin(this->_templates),
-                                     std::end(this->_templates));
-  int temp_card = this->_templates.size();
-
-  int i = 0;
-  while (i < max_iters) {
-
-    vector<Vector<unsigned int>> tmpT = curT;
-
-    // generate random coordinates to swap
-    unsigned int i1 = rand() % temp_card;
-    int j1 = rand() % this->dim();
-
-    // swap them
-    tmpT[i1][j1] = rand() % this->size();
-
-    if (!is_permutation_of_other_rows(tmpT, i1)) {
-      std::vector<Vector<double>> A;
-      for (unsigned int j = 0; j < this->dim(); j++) {
-        A.push_back(this->_directions[tmpT[i1][j]]);
-      }
-
-      Dense::LUP_Factorization<double> fact(A);
-      try {
-        fact.solve(Vector<double>(this->dim(), 0));
-
-        double w1 = dec_weight * maxOffsetDist(tmpT, off_distances)
-                    + (1 - dec_weight) * maxOrthProx(this->_directions, tmpT);
-        double w2 = dec_weight * maxOffsetDist(bestT, off_distances)
-                    + (1 - dec_weight) * maxOrthProx(this->_directions, bestT);
-
-        if (w1 < w2) {
-          bestT = tmpT;
-        }
-        curT = tmpT;
-      } catch (...) {
-        // The system Ax=b cannot be solved
-      }
-    }
-    i++;
-  }
-
-  return Bundle(_directions, _lower_bounds, _upper_bounds,
-                set<Vector<unsigned int>>(std::begin(bestT), std::end(bestT)));
-}
-
 /**
  * Compute the distances between the half-spaced of the parallelotopes
  *

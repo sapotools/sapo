@@ -360,32 +360,6 @@ public:
     return trans;
   }
 
-  const bool &isDecompositionDefined() const
-  {
-    return decomp_defined;
-  }
-  void setDecomposition()
-  {
-    decomp = true;
-  }
-  const bool &getDecomposition() const
-  {
-    return decomp;
-  }
-
-  bool isAlphaDefined() const
-  {
-    return alphaDefined;
-  }
-  void setAlpha(double a)
-  {
-    alpha = a;
-  }
-  const double &getAlpha() const
-  {
-    return alpha;
-  }
-
   bool isDynamicCompositionEnabled() const
   {
     return compose_dynamic;
@@ -492,9 +466,6 @@ protected:
 
   // SAPO options
   transType trans;
-  bool decomp, decomp_defined;
-  double alpha;
-  bool alphaDefined;
   bool compose_dynamic;
   unsigned dynamic_degree;
   Sapo::joinApproxType approx_type;

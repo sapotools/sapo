@@ -111,8 +111,6 @@
 	TRANS
 	AFO
 	OFO
-	DECOMP
-	ALPHA
 	COMPOSE
 	INVARIANT
 	EXP_DELTA
@@ -1002,48 +1000,6 @@ option	: TRANS transType ";"
 		| TRANS error ";"
 		{
 			ERROR(@2, "Unknown transformation type");
-		}
-		| DECOMP ";"
-		{
-			if (drv.data.isDecompositionDefined()) {
-				WARNING(@$, "Decomposition option already defined");
-			} else {
-				drv.data.setDecomposition();
-			}
-		}
-		| DECOMP error
-		{
-			MISSING_SC(@1);
-			if (drv.data.isDecompositionDefined()) {
-				WARNING(@$, "Decomposition option already defined");
-			} else {
-				drv.data.setDecomposition();
-			}
-		}
-		| ALPHA DOUBLE ";"
-		{
-			if (drv.data.isAlphaDefined()) {
-				WARNING(@$, "Alpha already defined");
-			}
-			
-			if ($2 > 1) {
-				ERROR(@2, "Alpha must be between 0 and 1");
-			}
-			
-			drv.data.setAlpha($2);
-		}
-		| ALPHA DOUBLE error
-		{
-			MISSING_SC(@2);
-			if (drv.data.isAlphaDefined()) {
-				WARNING(@$, "Alpha already defined");
-			}
-			
-			if ($2 > 1) {
-				ERROR(@2, "Alpha must be between 0 and 1");
-			}
-			
-			drv.data.setAlpha($2);
 		}
 		| COMPOSE NATURAL ";"
 		{

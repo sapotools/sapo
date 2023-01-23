@@ -306,16 +306,6 @@ We can define
 	In general, `AFO` gives more accurate results but `OFO` is faster.
 	The default value is ```AFO```.
 
-- whether or not to perform an optional decomposition phase after computing set images.
-	
-	```option decomposition;```
-
-- set a weigth `alpha` in `[0,1]` used in decomposition, to define the importance given to polytope volume over maximum side length in the cost function.
-	
-	```option sapo_alpha num;```
-	
-	The default value is `0.5`.
-
 - set an approximation technique for set join in `k`-induction invariant proof.
 
 	```option k_induction_join [listing|packaging|merging];```

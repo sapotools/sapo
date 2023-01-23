@@ -32,7 +32,7 @@
  * @param[in] cached is a flag to cache Bernstein coefficients
  */
 Sapo::Sapo(const Model &model, bool cached):
-    decomp(0), max_param_splits(0), num_of_pre_splits(0),
+    max_param_splits(0), num_of_pre_splits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
     max_k_induction(0), delta_thickness_threshold(0),
     missed_thickness_threshold(1), join_approx(joinApproxType::NO_APPROX),
@@ -82,10 +82,6 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
 
     // guarantee the assumptions
     nbundle.intersect_with(sapo->assumptions);
-
-    if (sapo->decomp > 0) { // if requested, decompose it
-      nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
-    }
 
     // TODO: check whether there is any chance for a transformed bundle to
     // be empty
@@ -206,10 +202,6 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
 
       // guarantee the assumptions
       nbundle.intersect_with(sapo->assumptions);
-
-      if (sapo->decomp > 0) { // if requested, decompose it
-        nbundle = nbundle.decompose(sapo->decomp_weight, sapo->decomp);
-      }
 
       Polytope bls = nbundle;
 

@@ -12,4 +12,4 @@
  - [ ] Write a method to test whether a LinearSystem is fully included in a LinearSystemSet. At the moment, we have a method that tests whether one of the LinearSystems of the LinearSystemSet fully includes the LinearSystem.
  - [ ] Use a proper class in place of std::vector<std::vector<double> > for matrices and std::vector<double> for vectors.
  - [X] Add both a LinearSystemSet::const_iterator and an LinearSystemSet::interator classes
- - [ ] Parallel computation for Bundle::{transform, decompose} (OpenMP? Cuda?) - [ ] Add documentation/examples on using Sapo C++ classes/functions.
+ - [ ] Parallel computation for Bundle::{transform} (OpenMP? Cuda?) - [ ] Add documentation/examples on using Sapo C++ classes/functions.

@@ -19,7 +19,6 @@ InputData::InputData():
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
-    decomp(false), decomp_defined(false), alpha(0.5), alphaDefined(false),
     compose_dynamic(false), dynamic_degree(1), approx_type(Sapo::NO_APPROX),
     bern_caching(true), all_dirs_dynamic(false),
     use_invariant_directions(false)

@@ -561,17 +561,6 @@ public:
                           = SPLIT_MAGNITUDE_RATIO) const;
 
   /**
-   * Decompose the current symbolic polytope
-   *
-   * @param[in] alpha weight parameter in [0,1] for decomposition (0 for
-   * distance, 1 for orthogonality)
-   * @param[in] max_iters maximum number of randomly generated templates
-   * @todo method does not work; it should be reviewed and fixed
-   * @returns new bundle decomposing current symbolic polytope
-   */
-  Bundle decompose(double alpha, int max_iters);
-
-  /**
    * @brief Get the intersection between two bundles
    *
    * This method intersects the current object and another bundle.
