@@ -650,7 +650,7 @@ LinearAlgebra::Vector<double> compute_orthogonal_direction(
 }
 
 inline void
-adjust_new_dir_verse(LinearAlgebra::Vector<double> &new_dir,
+fix_new_dir_verse(LinearAlgebra::Vector<double> &new_dir,
                      const LinearAlgebra::Vector<double> &dir_image)
 {
   using namespace LinearAlgebra;
@@ -670,31 +670,33 @@ compute_new_dirs(const Bundle &bundle, const DynamicalSystem<double> &ds,
 
   auto dir_images = collect_dir_images(bundle, ds, parameter_set);
   for (const auto &b_template: bundle.templates()) {
-    // build the vector of direction images excluding the
-    // image of direction 0
-    std::vector<LinearAlgebra::Vector<double>> t_dir_images;
-    t_dir_images.reserve(b_template.dim() - 1);
-    for (size_t i = 1; i < b_template.dim(); ++i) {
-      t_dir_images.push_back(dir_images[b_template[i]]);
-    }
+    if (b_template.have_dynamic_directions()) {
+      // build the vector of the template direction images excluding the
+      // image of direction 0
+      std::vector<LinearAlgebra::Vector<double>> t_dir_images;
+      t_dir_images.reserve(b_template.dim() - 1);
+      for (size_t i = 1; i < b_template.dim(); ++i) {
+        t_dir_images.push_back(dir_images[b_template[i]]);
+      }
 
-    // since the new directions depends on the other dir_images
-    // of the current template, every dynamic direction should
-    // exclusively belong to one template
-    if (bundle.is_direction_dynamic(b_template[0])) {
-      new_dirs[b_template[0]] = compute_orthogonal_direction(t_dir_images);
+      for (size_t i = 0; i < b_template.dim(); ++i) {
+        const size_t idx = b_template[i];
 
-      adjust_new_dir_verse(new_dirs[b_template[0]], dir_images[b_template[0]]);
-    }
-
-    for (size_t i = 0; i < b_template.dim() - 1; ++i) {
-      t_dir_images[i] = dir_images[b_template[i]];
-
-      const size_t idx = b_template[i + 1];
-      if (bundle.is_direction_dynamic(idx)) {
+        // compute one of vectors orthogonal to all the images of 
+        // bundle directions, but the i-th template direction
         new_dirs[idx] = compute_orthogonal_direction(t_dir_images);
 
-        adjust_new_dir_verse(new_dirs[idx], dir_images[idx]);
+        // fix the verse of the computed vector so that it is 
+        // consistent with the i-th direction image
+        fix_new_dir_verse(new_dirs[idx], dir_images[idx]);
+
+        // the i-th row of t_dir_images stores to the (i+1)-th 
+        // template direction image. Replace it with the i-th
+        // template direction image so that t_dir_image consists 
+        // in all the direction images, but the (i+1)-th one
+        if (i<b_template.dim()-1) {
+          t_dir_images[i] = dir_images[b_template[i]];
+        }
       }
     }
   }
@@ -808,8 +810,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   }
 
   Bundle res(std::move(new_dirs), std::move(lower_bounds),
-             std::move(upper_bounds), bundle.templates(),
-             bundle.dynamic_directions());
+             std::move(upper_bounds), bundle.templates());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {
@@ -1028,8 +1029,7 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
   }
 
   Bundle res(std::move(new_dirs), std::move(lower_bounds),
-             std::move(upper_bounds), bundle.templates(),
-             bundle.dynamic_directions());
+             std::move(upper_bounds), bundle.templates());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {

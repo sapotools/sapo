@@ -180,7 +180,6 @@ private:
   LinearAlgebra::Vector<double> _lower_bounds; //!< direction upper bounds
   LinearAlgebra::Vector<double> _upper_bounds; //!< direction lower bounds
   std::set<BundleTemplate> _templates;         //!< bundle templates
-  std::vector<bool> _dynamic_dirs;             //!< dynamic directions
 
   /**
    * @brief A draft horse function to split a bundle
@@ -238,13 +237,11 @@ private:
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
-   * @param[in] dynamic_dirs is the vector of the dynamic directions
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
-         const std::set<BundleTemplate> &templates,
-         const std::vector<bool> &dynamic_dirs);
+         const std::set<BundleTemplate> &templates);
 
   /**
    * @brief A constructor
@@ -256,13 +253,11 @@ private:
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
-   * @param[in] dynamic_dirs is the vector of the dynamic directions
    */
   Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds,
-         const std::set<BundleTemplate> &templates,
-         const std::vector<bool> &dynamic_dirs);
+         const std::set<BundleTemplate> &templates);
 
 public:
   /**
@@ -428,27 +423,6 @@ public:
   inline const std::set<BundleTemplate> &templates() const
   {
     return _templates;
-  }
-
-  /**
-   * @brief Get the dynamic direction flag vector
-   *
-   * @return a reference to the dynamic direction flag vector
-   */
-  const std::vector<bool> &dynamic_directions() const
-  {
-    return _dynamic_dirs;
-  }
-
-  /**
-   * @brief Check whether the i-th direction is dynamic
-   *
-   * @param i is the tested direction
-   * @return true if and only if the i-th direction is dynamic
-   */
-  inline bool is_direction_dynamic(const size_t i) const
-  {
-    return _dynamic_dirs[i];
   }
 
   /**

@@ -81,8 +81,7 @@ Bundle::Bundle() {}
 
 Bundle::Bundle(const Bundle &orig):
     _directions(orig._directions), _lower_bounds(orig._lower_bounds),
-    _upper_bounds(orig._upper_bounds), _templates(orig._templates),
-    _dynamic_dirs(orig._dynamic_dirs)
+    _upper_bounds(orig._upper_bounds), _templates(orig._templates)
 {
 }
 
@@ -97,7 +96,6 @@ void swap(Bundle &A, Bundle &B)
   std::swap(A._upper_bounds, B._upper_bounds);
   std::swap(A._lower_bounds, B._lower_bounds);
   std::swap(A._templates, B._templates);
-  std::swap(A._dynamic_dirs, B._dynamic_dirs);
 }
 
 /**
@@ -624,23 +622,20 @@ void duplicate_dynamic_directions(
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
-               const std::set<BundleTemplate> &templates,
-               const std::vector<bool> &dynamic_dirs):
+               const std::set<BundleTemplate> &templates):
     _directions(directions),
     _lower_bounds(lower_bounds), _upper_bounds(upper_bounds),
-    _templates(templates), _dynamic_dirs(dynamic_dirs)
+    _templates(templates)
 {
 }
 
 Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds,
-               const std::set<BundleTemplate> &templates,
-               const std::vector<bool> &dynamic_dirs):
+               const std::set<BundleTemplate> &templates):
     _directions(std::move(directions)),
     _lower_bounds(std::move(lower_bounds)),
-    _upper_bounds(std::move(upper_bounds)), _templates(templates),
-    _dynamic_dirs(dynamic_dirs)
+    _upper_bounds(std::move(upper_bounds)), _templates(templates)
 {
 }
 
@@ -651,8 +646,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                std::set<std::vector<unsigned int>> dynamic_templates,
                const template_less_fate_type template_less_fate):
     _directions(directions),
-    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds), _templates(),
-    _dynamic_dirs()
+    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds), _templates()
 {
   validate_directions(_directions, _lower_bounds, _upper_bounds);
   validate_templates(_directions, static_templates);
@@ -705,14 +699,9 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                                static_templates, dynamic_templates);
 
   _templates.insert(std::begin(static_templates), std::end(static_templates));
-  _templates.insert(std::begin(dynamic_templates),
-                    std::end(dynamic_templates));
 
-  _dynamic_dirs = std::vector<bool>(_directions.size(), false);
-  for (const auto &bundle_template: dynamic_templates) {
-    for (const auto &dir_idx: bundle_template) {
-      _dynamic_dirs[dir_idx] = true;
-    }
+  for (auto& dynamic_template: dynamic_templates) {
+    _templates.emplace(std::move(dynamic_template), true);
   }
 }
 
@@ -778,8 +767,6 @@ Bundle::Bundle(const Polytope &P)
   }
 
   add_missing_templates(_templates, _directions, missing_dirs);
-
-  _dynamic_dirs = std::vector<bool>(_directions.size(), false);
 }
 
 /**
@@ -807,8 +794,6 @@ Bundle &Bundle::operator=(const Bundle &orig)
 
   this->_upper_bounds = orig._upper_bounds;
   this->_lower_bounds = orig._lower_bounds;
-
-  this->_dynamic_dirs = orig._dynamic_dirs;
 
   return *this;
 }
@@ -1342,8 +1327,7 @@ std::list<Bundle> &Bundle::split_bundle(
 {
   if (idx == this->size()) {
     Bundle new_bundle(this->_directions, this->_lower_bounds,
-                      this->_upper_bounds, this->_templates,
-                      this->_dynamic_dirs);
+                      this->_upper_bounds, this->_templates);
     res.push_back(std::move(new_bundle));
 
     return res;
@@ -1520,7 +1504,6 @@ Bundle &Bundle::intersect_with(const Bundle &A)
       this->_directions.push_back(A_dir);
       this->_lower_bounds.push_back(A._lower_bounds[i]);
       this->_upper_bounds.push_back(A._upper_bounds[i]);
-      this->_dynamic_dirs.push_back(false);
     } else { // if the direction is already included in this object
 
       // compute the dependency coefficient
@@ -1598,7 +1581,6 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
       this->_directions.push_back(A_row);
       this->_lower_bounds.push_back(-std::numeric_limits<double>::infinity());
       this->_upper_bounds.push_back(ls.b(i));
-      this->_dynamic_dirs.push_back(false);
     } else {
       // compute the dependency coefficient
       const unsigned int &new_i = new_ids[i];
@@ -1698,7 +1680,6 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
       res._directions.push_back(b2_dir);
       res._lower_bounds.push_back(lower_bound);
       res._upper_bounds.push_back(upper_bound);
-      res._dynamic_dirs.push_back(false);
     } else {
       // compute the dependency coefficient
       const unsigned int &new_i = new_ids[i];
