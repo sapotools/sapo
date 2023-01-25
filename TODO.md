@@ -1,15 +1,13 @@
 ## TODO
- - [X] Remove all the memory leaks
- - [ ] Add real support to brew
- - [ ] Check whether it is possible to move from vector to list in both LinearSystemSet and Flowpipe.
- - [ ] Add an option to select whether the synthesize method should end as soons as it finds a non-null sets of parameters or keep splitting the parameter sets up to the maximum number of splits.
- - [ ] Parallel computation for the evolution of bundle sets (have a look at https://en.cppreference.com/w/cpp/thread/thread/thread, https://en.cppreference.com/w/cpp/thread/shared_mutex, https://stackoverflow.com/a/10673671, and https://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency). 
- - [X] Add constructors and swap functions for the copy-swap semantics.
- - [ ] Remove BaseConverter class and turn its methods in proper functions.
+ - [ ] Implement the simplex method [#12](https://github.com/dreossi/sapo/issues/12)
+ - [ ] Embed cached evolution in `Evolution` class and remove `CachedEvolution`. 
  - [ ] Introduce a namespace for Sapo.
- - [ ] Improve code documentation (Doxygen?).
+ - [ ] Improve code documentation.
+ - [ ] Produce a release.
+ - [ ] Build a Conda/Conan/Brew packages.
+ - [ ] Remove BaseConverter class and turn its methods in proper functions.
  - [ ] Review all the code.
- - [ ] Write a method to test whether a LinearSystem is fully included in a LinearSystemSet. At the moment, we have a method that tests whether one of the LinearSystems of the LinearSystemSet fully includes the LinearSystem.
- - [ ] Use a proper class in place of std::vector<std::vector<double> > for matrices and std::vector<double> for vectors.
- - [X] Add both a LinearSystemSet::const_iterator and an LinearSystemSet::interator classes
- - [ ] Parallel computation for Bundle::{transform} (OpenMP? Cuda?) - [ ] Add documentation/examples on using Sapo C++ classes/functions.
+ - [ ] Use a proper class in place of std::vector<std::vector<double> > for matrices and std::vector<double> for vectors (Eigen?)
+ - [ ] Parallel computation for Bundle::{transform} (OpenMP? Cuda?) 
+ - [ ] Add documentation/examples on using Sapo C++ classes/functions.
+ - [ ] Add continous dynamic support
