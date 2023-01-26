@@ -15,8 +15,8 @@
 #include <vector>
 #include <sstream>
 
+#include "ErrorHandling.h"
 #include "SymbolicAlgebra.h"
-
 #include "LinearAlgebraIO.h"
 
 /**
@@ -53,8 +53,9 @@ protected:
     using namespace SymbolicAlgebra;
 
     if (_variables.size() != _dynamics.size()) {
-      throw std::domain_error("The vectors of the dynamics laws and that "
-                              "of the variables must have the same size");
+      SAPO_ERROR("the vectors of the dynamics laws and that "
+                 "of the variables must have the same size",
+                 std::domain_error);
     }
 
     std::set<Symbol<T>> symbols;
@@ -74,8 +75,9 @@ protected:
          ++v_it) {
       symbols.erase(*v_it);
       if (!_var_index.emplace(v_it->get_id(), _var_index.size()).second) {
-        throw std::domain_error("The vector or the variables must not "
-                                "contain duplicates");
+        SAPO_ERROR("the vector or the variables must not "
+                   "contain duplicates",
+                   std::domain_error);
       }
     }
 
@@ -89,11 +91,12 @@ protected:
         oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id())
             << "\" is reported as both a variable and a parameter";
 
-        throw std::domain_error(oss.str());
+        SAPO_ERROR(oss.str(), std::domain_error);
       }
       if (!param_index.emplace(p_it->get_id()).second) {
-        throw std::domain_error("The vector of the parameters must not "
-                                "contain duplicates");
+        SAPO_ERROR("the vector of the parameters must not "
+                   "contain duplicates",
+                   std::domain_error);
       }
     }
 
@@ -103,7 +106,7 @@ protected:
       oss << "The symbols in " << symbols << " are neither variables "
           << "nor parameters";
 
-      throw std::domain_error(oss.str());
+      SAPO_ERROR(oss.str(), std::domain_error);
     }
   }
 

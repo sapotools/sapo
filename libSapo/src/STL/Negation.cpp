@@ -97,9 +97,9 @@ const std::shared_ptr<STL> Negation::get_PNF() const
                                     event->time_bounds().end(), sub);
   }
   case formula_type::UNTIL:
-    throw std::logic_error("Negation of until is not supported");
+    SAPO_ERROR("until does not support negation", std::logic_error);
   default:
-    throw std::logic_error("Unsupported formula type");
+    SAPO_ERROR("unsupported formula type", std::logic_error);
   }
 }
 

@@ -21,6 +21,7 @@
 
 #include "Bernstein.h"
 #include "VarsGenerator.h"
+#include "ErrorHandling.h"
 
 /**
  * @brief Avoid \f$-0\f$
@@ -485,8 +486,7 @@ make_interpretation(const std::vector<SymbolicAlgebra::Symbol<T>> &symbols,
                     const std::vector<T> &values)
 {
   if (symbols.size() != values.size()) {
-    throw std::runtime_error("make_interpretation: symbols and values "
-                             "sizes are not the same");
+    SAPO_ERROR("symbols and values sizes are not the same", std::domain_error);
   }
 
   typename SymbolicAlgebra::Expression<T>::interpretation_type inter;
@@ -712,13 +712,15 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   using namespace LinearAlgebra;
 
   if (bundle.dim() != _ds.variables().size()) {
-    throw std::domain_error("The bundle and the dynamic laws must have the "
-                            "same number of dimensions.");
+    SAPO_ERROR("the bundle and the dynamic laws must have the "
+               "same number of dimensions",
+               std::domain_error);
   }
 
   if (parameter_set.dim() != _ds.parameters().size()) {
-    throw std::domain_error("The vector of parameters and the parameter "
-                            "set must have same number of dimensions.");
+    SAPO_ERROR("the vector of parameters and the parameter "
+               "set must have same number of dimensions",
+               std::domain_error);
   }
 
   // compute new directions
@@ -796,8 +798,9 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     delete itvl_finder;
     std::ostringstream oss;
 
-    oss << "The symbol \"" << e.get_symbol_name() << "\" is unknown";
-    throw std::domain_error(oss.str());
+    oss << "the symbol \"" << e.get_symbol_name() << "\" is unknown";
+
+    SAPO_ERROR(oss.str(), std::domain_error);
   }
 
   LinearAlgebra::Vector<double> lower_bounds, upper_bounds;
@@ -813,14 +816,9 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {
-      std::ostringstream ss;
-
-      ss << "Evolver<double>::operator(): one of the "
-            "computed bundle edge lengths is larger than "
-            "the set threshold, i.e., "
-         << _edge_threshold;
-
-      throw std::runtime_error(ss.str());
+      SAPO_ERROR("one of the computed bundle edge lengths "
+                 "is larger than the set threshold",
+                 std::runtime_error);
     }
   }
 
@@ -919,13 +917,15 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
   using namespace LinearAlgebra;
 
   if (bundle.dim() != _ds.variables().size()) {
-    throw std::domain_error("The bundle and the dynamic laws must have the "
-                            "same number of dimensions.");
+    SAPO_ERROR("the bundle and the dynamic laws must have the "
+               "same number of dimensions",
+               std::domain_error);
   }
 
   if (parameter_set.dim() != _ds.parameters().size()) {
-    throw std::domain_error("The vector of parameters and the parameter "
-                            "set must have same number of dimensions.");
+    SAPO_ERROR("the vector of parameters and the parameter "
+               "set must have same number of dimensions",
+               std::domain_error);
   }
 
   // compute new directions
@@ -1015,8 +1015,8 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
     delete itvl_finder;
     std::ostringstream oss;
 
-    oss << "The symbol \"" << e.get_symbol_name() << "\" is unknown";
-    throw std::domain_error(oss.str());
+    oss << "the symbol \"" << e.get_symbol_name() << "\" is unknown";
+    SAPO_ERROR(oss.str(), std::domain_error);
   }
 
   LinearAlgebra::Vector<double> lower_bounds, upper_bounds;
@@ -1032,14 +1032,9 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {
-      std::ostringstream ss;
-
-      ss << "CachedEvolver<double>::operator(): one of the "
-            "computed bundle edge lengths is larger than "
-            "the set threshold, i.e., "
-         << _edge_threshold;
-
-      throw std::runtime_error(ss.str());
+      SAPO_ERROR("one of the computed bundle edge lengths is "
+                 "larger than the set threshold",
+                 std::runtime_error);
     }
   }
 
@@ -1061,18 +1056,21 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
   auto &ds = evolver.dynamical_system();
 
   if (bundle.dim() != ds.variables().size()) {
-    throw std::domain_error("The bundle and the dynamical system must "
-                            "have the same number of dimensions.");
+    SAPO_ERROR("the bundle and the dynamical system must "
+               "have the same number of dimensions",
+               std::domain_error);
   }
 
   if (parameter_set.dim() != ds.parameters().size()) {
-    throw std::domain_error("The parameter set and the parameter vector "
-                            "must have the same number of dimensions.");
+    SAPO_ERROR("the parameter set and the parameter vector "
+               "must have the same number of dimensions",
+               std::domain_error);
   }
 
   if (ds.parameters().size() == 0) {
-    throw std::domain_error("Nothing to synthesize: the parameter set "
-                            "is empty.");
+    SAPO_ERROR("the parameter set is empty and nothing "
+               "can be synthesized",
+               std::domain_error);
   }
 
   SetsUnion<Polytope> result = parameter_set;

@@ -15,8 +15,8 @@
 #include <vector>
 #include <cmath>
 
+#include "ErrorHandling.h"
 #include "LinearAlgebra.h"
-
 #include "SymbolicAlgebra.h"
 
 template<typename C>
@@ -208,8 +208,7 @@ private:
   {
 
     if (k > n) {
-      throw std::domain_error("nChoosek: n must be "
-                              "larger equal then k");
+      SAPO_ERROR("n must be larger equal then k", std::domain_error);
     }
 
     unsigned int res = 1;
@@ -231,8 +230,7 @@ private:
   {
 
     if (n.size() != k.size()) {
-      throw std::domain_error("multi_index_nChoosek: n "
-                              "and k must have same dimension");
+      SAPO_ERROR("n and k must have same dimension", std::domain_error);
     }
 
     unsigned int res = 1;
@@ -312,8 +310,7 @@ private:
     using namespace std;
 
     if (a.size() != dim.size()) {
-      throw std::domain_error("n2t: a and dim must have "
-                              "the same sizes");
+      SAPO_ERROR("a and dim must have the same sizes", std::domain_error);
     }
 
     vector<unsigned int> b(2, 0);
@@ -581,9 +578,7 @@ public:
       const SymbolicAlgebra::Expression<C> &polynomial)
   {
     if (!polynomial.is_a_polynomial()) {
-      throw std::domain_error(
-          "get_coefficients_from_polynomial: the parameter is not "
-          " a polynomial");
+      SAPO_ERROR("the parameter is not a polynomial", std::domain_error);
     }
     // Put the polynomial in extended form and extract variables degrees
     auto degrees = get_degree(polynomial, vars);

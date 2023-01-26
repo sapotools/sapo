@@ -96,8 +96,9 @@ private:
   bool add(const BASIC_SET_TYPE &set_obj, size_t sets_to_cmp)
   {
     if (size() != 0 && (this->front().dim() != set_obj.dim())) {
-      throw std::domain_error("Adding a set to a union of closed sets "
-                              "that has different dimension");
+      SAPO_ERROR("adding a set to a union of closed sets "
+                 "that has different dimension",
+                 std::domain_error);
     }
 
     if (set_obj.is_empty()) {
@@ -158,8 +159,9 @@ private:
   bool add(BASIC_SET_TYPE &&set_obj, size_t sets_to_cmp)
   {
     if (size() != 0 && (this->front().dim() != set_obj.dim())) {
-      throw std::domain_error("Adding a set to a union of closed sets "
-                              "that has different dimension");
+      SAPO_ERROR("adding a set to a union of closed sets "
+                 "that has different dimension",
+                 std::domain_error);
     }
 
     if (set_obj.is_empty()) {

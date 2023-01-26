@@ -11,6 +11,8 @@
 
 #include "Model.h"
 
+#include "ErrorHandling.h"
+
 Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
              const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
              const Bundle &init_set, const std::string name):
@@ -53,27 +55,25 @@ Model::Model(const DynamicalSystem<double> &dynamical_system,
 
   if (!dyn_symbols.empty()) {
     std::ostringstream oss;
-    oss << "The dynamic law symbols " << dyn_symbols
+    oss << "the dynamic law symbols " << dyn_symbols
         << "are neither variables nor parameters";
-    throw std::domain_error(oss.str());
+    SAPO_ERROR(oss.str(), std::domain_error);
   }
 
   if (init_set.dim() != _dynamical_system.dim()) {
     std::ostringstream oss;
-    oss << "The space dimension of the initial set (" << init_set.dim()
-        << ") differs from the "
-        << "variable number (" << _dynamical_system.dim()
-        << "). They must be the same.";
-    throw std::domain_error(oss.str());
+    oss << "the space dimension of the initial set (" << init_set.dim()
+        << ") differs from the variable number (" << _dynamical_system.dim()
+        << ")";
+    SAPO_ERROR(oss.str(), std::domain_error);
   }
 
   if (parameter_set.dim() != _dynamical_system.parameters().size()) {
     std::ostringstream oss;
-    oss << "The space dimension of the parameter set (" << parameter_set.dim()
+    oss << "the space dimension of the parameter set (" << parameter_set.dim()
         << ") differs from the parameter number ("
-        << _dynamical_system.parameters().size()
-        << "). They must be the same.";
-    throw std::domain_error(oss.str());
+        << _dynamical_system.parameters().size() << ")";
+    SAPO_ERROR(oss.str(), std::domain_error);
   }
 }
 
@@ -88,9 +88,9 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
 
     if (!spec_vars.empty()) {
       std::ostringstream oss;
-      oss << "The specification variables " << spec_vars
+      oss << "the specification variables " << spec_vars
           << "are not among the model variables";
-      throw std::domain_error(oss.str());
+      SAPO_ERROR(oss.str(), std::domain_error);
     }
 
     _spec = specification;
@@ -102,9 +102,9 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
 Model &Model::set_assumptions(const LinearSystem &assumptions)
 {
   if (assumptions.size() > 0 && assumptions.dim() != _dynamical_system.dim()) {
-    throw std::domain_error("The number of dimensions of the "
-                            "assumptions space differs from "
-                            "that of the model variables.");
+    SAPO_ERROR("the assumptions space and the model variables differ "
+               "in the number of dimensions",
+               std::domain_error);
   }
 
   _assumptions = LinearSystem(assumptions);
@@ -115,9 +115,9 @@ Model &Model::set_assumptions(const LinearSystem &assumptions)
 Model &Model::set_invariant(const LinearSystem &invariant)
 {
   if (invariant.size() > 0 && invariant.dim() != _dynamical_system.dim()) {
-    throw std::domain_error("The number of dimensions of the "
-                            "invariant space differs from "
-                            "that of the model variables.");
+    SAPO_ERROR("the invariant space and the model variables differ "
+               "in the number of dimensions",
+               std::domain_error);
   }
 
   _invariant = LinearSystem(invariant);

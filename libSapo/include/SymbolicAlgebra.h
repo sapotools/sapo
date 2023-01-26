@@ -24,6 +24,8 @@
 
 #endif // WITH_THREADS
 
+#include "ErrorHandling.h"
+
 /*!
  *  \addtogroup SymbolicAlgebra
  *  @{
@@ -3375,7 +3377,7 @@ public:
         constant /= (*it)->evaluate();
       }
     } catch (std::runtime_error &) {
-      throw std::runtime_error("Non-constant denominator not supported.");
+      SAPO_ERROR("non-constant denominator not supported", std::runtime_error);
     }
 
     base_expression_type<C> *res = new constant_type<C>(constant);
@@ -3401,8 +3403,8 @@ public:
       case FINITE_PROD:
       case FINITE_SUM:
       default:
-        throw std::runtime_error(
-            "'get_coeff' call only admitted after 'expand' call.");
+        SAPO_ERROR("'get_coeff' call only admitted after 'expand' call",
+                   std::runtime_error);
       }
     }
 
@@ -3426,8 +3428,8 @@ public:
   get_coeffs(const SymbolIdType &symbol_id) const
   {
     if (_denominator.size() > 0) {
-      throw std::runtime_error(
-          "coeff does not support non-constant denominator");
+      SAPO_ERROR("non-constant denominator is not supported",
+                 std::runtime_error);
     }
 
     std::map<int, base_expression_type<C> *> res;
@@ -4804,7 +4806,7 @@ Symbol<C>::Symbol(const std::string &name): Expression<C>(nullptr)
 #endif // WITH_THREADS
 
   if (name.size() == 0) {
-    throw std::domain_error("Symbols must have a non-null name");
+    SAPO_ERROR("the name must be non-empty", std::domain_error);
   }
 
   auto found_symbol = _declared_symbols.find(name);

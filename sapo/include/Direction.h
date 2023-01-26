@@ -4,7 +4,9 @@
 #include <cmath>
 #include <limits>
 
-#include "SymbolicAlgebra.h"
+#include <SymbolicAlgebra.h>
+#include <ErrorHandling.h>
+
 #include "Expr.h"
 #include "AbsSynIO.h"
 
@@ -56,7 +58,7 @@ private:
     case Type::IN:
       return type;
     default:
-      throw std::domain_error("Unknown Type");
+      SAPO_ERROR("unknown type", std::logic_error);
     }
   }
 
@@ -125,10 +127,10 @@ public:
       _lower_bound = _upper_bound;
       break;
     case Type::IN:
-      throw std::domain_error("Unhandled direction type (IN)");
+      SAPO_ERROR("\"IN\" direction is not supported", std::domain_error);
       break;
     default:
-      throw std::domain_error("Unknown direction type");
+      SAPO_ERROR("unknown direction type", std::runtime_error);
     }
   }
 
@@ -164,7 +166,7 @@ public:
   std::string getName() const
   {
     if (_symbol == nullptr) {
-      throw std::runtime_error("Direction has no name");
+      SAPO_ERROR("direction must have a name", std::runtime_error);
     }
     return SymbolicAlgebra::Symbol<T>::get_symbol_name(_symbol->get_id());
   }
@@ -271,7 +273,7 @@ std::ostream &operator<<(std::ostream &os, const Direction<T> &direction)
     return os << " in [" << direction.get_lower_bound() << ","
               << direction.get_upper_bound() << "]";
   default:
-    throw std::logic_error("unsupported direction type");
+    SAPO_ERROR("unknown direction type", std::runtime_error);
   }
   return os;
 }

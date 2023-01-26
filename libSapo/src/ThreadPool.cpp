@@ -1,5 +1,7 @@
 #include "ThreadPool.h"
 
+#include "ErrorHandling.h"
+
 /**
  * @brief Get information about a batch
  *
@@ -12,9 +14,9 @@ ThreadPool::get_batch_info(const ThreadPool::BatchId batch_id)
   // search for the batch id in the map
   auto found = _batches.find(batch_id);
 
-  // if not found throw an exception
+  // if not found throw an error
   if (found == std::end(_batches)) {
-    throw std::runtime_error("Unknown batch");
+    SAPO_ERROR("unknown batch", std::runtime_error);
   }
 
   // otherwise return a reference to the batch info

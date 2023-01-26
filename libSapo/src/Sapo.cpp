@@ -25,6 +25,8 @@
 
 #include "StickyUnion.h"
 
+#include "ErrorHandling.h"
+
 /**
  * Constructor
  *
@@ -451,7 +453,7 @@ std::list<SetsUnion<Polytope>> Sapo::synthesize(
     const unsigned int num_of_pre_splits, ProgressAccounter *accounter)
 {
   if (this->assumptions.size() > 0) {
-    throw std::runtime_error("Assumptions not supported in synthesis yet.");
+    SAPO_ERROR("synthesis does not support assumptions", std::runtime_error);
   }
 
   std::list<SetsUnion<Polytope>> pSetList{pSet};
@@ -565,7 +567,7 @@ SetsUnion<Polytope> Sapo::synthesize(Bundle init_set,
 {
   (void)accounter;
   if (this->assumptions.size() > 0) {
-    throw std::runtime_error("Assumptions not supported in synthesis yet.");
+    SAPO_ERROR("synthesis does not support assumptions", std::runtime_error);
   }
 
   switch (formula->get_type()) {
@@ -601,7 +603,7 @@ SetsUnion<Polytope> Sapo::synthesize(Bundle init_set,
                       std::dynamic_pointer_cast<STL::Eventually>(formula));
 
   default:
-    throw std::logic_error("Unsupported formula");
+    SAPO_ERROR("unsupported formula", std::logic_error);
   }
 }
 
@@ -770,7 +772,7 @@ approx_funct_type select_approx(Sapo::joinApproxType approx)
   case Sapo::FULL_JOIN:
     return &Tk_full_join<Bundle>;
   default:
-    throw std::domain_error("Unsupported approximation type");
+    SAPO_ERROR("unsupported approximation type", std::domain_error);
   }
 }
 
@@ -953,9 +955,9 @@ bool is_reached_set_invariant(Evolver<double> *evolver,
 double difference_max_thickness(const Bundle &A, const Bundle &B)
 {
   if (A.directions() != B.directions()) {
-    throw std::runtime_error("difference_max_direction_delta: the "
-                             "two parameters must have the same "
-                             "directions");
+    SAPO_ERROR("the two parameters must have the same "
+               "directions",
+               std::domain_error);
   }
 
   auto AB = over_approximate_union(A, B);

@@ -22,6 +22,8 @@
 #include <limits>    // due to numeric_limits
 #include <algorithm> // due to transform
 
+#include "ErrorHandling.h"
+
 namespace LinearAlgebra
 {
 
@@ -120,7 +122,7 @@ template<typename T>
 bool operator==(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
-    throw std::domain_error("The two vectors have different dimensions");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   auto b_it = std::cbegin(b);
@@ -173,7 +175,7 @@ template<typename T>
 Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
-    throw std::domain_error("The two vectors have different dimensions");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   Vector<T> res(a.size());
@@ -197,7 +199,7 @@ template<typename T>
 Vector<T> operator+(Vector<T> &&a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
-    throw std::domain_error("The two vectors have different dimensions");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   for (unsigned int i = 0; i < a.size(); ++i) {
@@ -234,7 +236,7 @@ template<typename T>
 Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
-    throw std::domain_error("The two vectors have different dimensions");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   Vector<T> res(a.size());
@@ -259,7 +261,7 @@ template<typename T>
 Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
-    throw std::domain_error("The two vectors have different dimensions");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   for (unsigned int i = 0; i < a.size(); ++i) {
@@ -282,7 +284,7 @@ template<typename T>
 Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
 {
   if (a.size() != b.size()) {
-    throw std::domain_error("The two vectors have different dimensions");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   for (unsigned int i = 0; i < a.size(); ++i) {
@@ -339,7 +341,7 @@ template<typename T>
 T operator*(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
-    throw std::domain_error("The two vectors have not the same dimensions.");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   T res = 0;
@@ -371,7 +373,7 @@ template<typename T>
 Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
-    throw std::domain_error("The two vectors have not the same dimensions.");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   Vector<T> res(v1.size());
@@ -426,7 +428,7 @@ template<typename T>
 Vector<T> operator/(const Vector<T> &v, const T s)
 {
   if (s == 0) {
-    throw std::domain_error("Division by 0");
+    SAPO_ERROR("division by 0", std::domain_error);
   }
 
   Vector<T> res(v.size());
@@ -450,7 +452,7 @@ template<typename T>
 Vector<T> operator/(Vector<T> &&v, const T s)
 {
   if (s == 0) {
-    throw std::domain_error("Division by 0");
+    SAPO_ERROR("division by 0", std::domain_error);
   }
 
   for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
@@ -551,8 +553,8 @@ public:
 
     for (auto it = this->begin(); it != this->end(); ++it) {
       if (it->first >= v.size() || it->second >= v.size()) {
-        throw std::domain_error(
-            "Permutation and vector dimensions are not compatible.");
+        SAPO_ERROR("the permutation and vector dimensions differ",
+                   std::domain_error);
       }
       pv[it->first] = v[it->second];
     }
@@ -609,11 +611,12 @@ template<typename T>
 bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
-    throw std::domain_error("The two vectors have not the same dimensions.");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   if (v1.size() == 0) {
-    throw std::domain_error("The two vectors must have size greater than 0.");
+    SAPO_ERROR("the two vectors must have size greater than 0",
+               std::domain_error);
   }
 
   // initialize the candidate index to be the first one
@@ -662,7 +665,7 @@ template<typename T>
 T operator/(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
-    throw std::domain_error("The two vectors have not the same dimensions.");
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
   // initialize the candidate index to be the first one
@@ -676,8 +679,8 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
     if (non_zero_idx == v1.size()) {
       if (v1[i] != 0 || v2[i] != 0) {
         if (v1[i] == 0 || v2[i] == 0) {
-          throw std::domain_error(
-              "The two vectors are not linearly dependent.");
+          SAPO_ERROR("the two vectors are not linearly dependent",
+                     std::domain_error);
         }
 
         // set the first non-zero index
@@ -687,13 +690,15 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
 
       if ((v1[i] == 0 && v2[i] != 0) || (v1[i] != 0 && v2[i] == 0)
           || (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx])) {
-        throw std::domain_error("The two vectors are not linearly dependent.");
+        SAPO_ERROR("the two vectors are not linearly dependent",
+                   std::domain_error);
       }
     }
   }
 
   if (non_zero_idx == v1.size()) {
-    throw std::domain_error("The two vectors are not linearly dependent.");
+    SAPO_ERROR("the two vectors are not linearly dependent",
+               std::domain_error);
   }
 
   return v1[non_zero_idx] / v2[non_zero_idx];
@@ -756,9 +761,9 @@ Vector<T> operator*(const Matrix<T> &A, const Vector<T> &v)
   }
 
   if (A.size() == 0 || A.front().size() != v.size()) {
-    throw std::domain_error(
-        "The matrix and the vector are not compatible for the "
-        "matrix-vector multiplication.");
+    SAPO_ERROR("the number of columns in the matrix differs from "
+               "the vector size",
+               std::domain_error);
   }
 
   Vector<T> res(A.size(), 0);
@@ -792,8 +797,9 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
   }
 
   if (A.front().size() != B.size()) {
-    throw std::domain_error("The two matrices are not compatible for the "
-                            "matrix-matrix multiplication.");
+    SAPO_ERROR("the two matrices are not compatible for "
+               "the matrix-matrix multiplication",
+               std::domain_error);
   }
 
   Matrix<T> res(A.size(), Vector<T>(B.front().size(), 0));
@@ -942,7 +948,7 @@ class LUP_Factorization
 
       const T &diag_value = row[j];
       if (diag_value == 0) {
-        throw std::domain_error("The linear system is undetermined.");
+        SAPO_ERROR("the linear system is undetermined", std::domain_error);
       }
       for (unsigned int i = j + 1; i < row.size(); ++i) {
         value -= row[i] * x[i];
@@ -980,7 +986,7 @@ public:
   LUP_Factorization(const Matrix<T> &M): _P(), _LU(M)
   {
     if (M.size() == 0) {
-      throw std::domain_error("The parameter is an empty matrix.");
+      SAPO_ERROR("the parameter is an empty matrix", std::domain_error);
     }
 
     for (size_t j = 0; j < _LU.size(); ++j) {
@@ -1045,12 +1051,15 @@ public:
   Vector<T> solve(const Vector<T> &b) const
   {
     if (b.size() != _LU.size()) {
-      throw std::domain_error("Wrong dimensions");
+      SAPO_ERROR("the number of rows of the LU factorization "
+                 "and the size of b differ",
+                 std::domain_error);
     }
 
     if (_LU.size() != _LU.front().size()) {
-      throw std::domain_error("The factorization is not square and the linear "
-                              "system cannot be solved.");
+      SAPO_ERROR("the factorization is not square and the linear "
+                 "system cannot be solved",
+                 std::domain_error);
     }
 
     Vector<T> Pb = _P(b);
@@ -1208,7 +1217,7 @@ template<typename T>
 T determinant(const Matrix<T> &A)
 {
   if (A.size() == 0 || A.front().size() == 0) {
-    throw std::domain_error("Determinant of a 0x0-matrix not supported");
+    SAPO_ERROR("0x0-matrices not supported", std::domain_error);
   }
 
   // Compute the factorization
@@ -1254,7 +1263,7 @@ template<typename T>
 Matrix<T> inverse(Matrix<T> &A)
 {
   if (A.size() == 0 || A.front().size() == 0) {
-    throw std::domain_error("Inverse of a 0x0-matrix not supported");
+    SAPO_ERROR("0x0-matrices not supported", std::domain_error);
   }
 
   Matrix<T> A_inv;
@@ -1369,7 +1378,7 @@ template<typename T>
 Dense::Matrix<T> operator/(Dense::Matrix<T> &&A, const T scalar)
 {
   if (scalar == 0) {
-    throw std::domain_error("Division by 0");
+    SAPO_ERROR("division by 0", std::domain_error);
   }
 
   for (auto row_it = std::begin(A); row_it != std::end(A); ++row_it) {
@@ -1443,7 +1452,7 @@ protected:
         A(row.A), row_idx(row.row_idx), col_idx(col_idx)
     {
       if (col_idx >= A.num_of_rows()) {
-        throw std::out_of_range("Out-of_bound: the column does not exist.");
+        SAPO_ERROR("the column does not exist", std::out_of_range);
       }
     }
 
@@ -1572,7 +1581,7 @@ protected:
         A(A), row_idx(row_idx)
     {
       if (row_idx >= A.num_of_rows()) {
-        throw std::out_of_range("Out-of_bound: the row does not exist.");
+        SAPO_ERROR("the row does not exist", std::out_of_range);
       }
     }
 
@@ -1620,7 +1629,7 @@ protected:
         A(A), row_idx(row_idx)
     {
       if (row_idx >= A.num_of_rows()) {
-        throw std::out_of_range("Out-of_bound: the row does not exist.");
+        SAPO_ERROR("the row does not exist", std::out_of_range);
       }
     }
 
@@ -1644,7 +1653,7 @@ protected:
     T operator[](const unsigned int col_idx) const
     {
       if (col_idx >= A.num_of_cols()) {
-        throw std::out_of_range("Out-of_bound: the column does not exist.");
+        SAPO_ERROR("the column does not exist", std::out_of_range);
       }
 
       auto row_it = A._matrix.find(row_idx);
@@ -1906,8 +1915,9 @@ public:
   std::vector<T> operator*(const std::vector<T> &v) const
   {
     if (v.size() != _num_of_cols) {
-      throw std::domain_error(
-          "The matrix and the vector have non-compatible dimensions.");
+      SAPO_ERROR("the number of columns in the matrix differs from "
+                 "the vector size",
+                 std::domain_error);
     }
 
     std::vector<T> res(_num_of_rows);
@@ -2088,7 +2098,7 @@ public:
   friend Matrix<E> operator/(Matrix<E> &&A, const E scalar)
   {
     if (scalar == 0) {
-      throw std::domain_error("Division by 0");
+      SAPO_ERROR("division by 0", std::domain_error);
     }
 
     for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
@@ -2271,7 +2281,7 @@ class LUP_Factorization
          ++row_it, ++i) {
       if (std::begin(row_it->second) == std::end(row_it->second)
           || row_it->first != i) {
-        throw std::domain_error("The linear system is undetermined.");
+        SAPO_ERROR("the linear system is undetermined", std::domain_error);
       }
       T value = b[row_it->first];
       for (auto elem_it = ++std::rbegin(row_it->second);
@@ -2283,7 +2293,7 @@ class LUP_Factorization
     }
 
     if (i != _L.num_of_cols()) {
-      throw std::domain_error("The linear system is undetermined.");
+      SAPO_ERROR("the linear system is undetermined", std::domain_error);
     }
 
     return x;
@@ -2305,7 +2315,7 @@ class LUP_Factorization
 
       if (std::begin(row_it->second) == std::end(row_it->second)
           || row_it->first != i - 1) {
-        throw std::domain_error("The linear system is undetermined.");
+        SAPO_ERROR("the linear system is undetermined", std::domain_error);
       }
       T value = b[row_it->first];
       for (auto elem_it = ++std::begin(row_it->second);
@@ -2317,7 +2327,7 @@ class LUP_Factorization
     }
 
     if (i != 0) {
-      throw std::domain_error("The linear system is undetermined.");
+      SAPO_ERROR("the linear system is undetermined", std::domain_error);
     }
 
     return x;
@@ -2351,7 +2361,7 @@ public:
       _P(), _L(M.num_of_rows(), M.num_of_rows()), _U(M)
   {
     if (M.num_of_rows() == 0 || M.num_of_cols() == 0) {
-      throw std::domain_error("The parameter is an empty matrix.");
+      SAPO_ERROR("0x0-matrices not supported", std::domain_error);
     }
 
     std::vector<std::set<unsigned int>> non_zero_below_diag
@@ -2455,12 +2465,15 @@ public:
   std::vector<T> solve(const std::vector<T> &b) const
   {
     if (b.size() != _U.num_of_rows()) {
-      throw std::domain_error("Wrong dimensions");
+      SAPO_ERROR("the number of rows in the factorization "
+                 "differs from the size of b",
+                 std::domain_error);
     }
 
     if (_U.num_of_rows() != _U.num_of_cols()) {
-      throw std::domain_error("The factorization is not square and the linear "
-                              "system cannot be solved.");
+      SAPO_ERROR("the factorization is not square and the linear "
+                 "system cannot be solved",
+                 std::domain_error);
     }
 
     std::vector<T> Pb = _P(b);
@@ -2574,7 +2587,7 @@ template<typename T>
 T determinant(const Matrix<T> &A)
 {
   if (A.num_of_rows() == 0 || A.num_of_cols() == 0) {
-    throw std::domain_error("Determinant of a 0x0-matrix not supported");
+    SAPO_ERROR("0x0-matrix not supported", std::domain_error);
   }
 
   // Compute the factorization
@@ -2620,7 +2633,7 @@ template<typename T>
 Matrix<T> inverse(Matrix<T> &A)
 {
   if (A.num_of_rows() == 0 || A.num_of_cols() == 0) {
-    throw std::domain_error("Inverse of a 0x0-matrix not supported");
+    SAPO_ERROR("0x0-matrix not supported", std::domain_error);
   }
 
   Matrix<T> A_inv;

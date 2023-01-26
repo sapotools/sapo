@@ -35,6 +35,8 @@
 #include "LinearAlgebra.h"
 #include "LinearAlgebraIO.h"
 
+#include "ErrorHandling.h"
+
 /**
  * @brief Avoid \f$-0\f$
  *
@@ -497,8 +499,9 @@ bool template_is_a_complete_basis(
   Dense::Matrix<T> A;
   for (const auto &dir_idx: bundle_template) {
     if (dir_idx >= directions.size()) {
-      throw std::domain_error("Bundle::Bundle: templates must contains "
-                              "as values indices of the directions vector");
+      SAPO_ERROR("templates must contains as values "
+                 "indices of the directions vectors",
+                 std::domain_error);
     }
 
     A.emplace_back(directions[dir_idx]);
@@ -513,24 +516,24 @@ void validate_templates(
     const std::set<std::vector<unsigned int>> &templates)
 {
   if (directions.size() == 0) {
-    throw std::domain_error("Bundle::Bundle: directions must be non empty");
+    SAPO_ERROR("directions must be non empty", std::domain_error);
   }
 
   const size_t dim = directions[0].size();
 
   for (const auto &bundle_template: templates) {
     if (bundle_template.size() != dim) {
-      throw std::domain_error("Bundle::Bundle: templates must have "
-                              "as many columns as directions");
+      SAPO_ERROR("templates must have as many columns "
+                 "as directions",
+                 std::domain_error);
     }
 
     if (!template_is_a_complete_basis(directions, bundle_template)) {
       std::ostringstream oss;
 
-      oss << "Bundle::Bundle: template directions must be linearly "
-             "independent, "
-          << "but template directions " << bundle_template << " are not.";
-      throw std::domain_error(oss.str());
+      oss << bundle_template << " does not contain linearly "
+          << "independent directions";
+      SAPO_ERROR(oss.str(), std::domain_error);
     }
   }
 }
@@ -542,29 +545,28 @@ void validate_directions(
     const LinearAlgebra::Vector<T> &upper_bounds)
 {
   if (directions.size() == 0) {
-    throw std::domain_error("Bundle::Bundle: directions must be non empty");
+    SAPO_ERROR("direction vector must be non empty", std::domain_error);
   }
 
   const size_t dim = directions[0].size();
   for (const auto &dir: directions) {
     if (dir.size() != dim) {
-      throw std::domain_error("Bundle::Bundle: all the directions must "
-                              "have the same dimension");
+      SAPO_ERROR("all the directions must have the same dimension",
+                 std::domain_error);
     }
 
     if (LinearAlgebra::norm_infinity(dir) == 0) {
-      throw std::domain_error("Bundle::Bundle: all the directions must "
-                              "be non-null");
+      SAPO_ERROR("all the directions must be non-null", std::domain_error);
     }
   }
 
   if (directions.size() != upper_bounds.size()) {
-    throw std::domain_error("Bundle::Bundle: directions and upper_bounds "
-                            "must have the same size");
+    SAPO_ERROR("directions and upper_bounds must have the same size",
+               std::domain_error);
   }
   if (directions.size() != lower_bounds.size()) {
-    throw std::domain_error("Bundle::Bundle: directions and lower_bounds "
-                            "must have the same size");
+    SAPO_ERROR("directions and lower_bounds must have the same size",
+               std::domain_error);
   }
 }
 
@@ -678,7 +680,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
     }
   } else {
     if (static_templates.size() == 0 && dynamic_templates.size() == 0) {
-      throw std::domain_error("Bundle::Bundle: templates must be non empty");
+      SAPO_ERROR("template vector must be non empty", std::domain_error);
     }
 
     // if the number of directions appearing in the templates is smaller
@@ -848,9 +850,8 @@ Bundle::get_parallelotope(const BundleTemplate &bundle_template) const
   for (unsigned int j = 0; j < this->dim(); j++) {
     const unsigned int idx = *it;
     if (idx >= this->_directions.size()) {
-      throw std::domain_error(
-          "Bundle::get_parallelotope: the parameter is not a template for "
-          "for the bundle");
+      SAPO_ERROR("the parameter is not a template for the bundle",
+                 std::domain_error);
     }
     Lambda.push_back(this->_directions[idx]);
     ubound.push_back(this->_upper_bounds[idx]);
@@ -907,8 +908,8 @@ void _bundle_free_lp_problem(glp_prob *lp, int *ia, int *ja, double *ar)
 bool are_disjoint(const Bundle &A, const Bundle &B)
 {
   if (A.dim() != B.dim()) {
-    throw std::domain_error("The two bundles must have the "
-                            "same dimension");
+    SAPO_ERROR("the two bundles must have the same dimension",
+               std::domain_error);
   }
 
   if (A.dim() == 0) {
@@ -1486,8 +1487,7 @@ Bundle &Bundle::intersect_with(const Bundle &A)
   using namespace LinearAlgebra;
 
   if (dim() != A.dim()) {
-    throw std::domain_error("Bundle::intersect_with: the two "
-                            "bundles differ in dimensions");
+    SAPO_ERROR("the two bundles differ in dimensions", std::domain_error);
   }
 
   std::vector<unsigned int> new_ids(A.size());
@@ -1558,9 +1558,9 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   }
 
   if (dim() != ls.dim()) {
-    throw std::domain_error("Bundle::intersect_with: the bundle "
-                            "and the linear system differ in "
-                            "dimensions");
+    SAPO_ERROR("the bundle and the linear system differ in "
+               "dimensions",
+               std::domain_error);
   }
 
   std::set<size_t> outside_templates;
@@ -1634,8 +1634,7 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
   using namespace LinearAlgebra::Dense;
 
   if (b1.dim() != b2.dim()) {
-    throw std::domain_error("over_approximate_union: the two "
-                            "bundles differ in dimensions");
+    SAPO_ERROR("the two bundles differ in dimensions", std::domain_error);
   }
 
   if (b1.is_empty()) {

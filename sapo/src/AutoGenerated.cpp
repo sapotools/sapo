@@ -3,6 +3,8 @@
 #include <SymbolicAlgebra.h>
 #include <LinearAlgebra.h>
 
+#include <ErrorHandling.h>
+
 using namespace AbsSyn;
 
 // ALL THE CODE IN THIS FILE MUST BE REVIEWED
@@ -437,7 +439,7 @@ getLinearSystem(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
       constrOffsets.push_back(-(*it)->get_lower_bound());
       break;
     default:
-      throw std::domain_error("Unsupported relation in linear systems");
+      SAPO_ERROR("unknown relation", std::runtime_error);
     }
   }
 
@@ -505,13 +507,12 @@ std::vector<std::vector<double>> getDirections(const InputData &id)
  * @param[in] v1 is the first vector
  * @param[in] v2 is the second vector
  * @return true if and only if the two vectors lay on the same line
- * @throw domain_error if the two vectors do not belong to the same space
  */
 bool on_the_same_line(const std::vector<double> &v1,
                       const std::vector<double> &v2)
 {
   if (v1.size() != v2.size()) {
-    throw domain_error("The two vectors must belong to the same space");
+    SAPO_ERROR("the two vectors differ in dimensions", std::domain_error);
   }
 
   if (v1.size() == 0) {

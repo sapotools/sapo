@@ -3,6 +3,7 @@
 #include <glpk.h>
 
 #include <LinearAlgebraIO.h>
+#include <ErrorHandling.h>
 
 #include "InputData.h"
 
@@ -225,8 +226,9 @@ SymbolicAlgebra::Symbol<> InputData::getSymbol(std::string name) const
       return *paramDirections[i]->getSymbol();
     }
   }
-
-  throw std::runtime_error("No symbol named \"" + name + "\"");
+  std::ostringstream oss;
+  oss << "no symbol named \"" << name << "\"";
+  SAPO_ERROR(oss.str(), std::domain_error);
 }
 
 const Variable *InputData::getVar(const string &name) const
@@ -419,14 +421,14 @@ void optimizeConstraintsBoundaries(
     OptimizationResult<double> opt_res = constrSystem.minimize(constrVector);
 
     if (opt_res.status() == GLP_NOFEAS) {
-      throw std::domain_error("Infeasible system");
+      SAPO_ERROR("infeasible system", std::domain_error);
     }
     constr.set_lower_bound(opt_res.optimum());
 
     opt_res = constrSystem.maximize(constrVector);
 
     if (opt_res.status() == GLP_NOFEAS) {
-      throw std::domain_error("Infeasible system");
+      SAPO_ERROR("infeasible system", std::domain_error);
     }
     constr.set_upper_bound(opt_res.optimum());
   }

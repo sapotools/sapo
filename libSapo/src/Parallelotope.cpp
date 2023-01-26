@@ -31,21 +31,15 @@ Parallelotope::Parallelotope(
   using namespace LinearAlgebra;
 
   if (lower_bound.size() != upper_bound.size()) {
-    std::ostringstream oss;
-
-    oss << "The lower and upper bounds vectors must "
-        << "have the same dimension: they are " << lower_bound.size()
-        << " and " << upper_bound.size() << ", respectively.";
-    throw std::domain_error(oss.str());
+    SAPO_ERROR("the lower and upper bounds vectors must "
+               "have the same number of dimensions",
+               std::domain_error);
   }
 
   if (lower_bound.size() != directions.size()) {
-    std::ostringstream oss;
-
-    oss << "The lower bounds vector and the direction vector must "
-        << "have the same dimension: they are " << lower_bound.size()
-        << " and " << directions.size() << ", respectively.";
-    throw std::domain_error(oss.str());
+    SAPO_ERROR("the lower bounds vector and the direction vector must "
+               "have the same number of dimensions",
+               std::domain_error);
   }
 
   Dense::LUP_Factorization<double> factorization(directions);
@@ -56,7 +50,7 @@ Parallelotope::Parallelotope(
 
   } catch (std::domain_error &) { // if a domain_error is raised, then the
                                   // template is singular
-    std::domain_error("Parallelotope::Parallelotope: singular parallelotope");
+    SAPO_ERROR("singular parallelotope", std::runtime_error);
   }
 
   // Compute the versors

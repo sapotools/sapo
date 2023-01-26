@@ -18,6 +18,7 @@
 #include "LinearSystem.h"
 #include "SymbolicAlgebra.h"
 #include "LinearAlgebraIO.h"
+#include "ErrorHandling.h"
 
 /**
  * @brief Print a linear system in a stream
@@ -67,8 +68,9 @@ optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
 
   unsigned int num_cols = (A.size() == 0 ? 0 : A[0].size());
   if (num_cols != obj_fun.size()) {
-    throw std::domain_error("obj_fun size does not equal the number "
-                            "of columns in A: they must be the same");
+    SAPO_ERROR("the number of colums in A must equals the "
+               "number of elements in obj_function",
+               std::domain_error);
   }
 
   unsigned int size_lp = num_rows * num_cols;
@@ -171,8 +173,9 @@ LinearSystem::add_constraint(const LinearAlgebra::Vector<double> &v,
                              const double &b)
 {
   if (dim() != v.size()) {
-    throw std::domain_error(
-        "LinearSystem::add_constraint: incompatible dimensions");
+    SAPO_ERROR("the new constraint and the linear system "
+               "differ in the number of variables",
+               std::domain_error);
   }
 
   _A.push_back(v);
@@ -192,8 +195,9 @@ LinearSystem &LinearSystem::operator=(const LinearSystem &orig)
 bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
 {
   if (ls1.dim() != ls2.dim()) {
-    throw std::domain_error("The two linear systems must have the "
-                            "same number of columns");
+    SAPO_ERROR("the two linear systems must have the "
+               "same number of variables",
+               std::domain_error);
   }
 
   if (ls1.dim() == 0) {
@@ -342,21 +346,19 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
                            const LinearAlgebra::Vector<double> &b)
 {
   if (A.size() != b.size()) {
-    std::ostringstream oss;
-
-    oss << "The matrix A and the vector b are expected to "
-        << "have the same number of rows: they have " << A.size() << " and "
-        << b.size() << "rows , respectively.";
-    throw std::domain_error(oss.str());
+    SAPO_ERROR("the number of rows in A must equals the "
+               "number of elements in b",
+               std::domain_error);
   }
 
   for (unsigned int i = 0; i < A.size(); i++) {
     if (A[i].size() != A[0].size()) {
       std::ostringstream oss;
-      oss << "The " << get_ordinal(i + 1) << " row " << A[i]
+      oss << "the " << get_ordinal(i + 1) << " row " << A[i]
           << " and the 1st one " << A[0] << " differ in "
           << "size" << std::endl;
-      throw std::domain_error(oss.str());
+
+      SAPO_ERROR(oss.str(), std::domain_error);
     }
   }
 
@@ -388,12 +390,9 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
     _b(std::move(b))
 {
   if (_A.size() != _b.size()) {
-    std::ostringstream oss;
-
-    oss << "The matrix A and the vector b are expected to "
-        << "have the same number of rows: they have " << A.size() << " and "
-        << b.size() << "rows , respectively.";
-    throw std::domain_error(oss.str());
+    SAPO_ERROR("the number of rows in A must equals the "
+               "number of elements in b",
+               std::domain_error);
   }
 
   for (unsigned int i = 0; i < _A.size(); i++) {
@@ -402,7 +401,8 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
       oss << "The " << get_ordinal(i + 1) << " row " << A[i]
           << " and the 1st one " << A[0] << " differ in "
           << "size" << std::endl;
-      throw std::domain_error(oss.str());
+
+      SAPO_ERROR(oss.str(), std::domain_error);
     }
   }
 }
@@ -483,8 +483,7 @@ LinearSystem::LinearSystem(
 
     for (auto x_it = begin(x); x_it != end(x); ++x_it) {
       if (e_it->degree(*x_it) > 1) {
-        throw std::domain_error("Non-linear expression cannot be mapped "
-                                "in a linear system.");
+        SAPO_ERROR("one of the expressions is non-linear", std::domain_error);
       }
 
       // Extract the coefficient of the i-th variable (grade 1)
@@ -513,11 +512,12 @@ LinearSystem::LinearSystem(
 const LinearAlgebra::Vector<double> &
 LinearSystem::A(const unsigned int i) const
 {
-  if (i < this->_A.size()) {
-    return this->_A[i];
+  if (i >= this->_A.size()) {
+    SAPO_ERROR("the parameter must be a valid row index "
+               "for the linear system matrix A",
+               std::domain_error);
   }
-  throw std::domain_error("LinearSystem::getA: i must be a valid "
-                          "index for the system matrix A");
+  return this->_A[i];
 }
 
 /**
@@ -528,11 +528,12 @@ LinearSystem::A(const unsigned int i) const
  */
 const double &LinearSystem::b(unsigned int i) const
 {
-  if (i < this->_b.size()) {
-    return this->_b[i];
+  if (i >= this->_b.size()) {
+    SAPO_ERROR("the parameter must be a valid index for the linear "
+               "system coefficient vector b",
+               std::domain_error);
   }
-  throw std::domain_error("LinearSystem::getb: i must be a valid "
-                          "index for the system");
+  return this->_b[i];
 }
 
 bool LinearSystem::has_solutions(const bool strict_inequality) const
@@ -587,8 +588,7 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
     if (obj_fun.degree(*s_it) > 1) {
-      throw std::domain_error(
-          "Non-linear objective function is not supported yet.");
+      SAPO_ERROR("the objective must be linear", std::domain_error);
     }
     double coeff = (obj_fun.get_coeff(*s_it, 1)).evaluate();
 
@@ -623,8 +623,7 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
   // Extract the coefficient of the i-th variable (grade 1)
   for (auto s_it = begin(symbols); s_it != end(symbols); ++s_it) {
     if (obj_fun.degree(*s_it) > 1) {
-      throw std::domain_error(
-          "Non-linear objective function is not supported yet.");
+      SAPO_ERROR("the objective must be linear", std::domain_error);
     }
     const double coeff = obj_fun.get_coeff(*s_it, 1).evaluate();
     obj_fun_coeffs.push_back(coeff);

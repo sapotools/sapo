@@ -117,7 +117,8 @@ public:
   inline Bundle operator()(const Bundle &bundle)
   {
     if (_ds.parameters().size() != 0) {
-      throw std::domain_error("The parameter set has not been specified");
+      SAPO_ERROR("the parameter set has not been specified",
+                 std::domain_error);
     }
 
     return this->operator()(bundle, Polytope());
@@ -144,7 +145,8 @@ public:
   SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union)
   {
     if (_ds.parameters().size() != 0) {
-      throw std::domain_error("The parameter set has not been specified");
+      SAPO_ERROR("the parameter set has not been specified",
+                 std::domain_error);
     }
 
     SetsUnion<Bundle> result;

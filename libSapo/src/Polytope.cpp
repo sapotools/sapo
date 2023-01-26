@@ -15,7 +15,7 @@
 #include "LinearAlgebra.h"
 #include "SetsUnion.h"
 
-using namespace std;
+#include "ErrorHandling.h"
 
 /**
  * @brief Get a set of linear independent rows in a matrix
@@ -156,8 +156,9 @@ std::list<Polytope> Polytope::split(const unsigned int num_of_splits) const
 Polytope &Polytope::intersect_with(const Polytope &P)
 {
   if (this->dim() != P.dim()) {
-    throw std::domain_error("Intersecting different dimension "
-                            "polytopes");
+    SAPO_ERROR("the intersecting parallelotope differ "
+               "in space dimensions",
+               std::domain_error);
   }
 
   for (unsigned int i = 0; i < P.size(); i++) {
@@ -196,11 +197,11 @@ Polytope intersect(const Polytope &P1, const Polytope &P2)
 double Polytope::bounding_box_volume() const
 {
 
-  vector<double> zeros(this->dim(), 0);
+  std::vector<double> zeros(this->dim(), 0);
   double vol = 1;
 
   for (unsigned int i = 0; i < this->dim(); i++) {
-    vector<double> facet = zeros;
+    std::vector<double> facet = zeros;
     facet[i] = 1;
     const double b_plus = maximize(facet).optimum();
     facet[i] = -1;
@@ -217,8 +218,8 @@ Polytope over_approximate_union(const Polytope &P1, const Polytope &P2)
   using namespace LinearAlgebra::Dense;
 
   if (P1.dim() != P2.dim()) {
-    throw std::domain_error("over_approximate_union: the two "
-                            "polytopes differ in dimensions");
+    SAPO_ERROR("the two polytopes differ in space dimensions",
+               std::domain_error);
   }
 
   if (P1.is_empty()) {
