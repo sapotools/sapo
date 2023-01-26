@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems)
                         << "GLP_UNBND was expected.");
 }
 
-BOOST_AUTO_TEST_CASE(test_unfeasable_linear_systems)
+BOOST_AUTO_TEST_CASE(test_unfeasible_linear_systems)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
