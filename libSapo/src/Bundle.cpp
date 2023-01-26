@@ -700,7 +700,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
 
   _templates.insert(std::begin(static_templates), std::end(static_templates));
 
-  for (auto& dynamic_template: dynamic_templates) {
+  for (auto &dynamic_template: dynamic_templates) {
     _templates.emplace(std::move(dynamic_template), true);
   }
 }

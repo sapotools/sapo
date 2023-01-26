@@ -64,7 +64,6 @@ protected:
 public:
   evolver_mode mode; //!< the mode used to compute the evolution
 
-
   /**
    * @brief A constructor
    *
@@ -73,7 +72,8 @@ public:
    */
   Evolver(const DynamicalSystem<T> &dynamical_system,
           const evolver_mode mode = ALL_FOR_ONE):
-      _ds(dynamical_system), mode(mode)
+      _ds(dynamical_system),
+      mode(mode)
   {
   }
 
@@ -85,7 +85,8 @@ public:
    */
   Evolver(const DynamicalSystem<T> &&dynamical_system,
           const evolver_mode mode = ALL_FOR_ONE):
-      _ds(std::move(dynamical_system)), mode(mode)
+      _ds(std::move(dynamical_system)),
+      mode(mode)
   {
   }
 
@@ -94,10 +95,7 @@ public:
    *
    * @param orig is the template object
    */
-  Evolver(const Evolver<T> &orig):
-      _ds(orig._ds), mode(orig.mode)
-  {
-  }
+  Evolver(const Evolver<T> &orig): _ds(orig._ds), mode(orig.mode) {}
 
   /**
    * @brief Return the dynamical system

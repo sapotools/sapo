@@ -813,19 +813,19 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
 
 /**
  * @brief Find the first independent rows in a matrix
- * 
- * This is quite similar to what is done by LU_Factorization. 
- * However, LU_Factorization goal is to factorize a matrix 
- * minimizing the error, while here we are searching for 
- * the first independent column. Thus, the former always 
- * chooses as pivot the row whose j-th entry is nearest to 
- * 1 in absolute value as opposed to this function which 
- * simply search for the first row whose j-th element is 
+ *
+ * This is quite similar to what is done by LU_Factorization.
+ * However, LU_Factorization goal is to factorize a matrix
+ * minimizing the error, while here we are searching for
+ * the first independent column. Thus, the former always
+ * chooses as pivot the row whose j-th entry is nearest to
+ * 1 in absolute value as opposed to this function which
+ * simply search for the first row whose j-th element is
  * different from 0.
- * 
+ *
  * @tparam T the scalar type of the input matrix
  * @param A is the input matrix
- * @return The index vector of the first independent rows 
+ * @return The index vector of the first independent rows
  *      in the input matrix A
  */
 template<typename T>
@@ -842,9 +842,10 @@ Vector<size_t> find_first_independent_rows(Matrix<T> A)
   for (size_t j = 0; j < A.size(); ++j) {
     if (j == num_of_columns) {
       // return the vector of the first n elements in row_pos
-      return Vector<size_t>(std::begin(row_pos), std::begin(row_pos)+num_of_columns);
+      return Vector<size_t>(std::begin(row_pos),
+                            std::begin(row_pos) + num_of_columns);
     }
-    
+
     // find the first row k whose j-th column is not null
     size_t k = j;
     while (k < num_of_rows && A[k][j] == 0) {
@@ -876,9 +877,10 @@ Vector<size_t> find_first_independent_rows(Matrix<T> A)
       }
     }
   }
-  
+
   // return the vector of the first n elements in row_pos
-  return Vector<size_t>(std::begin(row_pos), std::begin(row_pos)+num_of_columns);
+  return Vector<size_t>(std::begin(row_pos),
+                        std::begin(row_pos) + num_of_columns);
 }
 
 /**

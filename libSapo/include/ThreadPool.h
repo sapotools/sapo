@@ -83,10 +83,10 @@ protected:
    */
   typedef std::pair<std::function<void()>, BatchId> Task;
 
-  std::vector<std::thread> _threads;     //!< The thread list
-  std::queue<Task> _queue;               //!< The task queue
+  std::vector<std::thread> _threads;                      //!< The thread list
+  std::queue<Task> _queue;                                //!< The task queue
   std::map<BatchId, std::shared_ptr<BatchInfo>> _batches; //!< Batch info
-  std::set<BatchId> _unused_batch_ids;   //!< Not used batch ids
+  std::set<BatchId> _unused_batch_ids; //!< Not used batch ids
   std::mutex _mutex; //!< A mutex for mutual exclusive operations
   std::condition_variable _waiting_task; //!< Testify that a task is waiting
   bool _terminating;                     //!< The pool is to be destroyed
@@ -227,7 +227,7 @@ public:
 
   /**
    * @brief Get the number of pool threads
-   * 
+   *
    * @return the number of threads in the pool
    */
   inline size_t num_of_threads()
@@ -239,8 +239,8 @@ public:
 
   /**
    * @brief Get the number of active tasks
-   * 
-   * @return the number of pool active tasks 
+   *
+   * @return the number of pool active tasks
    */
   inline size_t num_of_tasks()
   {

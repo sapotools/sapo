@@ -221,15 +221,16 @@ public:
 
   /**
    * @brief Add a new constraint to the system
-   * 
-   * This method add a new linear constraint of the type \f$v\cdot x <= b\f$ to 
+   *
+   * This method add a new linear constraint of the type \f$v\cdot x <= b\f$ to
    * the system
-   * 
+   *
    * @param v is the vector of the variable coefficents
    * @param b is the constant term
    * @return a reference to the updated linear system
    */
-  LinearSystem& add_constraint(const LinearAlgebra::Vector<double>& v, const double& b);
+  LinearSystem &add_constraint(const LinearAlgebra::Vector<double> &v,
+                               const double &b);
 
   /**
    * Return the template matrix

@@ -649,9 +649,8 @@ LinearAlgebra::Vector<double> compute_orthogonal_direction(
   return orth_vector / norm_2(orth_vector);
 }
 
-inline void
-fix_new_dir_verse(LinearAlgebra::Vector<double> &new_dir,
-                     const LinearAlgebra::Vector<double> &dir_image)
+inline void fix_new_dir_verse(LinearAlgebra::Vector<double> &new_dir,
+                              const LinearAlgebra::Vector<double> &dir_image)
 {
   using namespace LinearAlgebra;
 
@@ -682,19 +681,19 @@ compute_new_dirs(const Bundle &bundle, const DynamicalSystem<double> &ds,
       for (size_t i = 0; i < b_template.dim(); ++i) {
         const size_t idx = b_template[i];
 
-        // compute one of vectors orthogonal to all the images of 
+        // compute one of vectors orthogonal to all the images of
         // bundle directions, but the i-th template direction
         new_dirs[idx] = compute_orthogonal_direction(t_dir_images);
 
-        // fix the verse of the computed vector so that it is 
+        // fix the verse of the computed vector so that it is
         // consistent with the i-th direction image
         fix_new_dir_verse(new_dirs[idx], dir_images[idx]);
 
-        // the i-th row of t_dir_images stores to the (i+1)-th 
+        // the i-th row of t_dir_images stores to the (i+1)-th
         // template direction image. Replace it with the i-th
-        // template direction image so that t_dir_image consists 
+        // template direction image so that t_dir_image consists
         // in all the direction images, but the (i+1)-th one
-        if (i<b_template.dim()-1) {
+        if (i < b_template.dim() - 1) {
           t_dir_images[i] = dir_images[b_template[i]];
         }
       }

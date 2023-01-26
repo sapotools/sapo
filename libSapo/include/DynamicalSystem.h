@@ -506,8 +506,7 @@ runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-inline
-std::vector<SymbolicAlgebra::Expression<T>>
+inline std::vector<SymbolicAlgebra::Expression<T>>
 runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
              const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
              const SymbolicAlgebra::Symbol<T> &time,
@@ -529,8 +528,7 @@ runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
  *         Runge-Kutta method
  */
 template<typename T, typename DELTA_TYPE>
-inline
-std::vector<SymbolicAlgebra::Expression<T>>
+inline std::vector<SymbolicAlgebra::Expression<T>>
 runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
              const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
              const DELTA_TYPE &timestep)

@@ -126,7 +126,7 @@ trim_unused_directions(std::vector<std::vector<double>> &directions,
 
 /*
  * This method computes a new template for the polytope.
- * Each parallelotope must constraints each variable, so that it is not 
+ * Each parallelotope must constraints each variable, so that it is not
  * singular. Moreover, each direction should be used at least once.
  *
  * We use a LP problem to compute which direction goes in which parallelotope.
@@ -354,7 +354,7 @@ Bundle getBundle(const InputData &id)
 
   if (id.getUseInvariantDirections()) {
     const auto variables = id.getVarSymbols();
-    auto ls = getConstraintsSystem(id.getInvariant(),  variables);
+    auto ls = getConstraintsSystem(id.getInvariant(), variables);
 
     return bundle.intersect_with(ls);
   }
@@ -391,8 +391,8 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
   vector<vector<double>> pA(2 * id.paramDirectionsNum(),
                             vector<double>(id.getParamNum(), 0));
   for (unsigned i = 0; i < id.paramDirectionsNum(); i++) {
-    pA[2 * i]
-        = id.getParamDirection(i)->get_variable_coefficients(id.getParamSymbols());
+    pA[2 * i] = id.getParamDirection(i)->get_variable_coefficients(
+        id.getParamSymbols());
     for (unsigned j = 0; j < id.getParamNum(); j++)
       pA[2 * i + 1][j] = -pA[2 * i][j];
   }

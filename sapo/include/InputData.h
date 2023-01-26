@@ -281,7 +281,8 @@ public:
   }
   bool isBounded(const unsigned int &d) const
   {
-    return directions[d]->has_lower_bound() && directions[d]->has_upper_bound();
+    return directions[d]->has_lower_bound()
+           && directions[d]->has_upper_bound();
   }
 
   void addInvariantConstraint(Direction<> *d);
@@ -303,8 +304,7 @@ public:
 
   unsigned int findDirectionPos(const std::string &name) const;
 
-  inline
-  size_t templateRows() const
+  inline size_t templateRows() const
   {
     return templateMatrix.size();
   }
@@ -386,26 +386,22 @@ public:
     return bern_caching;
   }
 
-  inline
-  void setAllDirsDynamics(const bool flag)
+  inline void setAllDirsDynamics(const bool flag)
   {
     all_dirs_dynamic = flag;
   }
 
-  inline
-  bool areAllDirsDynamics() const
+  inline bool areAllDirsDynamics() const
   {
     return all_dirs_dynamic;
   }
 
-  inline
-  void setUseInvariantDirections(bool flag)
+  inline void setUseInvariantDirections(bool flag)
   {
     use_invariant_directions = flag;
   }
 
-  inline
-  bool getUseInvariantDirections() const
+  inline bool getUseInvariantDirections() const
   {
     return use_invariant_directions;
   }
@@ -500,11 +496,11 @@ LinearSystem getConstraintsSystem(
     // add only bounded constraints
     if (dir.has_upper_bound()) {
       A.push_back(systemRow);
-      b.push_back(dir.get_upper_bound()==0 ? 0: dir.get_upper_bound());
+      b.push_back(dir.get_upper_bound() == 0 ? 0 : dir.get_upper_bound());
     }
     if (dir.has_lower_bound()) {
       A.push_back(-systemRow);
-      b.push_back(dir.get_lower_bound()==0 ? 0: -dir.get_lower_bound());
+      b.push_back(dir.get_lower_bound() == 0 ? 0 : -dir.get_lower_bound());
     }
   }
   return LinearSystem(std::move(A), std::move(b));

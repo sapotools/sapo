@@ -14,7 +14,7 @@ namespace AbsSyn
 {
 
 // checks if the expression contains at least one of the symbols
-template<typename T=double>
+template<typename T = double>
 inline bool contains(const Expression<T> &e, const vector<Symbol<T>> &symbols)
 {
   std::set<Symbol<T>> ids = e.get_symbols();

@@ -53,7 +53,7 @@ class Sapo
 {
 
 public:
-  std::string plot;     //!< the name of the file were to plot the reach set
+  std::string plot; //!< the name of the file were to plot the reach set
   unsigned int time_horizon;      //!< the computation time horizon
   unsigned int max_param_splits;  //!< maximum number of splits in synthesis
   unsigned int num_of_pre_splits; //!< number of pre-splits in synthesis

@@ -166,10 +166,13 @@ LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
   return ::optimize(this->_A, this->_b, obj_fun, maximize);
 }
 
-LinearSystem& LinearSystem::add_constraint(const LinearAlgebra::Vector<double>& v, const double& b)
+LinearSystem &
+LinearSystem::add_constraint(const LinearAlgebra::Vector<double> &v,
+                             const double &b)
 {
   if (dim() != v.size()) {
-    throw std::domain_error("LinearSystem::add_constraint: incompatible dimensions");
+    throw std::domain_error(
+        "LinearSystem::add_constraint: incompatible dimensions");
   }
 
   _A.push_back(v);
@@ -342,8 +345,8 @@ LinearSystem::LinearSystem(const std::vector<LinearAlgebra::Vector<double>> &A,
     std::ostringstream oss;
 
     oss << "The matrix A and the vector b are expected to "
-        << "have the same number of rows: they have " << A.size() 
-        << " and " << b.size() << "rows , respectively.";
+        << "have the same number of rows: they have " << A.size() << " and "
+        << b.size() << "rows , respectively.";
     throw std::domain_error(oss.str());
   }
 
@@ -388,8 +391,8 @@ LinearSystem::LinearSystem(std::vector<LinearAlgebra::Vector<double>> &&A,
     std::ostringstream oss;
 
     oss << "The matrix A and the vector b are expected to "
-        << "have the same number of rows: they have " << A.size() 
-        << " and " << b.size() << "rows , respectively.";
+        << "have the same number of rows: they have " << A.size() << " and "
+        << b.size() << "rows , respectively.";
     throw std::domain_error(oss.str());
   }
 

@@ -329,13 +329,15 @@ void InputData::addInvariantConstraint(Direction<> *d)
   invariant.push_back(d);
 }
 
-void update_dir(Direction<> * dir, const Direction<> *new_dir)
+void update_dir(Direction<> *dir, const Direction<> *new_dir)
 {
-  if (!dir->has_upper_bound() || new_dir->get_upper_bound() < dir->get_upper_bound()) {
+  if (!dir->has_upper_bound()
+      || new_dir->get_upper_bound() < dir->get_upper_bound()) {
     dir->set_upper_bound(new_dir->get_upper_bound());
     dir->setSymbol(new_dir->getSymbol());
   }
-  if (!dir->has_lower_bound() || new_dir->get_lower_bound() > dir->get_lower_bound()) {
+  if (!dir->has_lower_bound()
+      || new_dir->get_lower_bound() > dir->get_lower_bound()) {
     dir->set_lower_bound(new_dir->get_lower_bound());
     dir->setSymbol(new_dir->getSymbol());
   }
@@ -457,7 +459,8 @@ void InputData::optimize_boundaries()
  * @return true if and only if all the symbols are bounded
  */
 template<typename T>
-bool checkFiniteBounds(const char *what, std::vector<Direction<> *> &constraints,
+bool checkFiniteBounds(const char *what,
+                       std::vector<Direction<> *> &constraints,
                        const std::vector<SymbolicAlgebra::Symbol<>> &symbols)
 {
   if (constraints.size() == 0) {
@@ -534,8 +537,9 @@ bool InputData::check()
     for (unsigned i = 0; i < templateMatrix.size(); i++) {
       vector<vector<double>> M{};
       for (unsigned j = 0; j < templateMatrix[i].size(); j++) {
-        M.push_back(directions[templateMatrix[i][j]]->get_variable_coefficients(
-            var_symbols));
+        M.push_back(
+            directions[templateMatrix[i][j]]->get_variable_coefficients(
+                var_symbols));
       }
 
       if (LinearAlgebra::Dense::rank(M) != templateMatrix[i].size()) {
