@@ -8,7 +8,7 @@
 #include "LinearAlgebraIO.h"
 
 
-BOOST_AUTO_TEST_CASE(test_linear_systems)
+BOOST_AUTO_TEST_CASE(test_simplex_optimum)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
@@ -24,7 +24,8 @@ BOOST_AUTO_TEST_CASE(test_linear_systems)
 
     Vector<double> b = {1,2,3,3,2,1};
 
-    std::vector<std::pair<std::pair<Vector<double>, OptimizationGoal>, double>> min_probs = {
+    std::vector<std::pair<std::pair<Vector<double>, OptimizationGoal>, 
+                          double>> min_probs = {
         {{{1,0,0}, OptimizationGoal::MAXIMIZE}, 1},
         {{{0,1,0}, OptimizationGoal::MAXIMIZE}, 2},
         {{{0,0,1}, OptimizationGoal::MAXIMIZE}, 3},
@@ -56,7 +57,7 @@ BOOST_AUTO_TEST_CASE(test_linear_systems)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems)
+BOOST_AUTO_TEST_CASE(test_simplex_unbounded)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
@@ -92,7 +93,7 @@ BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems)
 }
 
 
-BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems2)
+BOOST_AUTO_TEST_CASE(test_simplex_unbounded2)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
@@ -124,7 +125,7 @@ BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems2)
                         ": UNBOUNDED was expected.");
 }
 
-BOOST_AUTO_TEST_CASE(test_unfeasible_linear_systems)
+BOOST_AUTO_TEST_CASE(test_simplex_unfeasible)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
