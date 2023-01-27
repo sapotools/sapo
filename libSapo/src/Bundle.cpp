@@ -72,7 +72,7 @@ BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices,
 }
 
 bool std::less<BundleTemplate>::operator()(const BundleTemplate &a,
-                                           const BundleTemplate &b)
+                                           const BundleTemplate &b) const
 {
   std::less<std::vector<unsigned int>> cmp;
 

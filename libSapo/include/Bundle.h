@@ -157,7 +157,7 @@ public:
 
 template<>
 struct std::less<BundleTemplate> {
-  bool operator()(const BundleTemplate &a, const BundleTemplate &b);
+  bool operator()(const BundleTemplate &a, const BundleTemplate &b) const;
 };
 
 class Bundle
