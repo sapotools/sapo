@@ -227,7 +227,7 @@ class SimplexMethodOptimizer
     for (auto &row: tableau) {
 
       // double variable to handle negative solutions
-      row.reserve(2 * num_cols);
+      row.reserve(2 * (num_cols + num_rows));
       for (size_t i = 0; i < num_cols; ++i) {
         row.push_back(-row[i]);
       }
@@ -394,7 +394,7 @@ class SimplexMethodOptimizer
   }
 
   /**
-   * @brief Collext the optimum
+   * @brief Collect the optimum
    *
    * This method collects and returns the optimum value at the end of the
    * execution of the simplex method.
@@ -437,7 +437,7 @@ class SimplexMethodOptimizer
    * @tparam T is the type of linear system coefficients
    * @param A is the linear system matrix
    * @return a vector containing the indexes of the basic variables in
-   *      the correspong tableau
+   *      the corresponding tableau
    */
   template<typename T>
   static std::vector<size_t>
@@ -453,7 +453,7 @@ class SimplexMethodOptimizer
 
   template<typename T>
   static bool
-  problem_is_infeasable(const std::vector<LinearAlgebra::Vector<T>> &tableau,
+  problem_is_infeasible(const std::vector<LinearAlgebra::Vector<T>> &tableau,
                         const std::vector<size_t> &basic_variables)
   {
     const size_t last_artificial_index = tableau.front().size() - 2;
@@ -519,11 +519,6 @@ public:
     auto tableau = build_tableau(A, b, objective, optimization_type);
     auto basic_variables = build_basic_variable_vector(A);
 
-    std::cout << "tableau:" << std::endl
-              << tableau << std::endl
-              << "basic_variables:" << std::endl
-              << basic_variables << std::endl;
-
     for (size_t pivot_row_index = 0; pivot_row_index < basic_variables.size();
          ++pivot_row_index) {
       pivot_operation(tableau, basic_variables, pivot_row_index);
@@ -535,17 +530,13 @@ public:
     const Vector<T> &obj_row = tableau[obj_row_idx];
 
     while (true) {
-      std::cout << "tableau:" << std::endl
-                << tableau << std::endl
-                << "basic_variables:" << std::endl
-                << basic_variables << std::endl;
       size_t entering_variable = choose_entering_variable(tableau);
 
       if (omega_row[entering_variable] > 0
           || (omega_row[entering_variable] == 0
               && obj_row[entering_variable] >= 0)) {
 
-        if (problem_is_infeasable(tableau, basic_variables)) {
+        if (problem_is_infeasible(tableau, basic_variables)) {
           return OptimizationResult<T>(OptimizationResult<T>::INFEASIBLE);
         }
 
@@ -558,7 +549,7 @@ public:
           tableau, entering_variable, basic_variables);
 
       if (leaving_variable == basic_variables.size()) {
-        if (problem_is_infeasable(tableau, basic_variables)) {
+        if (problem_is_infeasible(tableau, basic_variables)) {
           return OptimizationResult<T>(OptimizationResult<T>::INFEASIBLE);
         }
 
