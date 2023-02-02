@@ -47,8 +47,8 @@ T norm_2(const Vector<T> &v)
 {
   T norm = 0;
 
-  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
-    norm += *v_it * *v_it;
+  for (const auto &elem: v) {
+    norm += elem * elem;
   }
 
   return sqrt(norm);
@@ -66,8 +66,8 @@ T norm_1(const Vector<T> &v)
 {
   T norm = 0;
 
-  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
-    norm += std::abs(*v_it);
+  for (const auto &elem: v) {
+    norm += std::abs(elem);
   }
 
   return norm;
@@ -85,13 +85,31 @@ T norm_infinity(const Vector<T> &v)
 {
   T norm = 0;
 
-  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
-    if (std::abs(*v_it) > norm) {
-      norm = std::abs(*v_it);
+  for (const auto &elem: v) {
+    if (std::abs(elem) > norm) {
+      norm = std::abs(elem);
     }
   }
 
   return norm;
+}
+
+/**
+ * @brief Test whether all the value in a vector equal 0
+ *
+ * @tparam T is the type of matrix coefficients
+ * @param v is the vector whose values will be tested
+ * @return `true` if and only if all the value in `v` equal 0
+ */
+template<typename T>
+bool is_null(const Vector<T> &v)
+{
+  for (const auto &elem: v) {
+    if (elem != 0) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -393,11 +411,9 @@ Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
  * @return the element-wise scalar product \f$s * \f$
  */
 template<typename T>
-Vector<T> operator*(const T s, Vector<T> &&v)
+inline Vector<T> operator*(const T s, Vector<T> &&v)
 {
-  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
-    *v_it *= s;
-  }
+  v *= s;
 
   return v;
 }
@@ -413,7 +429,27 @@ Vector<T> operator*(const T s, Vector<T> &&v)
 template<typename T>
 inline Vector<T> operator*(Vector<T> &&v, const T s)
 {
-  return operator*(s, v);
+  return operator*(s, std::move(v));
+}
+
+/**
+ * @brief Compute the element-wise scalar product
+ *
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return a reference to the updated vector
+ */
+template<typename T>
+Vector<T> &operator*=(Vector<T> &v, const T s)
+{
+  if (s != 1) {
+    for (auto &elem: v) {
+      elem *= s;
+    }
+  }
+
+  return v;
 }
 
 /**
@@ -438,6 +474,28 @@ Vector<T> operator/(const Vector<T> &v, const T s)
   }
 
   return res;
+}
+
+/**
+ * @brief Compute the element-wise scalar division
+ *
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return a reference to the updated vector
+ */
+template<typename T>
+Vector<T> &operator/=(Vector<T> &v, const T s)
+{
+  if (s == 0) {
+    SAPO_ERROR("division by 0", std::domain_error);
+  }
+
+  for (auto &elem: v) {
+    elem /= s;
+  }
+
+  return v;
 }
 
 /**
