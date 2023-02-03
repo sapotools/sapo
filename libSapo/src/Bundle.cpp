@@ -69,6 +69,23 @@ BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices,
   std::sort(std::begin(_dir_indices), std::end(_dir_indices));
 }
 
+std::ostream &operator<<(std::ostream &os,
+                         const BundleTemplate &bundle_template)
+{
+  os << "{indices: [";
+  std::string sep = "";
+  for (const auto &index: bundle_template.get_direction_indices()) {
+    os << sep << index;
+    sep = ",";
+  }
+
+  os << "], "
+     << (bundle_template.have_dynamic_directions() ? "dynamic" : "static")
+     << "}";
+
+  return os;
+}
+
 bool std::less<BundleTemplate>::operator()(const BundleTemplate &a,
                                            const BundleTemplate &b) const
 {

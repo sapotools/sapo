@@ -155,6 +155,16 @@ public:
   }
 };
 
+/**
+ * @brief Print a bundle template
+ *
+ * @param os is the output stream
+ * @param bundle_template is the bundle template to be printed
+ * @return a reference to the output stream
+ */
+std::ostream &operator<<(std::ostream &os,
+                         const BundleTemplate &bundle_template);
+
 template<>
 struct std::less<BundleTemplate> {
   bool operator()(const BundleTemplate &a, const BundleTemplate &b) const;
@@ -498,7 +508,7 @@ public:
    */
   inline bool is_empty() const
   {
-    return ((Polytope) * this).is_empty();
+    return static_cast<Polytope>(*this).is_empty();
   }
 
   /**
