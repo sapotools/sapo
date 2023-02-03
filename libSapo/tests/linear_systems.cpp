@@ -6,8 +6,6 @@
 
 #include <sstream>
 
-#include <glpk.h>
-
 #include "LinearSystem.h"
 #include "LinearAlgebra.h"
 #include "LinearAlgebraIO.h"
@@ -15,7 +13,8 @@
 template<typename T>
 inline bool same_result_value(const OptimizationResult<T>& result, const T value)
 {
-    return (result.status()==GLP_OPT && result.optimum()==value);
+    return (result.status()==result.OPTIMUM_AVAILABLE && 
+            result.objective_value()==value);
 }
 
 
@@ -114,17 +113,17 @@ BOOST_AUTO_TEST_CASE(test_unbounded_linear_systems)
 
     Vector<double> obj{1,0,0};
     OptimizationResult<double> result = ls.maximize(obj);
-    BOOST_CHECK_MESSAGE(same_result_status(result, GLP_UNBND),
+    BOOST_CHECK_MESSAGE(same_result_status(result, result.UNBOUNDED),
                         "maximizing " << obj << " on " << ls 
-                        << " produces " << result.optimum() 
-                        << ": GLP_UNBND was expected.");
+                        << " produces " << result.status() 
+                        << ": UNBOUNDED was expected.");
 
     obj = {0,0,1};
     result = ls.minimize(obj);
-    BOOST_CHECK_MESSAGE(same_result_status(result, GLP_UNBND), 
+    BOOST_CHECK_MESSAGE(same_result_status(result, result.UNBOUNDED), 
                         "minimizing " << obj << " on " << ls 
-                        << " produces " << result.optimum() << ": "
-                        << "GLP_UNBND was expected.");
+                        << " produces " << result.status() << ": "
+                        << "UNBOUNDED was expected.");
 }
 
 BOOST_AUTO_TEST_CASE(test_unfeasible_linear_systems)
@@ -147,17 +146,17 @@ BOOST_AUTO_TEST_CASE(test_unfeasible_linear_systems)
 
     Vector<double> obj{1,0,0};
     OptimizationResult<double> result = ls.maximize(obj);
-    BOOST_CHECK_MESSAGE(same_result_status(result, GLP_NOFEAS),
+    BOOST_CHECK_MESSAGE(same_result_status(result, result.INFEASIBLE),
                         "maximizing " << obj << " on " << ls 
                         << " produces " << result.status() 
-                        << ": GLP_NOFEAS was expected.");
+                        << ": INFEASIBLE was expected.");
 
     obj = {0,0,1};
     result = ls.minimize(obj);
-    BOOST_CHECK_MESSAGE(same_result_status(result, GLP_NOFEAS), 
+    BOOST_CHECK_MESSAGE(same_result_status(result, result.INFEASIBLE), 
                         "minimizing " << obj << " on " << ls 
-                        << " produces " << result.status() << ": "
-                        << "GLP_NOFEAS was expected.");
+                        << " produces " << result.status() 
+                        << ": INFEASIBLE was expected.");
 }
 
 BOOST_AUTO_TEST_CASE(test_has_solutions_linear_systems)
@@ -221,7 +220,6 @@ BOOST_AUTO_TEST_CASE(test_simplify_linear_systems)
         {0,-1,0},
         {0,0,-1}
     };
-
 
     Matrix<double> C = {
         {1,0,0},

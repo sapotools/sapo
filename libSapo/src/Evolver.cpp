@@ -424,13 +424,13 @@ double MinMaxCoeffFinder::eval_coeff(
 double ParamMinMaxCoeffFinder::maximize_coeff(
     const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  return paraSet.maximize(params, bernCoeff).optimum();
+  return paraSet.maximize(params, bernCoeff).objective_value();
 }
 
 double ParamMinMaxCoeffFinder::minimize_coeff(
     const SymbolicAlgebra::Expression<> &bernCoeff) const
 {
-  return paraSet.minimize(params, bernCoeff).optimum();
+  return paraSet.minimize(params, bernCoeff).objective_value();
 }
 
 std::pair<double, double> MinMaxCoeffFinder::operator()(

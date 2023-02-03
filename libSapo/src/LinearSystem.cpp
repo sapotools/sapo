@@ -10,7 +10,6 @@
 
 #include <iostream>
 
-#include <glpk.h>
 #include <limits>
 #include <cmath>
 #include <sstream>
@@ -58,114 +57,13 @@ unsigned int find_in(const std::vector<LinearAlgebra::Vector<T>> &A,
 }
 
 OptimizationResult<double>
-optimize(const std::vector<LinearAlgebra::Vector<double>> &A,
-         const LinearAlgebra::Vector<double> &b,
-         const LinearAlgebra::Vector<double> &obj_fun, const bool maximize)
-{
-  using namespace LinearAlgebra;
-
-  unsigned int num_rows = A.size();
-
-  unsigned int num_cols = (A.size() == 0 ? 0 : A[0].size());
-  if (num_cols != obj_fun.size()) {
-    SAPO_ERROR("the number of colums in A must equals the "
-               "number of elements in obj_function",
-               std::domain_error);
-  }
-
-  unsigned int size_lp = num_rows * num_cols;
-
-  int *ia, *ja;
-  double *ar;
-
-  ia = (int *)calloc(size_lp + 1, sizeof(int));
-  ja = (int *)calloc(size_lp + 1, sizeof(int));
-  ar = (double *)calloc(size_lp + 1, sizeof(double));
-
-  glp_prob *lp;
-  lp = glp_create_prob();
-  glp_set_obj_dir(lp, (maximize ? GLP_MAX : GLP_MIN));
-
-  // Turn off verbose mode
-  glp_smcp lp_param;
-  glp_init_smcp(&lp_param);
-  lp_param.msg_lev = GLP_MSG_ERR;
-
-  glp_add_rows(lp, num_rows);
-  for (unsigned int i = 0; i < num_rows; i++) {
-    glp_set_row_bnds(lp, i + 1, GLP_UP, 0.0, b[i]);
-  }
-
-  glp_add_cols(lp, num_cols);
-  for (unsigned int i = 0; i < num_cols; i++) {
-    glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
-  }
-
-  for (unsigned int i = 0; i < num_cols; i++) {
-    glp_set_obj_coef(lp, i + 1, obj_fun[i]);
-  }
-
-  unsigned int k = 1;
-  for (unsigned int i = 0; i < num_rows; i++) {
-    for (unsigned int j = 0; j < num_cols; j++) {
-      ia[k] = i + 1;
-      ja[k] = j + 1;
-      ar[k] = A[i][j]; /* a[i+1,j+1] = A[i][j] */
-      k++;
-    }
-  }
-
-  glp_load_matrix(lp, size_lp, ia, ja, ar);
-  // glp_exact(lp, &lp_param);
-  glp_simplex(lp, &lp_param);
-
-  double res;
-  switch (glp_get_status(lp)) {
-  case GLP_UNBND:
-    if (maximize) {
-      res = std::numeric_limits<double>::infinity();
-    } else {
-      res = -std::numeric_limits<double>::infinity();
-    }
-    break;
-  default:
-    res = glp_get_obj_val(lp);
-  }
-
-  // The following lines are meant to contain GLPK
-  // approximation error!!!
-  if (maximize) {
-    unsigned int const_idx = find_in(A, obj_fun);
-
-    if (const_idx < A.size() && res > b[const_idx]) {
-      res = b[const_idx];
-    }
-  } else {
-    unsigned int const_idx = find_in(A, -obj_fun);
-
-    if (const_idx < A.size() && -res > b[const_idx]) {
-      res = -b[const_idx];
-    }
-  }
-  // End of the tricky code to contain
-  // approximation GLPK errors
-
-  OptimizationResult<double> opt_res(res, glp_get_status(lp));
-
-  glp_delete_prob(lp);
-  glp_free_env();
-  free(ia);
-  free(ja);
-  free(ar);
-
-  return opt_res;
-}
-
-OptimizationResult<double>
 LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
                        const bool maximize) const
 {
-  return ::optimize(this->_A, this->_b, obj_fun, maximize);
+  SimplexMethodOptimizer optimizer;
+
+  return optimizer(this->_A, this->_b, obj_fun,
+                   (maximize ? MAXIMIZE : MINIMIZE));
 }
 
 LinearSystem &
@@ -204,75 +102,21 @@ bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
     return false;
   }
 
-  unsigned int num_rows = ls1.size() + ls2.size();
-  unsigned int num_cols = ls1.dim();
-  unsigned int size_lp = num_rows * num_cols;
+  LinearAlgebra::Vector<double> obj(ls1.dim(), 1);
 
-  std::vector<double> obj_fun(num_cols, 0);
-  obj_fun[0] = 1;
+  auto A{ls1.A()};
+  A.reserve(ls1.size() + ls2.size());
+  std::copy(std::begin(ls2.A()), std::end(ls2.A()), std::back_inserter(A));
 
-  int *ia, *ja;
-  double *ar;
+  auto b{ls1.b()};
+  b.reserve(ls1.size() + ls2.size());
+  std::copy(std::begin(ls2.b()), std::end(ls2.b()), std::back_inserter(b));
 
-  ia = (int *)calloc(size_lp + 1, sizeof(int));
-  ja = (int *)calloc(size_lp + 1, sizeof(int));
-  ar = (double *)calloc(size_lp + 1, sizeof(double));
+  SimplexMethodOptimizer optimizer;
 
-  glp_prob *lp;
-  lp = glp_create_prob();
-  glp_set_obj_dir(lp, GLP_MAX);
+  auto result = optimizer(A, b, obj);
 
-  // Turn off verbose mode
-  glp_smcp lp_param;
-  glp_init_smcp(&lp_param);
-  lp_param.msg_lev = GLP_MSG_ERR;
-
-  glp_add_rows(lp, num_rows);
-  for (unsigned int i = 0; i < ls1.size(); i++) {
-    glp_set_row_bnds(lp, i + 1, GLP_UP, 0.0, ls1.b(i));
-  }
-  for (unsigned int i = 0; i < ls2.size(); i++) {
-    glp_set_row_bnds(lp, ls1.size() + i + 1, GLP_UP, 0.0, ls2.b(i));
-  }
-
-  glp_add_cols(lp, num_cols);
-  for (unsigned int i = 0; i < num_cols; i++) {
-    glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
-    glp_set_obj_coef(lp, i + 1, obj_fun[i]);
-  }
-
-  unsigned int k = 1;
-  for (unsigned int i = 0; i < ls1.size(); i++) {
-    for (unsigned int j = 0; j < num_cols; j++) {
-      ia[k] = i + 1;
-      ja[k] = j + 1;
-      ar[k] = ls1.A(i)[j]; /* a[i+1,j+1] = A[i][j] */
-      k++;
-    }
-  }
-  for (unsigned int i = 0; i < ls2.size(); i++) {
-    for (unsigned int j = 0; j < num_cols; j++) {
-      ia[k] = ls1.size() + i + 1;
-      ja[k] = j + 1;
-      ar[k] = ls2.A(i)[j]; /* a[i+1,j+1] = A[i][j] */
-      k++;
-    }
-  }
-
-  glp_load_matrix(lp, size_lp, ia, ja, ar);
-  // glp_exact(lp, &lp_param);
-  glp_simplex(lp, &lp_param);
-
-  auto status = glp_get_status(lp);
-  bool res = (status == GLP_NOFEAS || status == GLP_INFEAS);
-
-  glp_delete_prob(lp);
-  glp_free_env();
-  free(ia);
-  free(ja);
-  free(ar);
-
-  return res;
+  return result.status() == result.INFEASIBLE;
 }
 
 /**
@@ -284,7 +128,9 @@ bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
 OptimizationResult<double>
 LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
-  return ::optimize(this->_A, this->_b, obj_fun, false);
+  SimplexMethodOptimizer optimizer;
+
+  return optimizer(this->_A, this->_b, obj_fun);
 }
 
 /**
@@ -296,7 +142,9 @@ LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 OptimizationResult<double>
 LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
-  return ::optimize(this->_A, this->_b, obj_fun, true);
+  SimplexMethodOptimizer optimizer;
+
+  return optimizer(this->_A, this->_b, obj_fun, MAXIMIZE);
 }
 
 /**
@@ -545,21 +393,20 @@ bool LinearSystem::has_solutions(const bool strict_inequality) const
   if (!strict_inequality) {
     OptimizationResult<double> res = maximize(_A[0]);
 
-    return (res.status() == GLP_OPT || res.status() == GLP_UNBND
-            || res.status() == GLP_FEAS);
+    return res.status() != res.INFEASIBLE;
   }
 
   for (auto row_it = std::begin(_A); row_it != std::end(_A); ++row_it) {
     OptimizationResult<double> res = maximize(*row_it);
-    if ((res.status() == GLP_NOFEAS) || (res.status() == GLP_INFEAS)) {
+    if (res.status() == res.INFEASIBLE) {
       return false;
     }
     OptimizationResult<double> res2 = minimize(*row_it);
-    if ((res2.status() == GLP_NOFEAS) || (res2.status() == GLP_INFEAS)) {
+    if (res.status() == res.INFEASIBLE) {
       return false;
     }
 
-    if (res.optimum() == res2.optimum()) {
+    if (res.objective_value() == res2.objective_value()) {
       return false;
     }
   }
@@ -599,7 +446,11 @@ LinearSystem::minimize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
   const double c = const_term.evaluate();
   auto res = minimize(obj_fun_coeffs);
 
-  return OptimizationResult<double>(res.optimum() + c, res.status());
+  if (res.status() != res.OPTIMUM_AVAILABLE) {
+    return res;
+  }
+
+  return OptimizationResult<double>(res.optimum(), res.objective_value() + c);
 }
 
 /**
@@ -633,7 +484,11 @@ LinearSystem::maximize(const std::vector<SymbolicAlgebra::Symbol<>> &symbols,
   const double c = const_term.evaluate();
   auto res = maximize(obj_fun_coeffs);
 
-  return OptimizationResult<double>(res.optimum() + c, res.status());
+  if (res.status() != res.OPTIMUM_AVAILABLE) {
+    return res;
+  }
+
+  return OptimizationResult<double>(res.optimum(), res.objective_value() + c);
 }
 
 /**
@@ -655,8 +510,7 @@ bool LinearSystem::satisfies(const LinearAlgebra::Vector<double> &Ai,
   }
 
   OptimizationResult<double> res = this->maximize(Ai);
-  if ((res.status() == GLP_OPT || res.status() == GLP_FEAS)
-      && res.optimum() <= bi) {
+  if ((res.status() == res.OPTIMUM_AVAILABLE) && res.objective_value() <= bi) {
     return true;
   }
 

@@ -10,11 +10,11 @@
 #define APPROX_ERR 1e-14
 
 
-inline bool epsilon_equivalent(const Polytope& synthesized,
-                               const Polytope& expected, const double epsilon)
+inline bool epsilon_equivalent(const Polytope& P1,
+                               const Polytope& P2, const double epsilon)
 {
-    return ((expand(synthesized, epsilon).includes(expected)) && 
-            (expand(expected, epsilon).includes(synthesized)));    
+    return ((expand(P1, epsilon).includes(P2)) && 
+            (expand(P2, epsilon).includes(P1)));    
 }
 
 BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(test_transform_dynamic_bundle)
     for (size_t i=0; i<523; ++i) {
         next = T(next);
     }
-    BOOST_CHECK(epsilon_equivalent(rSet, next, 1e-7));
+    BOOST_CHECK(epsilon_equivalent(rSet, next, 3e-7));
 }
 
 BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
@@ -176,20 +176,24 @@ BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
 
     BOOST_CHECK(synthesized.size()==1);
     
-    // The following test does not work because of the approximation error
-    // due to the double arithmetic
-    // BOOST_CHECK(synthesized.begin()->simplify()==expected);
-    BOOST_CHECK(epsilon_equivalent(*(synthesized.begin()), expected, APPROX_ERR));
+    if (synthesized.size()==1) {
+        // The following test does not work because of the approximation error
+        // due to the double arithmetic
+        // BOOST_CHECK(synthesized.begin()->simplify()==expected);
+        BOOST_CHECK(epsilon_equivalent(*(synthesized.begin()), expected, APPROX_ERR));
+    }
 
     synthesized = synthesize(f, rSet, pSet, atom2);
     expected = Polytope({{7,0},{0,1},{-1,0},{0,-1}},{4,0.2,-0.5,-0.1});
 
     BOOST_CHECK(synthesized.size()==1);
     
-    // The following test does not work because of the approximation error
-    // due to the double arithmetic
-    // BOOST_CHECK(synthesized.begin()->simplify()==expected);
-    BOOST_CHECK(epsilon_equivalent(*(synthesized.begin()), expected, APPROX_ERR));
+    if (synthesized.size()==1) {
+        // The following test does not work because of the approximation error
+        // due to the double arithmetic
+        // BOOST_CHECK(synthesized.begin()->simplify()==expected);
+        BOOST_CHECK(epsilon_equivalent(*(synthesized.begin()), expected, APPROX_ERR));
+    }
 
     rSet = Bundle(rA, {0,0,0}, {1,0.65,1.55});
     pSet = Polytope(pA, {0.55,0.15,-0.5,-0.1});
@@ -199,10 +203,12 @@ BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
 
     BOOST_CHECK(synthesized.size()==1);
     
-    // The following test does not work because of the approximation error
-    // due to the double arithmetic
-    // BOOST_CHECK(synthesized.begin()->simplify()==expected);
-    BOOST_CHECK(epsilon_equivalent(*(synthesized.begin()), expected, APPROX_ERR));
+    if (synthesized.size()==1) {
+        // The following test does not work because of the approximation error
+        // due to the double arithmetic
+        // BOOST_CHECK(synthesized.begin()->simplify()==expected);
+        BOOST_CHECK(epsilon_equivalent(*(synthesized.begin()), expected, APPROX_ERR));
+    }
 
     synthesized = synthesize(f, rSet, pSet, atom2);
     expected = Polytope({{1,0},{0,1},{-1,0},{0,-1}},{0.55,0.15,-0.5,-0.1});

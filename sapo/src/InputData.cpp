@@ -1,7 +1,5 @@
 #include <memory>
 
-#include <glpk.h>
-
 #include <LinearAlgebraIO.h>
 #include <ErrorHandling.h>
 
@@ -420,17 +418,17 @@ void optimizeConstraintsBoundaries(
 
     OptimizationResult<double> opt_res = constrSystem.minimize(constrVector);
 
-    if (opt_res.status() == GLP_NOFEAS) {
+    if (opt_res.status() == opt_res.INFEASIBLE) {
       SAPO_ERROR("infeasible system", std::domain_error);
     }
-    constr.set_lower_bound(opt_res.optimum());
+    constr.set_lower_bound(opt_res.objective_value());
 
     opt_res = constrSystem.maximize(constrVector);
 
-    if (opt_res.status() == GLP_NOFEAS) {
+    if (opt_res.status() == opt_res.INFEASIBLE) {
       SAPO_ERROR("infeasible system", std::domain_error);
     }
-    constr.set_upper_bound(opt_res.optimum());
+    constr.set_upper_bound(opt_res.objective_value());
   }
 }
 
@@ -474,24 +472,27 @@ bool checkFiniteBounds(const char *what,
   LinearSystem constrSystem = getConstraintsSystem(constraints, symbols);
 
   std::vector<T> sym_array(symbols.size(), 0);
+  
+  if (constrSystem.minimize(sym_array).status() == 
+        OptimizationResult<double>::INFEASIBLE) {
+    return true;
+  }
 
   // for each symbol
   for (unsigned int i = 0; i < sym_array.size(); ++i) {
     sym_array[i] = 1;
 
     // check whether it is lower bounded
-    if (constrSystem.minimize(sym_array).optimum()
-        == -std::numeric_limits<T>::infinity()) {
-      std::cerr << what << " " << symbols[i] << " has no finite lower bound"
-                << std::endl;
+    if (constrSystem.minimize(sym_array).status() == 
+        OptimizationResult<double>::UNBOUNDED) {
+      std::cerr << what << " is not lower bounded on " << symbols[i] << std::endl;
       result = false;
     }
 
     // check whether it is bounded
-    if (constrSystem.maximize(sym_array).optimum()
-        == std::numeric_limits<T>::infinity()) {
-      std::cerr << what << " " << symbols[i] << " has no finite upper bound"
-                << std::endl;
+    if (constrSystem.maximize(sym_array).status() == 
+        OptimizationResult<double>::UNBOUNDED) {
+      std::cerr << what << " is not upper bounded on " << symbols[i] << std::endl;
       result = false;
     }
 
@@ -525,14 +526,10 @@ bool InputData::check()
   }
 
   auto var_symbols = this->getVarSymbols();
-  if (!checkFiniteBounds<double>("Variable", directions, var_symbols)) {
-    res = false;
-  }
+  res = res && checkFiniteBounds<double>("The initial set", directions, var_symbols);
 
-  if (!checkFiniteBounds<double>("Parameter", paramDirections,
-                                 this->getParamSymbols())) {
-    res = false;
-  }
+  res = res && checkFiniteBounds<double>("The initial parameter set", paramDirections,
+                                         this->getParamSymbols());
 
   // each template row must be bounded
   {

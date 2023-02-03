@@ -10,13 +10,11 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -Wpedantic -Werror ${CMAKE_CXX_FLAGS}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(GLPK REQUIRED)
 find_package(GMP REQUIRED)
 
 set(THREADED_VERSION TRUE CACHE BOOL "Enable/disable threaded version compilation")
 
 if(${THREADED_VERSION})
-if (${GLPK_THREADS})
 find_package(Threads)
 
 if(${Threads_FOUND})
@@ -29,9 +27,6 @@ add_compile_definitions(WITH_THREADS)
 endif()
 
 set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} Threads::Threads)
-endif()
-else()
-message("Found GLPK does not support thread local memory. Building standard version.")
 endif()
 else()
 message("Threaded version disabled.")

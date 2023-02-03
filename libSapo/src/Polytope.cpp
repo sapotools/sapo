@@ -96,7 +96,7 @@ std::list<Polytope> Polytope::split(const std::vector<bool> &bvect_base,
     b.push_back(this->_b[cidx]);
 
     try {
-      const double min_value = minimize(this->_A[cidx]).optimum();
+      const double min_value = minimize(this->_A[cidx]).objective_value();
 
       A.push_back(-this->_A[cidx]);
       if (num_of_splits > 0) {
@@ -173,8 +173,8 @@ Polytope &Polytope::intersect_with(const Polytope &P)
 
 Polytope &Polytope::expand_by(const double delta)
 {
-  for (auto b_it = std::begin(_b); b_it != std::end(_b); ++b_it) {
-    *b_it += delta;
+  for (size_t i = 0; i < _b.size(); ++i) {
+    _b[i] += delta * LinearAlgebra::norm_2(_A[i]);
   }
 
   return *this;
@@ -203,9 +203,9 @@ double Polytope::bounding_box_volume() const
   for (unsigned int i = 0; i < this->dim(); i++) {
     std::vector<double> facet = zeros;
     facet[i] = 1;
-    const double b_plus = maximize(facet).optimum();
+    const double b_plus = maximize(facet).objective_value();
     facet[i] = -1;
-    const double b_minus = minimize(facet).optimum();
+    const double b_minus = minimize(facet).objective_value();
     vol = vol * (b_plus + b_minus);
   }
 
@@ -238,12 +238,12 @@ Polytope over_approximate_union(const Polytope &P1, const Polytope &P2)
 
   for (unsigned int i = 0; i < P1.size(); ++i) {
     A.push_back(P1._A[i]);
-    b.push_back(std::max(P2.maximize(A.back()).optimum(), P1._b[i]));
+    b.push_back(std::max(P2.maximize(A.back()).objective_value(), P1._b[i]));
   }
 
   for (unsigned int i = 0; i < P2.size(); ++i) {
     A.push_back(P2._A[i]);
-    b.push_back(std::max(P1.maximize(A.back()).optimum(), P2._b[i]));
+    b.push_back(std::max(P1.maximize(A.back()).objective_value(), P2._b[i]));
   }
 
   Polytope res(std::move(A), std::move(b));
@@ -278,7 +278,7 @@ SetsUnion<Polytope> subtract_and_close(const Polytope &P1, const Polytope &P2)
   }
 
   for (unsigned int i = 0; i < P2.size(); ++i) {
-    auto min = P1.minimize(P2.A(i)).optimum();
+    auto min = P1.minimize(P2.A(i)).objective_value();
 
     if (min < P2.b(1)) {
       Polytope new_P1 = P1;

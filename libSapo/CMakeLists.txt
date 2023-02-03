@@ -13,7 +13,7 @@ set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_library(Sapo SHARED $<TARGET_OBJECTS:objlib>)
 add_library(SapoStatic STATIC $<TARGET_OBJECTS:objlib>)
 
-set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp GLPK::glpk)
+set(PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS} GMP::gmpxx GMP::gmp)
 
 target_include_directories(Sapo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(Sapo LINK_PUBLIC ${PROJECT_LINK_LIBS})

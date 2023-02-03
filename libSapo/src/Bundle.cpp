@@ -18,8 +18,6 @@
 #include <functional>
 #include <sstream>
 
-#include <glpk.h>
-
 #define _USE_MATH_DEFINES //!< This macro enables the use of cmath constants
 
 #include <cmath>
@@ -758,8 +756,8 @@ Bundle::Bundle(const Polytope &P)
         }
       }
       _directions.push_back(P.A(i));
-      _upper_bounds.push_back(P.maximize(P.A(i)).optimum());
-      _lower_bounds.push_back(P.minimize(P.A(i)).optimum());
+      _upper_bounds.push_back(P.maximize(P.A(i)).objective_value());
+      _lower_bounds.push_back(P.minimize(P.A(i)).objective_value());
     }
   }
 
@@ -889,20 +887,10 @@ Bundle &Bundle::canonize()
   // get current polytope
   Polytope bund = *this;
   for (unsigned int i = 0; i < this->size(); ++i) {
-    _lower_bounds[i] = bund.minimize(this->_directions[i]).optimum();
-    _upper_bounds[i] = bund.maximize(this->_directions[i]).optimum();
+    _lower_bounds[i] = bund.minimize(this->_directions[i]).objective_value();
+    _upper_bounds[i] = bund.maximize(this->_directions[i]).objective_value();
   }
   return *this;
-}
-
-/// @private
-void _bundle_free_lp_problem(glp_prob *lp, int *ia, int *ja, double *ar)
-{
-  glp_delete_prob(lp);
-  glp_free_env();
-  free(ia);
-  free(ja);
-  free(ar);
 }
 
 bool are_disjoint(const Bundle &A, const Bundle &B)
@@ -916,82 +904,28 @@ bool are_disjoint(const Bundle &A, const Bundle &B)
     return false;
   }
 
-  unsigned int num_rows = A.size() + B.size();
-  unsigned int num_cols = A.dim();
-  unsigned int size_lp = num_rows * num_cols;
+  using namespace LinearAlgebra;
 
-  std::vector<double> obj_fun(num_cols, 0);
-  obj_fun[0] = 1;
+  Dense::Matrix<double> ls_A;
+  Vector<double> ls_b;
 
-  int *ia, *ja;
-  double *ar;
-
-  ia = (int *)calloc(size_lp + 1, sizeof(int));
-  ja = (int *)calloc(size_lp + 1, sizeof(int));
-  ar = (double *)calloc(size_lp + 1, sizeof(double));
-
-  glp_prob *lp;
-  lp = glp_create_prob();
-  glp_set_obj_dir(lp, GLP_MAX);
-
-  // Turn off verbose mode
-  glp_smcp lp_param;
-  glp_init_smcp(&lp_param);
-  lp_param.msg_lev = GLP_MSG_ERR;
-
-  glp_add_rows(lp, num_rows);
-  for (unsigned int i = 0; i < A.size(); i++) {
-    if (A.get_lower_bound(i) > A.get_upper_bound(i)) {
-      _bundle_free_lp_problem(lp, ia, ja, ar);
-
-      return true;
+  auto add_bundle_constraints = [&ls_A, &ls_b](const Bundle &bundle) {
+    for (size_t i = 0; i < bundle.size(); ++i) {
+      ls_A.push_back(bundle.get_direction(i));
+      ls_b.push_back(bundle.get_upper_bound(i));
+      ls_A.push_back(-bundle.get_direction(i));
+      ls_b.push_back(-bundle.get_lower_bound(i));
     }
-    glp_set_row_bnds(lp, i + 1, GLP_DB, A.get_lower_bound(i),
-                     A.get_upper_bound(i));
-  }
-  for (unsigned int i = 0; i < B.size(); i++) {
-    if (B.get_lower_bound(i) > B.get_upper_bound(i)) {
-      _bundle_free_lp_problem(lp, ia, ja, ar);
+  };
 
-      return true;
-    }
-    glp_set_row_bnds(lp, A.size() + i + 1, GLP_DB, B.get_lower_bound(i),
-                     B.get_upper_bound(i));
-  }
+  add_bundle_constraints(A);
+  add_bundle_constraints(B);
 
-  glp_add_cols(lp, num_cols);
-  for (unsigned int i = 0; i < num_cols; i++) {
-    glp_set_col_bnds(lp, i + 1, GLP_FR, 0.0, 0.0);
-    glp_set_obj_coef(lp, i + 1, obj_fun[i]);
-  }
+  SimplexMethodOptimizer optimizer;
 
-  unsigned int k = 1;
-  for (unsigned int i = 0; i < A.size(); i++) {
-    for (unsigned int j = 0; j < num_cols; j++) {
-      ia[k] = i + 1;
-      ja[k] = j + 1;
-      ar[k] = A.get_direction(i)[j]; /* a[i+1,j+1] = A[i][j] */
-      k++;
-    }
-  }
-  for (unsigned int i = 0; i < B.size(); i++) {
-    for (unsigned int j = 0; j < num_cols; j++) {
-      ia[k] = A.size() + i + 1;
-      ja[k] = j + 1;
-      ar[k] = B.get_direction(i)[j]; /* a[i+1,j+1] = A[i][j] */
-      k++;
-    }
-  }
+  auto result = optimizer(ls_A, ls_b, Vector<double>(A.dim()));
 
-  glp_load_matrix(lp, size_lp, ia, ja, ar);
-  glp_exact(lp, &lp_param);
-
-  auto status = glp_get_status(lp);
-  bool res = (status == GLP_NOFEAS || status == GLP_INFEAS);
-
-  _bundle_free_lp_problem(lp, ia, ja, ar);
-
-  return res;
+  return result.feasible_set_is_empty();
 }
 
 /**
@@ -1023,14 +957,14 @@ bool Bundle::is_subset_of(const Bundle &bundle) const
 
     // if the minimum of this object on that direction is lesser than
     // the bundle minimum, this object is not a subset of the bundle
-    if (P_this.minimize(bundle.get_direction(dir_idx)).optimum()
+    if (P_this.minimize(bundle.get_direction(dir_idx)).objective_value()
         < bundle.get_lower_bound(dir_idx)) {
       return false;
     }
 
     // if the maximum of this object on that direction is greater than
     // the bundle maximum, this object is not a subset of the bundle
-    if (P_this.maximize(bundle.get_direction(dir_idx)).optimum()
+    if (P_this.maximize(bundle.get_direction(dir_idx)).objective_value()
         > bundle.get_upper_bound(dir_idx)) {
       return false;
     }
@@ -1070,7 +1004,7 @@ bool Bundle::satisfies(const LinearSystem &ls) const
 
     // if the maximum of this object on that direction is smaller than
     // the bundle maximum, this object does not include the bundle
-    if (P_this.maximize(ls.A(dir_idx)).optimum() > ls.b(dir_idx)) {
+    if (P_this.maximize(ls.A(dir_idx)).objective_value() > ls.b(dir_idx)) {
       return false;
     }
   }
@@ -1652,10 +1586,10 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
   // Updates res boundaries to include p2
   for (unsigned int i = 0; i < res_dirs.size(); ++i) {
     const LinearAlgebra::Vector<double> &res_dir = res_dirs[i];
-    res._lower_bounds[i]
-        = std::min(p2.minimize(res_dir).optimum(), res.get_lower_bound(i));
-    res._upper_bounds[i]
-        = std::max(p2.maximize(res_dir).optimum(), res.get_upper_bound(i));
+    res._lower_bounds[i] = std::min(p2.minimize(res_dir).objective_value(),
+                                    res.get_lower_bound(i));
+    res._upper_bounds[i] = std::max(p2.maximize(res_dir).objective_value(),
+                                    res.get_upper_bound(i));
   }
 
   const Matrix<double> &b2_dirs = b2.directions();
@@ -1670,10 +1604,10 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
 
     // if the direction is not present in this object
     if (new_ids[i] == res.size()) {
-      double lower_bound
-          = std::min(p1.minimize(b2_dir).optimum(), b2.get_lower_bound(i));
-      double upper_bound
-          = std::max(p1.maximize(b2_dir).optimum(), b2.get_upper_bound(i));
+      double lower_bound = std::min(p1.minimize(b2_dir).objective_value(),
+                                    b2.get_lower_bound(i));
+      double upper_bound = std::max(p1.maximize(b2_dir).objective_value(),
+                                    b2.get_upper_bound(i));
 
       // add the direction and the corresponding boundaries
       res._directions.push_back(b2_dir);
@@ -1721,7 +1655,7 @@ SetsUnion<Bundle> subtract_and_close(const Bundle &b1, const Bundle &b2)
   Polytope p1 = b1;
 
   for (unsigned int i = 0; i < b2.size(); ++i) {
-    auto new_bound = p1.maximize(b2.get_direction(i)).optimum();
+    auto new_bound = p1.maximize(b2.get_direction(i)).objective_value();
     if (new_bound > b2.get_upper_bound(i)) {
       Bundle new_b1 = b1;
       new_b1._directions.push_back(b2.get_direction(i));
@@ -1731,7 +1665,7 @@ SetsUnion<Bundle> subtract_and_close(const Bundle &b1, const Bundle &b2)
       su.add(std::move(new_b1.canonize()));
     }
 
-    new_bound = p1.minimize(b2.get_direction(i)).optimum();
+    new_bound = p1.minimize(b2.get_direction(i)).objective_value();
     if (new_bound < b2.get_lower_bound(i)) {
       Bundle new_b1 = b1;
       new_b1._directions.push_back(b2.get_direction(i));
