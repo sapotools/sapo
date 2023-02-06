@@ -67,7 +67,7 @@ T norm_1(const Vector<T> &v)
   T norm = 0;
 
   for (const auto &elem: v) {
-    norm += std::abs(elem);
+    norm += abs(elem);
   }
 
   return norm;
@@ -86,8 +86,8 @@ T norm_infinity(const Vector<T> &v)
   T norm = 0;
 
   for (const auto &elem: v) {
-    if (std::abs(elem) > norm) {
-      norm = std::abs(elem);
+    if (abs(elem) > norm) {
+      norm = abs(elem);
     }
   }
 
@@ -762,10 +762,6 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
   return v1[non_zero_idx] / v2[non_zero_idx];
 }
 
-/*!
- *  \addtogroup Dense
- *  @{
- */
 
 //! Linear algebra for dense matrices
 namespace Dense
@@ -778,6 +774,7 @@ namespace Dense
  */
 template<typename T>
 using Matrix = std::vector<Vector<T>>;
+}
 
 /**
  * @brief Transpose a matrix
@@ -787,11 +784,11 @@ using Matrix = std::vector<Vector<T>>;
  * @return the transposed matrix
  */
 template<typename T>
-Matrix<T> transpose(const Matrix<T> &A)
+Dense::Matrix<T> transpose(const Dense::Matrix<T> &A)
 {
   size_t num_of_rows = A.size();
   size_t num_of_cols = (num_of_rows == 0 ? 0 : A[0].size());
-  Matrix<T> TA(num_of_cols, Vector<T>(num_of_rows));
+  Dense::Matrix<T> TA(num_of_cols, Vector<T>(num_of_rows));
 
   for (size_t i = 0; i < num_of_rows; ++i) {
     for (size_t j = 0; j < num_of_cols; ++j) {
@@ -811,7 +808,7 @@ Matrix<T> transpose(const Matrix<T> &A)
  * @return the row-column matrix-vector multiplication \f$A \cdot \f$
  */
 template<typename T>
-Vector<T> operator*(const Matrix<T> &A, const Vector<T> &v)
+Vector<T> operator*(const Dense::Matrix<T> &A, const Vector<T> &v)
 {
   if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
       && v.size() == 0) {
@@ -847,11 +844,11 @@ Vector<T> operator*(const Matrix<T> &A, const Vector<T> &v)
  * @return the row-column matrix-matrix multiplication \f$A \cdot \f$
  */
 template<typename T>
-Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
+Dense::Matrix<T> operator*(const Dense::Matrix<T> &A, const Dense::Matrix<T> &B)
 {
   if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
       && B.size() == 0) {
-    return Matrix<T>();
+    return Dense::Matrix<T>();
   }
 
   if (A.front().size() != B.size()) {
@@ -860,7 +857,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
                std::domain_error);
   }
 
-  Matrix<T> res(A.size(), Vector<T>(B.front().size(), 0));
+  Dense::Matrix<T> res(A.size(), Vector<T>(B.front().size(), 0));
 
   for (unsigned int row_idx = 0; row_idx < A.size(); ++row_idx) {
     for (unsigned int col_idx = 0; col_idx < B.front().size(); ++col_idx) {
@@ -893,7 +890,7 @@ Matrix<T> operator*(const Matrix<T> &A, const Matrix<T> &B)
  *      in the input matrix A
  */
 template<typename T>
-Vector<size_t> find_first_independent_rows(Matrix<T> A)
+Vector<size_t> find_first_independent_rows(Dense::Matrix<T> A)
 {
   const size_t num_of_columns = A.front().size();
   const size_t num_of_rows = A.size();
@@ -946,6 +943,24 @@ Vector<size_t> find_first_independent_rows(Matrix<T> A)
   return Vector<size_t>(std::begin(row_pos),
                         std::begin(row_pos) + num_of_columns);
 }
+
+/**
+ * @brief Compute the rank of a dense matrix
+ *
+ * @tparam T is the scalar value type
+ * @param A is the dense matrix whose rank must be computed
+ * @return The rank of the matrix `A`
+ */
+template<typename T>
+size_t rank(const Dense::Matrix<T> &A);
+
+/*!
+ *  \addtogroup Dense
+ *  @{
+ */
+
+namespace Dense 
+{
 
 /**
  * @brief A LUP factorization for dense matrices
@@ -1059,7 +1074,7 @@ public:
       size_t l = j;
       while (l < _LU.size() && delta > 0) {
         if (_LU[l][j] != 0) {
-          T new_delta = std::abs(1 - std::abs(_LU[l][j]));
+          T new_delta = abs(1 - abs(_LU[l][j]));
           if (k == _LU.size()) {
             delta = new_delta;
             k = l;
@@ -1227,29 +1242,31 @@ public:
    * @param A is the matrix whose rank must be computed
    * @return The rank of the matrix `A`
    */
-  template<typename E>
-  friend unsigned int rank(const Matrix<E> &A);
+  friend size_t rank<T>(const Matrix<T> &A);
 };
+
+}
+/*! @} End of DenseLinearAlgebra group */
 
 /**
  * @brief Compute the rank of a dense matrix
  *
  * @tparam T is the scalar value type
- * @param A is the matrix whose rank must be computed
+ * @param A is the dense matrix whose rank must be computed
  * @return The rank of the matrix `A`
  */
 template<typename T>
-unsigned int rank(const Matrix<T> &A)
+size_t rank(const Dense::Matrix<T> &A)
 {
   if (A.size() == 0) {
     return 0;
   }
 
-  LUP_Factorization<T> fact(A);
+  Dense::LUP_Factorization<T> fact(A);
 
-  unsigned int rank = 0;
-  const unsigned max_diag = std::min(A.size(), A[0].size());
-  for (unsigned int i = 0; i < max_diag; ++i) {
+  size_t rank = 0;
+  const size_t max_diag = std::min(A.size(), A[0].size());
+  for (size_t i = 0; i < max_diag; ++i) {
     if (fact._LU[i][i] != 0) {
       rank++;
     }
@@ -1272,14 +1289,14 @@ unsigned int rank(const Matrix<T> &A)
  * @return the determinant of the matrix `A`
  */
 template<typename T>
-T determinant(const Matrix<T> &A)
+T determinant(const Dense::Matrix<T> &A)
 {
   if (A.size() == 0 || A.front().size() == 0) {
     SAPO_ERROR("0x0-matrices not supported", std::domain_error);
   }
 
   // Compute the factorization
-  LUP_Factorization<T> fact(A);
+  Dense::LUP_Factorization<T> fact(A);
 
   // multiply the elements in U main diagonal
   T det = 1;
@@ -1314,20 +1331,20 @@ T determinant(const Matrix<T> &A)
  * @brief Compute the inverse matrix
  *
  * @tparam T is the type of the scalar values
- * @param A is the matrix to be inverted
+ * @param A is the dense matrix to be inverted
  * @return a matrix \f$A^{-1}\f$ such that \f$A\cdot A^{-1} = I\f$
  */
 template<typename T>
-Matrix<T> inverse(Matrix<T> &A)
+Dense::Matrix<T> inverse(Dense::Matrix<T> &A)
 {
   if (A.size() == 0 || A.front().size() == 0) {
     SAPO_ERROR("0x0-matrices not supported", std::domain_error);
   }
 
-  Matrix<T> A_inv;
+  Dense::Matrix<T> A_inv;
 
   // Compute the factorization
-  LUP_Factorization<T> fact(A);
+  Dense::LUP_Factorization<T> fact(A);
   std::vector<T> vi(A.size(), 0);
 
   for (unsigned int i = 0; i < A.size(); ++i) {
@@ -1338,9 +1355,6 @@ Matrix<T> inverse(Matrix<T> &A)
 
   return transpose(A_inv);
 }
-
-}
-/*! @} End of DenseLinearAlgebra group */
 
 /**
  * @brief Compute the maximum norm of a dense matrix
@@ -1468,6 +1482,88 @@ Dense::Matrix<T> operator/(const Dense::Matrix<T> &A, const T scalar)
  *  \addtogroup Sparse
  *  @{
  */
+
+//! Linear algebra for sparse matrices
+namespace Sparse
+{
+
+/**
+ * @brief A class to represent sparse matrices
+ *
+ * The matrix is internally represented as a map
+ * index-row type and each row is a index-element
+ * type.
+ *
+ * @tparam T any numeric type
+ */
+template<typename T>
+class Matrix;
+}
+
+/**
+ * @brief Element-wise scalar sum for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A+B\f$
+ */
+template<typename T>
+Sparse::Matrix<T> operator+(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B);
+
+/**
+ * @brief Element-wise scalar subtraction for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A-B\f$
+ */
+template<typename T>
+Sparse::Matrix<T> operator-(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B);
+
+/**
+ * @brief Element-wise scalar subtraction for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A-B\f$
+ */
+template<typename T>
+Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A, Sparse::Matrix<T> &&B);
+
+/**
+ * @brief Compute the row-column matrix-matrix multiplication
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return The row-column multiplication between `A` and `B`
+ */
+template<typename T>
+Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A, const Sparse::Matrix<T> &B);
+
+/**
+ * @brief Element-wise scalar division for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A/\textrm{scalar}\f$
+ */
+template<typename T>
+Sparse::Matrix<T> operator/(Sparse::Matrix<T> &&A, const T scalar);
+
+/**
+ * @brief Transpose a matrix
+ *
+ * @tparam T is the scalar value type
+ * @param A is the sparse matrix to be transposed
+ * @return the transposed matrix
+ */
+template<typename T>
+Sparse::Matrix<T> transpose(const Sparse::Matrix<T> &A);
 
 //! Linear algebra for sparse matrices
 namespace Sparse
@@ -2029,6 +2125,7 @@ public:
    * @param A is a matrix
    * @return The row-column multiplication between this object and `A`
    */
+  /*
   Matrix<T> operator*(const Matrix<T> &A) const
   {
     if (num_of_cols() != A.num_of_rows()) {
@@ -2055,120 +2152,73 @@ public:
 
     return res;
   }
-
-  /**
-   * @brief Element-wise scalar sum for matrices
-   *
-   * @tparam E is the type of scalar values
-   * @param A is a sparse matrix
-   * @param B is a sparse matrix
-   * @return the sparse matrix \f$A+B\f$
-   */
-  template<typename E>
-  friend Matrix<E> operator+(Matrix<E> &&A, const Matrix<E> &B)
-  {
-    for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
-         ++row_it) {
-      for (auto elem_it = std::begin(row_it->second);
-           elem_it != std::end(row_it->second); ++elem_it) {
-        A[row_it->first][elem_it->first] += elem_it->second;
-      }
-    }
-
-    return std::move(A);
-  }
-
-  /**
-   * @brief Element-wise scalar subtraction for matrices
-   *
-   * @tparam E is the type of scalar values
-   * @param A is a sparse matrix
-   * @param B is a sparse matrix
-   * @return the sparse matrix \f$A-B\f$
-   */
-  template<typename E>
-  friend Matrix<E> operator-(Matrix<E> &&A, const Matrix<E> &B)
-  {
-    for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
-         ++row_it) {
-      for (auto elem_it = std::begin(row_it->second);
-           elem_it != std::end(row_it->second); ++elem_it) {
-        A[row_it->first][elem_it->first] -= elem_it->second;
-      }
-    }
-
-    return std::move(A);
-  }
-
-  /**
-   * @brief Element-wise scalar subtraction for matrices
-   *
-   * @tparam E is the type of scalar values
-   * @param A is a sparse matrix
-   * @param B is a sparse matrix
-   * @return the sparse matrix \f$A-B\f$
-   */
-  template<typename E>
-  friend Matrix<E> operator-(const Matrix<E> &A, Matrix<E> &&B)
-  {
-    for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
-         ++row_it) {
-      for (auto elem_it = std::begin(row_it->second);
-           elem_it != std::end(row_it->second); ++elem_it) {
-        elem_it->second *= -1;
-      }
-    }
-
-    return std::move(B) + A;
-  }
+  */
 
   /**
    * @brief Element-wise scalar multiplication for matrices
    *
-   * @tparam E is the type of scalar values
-   * @param A is a matrix
    * @param scalar is a scalar value
-   * @return the matrix \f$A*\textrm{scalar}\f$
+   * @return a copy of the current matrix multiplied by `scalar`
    */
-  template<typename E>
-  friend Matrix<E> operator*(Matrix<E> &&A, const T scalar)
+  Matrix<T> operator*(const T scalar) const
   {
-    for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
-         ++row_it) {
-      for (auto elem_it = std::begin(row_it->second);
-           elem_it != std::end(row_it->second); ++elem_it) {
-        elem_it->second *= scalar;
+    if (scalar == 0) {
+      return Matrix<T>(num_of_rows(), num_of_cols());
+    }
+
+    Matrix<T> res(*this);
+    if (scalar == 1) {
+      return res;
+    }
+
+  for (auto row_it = std::begin(res._matrix); row_it != std::end(res._matrix);
+        ++row_it) {
+    for (auto elem_it = std::begin(row_it->second);
+            elem_it != std::end(row_it->second); ++elem_it) {
+          elem_it->second *= scalar;
       }
     }
 
-    return std::move(A);
+    return res;
   }
+
+  /**
+   * @brief Element-wise scalar sum for matrices
+   *
+   * @param A is a sparse matrix
+   * @param B is a sparse matrix
+   * @return the sparse matrix \f$A+B\f$
+   */
+  friend Matrix<T> operator+<T>(Matrix<T> &&A, const Matrix<T> &B);
+
+  /**
+   * @brief Element-wise scalar subtraction for matrices
+   *
+   * @tparam T is the type of scalar values
+   * @param A is a sparse matrix
+   * @param B is a sparse matrix
+   * @return the sparse matrix \f$A-B\f$
+   */
+  friend Matrix<T> operator-<T>(Matrix<T> &&A, const Matrix<T> &B);
+
+  /**
+   * @brief Element-wise scalar subtraction for matrices
+   *
+   * @tparam T is the type of scalar values
+   * @param A is a sparse matrix
+   * @param B is a sparse matrix
+   * @return the sparse matrix \f$A-B\f$
+   */
+  friend Matrix<T> operator-<T>(const Matrix<T> &A, Matrix<T> &&B);
 
   /**
    * @brief Element-wise scalar division for matrices
    *
-   * @tparam E is the type of scalar values
    * @param A is a matrix
    * @param scalar is a scalar value
    * @return the matrix \f$A/\textrm{scalar}\f$
    */
-  template<typename E>
-  friend Matrix<E> operator/(Matrix<E> &&A, const E scalar)
-  {
-    if (scalar == 0) {
-      SAPO_ERROR("division by 0", std::domain_error);
-    }
-
-    for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
-         ++row_it) {
-      for (auto elem_it = std::begin(row_it->second);
-           elem_it != std::end(row_it->second); ++elem_it) {
-        elem_it->second /= scalar;
-      }
-    }
-
-    return std::move(A);
-  }
+  friend Matrix<T> operator/<T>(Matrix<T> &&A, const T scalar);
 
   template<typename E>
   friend class LUP_Factorization;
@@ -2180,8 +2230,7 @@ public:
    * @param A is a sparse matrix
    * @return the transpose matrix \f$A^T\f$
    */
-  template<typename E>
-  friend Matrix<E> transpose(const Matrix<E> &A);
+  friend Matrix<T> transpose<T>(const Matrix<T> &A);
 
   /**
    * @brief Print a sparse matrix in a stream
@@ -2194,29 +2243,6 @@ public:
   template<typename E>
   friend std::ostream &std::operator<<(std::ostream &out, const Matrix<E> &A);
 };
-
-/**
- * @brief Transpose a matrix
- *
- * @tparam T is the scalar value type
- * @param A is the matrix to be transposed
- * @return the transposed matrix
- */
-template<typename T>
-Matrix<T> transpose(const Matrix<T> &A)
-{
-  Matrix<T> TA(A.num_of_cols(), A.num_of_rows());
-
-  for (auto row_it = std::cbegin(A._matrix); row_it != std::cend(A._matrix);
-       ++row_it) {
-    for (auto elem_it = std::cbegin(row_it->second);
-         elem_it != std::cend(row_it->second); ++elem_it) {
-      TA[elem_it->first][row_it->first] = elem_it->second;
-    }
-  }
-
-  return TA;
-}
 
 /**
  * @brief A LUP factorization for sparse matrices
@@ -2293,10 +2319,10 @@ class LUP_Factorization
     // column which is the nearest to \f$1\f$.
     auto l = non_zero_below_diag[row_idx].begin();
     auto new_row_idx = *l;
-    T delta = std::abs(1 - std::abs(_U._matrix[new_row_idx][row_idx]));
+    T delta = abs(1 - abs(_U._matrix[new_row_idx][row_idx]));
 
     for (++l; l != non_zero_below_diag[row_idx].end(); ++l) {
-      T new_delta = std::abs(1 - std::abs(_U._matrix[*l][row_idx]));
+      T new_delta = abs(1 - abs(_U._matrix[*l][row_idx]));
       if (new_delta < delta) {
         new_row_idx = *l;
         delta = new_delta;
@@ -2466,7 +2492,7 @@ public:
 
           // compute the ratio between the element on the U diagonal and the
           // non-null value below it
-          auto ratio = -nz_row[row_idx] / diag_elem->second;
+          T ratio = -nz_row[row_idx] / diag_elem->second;
 
           // for any value in the row row_idx
           for (auto elem_it = std::cbegin(U_row); elem_it != std::cend(U_row);
@@ -2604,6 +2630,9 @@ public:
   }
 };
 
+}
+/*! @} End of SparseLinearAlgebra group */
+
 /**
  * @brief Compute the rank of a sparse matrix
  *
@@ -2612,14 +2641,14 @@ public:
  * @return The rank of the matrix `A`
  */
 template<typename T>
-unsigned int rank(const Matrix<T> &A)
+size_t rank(const Sparse::Matrix<T> &A)
 {
-  const Matrix<T> U = LUP_Factorization<T>(A);
+  const auto U = Sparse::LUP_Factorization<T>(A).U();
 
-  unsigned int rank = 0;
+  size_t rank = 0;
 
-  const unsigned max_diag = std::min(A.num_of_cols(), A.num_of_rows());
-  for (unsigned int i = 0; i < max_diag; ++i) {
+  const size_t max_diag = std::min(A.num_of_cols(), A.num_of_rows());
+  for (size_t i = 0; i < max_diag; ++i) {
     if (U[i][i] != 0) {
       rank++;
     }
@@ -2642,14 +2671,14 @@ unsigned int rank(const Matrix<T> &A)
  * @return the determinant of the matrix `A`
  */
 template<typename T>
-T determinant(const Matrix<T> &A)
+T determinant(const Sparse::Matrix<T> &A)
 {
   if (A.num_of_rows() == 0 || A.num_of_cols() == 0) {
     SAPO_ERROR("0x0-matrix not supported", std::domain_error);
   }
 
   // Compute the factorization
-  LUP_Factorization<T> fact(A);
+  Sparse::LUP_Factorization<T> fact(A);
 
   T det = 1;
   // multiply the elements in U main diagonal
@@ -2681,23 +2710,46 @@ T determinant(const Matrix<T> &A)
 }
 
 /**
+ * @brief Transpose a matrix
+ *
+ * @tparam T is the scalar value type
+ * @param A is the sparse matrix to be transposed
+ * @return the transposed matrix
+ */
+template<typename T>
+Sparse::Matrix<T> transpose(const Sparse::Matrix<T> &A)
+{
+  Sparse::Matrix<T> TA(A.num_of_cols(), A.num_of_rows());
+
+  for (auto row_it = std::cbegin(A._matrix); row_it != std::cend(A._matrix);
+       ++row_it) {
+    for (auto elem_it = std::cbegin(row_it->second);
+         elem_it != std::cend(row_it->second); ++elem_it) {
+      TA[elem_it->first][row_it->first] = elem_it->second;
+    }
+  }
+
+  return TA;
+}
+
+/**
  * @brief Compute the inverse matrix
  *
  * @tparam T is the type of the scalar values
- * @param A is the matrix to be inverted
+ * @param A is the sparse matrix to be inverted
  * @return a matrix \f$A^{-1}\f$ such that \f$A\cdot A^{-1} = I\f$
  */
 template<typename T>
-Matrix<T> inverse(Matrix<T> &A)
+Sparse::Matrix<T> inverse(Sparse::Matrix<T> &A)
 {
   if (A.num_of_rows() == 0 || A.num_of_cols() == 0) {
     SAPO_ERROR("0x0-matrix not supported", std::domain_error);
   }
 
-  Matrix<T> A_inv;
+  Sparse::Matrix<T> A_inv;
 
   // Compute the factorization
-  LUP_Factorization<T> fact(A);
+  Sparse::LUP_Factorization<T> fact(A);
   std::vector<T> vi(A.num_of_rows(), 0);
 
   for (unsigned int i = 0; i < A.num_of_rows(); ++i) {
@@ -2709,8 +2761,27 @@ Matrix<T> inverse(Matrix<T> &A)
   return transpose(A_inv);
 }
 
+/**
+ * @brief Element-wise scalar sum for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A+B\f$
+ */
+template<typename T>
+Sparse::Matrix<T> operator+(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B)
+{
+  for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
+        ++row_it) {
+    for (auto elem_it = std::begin(row_it->second);
+          elem_it != std::end(row_it->second); ++elem_it) {
+      A[row_it->first][elem_it->first] += elem_it->second;
+    }
+  }
+
+  return std::move(A);
 }
-/*! @} End of SparseLinearAlgebra group */
 
 /**
  * @brief Element-wise scalar sum for sparse matrices
@@ -2721,8 +2792,8 @@ Matrix<T> inverse(Matrix<T> &A)
  * @return the sparse matrix \f$A+B\f$
  */
 template<typename T>
-Sparse::Matrix<T> operator+(const Sparse::Matrix<T> &A,
-                            const Sparse::Matrix<T> &&B)
+inline Sparse::Matrix<T> operator+(const Sparse::Matrix<T> &A,
+                                   const Sparse::Matrix<T> &&B)
 {
   return std::move(B) + A;
 }
@@ -2736,13 +2807,62 @@ Sparse::Matrix<T> operator+(const Sparse::Matrix<T> &A,
  * @return the sparse matrix \f$A+B\f$
  */
 template<typename T>
-Sparse::Matrix<T> operator+(const Sparse::Matrix<T> &A,
-                            const Sparse::Matrix<T> &B)
+inline Sparse::Matrix<T> operator+(const Sparse::Matrix<T> &A,
+                                   const Sparse::Matrix<T> &B)
 {
   Sparse::Matrix<T> C(B);
 
   return std::move(C) + A;
 }
+
+/**
+ * @brief Element-wise scalar subtraction for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A-B\f$
+ */
+template<typename T>
+Sparse::Matrix<T> operator-(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B)
+{
+  for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
+        ++row_it) {
+    for (auto elem_it = std::begin(row_it->second);
+          elem_it != std::end(row_it->second); ++elem_it) {
+      A[row_it->first][elem_it->first] -= elem_it->second;
+    }
+  }
+
+  return std::move(A);
+}
+
+/**
+ * @brief Element-wise scalar subtraction for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return the sparse matrix \f$A-B\f$
+ */
+template<typename T>
+inline Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A, 
+                                   Sparse::Matrix<T> &&B)
+{
+  /*
+  for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
+        ++row_it) {
+    for (auto elem_it = std::begin(row_it->second);
+          elem_it != std::end(row_it->second); ++elem_it) {
+      elem_it->second *= -1;
+    }
+  }
+
+  return std::move(B) + A;
+  */
+  return (-1 * std::move(B)) + A;
+}
+
 
 /**
  * @brief Element-wise scalar subtraction for sparse matrices
@@ -2753,8 +2873,8 @@ Sparse::Matrix<T> operator+(const Sparse::Matrix<T> &A,
  * @return the sparse matrix \f$A-B\f$
  */
 template<typename T>
-Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A,
-                            const Sparse::Matrix<T> &B)
+inline Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A,
+                                   const Sparse::Matrix<T> &B)
 {
   Sparse::Matrix<T> C(A);
 
@@ -2762,45 +2882,38 @@ Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A,
 }
 
 /**
- * @brief Element-wise scalar multiplication for matrices
+ * @brief Compute the row-column matrix-matrix multiplication
  *
- * @tparam T is the type of scalar values
- * @param A is a matrix
- * @param scalar is a scalar value
- * @return the matrix \f$A*\textrm{scalar}\f$
+ * @param A is a sparse matrix
+ * @param B is a sparse matrix
+ * @return The row-column multiplication between `A` and `B`
  */
 template<typename T>
-Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A, const T scalar)
+Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A, const Sparse::Matrix<T> &B)
 {
-  return operator*(Sparse::Matrix<T>(A), scalar);
-}
+  if (A.num_of_cols() != B.num_of_rows()) {
+    SAPO_ERROR("the two matrices are not compatible for the "
+               "matrix-matrix multiplication.", std::domain_error);
+  }
 
-/**
- * @brief Element-wise scalar multiplication for matrices
- *
- * @tparam T is the type of scalar values
- * @param scalar is a scalar value
- * @param A is a matrix
- * @return the matrix \f$\textrm{scalar}*A\f$
- */
-template<typename T>
-Sparse::Matrix<T> operator*(const T scalar, const Sparse::Matrix<T> &A)
-{
-  return A * scalar;
-}
+  Sparse::Matrix<T> res(A.num_of_rows(), B.num_of_cols());
 
-/**
- * @brief Element-wise scalar multiplication for matrices
- *
- * @tparam T is the type of scalar values
- * @param scalar is a scalar value
- * @param A is a matrix
- * @return the matrix \f$\textrm{scalar}*A\f$
- */
-template<typename T>
-Sparse::Matrix<T> operator*(const T scalar, Sparse::Matrix<T> &&A)
-{
-  return std::move(operator*(std::move(A), scalar));
+  for (auto row_it = std::cbegin(A._matrix); row_it != std::cend(A._matrix);
+        ++row_it) {
+    const unsigned int row_idx = row_it->first;
+    for (unsigned int col_idx = 0; col_idx < B.num_of_cols(); ++col_idx) {
+      T value = 0;
+      for (auto elem_it = std::cbegin(row_it->second);
+            elem_it != std::cend(row_it->second); ++elem_it) {
+        value += elem_it->second * B[elem_it->first][col_idx];
+      }
+      if (value != 0) {
+        res._matrix[row_idx][col_idx] = value;
+      }
+    }
+  }
+
+  return res;
 }
 
 /**
@@ -2812,9 +2925,35 @@ Sparse::Matrix<T> operator*(const T scalar, Sparse::Matrix<T> &&A)
  * @return the matrix \f$A/\textrm{scalar}\f$
  */
 template<typename T>
-Sparse::Matrix<T> operator/(const Sparse::Matrix<T> &A, const T scalar)
+Sparse::Matrix<T> operator/(Sparse::Matrix<T> &&A, const T scalar)
 {
-  return operator/(Sparse::Matrix<T>(A), scalar);
+  if (scalar == 0) {
+    SAPO_ERROR("division by 0", std::domain_error);
+  }
+
+  for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
+        ++row_it) {
+    for (auto elem_it = std::begin(row_it->second);
+          elem_it != std::end(row_it->second); ++elem_it) {
+      elem_it->second /= scalar;
+    }
+  }
+
+  return std::move(A);
+}
+
+/**
+ * @brief Element-wise scalar division for matrices
+ *
+ * @tparam T is the type of scalar values
+ * @param A is a matrix
+ * @param scalar is a scalar value
+ * @return the matrix \f$A/\textrm{scalar}\f$
+ */
+template<typename T>
+inline Sparse::Matrix<T> operator/(const Sparse::Matrix<T> &A, const T scalar)
+{
+  return Sparse::Matrix<T>(A) / scalar;
 }
 }
 

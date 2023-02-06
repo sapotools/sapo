@@ -541,7 +541,7 @@ bool InputData::check()
                 var_symbols));
       }
 
-      if (LinearAlgebra::Dense::rank(M) != templateMatrix[i].size()) {
+      if (LinearAlgebra::rank(M) != templateMatrix[i].size()) {
         // directions are dependent, parallelotope is not bounded
         cerr << "Template row " << templateMatrix[i]
              << " defines an unbounded parallelotope" << endl;

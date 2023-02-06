@@ -4,10 +4,12 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/list.hpp>
 
+#include <gmpxx.h>
+
 #include "LinearAlgebra.h"
 #include "LinearAlgebraIO.h"
 
-typedef boost::mpl::list<double> test_types;
+typedef boost::mpl::list<double, mpq_class> test_types;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_1, T, test_types)
 {
@@ -30,11 +32,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_1, T, test_types)
     }
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_2, T, test_types)
+BOOST_AUTO_TEST_CASE(test_norm_2)  // mpq_class is not supported: it misses sqrt()
 {
     using namespace LinearAlgebra;
 
-    std::vector<std::pair<std::vector<T>, T>> tests{
+    std::vector<std::pair<std::vector<double>, double>> tests{
         {{}, 0},
         {{1,7,5,5}, 10},
         {{-1,-7,-5,-5}, 10},
@@ -45,7 +47,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_2, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        T value = norm_2(test_it->first);
+        double value = norm_2(test_it->first);
         bool beval = (value == test_it->second);
         BOOST_REQUIRE_MESSAGE(beval, "norm_2(" << test_it->first << ") == "
                                           << value  << " != " << test_it->second);  
@@ -74,11 +76,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_norm_inf, T, test_types)
     }
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_eq, T, test_types)
+BOOST_AUTO_TEST_CASE(test_eq)  // mpq_class is not supported: it misses sqrt()
 {
     using namespace LinearAlgebra;
 
-    std::vector<std::pair<std::pair<std::vector<T>, std::vector<T>>, bool>> tests{
+    std::vector<std::pair<std::pair<std::vector<double>, std::vector<double>>, bool>> tests{
         {{{},{}}, true},
         {{{1,7,5,5}, {1,7,5,5}}, true},
         {{{-1,-7,-5,-5}, {-1,-7,-5,-5}}, true},
@@ -101,7 +103,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_eq, T, test_types)
                                           << eq << " != " << test_it->second);  
     }
 
-    std::vector<T> v1{1,7,5,5}, v2{0,1,7,5,5};
+    std::vector<double> v1{1,7,5,5}, v2{0,1,7,5,5};
     BOOST_REQUIRE_THROW(operator==(v1,v2), std::domain_error);
 }
 
@@ -703,9 +705,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_solve, T, test_types)
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
 {
     using namespace LinearAlgebra;
-    using namespace LinearAlgebra::Dense;
 
-    std::vector<std::pair<std::pair<Matrix<T>, Vector<T>>, Vector<T>>> tests{
+    std::vector<std::pair<std::pair<Dense::Matrix<T>, Vector<T>>, Vector<T>>> tests{
         {{{{1,0,0},{0,1,0},{0,0,1}}, {1,2,3}}, {1,2,3}},
         {{{{0,1,0},{0,0,1},{1,0,0}}, {1,2,3}}, {3,1,2}},
         {{{{0,3,1},{1,15,1},{7,0,0}}, {5,18,7}}, {1,1,2}},
@@ -713,7 +714,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_solve, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        LinearAlgebra::Sparse::LUP_Factorization<T> fact(test_it->first.first);
+        Sparse::LUP_Factorization<T> fact(test_it->first.first);
         std::vector<T> sol = fact.solve(test_it->first.second);
         bool beval = (sol == test_it->second);
         BOOST_REQUIRE_MESSAGE(beval, "solve(" << test_it->first.first << "," << test_it->first.second << ") == " 
@@ -750,9 +751,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_determinant, T, test_types)
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_determinant, T, test_types)
 {
     using namespace LinearAlgebra;
-    using namespace LinearAlgebra::Sparse;
+    using namespace LinearAlgebra::Dense;
 
-    std::vector<std::pair<LinearAlgebra::Dense::Matrix<T>, T>> tests{
+    std::vector<std::pair<Matrix<T>, T>> tests{
         {{{0,2,4},{6,8,10},{12,14,16}}, 0},
         {{{1,0,0},{0,1,0},{0,0,1}}, 1},
         {{{0,1,2},{3,4,5},{6,7,8}}, 0},
@@ -763,7 +764,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_determinant, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        Matrix<T> A(test_it->first);
+        Sparse::Matrix<T> A(test_it->first);
         auto det = determinant(A);
         bool beval = (det == test_it->second);
         BOOST_REQUIRE_MESSAGE(beval, "determinant(" << A << ") == " 
@@ -810,9 +811,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_inverse, T, test_types)
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
 {
     using namespace LinearAlgebra;
-    using namespace LinearAlgebra::Dense;
 
-    std::vector<std::pair<Matrix<T>,std::pair<Matrix<T>, T>>> tests{
+    std::vector<std::pair<Dense::Matrix<T>,std::pair<Dense::Matrix<T>, T>>> tests{
         {{{0,2,4},{6,8,10},{12,14,17}}, {{{2,-11,6},{-9,24,-12},{6,-12,6}}, 6}},
         {{{1,0,0},{0,1,0},{0,0,1}}, {{{1,0,0},{0,1,0},{0,0,1}}, 1}},
         {{{0,1,2},{3,4,5},{6,7,9}}, {{{-1,-5,3},{-3,12,-6},{3,-6,3}}, 3}},
@@ -822,22 +822,22 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_sparse_matrix_inverse, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        LinearAlgebra::Sparse::Matrix<T> A(test_it->first);
+        Sparse::Matrix<T> A(test_it->first);
         auto inv = inverse(A);
-        auto correct = LinearAlgebra::Sparse::Matrix<T>(test_it->second.first)/test_it->second.second;
+        auto correct = Sparse::Matrix<T>(test_it->second.first)/test_it->second.second;
         bool beval = (inv == correct);
         BOOST_REQUIRE_MESSAGE(beval, "inverse(" << A << ") == " 
                                           << inv << " != " << correct << " " << (inv-correct));   
     }
 
-    std::vector<Matrix<T>> test_errs{
+    std::vector<Dense::Matrix<T>> test_errs{
         {{0,2,4},{6,8,10},{12,14,16}},
         {{0,1,2},{3,4,5},{6,7,8}},
         {{0,0,0},{0,0,0},{0,0,0}},
         {{0,1,2},{3,4,5},{1,1,1}},
     };
     for (auto test_it = std::begin(test_errs); test_it != std::end(test_errs); ++test_it) {
-        LinearAlgebra::Sparse::Matrix<T> A(*test_it);
+        Sparse::Matrix<T> A(*test_it);
         BOOST_REQUIRE_THROW(inverse(A), std::domain_error);
     }
 }

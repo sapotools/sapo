@@ -522,7 +522,7 @@ bool template_is_a_complete_basis(
     A.emplace_back(directions[dir_idx]);
   }
 
-  return Dense::rank(A) == A.size();
+  return rank(A) == A.size();
 }
 
 template<typename T>

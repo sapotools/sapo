@@ -527,9 +527,8 @@ private:
       const std::vector<unsigned int> &degrees,
       const std::vector<unsigned int> &shifts)
   {
-    using namespace std;
     using namespace SymbolicAlgebra;
-    using namespace LinearAlgebra::Dense;
+    using namespace LinearAlgebra;
 
     // Initialize the coefficients vector
     auto coeffs = get_coeffs(polynomial, vars, degrees, shifts);

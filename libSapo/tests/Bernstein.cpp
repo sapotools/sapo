@@ -4,8 +4,6 @@
 #include <boost/test/unit_test.hpp>
 #include <gmpxx.h>
 
-#include "Bundle.h"
-
 #include "SymbolicAlgebra.h"
 #include "Bernstein.h"
 
