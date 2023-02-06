@@ -10,8 +10,6 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -Wpedantic -Werror ${CMAKE_CXX_FLAGS}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(GMP REQUIRED)
-
 set(THREADED_VERSION TRUE CACHE BOOL "Enable/disable threaded version compilation")
 
 if(${THREADED_VERSION})

@@ -4,13 +4,15 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <gmpxx.h>
-
-#include <sstream>
-
 #include "SymbolicAlgebra.h"
 
+#ifdef HAVE_GMP
+#include <gmpxx.h>
+
 typedef boost::mpl::list<double, mpq_class> test_types;
+#else
+typedef boost::mpl::list<double> test_types;
+#endif
 
 using namespace SymbolicAlgebra;
 

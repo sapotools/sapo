@@ -4,12 +4,17 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <gmpxx.h>
-
 #include "Simplex.h"
 #include "LinearAlgebraIO.h"
 
+#ifdef HAVE_GMP
+#include <gmpxx.h>
+
 typedef boost::mpl::list<double, mpq_class> test_types;
+#else
+typedef boost::mpl::list<double> test_types;
+#endif
+
 
 template<typename T>
 inline T admitted_error();
