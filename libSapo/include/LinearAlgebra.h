@@ -206,6 +206,28 @@ Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
 }
 
 /**
+ * @brief Compute the in-place element-wise sum of two vectors
+ *
+ * @tparam T any numeric type
+ * @param a is the first vector to be added and the destination of the sum
+ * @param b is the second vector to be added
+ * @return a reference to the updated vector `a`
+ */
+template<typename T>
+Vector<T> &operator+=(Vector<T> &a, const Vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+  }
+
+  for (unsigned int i = 0; i < a.size(); ++i) {
+    a[i] += b[i];
+  }
+
+  return a;
+}
+
+/**
  * @brief Compute the element-wise sum of two vectors
  *
  * @tparam T any numeric type
@@ -220,11 +242,9 @@ Vector<T> operator+(Vector<T> &&a, const Vector<T> &b)
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  for (unsigned int i = 0; i < a.size(); ++i) {
-    a[i] += b[i];
-  }
+  a += b;
 
-  return a;
+  return std::move(a);
 }
 
 /**
@@ -267,6 +287,29 @@ Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
 }
 
 /**
+ * @brief Compute the in-place element-wise subtraction of two vectors
+ *
+ * @tparam T any numeric type
+ * @param a is the vector from which the second parameter must be subtracted
+ *      and destination of the subtraction
+ * @param b is the vector that must be subtracted
+ * @return a reference to the updated vector `a`
+ */
+template<typename T>
+Vector<T> &operator-=(Vector<T> &a, const Vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+  }
+
+  for (unsigned int i = 0; i < a.size(); ++i) {
+    a[i] -= b[i];
+  }
+
+  return a;
+}
+
+/**
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T any numeric type
@@ -282,9 +325,7 @@ Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  for (unsigned int i = 0; i < a.size(); ++i) {
-    a[i] -= b[i];
-  }
+  a -= b;
 
   return std::move(a);
 }
@@ -314,23 +355,24 @@ Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
 }
 
 /**
- * @brief Compute the element-wise scalar product
+ * @brief Compute the in-place element-wise scalar product
  *
  * @tparam T any numeric type
- * @param s is a scalar value
  * @param v is a vector
- * @return the element-wise scalar product \f$s * \f$
+ * @param s is a scalar value
+ * @return a reference to the object `v` that will be updated
+ *       to \f$v * \f$
  */
 template<typename T>
-Vector<T> operator*(const T s, const Vector<T> &v)
+Vector<T> &operator*=(Vector<T> &v, const T s)
 {
-  Vector<T> res(v.size());
-
-  for (unsigned int i = 0; i < res.size(); ++i) {
-    res[i] = s * v[i];
+  if (s != 1) {
+    for (auto &elem: v) {
+      elem *= s;
+    }
   }
 
-  return res;
+  return v;
 }
 
 /**
@@ -342,9 +384,27 @@ Vector<T> operator*(const T s, const Vector<T> &v)
  * @return the element-wise scalar product \f$v * \f$
  */
 template<typename T>
-Vector<T> operator*(const Vector<T> &v, const T s)
+inline Vector<T> operator*(const Vector<T> &v, const T s)
 {
-  return operator*(s, v);
+  Vector<T> result(v);
+
+  result *= s;
+
+  return result;
+}
+
+/**
+ * @brief Compute the element-wise scalar product
+ *
+ * @tparam T any numeric type
+ * @param s is a scalar value
+ * @param v is a vector
+ * @return the element-wise scalar product \f$s * \f$
+ */
+template<typename T>
+inline Vector<T> operator*(const T s, const Vector<T> &v)
+{
+  return operator*(v, s);
 }
 
 /**
@@ -433,50 +493,6 @@ inline Vector<T> operator*(Vector<T> &&v, const T s)
 }
 
 /**
- * @brief Compute the element-wise scalar product
- *
- * @tparam T any numeric type
- * @param v is a vector
- * @param s is a scalar value
- * @return a reference to the updated vector
- */
-template<typename T>
-Vector<T> &operator*=(Vector<T> &v, const T s)
-{
-  if (s != 1) {
-    for (auto &elem: v) {
-      elem *= s;
-    }
-  }
-
-  return v;
-}
-
-/**
- * @brief Compute the element-wise scalar division
- *
- * @tparam T any numeric type
- * @param v is a vector
- * @param s is a scalar value
- * @return the element-wise scalar division \f$v/\f$
- */
-template<typename T>
-Vector<T> operator/(const Vector<T> &v, const T s)
-{
-  if (s == 0) {
-    SAPO_ERROR("division by 0", std::domain_error);
-  }
-
-  Vector<T> res(v.size());
-
-  for (unsigned int i = 0; i < res.size(); ++i) {
-    res[i] = v[i] / s;
-  }
-
-  return res;
-}
-
-/**
  * @brief Compute the element-wise scalar division
  *
  * @tparam T any numeric type
@@ -507,17 +523,29 @@ Vector<T> &operator/=(Vector<T> &v, const T s)
  * @return the element-wise scalar division \f$v/\f$
  */
 template<typename T>
-Vector<T> operator/(Vector<T> &&v, const T s)
+inline Vector<T> operator/(const Vector<T> &v, const T s)
 {
-  if (s == 0) {
-    SAPO_ERROR("division by 0", std::domain_error);
-  }
+  Vector<T> res(v);
 
-  for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it) {
-    *v_it /= s;
-  }
+  res /= s;
 
-  return v;
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise scalar division
+ *
+ * @tparam T any numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar division \f$v/\f$
+ */
+template<typename T>
+inline Vector<T> operator/(Vector<T> &&v, const T s)
+{
+  v /= s;
+
+  return std::move(v);
 }
 
 /**
@@ -762,7 +790,6 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
   return v1[non_zero_idx] / v2[non_zero_idx];
 }
 
-
 //! Linear algebra for dense matrices
 namespace Dense
 {
@@ -844,7 +871,8 @@ Vector<T> operator*(const Dense::Matrix<T> &A, const Vector<T> &v)
  * @return the row-column matrix-matrix multiplication \f$A \cdot \f$
  */
 template<typename T>
-Dense::Matrix<T> operator*(const Dense::Matrix<T> &A, const Dense::Matrix<T> &B)
+Dense::Matrix<T> operator*(const Dense::Matrix<T> &A,
+                           const Dense::Matrix<T> &B)
 {
   if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
       && B.size() == 0) {
@@ -959,7 +987,7 @@ size_t rank(const Dense::Matrix<T> &A);
  *  @{
  */
 
-namespace Dense 
+namespace Dense
 {
 
 /**
@@ -1542,7 +1570,8 @@ Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A, Sparse::Matrix<T> &&B);
  * @return The row-column multiplication between `A` and `B`
  */
 template<typename T>
-Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A, const Sparse::Matrix<T> &B);
+Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A,
+                            const Sparse::Matrix<T> &B);
 
 /**
  * @brief Element-wise scalar division for matrices
@@ -2171,11 +2200,11 @@ public:
       return res;
     }
 
-  for (auto row_it = std::begin(res._matrix); row_it != std::end(res._matrix);
-        ++row_it) {
-    for (auto elem_it = std::begin(row_it->second);
-            elem_it != std::end(row_it->second); ++elem_it) {
-          elem_it->second *= scalar;
+    for (auto row_it = std::begin(res._matrix);
+         row_it != std::end(res._matrix); ++row_it) {
+      for (auto elem_it = std::begin(row_it->second);
+           elem_it != std::end(row_it->second); ++elem_it) {
+        elem_it->second *= scalar;
       }
     }
 
@@ -2773,9 +2802,9 @@ template<typename T>
 Sparse::Matrix<T> operator+(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B)
 {
   for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
-        ++row_it) {
+       ++row_it) {
     for (auto elem_it = std::begin(row_it->second);
-          elem_it != std::end(row_it->second); ++elem_it) {
+         elem_it != std::end(row_it->second); ++elem_it) {
       A[row_it->first][elem_it->first] += elem_it->second;
     }
   }
@@ -2827,9 +2856,9 @@ template<typename T>
 Sparse::Matrix<T> operator-(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B)
 {
   for (auto row_it = std::begin(B._matrix); row_it != std::end(B._matrix);
-        ++row_it) {
+       ++row_it) {
     for (auto elem_it = std::begin(row_it->second);
-          elem_it != std::end(row_it->second); ++elem_it) {
+         elem_it != std::end(row_it->second); ++elem_it) {
       A[row_it->first][elem_it->first] -= elem_it->second;
     }
   }
@@ -2846,7 +2875,7 @@ Sparse::Matrix<T> operator-(Sparse::Matrix<T> &&A, const Sparse::Matrix<T> &B)
  * @return the sparse matrix \f$A-B\f$
  */
 template<typename T>
-inline Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A, 
+inline Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A,
                                    Sparse::Matrix<T> &&B)
 {
   /*
@@ -2862,7 +2891,6 @@ inline Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A,
   */
   return (-1 * std::move(B)) + A;
 }
-
 
 /**
  * @brief Element-wise scalar subtraction for sparse matrices
@@ -2889,22 +2917,24 @@ inline Sparse::Matrix<T> operator-(const Sparse::Matrix<T> &A,
  * @return The row-column multiplication between `A` and `B`
  */
 template<typename T>
-Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A, const Sparse::Matrix<T> &B)
+Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A,
+                            const Sparse::Matrix<T> &B)
 {
   if (A.num_of_cols() != B.num_of_rows()) {
     SAPO_ERROR("the two matrices are not compatible for the "
-               "matrix-matrix multiplication.", std::domain_error);
+               "matrix-matrix multiplication.",
+               std::domain_error);
   }
 
   Sparse::Matrix<T> res(A.num_of_rows(), B.num_of_cols());
 
   for (auto row_it = std::cbegin(A._matrix); row_it != std::cend(A._matrix);
-        ++row_it) {
+       ++row_it) {
     const unsigned int row_idx = row_it->first;
     for (unsigned int col_idx = 0; col_idx < B.num_of_cols(); ++col_idx) {
       T value = 0;
       for (auto elem_it = std::cbegin(row_it->second);
-            elem_it != std::cend(row_it->second); ++elem_it) {
+           elem_it != std::cend(row_it->second); ++elem_it) {
         value += elem_it->second * B[elem_it->first][col_idx];
       }
       if (value != 0) {
@@ -2932,9 +2962,9 @@ Sparse::Matrix<T> operator/(Sparse::Matrix<T> &&A, const T scalar)
   }
 
   for (auto row_it = std::begin(A._matrix); row_it != std::end(A._matrix);
-        ++row_it) {
+       ++row_it) {
     for (auto elem_it = std::begin(row_it->second);
-          elem_it != std::end(row_it->second); ++elem_it) {
+         elem_it != std::end(row_it->second); ++elem_it) {
       elem_it->second /= scalar;
     }
   }
