@@ -43,45 +43,45 @@
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
 
 BundleTemplate::BundleTemplate(const BundleTemplate &orig):
-    _dir_indices(orig._dir_indices),
-    _dynamic_directions(orig._dynamic_directions)
+    _dir_indices(orig._dir_indices)
 {
 }
 
 BundleTemplate::BundleTemplate(BundleTemplate &&orig):
-    BundleTemplate(std::move(orig._dir_indices), orig._dynamic_directions)
+    BundleTemplate(std::move(orig._dir_indices))
 {
 }
 
-BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices,
-                               const bool dynamic_directions):
-    _dir_indices(dir_indices),
-    _dynamic_directions(dynamic_directions)
+BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices):
+    BundleTemplate(std::vector<unsigned int>(dir_indices))
 {
-  std::sort(std::begin(_dir_indices), std::end(_dir_indices));
 }
 
-BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices,
-                               const bool dynamic_directions):
-    _dir_indices(std::move(dir_indices)),
-    _dynamic_directions(dynamic_directions)
+BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices):
+    _dir_indices(std::move(dir_indices))
 {
   std::sort(std::begin(_dir_indices), std::end(_dir_indices));
+
+  for (size_t i = 1; i < _dir_indices.size(); ++i) {
+    if (_dir_indices[i] == _dir_indices[i - 1]) {
+      SAPO_ERROR("Template contains twice the same "
+                 "direction index",
+                 std::domain_error);
+    }
+  }
 }
 
 std::ostream &operator<<(std::ostream &os,
                          const BundleTemplate &bundle_template)
 {
-  os << "{indices: [";
+  os << "{";
   std::string sep = "";
-  for (const auto &index: bundle_template.get_direction_indices()) {
+  for (const auto &index: bundle_template.direction_indices()) {
     os << sep << index;
     sep = ",";
   }
 
-  os << "], "
-     << (bundle_template.have_dynamic_directions() ? "dynamic" : "static")
-     << "}";
+  os << "}";
 
   return os;
 }
@@ -91,14 +91,16 @@ bool std::less<BundleTemplate>::operator()(const BundleTemplate &a,
 {
   std::less<std::vector<unsigned int>> cmp;
 
-  return cmp(a.get_direction_indices(), b.get_direction_indices());
+  return cmp(a.direction_indices(), b.direction_indices());
 }
 
 Bundle::Bundle() {}
 
 Bundle::Bundle(const Bundle &orig):
-    _directions(orig._directions), _lower_bounds(orig._lower_bounds),
-    _upper_bounds(orig._upper_bounds), _templates(orig._templates)
+    _directions(orig._directions),
+    _dynamic_directions(orig._dynamic_directions),
+    _lower_bounds(orig._lower_bounds), _upper_bounds(orig._upper_bounds),
+    _templates(orig._templates)
 {
 }
 
@@ -110,23 +112,10 @@ Bundle::Bundle(Bundle &&orig)
 void swap(Bundle &A, Bundle &B)
 {
   std::swap(A._directions, B._directions);
+  std::swap(A._dynamic_directions, B._dynamic_directions);
   std::swap(A._upper_bounds, B._upper_bounds);
   std::swap(A._lower_bounds, B._lower_bounds);
   std::swap(A._templates, B._templates);
-}
-
-/**
- * Orthogonal proximity of v1 and v2, i.e.,
- * how close is the angle between v1 and v2 is to pi/2
- *
- * @param[in] v1 vector
- * @param[in] v2 vector
- * @returns orthogonal proximity
- */
-double orthProx(LinearAlgebra::Vector<double> v1,
-                LinearAlgebra::Vector<double> v2)
-{
-  return std::abs(LinearAlgebra::angle(v1, v2) - M_PI_2);
 }
 
 /**
@@ -198,34 +187,19 @@ canonize_templates(const std::set<std::vector<unsigned int>> &templates)
 /**
  * @brief Collect directions in templates
  *
- * @param[out] template_directions is the set in which the template directions
- * are placed
- * @param[in] templates is the set of templates whose directions is aimed for
- */
-void collect_directions_in_templates(
-    std::set<size_t> &template_directions,
-    const std::set<std::vector<unsigned int>> &templates)
-{
-  for (const auto &bundle_template: templates) {
-    template_directions.insert(std::begin(bundle_template),
-                               std::end(bundle_template));
-  }
-}
-
-/**
- * @brief Collect directions in templates
- *
  * @param templates is the set of templates whose directions is aimed for
  * @return the set of directions mentioned in the templates
  */
 std::set<size_t> collect_directions_in_templates(
     const std::set<std::vector<unsigned int>> &templates)
 {
-  std::set<size_t> dirs;
+  std::set<size_t> template_directions;
+  for (const auto &bundle_template: templates) {
+    template_directions.insert(std::begin(bundle_template),
+                               std::end(bundle_template));
+  }
 
-  collect_directions_in_templates(dirs, templates);
-
-  return dirs;
+  return template_directions;
 }
 
 /**
@@ -256,16 +230,22 @@ template<typename T>
 void mark_linearly_dep_dirs(
     std::vector<size_t> &new_pos,
     const std::vector<LinearAlgebra::Vector<T>> &directions,
-    const size_t &dir_idx)
+    const std::set<size_t> &dynamic_directions, const size_t &dir_idx)
 {
   using namespace LinearAlgebra;
+
+  bool dir_is_dyn = (dynamic_directions.count(dir_idx) > 0);
 
   const size_t new_idx = new_pos[dir_idx];
 
   const auto &dir = directions[dir_idx];
   for (size_t j = dir_idx + 1; j < directions.size(); ++j) {
-    if (new_pos[j] == j && are_linearly_dependent(dir, directions[j])) {
-      new_pos[j] = new_idx;
+    if (new_pos[j] == j) {
+      bool j_is_dyn = (dynamic_directions.count(j) > 0);
+      if (j_is_dyn == dir_is_dyn
+          && are_linearly_dependent(dir, directions[j])) {
+        new_pos[j] = new_idx;
+      }
     }
   }
 }
@@ -275,6 +255,7 @@ void mark_linearly_dep_dirs(
  *
  * @tparam T is the scalar type of the directions
  * @param directions is the direction vector
+ * @param dynamic_directions is the set of dynamic direction indices
  * @param lower_bounds is the vector of the direction lower bounds
  * @param upper_bounds is the vector of the direction upper bounds
  * @return a vector mapping each index of the input direction vector in the
@@ -283,10 +264,12 @@ void mark_linearly_dep_dirs(
 template<typename T>
 std::vector<size_t>
 filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
+                             std::set<size_t> &dynamic_directions,
                              LinearAlgebra::Vector<T> &lower_bounds,
                              LinearAlgebra::Vector<T> &upper_bounds)
 {
   std::vector<LinearAlgebra::Vector<T>> new_directions;
+  std::set<size_t> new_dynamic_dirs;
   LinearAlgebra::Vector<T> new_lower_bounds, new_upper_bounds;
 
   std::vector<size_t> new_pos(directions.size());
@@ -303,16 +286,23 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
       const size_t new_idx = new_directions.size();
       new_pos[i] = new_idx;
 
-      // add directions[i], lower_bounds[i], and upper_bounds[i]
-      // in new_directions, new_lower_bounds, and new_upper_bounds,
-      // respectively
+      // add directions[i], lower_bounds[i], and
+      // upper_bounds[i] in new_directions, new_lower_bounds,
+      // and new_upper_bounds, respectively
       new_directions.push_back(directions[i]);
       new_lower_bounds.push_back(lower_bounds[i]);
       new_upper_bounds.push_back(upper_bounds[i]);
 
-      // mark in new_pos directions in direction vector that are
-      // linearly dependent to directions[i]
-      mark_linearly_dep_dirs(new_pos, directions, i);
+      // if the i-th direction is dynamic add among the
+      // dynamic directions of the new direction vector
+      if (dynamic_directions.count(i) > 0) {
+        new_dynamic_dirs.insert(new_idx);
+      }
+
+      // mark in new_pos directions all direction vector that are
+      // linearly dependent to directions[i] and are among dynamic
+      // directions as direction[i] is/is not.
+      mark_linearly_dep_dirs(new_pos, directions, dynamic_directions, i);
     } else {
       // directions[i] has been already inserted in new_directions
       // in position new_pos[i]
@@ -333,8 +323,9 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
     }
   }
 
-  // replace old directions, lower_bounds, and upper_bounds
+  // replace old directions, dynamic_directions, lower_bounds, and upper_bounds
   std::swap(directions, new_directions);
+  std::swap(dynamic_directions, new_dynamic_dirs);
   std::swap(lower_bounds, new_lower_bounds);
   std::swap(upper_bounds, new_upper_bounds);
 
@@ -349,16 +340,21 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
  * new position.
  *
  * @tparam T is the scalar type of the directions
- * @param directions is the vector of the directions to be reorganized
+ * @param directions is the vector of the directions
+ * @param dynamic_directions is the set of dynamic direction indices
+ * @param lower_bounds is the vector of the direction lower bounds
+ * @param upper_bounds is the vector of the direction upper bounds
  * @param new_positions is the map of the new positions
  */
 template<typename T>
 void resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
+                       std::set<size_t> &dynamic_directions,
                        LinearAlgebra::Vector<T> &lower_bounds,
                        LinearAlgebra::Vector<T> &upper_bounds,
                        const std::map<size_t, size_t> &new_positions)
 {
   std::vector<LinearAlgebra::Vector<T>> new_directions(new_positions.size());
+  std::set<size_t> new_dynamic_dirs;
   LinearAlgebra::Vector<T> new_lower_bounds(new_positions.size()),
       new_upper_bounds(new_positions.size());
 
@@ -368,7 +364,12 @@ void resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
     std::swap(upper_bounds[new_pos.first], new_upper_bounds[new_pos.second]);
   }
 
+  for (const auto &dynamic_direction: dynamic_directions) {
+    new_dynamic_dirs.insert(new_positions.at(dynamic_direction));
+  }
+
   std::swap(directions, new_directions);
+  std::swap(dynamic_directions, new_dynamic_dirs);
   std::swap(lower_bounds, new_lower_bounds);
   std::swap(upper_bounds, new_upper_bounds);
 }
@@ -481,17 +482,14 @@ template<typename T>
 void add_missing_templates(
     std::set<BundleTemplate> &templates,
     const std::vector<LinearAlgebra::Vector<T>> &directions,
-    std::set<size_t> missing_dirs,
-    const Bundle::template_less_fate_type template_less_fate
-    = Bundle::STATIC_TEMPLATES)
+    std::set<size_t> missing_dirs)
 {
   std::set<std::vector<unsigned int>> raw_templates;
 
   add_missing_templates(raw_templates, directions, missing_dirs);
 
   for (auto &raw_template: raw_templates) {
-    templates.emplace(std::move(raw_template),
-                      template_less_fate == Bundle::DYNAMIC_TEMPLATES);
+    templates.insert(std::move(raw_template));
   }
 }
 
@@ -587,32 +585,31 @@ void validate_directions(
 
 void duplicate_dynamic_directions(
     std::vector<LinearAlgebra::Vector<double>> &directions,
+    std::set<size_t> &dynamic_directions,
     LinearAlgebra::Vector<double> &lower_bounds,
     LinearAlgebra::Vector<double> &upper_bounds,
-    const std::set<std::vector<unsigned int>> &static_templates,
-    std::set<std::vector<unsigned int>> &dynamic_templates)
+    std::set<std::vector<unsigned int>> &templates)
 {
-  // mark as to-be-duplicated all the static directions
   std::vector<bool> require_duplicate(directions.size(), false);
-  for (const auto &bundle_template: static_templates) {
-    for (const auto &idx: bundle_template) {
-      require_duplicate[idx] = true;
-    }
-  }
 
   // build a new dynamic template set
-  std::set<std::vector<unsigned int>> new_dynamic_templates;
+  std::set<std::vector<unsigned int>> new_templates;
 
   // for each template in the dynamic template set
-  for (auto bundle_template: dynamic_templates) {
+  for (auto bundle_template: templates) {
     bool changed = false;
     for (auto &idx: bundle_template) {
 
       // if one of template directions has been already mentioned
-      if (require_duplicate[idx]) {
+      if (dynamic_directions.count(idx) > 0 && require_duplicate[idx]) {
 
         // the template must be changed
         changed = true;
+
+        // add the index of the direction that we are going to
+        // insert at the end of the direction vector among
+        // the dynamic direction indices
+        dynamic_directions.insert(directions.size());
 
         // copy the mentioned direction as a new direction
         directions.emplace_back(directions[idx]);
@@ -630,27 +627,30 @@ void duplicate_dynamic_directions(
     if (changed) {
       canonize_template(bundle_template);
     }
-    new_dynamic_templates.insert(bundle_template);
+    new_templates.insert(bundle_template);
   }
 
-  std::swap(dynamic_templates, new_dynamic_templates);
+  std::swap(templates, new_templates);
 }
 
-Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+Bundle::Bundle(const std::set<size_t> &dynamic_directions,
+               const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
                const std::set<BundleTemplate> &templates):
     _directions(directions),
-    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds),
-    _templates(templates)
+    _dynamic_directions(dynamic_directions), _lower_bounds(lower_bounds),
+    _upper_bounds(upper_bounds), _templates(templates)
 {
 }
 
-Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+Bundle::Bundle(const std::set<size_t> &dynamic_directions,
+               std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds,
                const std::set<BundleTemplate> &templates):
     _directions(std::move(directions)),
+    _dynamic_directions(dynamic_directions),
     _lower_bounds(std::move(lower_bounds)),
     _upper_bounds(std::move(upper_bounds)), _templates(templates)
 {
@@ -659,28 +659,34 @@ Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
-               std::set<std::vector<unsigned int>> static_templates,
-               std::set<std::vector<unsigned int>> dynamic_templates,
-               const template_less_fate_type template_less_fate):
+               std::set<std::vector<unsigned int>> templates,
+               const std::set<size_t> &dynamic_directions,
+               const bool remove_unused_directions):
     _directions(directions),
-    _lower_bounds(lower_bounds), _upper_bounds(upper_bounds), _templates()
+    _dynamic_directions(dynamic_directions), _lower_bounds(lower_bounds),
+    _upper_bounds(upper_bounds), _templates()
 {
   validate_directions(_directions, _lower_bounds, _upper_bounds);
-  validate_templates(_directions, static_templates);
-  validate_templates(_directions, dynamic_templates);
+  validate_templates(_directions, templates);
+
+  for (const auto &dir_index: dynamic_directions) {
+    if (dir_index >= _directions.size()) {
+      SAPO_ERROR("the dynamic directions must be valid "
+                 "indices for the direction vector",
+                 std::domain_error);
+    }
+  }
 
   // filter duplicated direction, update templates, and bring them in canonical
   // form
-  auto new_pos = filter_duplicated_directions(_directions, _lower_bounds,
-                                              _upper_bounds);
+  auto new_pos = filter_duplicated_directions(_directions, _dynamic_directions,
+                                              _lower_bounds, _upper_bounds);
 
-  static_templates = update_templates_directions(static_templates, new_pos);
-  dynamic_templates = update_templates_directions(dynamic_templates, new_pos);
+  templates = update_templates_directions(templates, new_pos);
 
-  auto used_dirs = collect_directions_in_templates(static_templates);
-  collect_directions_in_templates(used_dirs, dynamic_templates);
+  auto used_dirs = collect_directions_in_templates(templates);
 
-  if (template_less_fate != REMOVE_DIRECTION) {
+  if (!remove_unused_directions) {
     // add missing directions in templates
     std::set<size_t> missing_dirs;
     for (size_t idx = 0; idx < _directions.size(); ++idx) {
@@ -688,13 +694,9 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
         missing_dirs.insert(idx);
       }
     }
-    if (template_less_fate == STATIC_TEMPLATES) {
-      add_missing_templates(static_templates, _directions, missing_dirs);
-    } else {
-      add_missing_templates(dynamic_templates, _directions, missing_dirs);
-    }
+    add_missing_templates(templates, _directions, missing_dirs);
   } else {
-    if (static_templates.size() == 0 && dynamic_templates.size() == 0) {
+    if (templates.size() == 0) {
       SAPO_ERROR("template vector must be non empty", std::domain_error);
     }
 
@@ -705,55 +707,33 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
       // find a new position for the used directions
       auto new_pos = find_new_position_for(used_dirs);
 
-      resort_directions(_directions, _lower_bounds, _upper_bounds, new_pos);
-      static_templates
-          = update_templates_directions(static_templates, new_pos);
-      dynamic_templates
-          = update_templates_directions(dynamic_templates, new_pos);
+      resort_directions(_directions, _dynamic_directions, _lower_bounds,
+                        _upper_bounds, new_pos);
+      templates = update_templates_directions(templates, new_pos);
     }
   }
-  duplicate_dynamic_directions(_directions, _lower_bounds, _upper_bounds,
-                               static_templates, dynamic_templates);
+  duplicate_dynamic_directions(_directions, _dynamic_directions, _lower_bounds,
+                               _upper_bounds, templates);
 
-  _templates.insert(std::begin(static_templates), std::end(static_templates));
-
-  for (auto &dynamic_template: dynamic_templates) {
-    _templates.emplace(std::move(dynamic_template), true);
-  }
+  _templates.insert(std::begin(templates), std::end(templates));
 }
 
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
-               const std::set<std::vector<unsigned int>> &static_templates,
-               const template_less_fate_type template_less_fate):
-    Bundle(directions, lower_bounds, upper_bounds, static_templates, {},
-           template_less_fate)
-{
-}
-
-Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-               LinearAlgebra::Vector<double> &&lower_bounds,
-               LinearAlgebra::Vector<double> &&upper_bounds,
-               const std::set<std::vector<unsigned int>> &static_templates,
-               const template_less_fate_type template_less_fate):
-    Bundle(std::move(directions), std::move(lower_bounds),
-           std::move(upper_bounds), static_templates, {}, template_less_fate)
+               const std::set<std::vector<unsigned int>> &templates,
+               const bool remove_unused_directions):
+    Bundle(directions, lower_bounds, upper_bounds, templates, {},
+           remove_unused_directions)
 {
 }
 
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
-               const LinearAlgebra::Vector<double> &upper_bounds):
-    Bundle(directions, lower_bounds, upper_bounds, {}, {}, STATIC_TEMPLATES)
-{
-}
-
-Bundle::Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-               LinearAlgebra::Vector<double> &&lower_bounds,
-               LinearAlgebra::Vector<double> &&upper_bounds):
-    Bundle(std::move(directions), std::move(lower_bounds),
-           std::move(upper_bounds), {}, {}, STATIC_TEMPLATES)
+               const LinearAlgebra::Vector<double> &upper_bounds,
+               const bool remove_unused_directions):
+    Bundle(directions, lower_bounds, upper_bounds, {}, {},
+           remove_unused_directions)
 {
 }
 
@@ -794,20 +774,9 @@ Bundle::Bundle(const Polytope &P)
  */
 Bundle &Bundle::operator=(const Bundle &orig)
 {
-  using namespace LinearAlgebra;
-
-  this->_directions = std::vector<Vector<double>>();
-  this->_templates = std::set<BundleTemplate>();
-
-  this->_directions.reserve(orig._directions.size());
-
-  for (const auto &dir: orig._directions) {
-    this->_directions.emplace_back(dir);
-  }
-
-  for (const auto &bundle_template: orig._templates) {
-    this->_templates.emplace(bundle_template);
-  }
+  this->_directions = orig._directions;
+  this->_dynamic_directions = orig._dynamic_directions;
+  this->_templates = orig._templates;
 
   this->_upper_bounds = orig._upper_bounds;
   this->_lower_bounds = orig._lower_bounds;
@@ -860,7 +829,7 @@ Bundle::get_parallelotope(const BundleTemplate &bundle_template) const
   vector<double> lbound, ubound;
   vector<LinearAlgebra::Vector<double>> Lambda;
 
-  auto it = std::begin(bundle_template.get_direction_indices());
+  auto it = std::begin(bundle_template.direction_indices());
   // upper facets
   for (unsigned int j = 0; j < this->dim(); j++) {
     const unsigned int idx = *it;
@@ -1032,207 +1001,6 @@ bool Bundle::satisfies(const LinearSystem &ls) const
 }
 
 /**
- * Check whether a vector is permutation of a sorted vector
- *
- * @param[in] v1 first vector
- * @param[in] sorted a sorted vector
- * @returns true is v1 is a permutation of v2
- */
-bool isPermutationOfSorted(std::vector<unsigned int> v1,
-                           const std::vector<unsigned int> &sorted)
-{
-  if (v1.size() != sorted.size()) {
-    return false;
-  }
-
-  std::sort(std::begin(v1), std::end(v1));
-
-  auto v1_it = std::begin(v1);
-  auto v2_it = std::begin(sorted);
-  while (v1_it != std::end(v1)) {
-    if (*v1_it != *v2_it) {
-      return false;
-    }
-
-    ++v1_it;
-    ++v2_it;
-  }
-
-  return true;
-}
-
-/**
- * Check if v1 is a permutation of v2
- *
- * @param[in] v1 first vector
- * @param[in] v2 second vector
- * @returns true is v1 is a permutation of v2
- */
-bool isPermutation(const std::vector<unsigned int> &v1,
-                   std::vector<unsigned int> v2)
-{
-  if (v1.size() != v2.size()) {
-    return false;
-  }
-
-  std::sort(std::begin(v2), std::end(v2));
-
-  return isPermutationOfSorted(v1, v2);
-}
-
-/**
- * @brief Test whether a row is permutation of another row
- *
- * This method test whether the `i`-th row in the matrix `M`
- * is the permutation of another row in `M`.
- *
- * @tparam T is the scalar type of `M`
- * @param M is the matrix whose rows must be tested
- * @param i is the index of the row to be tested
- * @return `true` if and only if the `i`-th row of `M`
- *         is the permutation of any other row in `M`
- */
-template<typename T>
-bool is_permutation_of_other_rows(const std::vector<std::vector<T>> &M,
-                                  const unsigned int &i)
-{
-  using namespace std;
-
-  vector<T> M_i = M[i];
-  sort(std::begin(M_i), std::end(M_i));
-  for (unsigned int j = 0; j < M.size(); j++) {
-    if (j != i) {
-      if (isPermutationOfSorted(M[j], M_i)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-/**
- * Maximum distance accumulation of a vector w.r.t. a set of vectors
- *
- * @param[in] vIdx index of the reference vector
- * @param[in] dirsIdx indexes of vectors to be considered
- * @param[in] distances pre-computed distances
- * @returns distance accumulation
- */
-double maxOffsetDist(const int vIdx, const std::vector<int> &dirsIdx,
-                     const LinearAlgebra::Vector<double> &distances)
-{
-
-  if (dirsIdx.empty()) {
-    return 0;
-  }
-
-  double dist = distances[vIdx];
-  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    dist = dist * distances[dirsIdx[i]];
-  }
-  return dist;
-}
-
-/**
- * Maximum distance accumulation of a set of vectors
- *
- * @param[in] dirsIdx indexes of vectors to be considered
- * @param[in] distances pre-computed distances
- * @returns distance accumulation
- */
-double maxOffsetDist(const std::vector<unsigned int> &dirsIdx,
-                     const LinearAlgebra::Vector<double> &distances)
-{
-
-  double dist = 1;
-  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    dist = dist * distances[dirsIdx[i]];
-  }
-  return dist;
-}
-
-/**
- * Maximum distance accumulation of matrix
- *
- * @param[in] T matrix from which fetch the vectors
- * @param[in] distances pre-computed distances
- * @returns distance accumulation
- */
-double maxOffsetDist(const std::vector<std::vector<unsigned int>> &T,
-                     const LinearAlgebra::Vector<double> &distances)
-{
-  double max_dist = std::numeric_limits<double>::lowest();
-  for (unsigned int i = 0; i < T.size(); i++) {
-    max_dist = std::max(max_dist, maxOffsetDist(T[i], distances));
-  }
-  return max_dist;
-}
-
-/**
- * Maximum orthogonal proximity of a vector w.r.t. a set of vectors
- *
- * @param[in] directions is the direction matrix
- * @param[in] vIdx index of the reference vector
- * @param[in] dirsIdx indexes of vectors to be considered
- * @returns maximum orthogonal proximity
- */
-double
-maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
-            const int vIdx, const std::vector<int> &dirsIdx)
-{
-
-  if (dirsIdx.empty()) {
-    return 0;
-  }
-
-  double maxProx = 0;
-  for (auto d_it = std::begin(dirsIdx); d_it != std::end(dirsIdx); ++d_it) {
-    maxProx = std::max(maxProx, orthProx(directions[vIdx], directions[*d_it]));
-  }
-  return maxProx;
-}
-
-/**
- * Maximum orthogonal proximity within a set of vectors
- *
- * @param[in] directions is the direction matrix
- * @param[in] dirsIdx indexes of vectors to be considered
- * @returns maximum orthogonal proximity
- */
-double
-maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
-            const std::vector<unsigned int> &dirsIdx)
-{
-  double maxProx = 0;
-  for (unsigned int i = 0; i < dirsIdx.size(); i++) {
-    for (unsigned int j = i + 1; j < dirsIdx.size(); j++) {
-      maxProx = std::max(
-          maxProx, orthProx(directions[dirsIdx[i]], directions[dirsIdx[j]]));
-    }
-  }
-  return maxProx;
-}
-
-/**
- * Maximum orthogonal proximity of all the vectors of a matrix
- *
- * @param[in] directions is the direction matrix
- * @param[in] T collection of vectors
- * @returns maximum orthogonal proximity
- */
-double
-maxOrthProx(const std::vector<LinearAlgebra::Vector<double>> &directions,
-            const std::vector<std::vector<unsigned int>> &T)
-{
-  double max_orth = std::numeric_limits<double>::lowest();
-  for (auto T_it = std::begin(T); T_it != std::end(T); ++T_it) {
-    max_orth = std::max(max_orth, maxOrthProx(directions, *T_it));
-  }
-  return max_orth;
-}
-
-/**
  * @brief A draft horse function to split a bundle
  *
  * This recursive function is a private draft horse to
@@ -1278,8 +1046,9 @@ std::list<Bundle> &Bundle::split_bundle(
     const double &max_magnitude, const double &split_ratio) const
 {
   if (idx == this->size()) {
-    Bundle new_bundle(this->_directions, this->_lower_bounds,
-                      this->_upper_bounds, this->_templates);
+    Bundle new_bundle(this->_dynamic_directions, this->_directions,
+                      this->_lower_bounds, this->_upper_bounds,
+                      this->_templates);
     res.push_back(std::move(new_bundle));
 
     return res;
@@ -1423,13 +1192,13 @@ void add_mapped_templates(
   // check whether some of the templates must be copied
   for (const BundleTemplate &temp: source_templates) {
     // if this is the case, copy and update the template indices
-    std::vector<unsigned int> t_copy(temp.get_direction_indices());
+    std::vector<unsigned int> t_copy(temp.direction_indices());
     for (unsigned int j = 0; j < t_copy.size(); ++j) {
       t_copy[j] = new_direction_indices[t_copy[j]];
     }
 
     // add the new template to the intersected bundle
-    dest_templates.emplace(std::move(t_copy), temp.have_dynamic_directions());
+    dest_templates.emplace(std::move(t_copy));
   }
 }
 

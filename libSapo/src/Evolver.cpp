@@ -482,8 +482,8 @@ std::pair<double, double> ParamMinMaxCoeffFinder::operator()(
 
 template<typename T>
 inline typename SymbolicAlgebra::Expression<T>::interpretation_type
-make_interpretation(const std::vector<SymbolicAlgebra::Symbol<T>> &symbols,
-                    const std::vector<T> &values)
+build_interpretation(const std::vector<SymbolicAlgebra::Symbol<T>> &symbols,
+                     const std::vector<T> &values)
 {
   if (symbols.size() != values.size()) {
     SAPO_ERROR("symbols and values sizes are not the same", std::domain_error);
@@ -497,10 +497,11 @@ make_interpretation(const std::vector<SymbolicAlgebra::Symbol<T>> &symbols,
   return inter;
 }
 
-LinearAlgebra::Vector<double> get_approx_center(const Bundle &bundle)
+template<typename T>
+LinearAlgebra::Vector<T> get_approx_center(const Bundle &bundle)
 {
   using namespace LinearAlgebra;
-  std::vector<double> approx_c;
+  std::vector<T> approx_c;
 
   if (bundle.dim() == 0) {
     return approx_c;
@@ -514,18 +515,18 @@ LinearAlgebra::Vector<double> get_approx_center(const Bundle &bundle)
     }
   }
 
-  return approx_c / (double)bundle.num_of_templates();
+  return approx_c / T(bundle.num_of_templates());
 }
 
-std::vector<SymbolicAlgebra::Expression<double>>
-average_dynamics(const DynamicalSystem<double> &ds,
-                 const Polytope &parameter_set)
+template<typename T>
+std::vector<SymbolicAlgebra::Expression<T>>
+average_dynamics(const DynamicalSystem<T> &ds, const Polytope &parameter_set)
 {
   using namespace SymbolicAlgebra;
 
-  std::vector<double> approx_c = get_approx_center(Bundle(parameter_set));
+  std::vector<T> approx_c = get_approx_center<T>(Bundle(parameter_set));
 
-  auto inter{make_interpretation(ds.parameters(), approx_c)};
+  auto inter{build_interpretation(ds.parameters(), approx_c)};
 
   std::vector<SymbolicAlgebra::Expression<>> avg_ds;
   for (const auto &dyn: ds.dynamics()) {
@@ -566,11 +567,11 @@ collect_dir_images(const Bundle &bundle, const DynamicalSystem<double> &ds,
 
   auto avg_ds = average_dynamics(ds, parameter_set);
 
-  auto approx_c = get_approx_center(bundle);
+  auto approx_c = get_approx_center<double>(bundle);
 
   const auto lengths = bundle.edge_lengths();
 
-  auto inter = make_interpretation(ds.variables(), approx_c);
+  auto inter = build_interpretation(ds.variables(), approx_c);
   const auto ac_image{evaluate(avg_ds, inter)};
 
   for (size_t i = 0; i < bundle.size(); ++i) {
@@ -581,7 +582,7 @@ collect_dir_images(const Bundle &bundle, const DynamicalSystem<double> &ds,
     if (lengths[i] != 0) {
       Vector<double> delta = (lengths[i] / 2 * dir) / norm_2(dir);
 
-      inter = make_interpretation(ds.variables(), approx_c + delta);
+      inter = build_interpretation(ds.variables(), approx_c + delta);
 
       const auto dir_image{evaluate(avg_ds, inter) - ac_image};
 
@@ -597,6 +598,31 @@ collect_dir_images(const Bundle &bundle, const DynamicalSystem<double> &ds,
   }
 
   return dir_images;
+}
+
+template<typename T>
+inline LinearAlgebra::Vector<T> compute_image(
+    const std::vector<SymbolicAlgebra::Expression<T>> &dynamical_system,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+    const LinearAlgebra::Vector<T> &point)
+{
+  auto point_interpretation = build_interpretation(variables, point);
+  return evaluate(dynamical_system, point_interpretation);
+}
+
+template<typename T>
+std::vector<LinearAlgebra::Vector<T>> compute_images(
+    const std::vector<SymbolicAlgebra::Expression<T>> &dynamical_system,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+    const std::vector<LinearAlgebra::Vector<T>> &points)
+{
+  std::vector<LinearAlgebra::Vector<T>> images;
+
+  for (const auto &point: points) {
+    images.push_back(compute_image(dynamical_system, variables, point));
+  }
+
+  return images;
 }
 
 /**
@@ -661,43 +687,92 @@ inline void fix_new_dir_verse(LinearAlgebra::Vector<double> &new_dir,
   }
 }
 
-std::vector<LinearAlgebra::Vector<double>>
-compute_new_dirs(const Bundle &bundle, const DynamicalSystem<double> &ds,
-                 const Polytope &parameter_set)
+template<typename T>
+std::vector<LinearAlgebra::Vector<T>>
+compute_a_plan_basis(const LinearAlgebra::Vector<T> &normal)
 {
-  std::vector<LinearAlgebra::Vector<double>> new_dirs(bundle.directions());
+  using namespace LinearAlgebra;
+  std::vector<Vector<T>> basis;
 
-  auto dir_images = collect_dir_images(bundle, ds, parameter_set);
-  for (const auto &b_template: bundle.templates()) {
-    if (b_template.have_dynamic_directions()) {
-      // build the vector of the template direction images excluding the
-      // image of direction 0
-      std::vector<LinearAlgebra::Vector<double>> t_dir_images;
-      t_dir_images.reserve(b_template.dim() - 1);
-      for (size_t i = 1; i < b_template.dim(); ++i) {
-        t_dir_images.push_back(dir_images[b_template[i]]);
-      }
-
-      for (size_t i = 0; i < b_template.dim(); ++i) {
-        const size_t idx = b_template[i];
-
-        // compute one of vectors orthogonal to all the images of
-        // bundle directions, but the i-th template direction
-        new_dirs[idx] = compute_orthogonal_direction(t_dir_images);
-
-        // fix the verse of the computed vector so that it is
-        // consistent with the i-th direction image
-        fix_new_dir_verse(new_dirs[idx], dir_images[idx]);
-
-        // the i-th row of t_dir_images stores to the (i+1)-th
-        // template direction image. Replace it with the i-th
-        // template direction image so that t_dir_image consists
-        // in all the direction images, but the (i+1)-th one
-        if (i < b_template.dim() - 1) {
-          t_dir_images[i] = dir_images[b_template[i]];
-        }
-      }
+  Vector<T> v(normal.size(), 0);
+  for (size_t i = 0; i < normal.size(); ++i) {
+    if (normal[i] == 0) {
+      v[i] = 1;
+      basis.push_back(v);
+      v[i] = 0;
     }
+  }
+
+  size_t i = 0;
+  v = normal;
+  T total = 0;
+  for (auto &value: v) {
+    if (value != 0) {
+      total += value;
+      value = 1;
+    }
+  }
+
+  while (basis.size() < normal.size() - 1) {
+    if (normal[i] != 0) {
+      v[i] = 1 - total / normal[i];
+      basis.push_back(v / norm_1(v));
+      v[i] = 1;
+    }
+  }
+
+  return basis;
+}
+
+std::vector<LinearAlgebra::Vector<double>>
+compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
+                       const Polytope &parameter_set)
+{
+  using namespace LinearAlgebra;
+
+  // if no direction is dynamic return the old direction vector
+  if (bundle.dynamic_directions().size() == 0) {
+    return bundle.directions();
+  }
+
+  std::vector<Vector<double>> new_dirs(bundle.directions());
+
+  auto avg_ds = average_dynamics(ds, parameter_set);
+  auto approximate_center = get_approx_center<double>(bundle);
+
+  const auto ac_image
+      = compute_image(avg_ds, ds.variables(), approximate_center);
+
+  for (const auto &idx: bundle.dynamic_directions()) {
+    const auto &bundle_dir = bundle.get_direction(idx);
+
+    // compute a basis of the plan defined by the i-th direction
+    // of the bundle. Its vector will be used as sampling points
+    // for the plan transformation
+    auto sampling = compute_a_plan_basis(bundle_dir);
+
+    // compute the vectors of the plan basis with respect to the
+    // bundle center
+    for (auto &sample: sampling) {
+      sample += approximate_center;
+    }
+
+    // evaluate the image of the sampling points through the
+    // dynamical system
+    auto sampling_image = compute_images(avg_ds, ds.variables(), sampling);
+
+    // compute the vectors of the plan basis with respect to the
+    // bundle center
+    for (auto &sample_image: sampling_image) {
+      sample_image -= ac_image;
+    }
+
+    // compute one of vectors orthogonal to sampling images
+    new_dirs[idx] = compute_orthogonal_direction(sampling_image);
+
+    // fix the verse of the computed vector so that it is
+    // consistent with the i-th direction image
+    fix_new_dir_verse(new_dirs[idx], bundle_dir);
   }
 
   return new_dirs;
@@ -724,7 +799,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   }
 
   // compute new directions
-  const auto new_dirs = compute_new_dirs(bundle, _ds, parameter_set);
+  const auto new_dirs = compute_new_directions(bundle, _ds, parameter_set);
 
   vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
   vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
@@ -811,8 +886,9 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res(std::move(new_dirs), std::move(lower_bounds),
-             std::move(upper_bounds), bundle.templates());
+  Bundle res(bundle._dynamic_directions, std::move(new_dirs),
+             std::move(lower_bounds), std::move(upper_bounds),
+             bundle.templates());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {
@@ -929,7 +1005,7 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
   }
 
   // compute new directions
-  const auto new_dirs = compute_new_dirs(bundle, _ds, parameter_set);
+  const auto new_dirs = compute_new_directions(bundle, _ds, parameter_set);
 
   vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
   vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
@@ -1027,8 +1103,9 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res(std::move(new_dirs), std::move(lower_bounds),
-             std::move(upper_bounds), bundle.templates());
+  Bundle res(bundle._dynamic_directions, std::move(new_dirs),
+             std::move(lower_bounds), std::move(upper_bounds),
+             bundle.templates());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > _edge_threshold) {

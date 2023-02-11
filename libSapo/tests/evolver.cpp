@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(test_transform_dynamic_bundle)
         {0,1}
     };
 
-    Bundle rSet(rA, {-0.05,0.05}, {9.95,10.05},{},{{0,1}}, Bundle::REMOVE_DIRECTION);
+    Bundle rSet(rA, {-0.05,0.05}, {9.95,10.05}, {}, {0,1});
 
     Bundle next = T(rSet);
     for (size_t i=0; i<523; ++i) {

@@ -52,13 +52,12 @@ class Bundle;
  * This class represents bundle templates. A template of a $n$-dimensional
  * bundle is a vector of the indices of $n$ linearly independent directions of
  * the bundle itself. A bundle consists in the intersection of parallelotopes.
- * A template symbolically represents one of these parallotopes.
+ * A template symbolically represents one of these parallelotopes.
  */
 class BundleTemplate
 {
   std::vector<unsigned int>
-      _dir_indices;         //!< Indices of the template directions
-  bool _dynamic_directions; //!< A flag for dynamic direction templates
+      _dir_indices; //!< Indices of the template directions
 
 public:
   /**
@@ -80,22 +79,16 @@ public:
    *
    * @param[in] dir_indices is the vector of linearly independent directions of
    * the template
-   * @param[in] dynamic_directions is `true` if and only if the template
-   * directions are dynamic and they can change during the computation.
    */
-  BundleTemplate(const std::vector<unsigned int> &dir_indices,
-                 const bool dynamic_directions = false);
+  BundleTemplate(const std::vector<unsigned int> &dir_indices);
 
   /**
    * @brief A move constructor for bundle templates
    *
    * @param[in] dir_indices is the vector of linearly independent directions of
    * the template
-   * @param[in] dynamic_directions is `true` if and only if the template
-   * directions are dynamic and they can change during the computation.
    */
-  BundleTemplate(std::vector<unsigned int> &&dir_indices,
-                 const bool dynamic_directions = false);
+  BundleTemplate(std::vector<unsigned int> &&dir_indices);
 
   /**
    * @brief A move operator
@@ -106,7 +99,19 @@ public:
   inline BundleTemplate &operator=(BundleTemplate &&orig)
   {
     std::swap(_dir_indices, orig._dir_indices);
-    _dynamic_directions = orig._dynamic_directions;
+
+    return *this;
+  }
+
+  /**
+   * @brief A copy operator
+   *
+   * @param orig is the original template
+   * @return a reference to the updated template
+   */
+  inline BundleTemplate &operator=(const BundleTemplate &orig)
+  {
+    _dir_indices = orig._dir_indices;
 
     return *this;
   }
@@ -116,20 +121,9 @@ public:
    *
    * @return the vector of the template direction indices
    */
-  inline const std::vector<unsigned int> &get_direction_indices() const
+  inline const std::vector<unsigned int> &direction_indices() const
   {
     return _dir_indices;
-  }
-
-  /**
-   * @brief Check whether the template have dynamic direcitons
-   *
-   * @return `true` if and only if the template have dynamic
-   *            directions
-   */
-  inline const bool &have_dynamic_directions() const
-  {
-    return _dynamic_directions;
   }
 
   /**
@@ -172,21 +166,10 @@ struct std::less<BundleTemplate> {
 
 class Bundle
 {
-public:
-  /**
-   * @brief Fate type for template-less directions
-   */
-  enum template_less_fate_type {
-    REMOVE_DIRECTION, //!< template-less directions will be removed
-    STATIC_TEMPLATES, //!< template-less directions will be added to static
-                      //!< templates
-    DYNAMIC_TEMPLATES //!< template-less directions will be added to dynamic
-                      //!< templates
-  };
-
-private:
   std::vector<LinearAlgebra::Vector<double>>
-      _directions;                             //!< the vector of directions
+      _directions; //!< the vector of directions
+  std::set<size_t>
+      _dynamic_directions; //!< the set of dynamic direction indices
   LinearAlgebra::Vector<double> _lower_bounds; //!< direction upper bounds
   LinearAlgebra::Vector<double> _upper_bounds; //!< direction lower bounds
   std::set<BundleTemplate> _templates;         //!< bundle templates
@@ -243,12 +226,14 @@ private:
    * This constructor does not perform any check on the parameter
    * consistency.
    *
+   * @param[in] dynamic_directions is the set of dynamic direction indices
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
    */
-  Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
+  Bundle(const std::set<size_t> &dynamic_directions,
+         const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
          const std::set<BundleTemplate> &templates);
@@ -259,12 +244,14 @@ private:
    * This constructor does not perform any check on the parameter
    * consistency.
    *
+   * @param[in] dynamic_directions is the set of dynamic direction indices
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
    */
-  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
+  Bundle(const std::set<size_t> &dynamic_directions,
+         std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds,
          const std::set<BundleTemplate> &templates);
@@ -296,17 +283,17 @@ public:
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] static_templates is the set of the static templates
-   * @param[in] dynamic_templates is the set of the dynamic templates
-   * @param[in] template_less_fate is the fate of the directions not
-   *                  belonging to any template
+   * @param[in] templates is the set of the bundle templates
+   * @param[in] dynamic_direction is the set of dynamic directions
+   * @param[in] remove_unused_directions is a flag to remove
+   *      directions not belonging to any template
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
-         std::set<std::vector<unsigned int>> static_templates,
-         std::set<std::vector<unsigned int>> dynamic_templates,
-         const template_less_fate_type template_less_fate = REMOVE_DIRECTION);
+         std::set<std::vector<unsigned int>> templates,
+         const std::set<size_t> &dynamic_directions,
+         const bool remove_unused_directions = false);
 
   /**
    * @brief A constructor
@@ -314,31 +301,15 @@ public:
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] static_templates is the set of the static templates
-   * @param[in] template_less_fate is the fate of the directions not
-   *                  belonging to any template
+   * @param[in] templates is the set of the bundle templates
+   * @param[in] remove_unused_directions is a flag to remove
+   *      directions not belonging to any template
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
-         const std::set<std::vector<unsigned int>> &static_templates,
-         const template_less_fate_type template_less_fate = REMOVE_DIRECTION);
-
-  /**
-   * @brief A move constructor
-   *
-   * @param[in] directions is the direction vector
-   * @param[in] lower_bounds is the vector of direction lower bounds
-   * @param[in] upper_bounds is the vector of direction upper bounds
-   * @param[in] static_templates is the set of the static templates
-   * @param[in] template_less_fate is the fate of the directions not
-   *                  belonging to any template
-   */
-  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-         LinearAlgebra::Vector<double> &&lower_bounds,
-         LinearAlgebra::Vector<double> &&upper_bounds,
-         const std::set<std::vector<unsigned int>> &static_templates,
-         const template_less_fate_type template_less_fate = REMOVE_DIRECTION);
+         const std::set<std::vector<unsigned int>> &templates,
+         const bool remove_unused_directions = false);
 
   /**
    * @brief A constructor
@@ -350,25 +321,13 @@ public:
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
+   * @param[in] remove_unused_directions is a flag to remove
+   *      directions not belonging to any template
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
-         const LinearAlgebra::Vector<double> &upper_bounds);
-
-  /**
-   * @brief A move constructor
-   *
-   * Whenever the templates are not specified at all, we assume that
-   * all the directions are relevant and the templates are computed
-   * automatically.
-   *
-   * @param[in] directions is the direction vector
-   * @param[in] lower_bounds is the vector of direction lower bounds
-   * @param[in] upper_bounds is the vector of direction upper bounds
-   */
-  Bundle(std::vector<LinearAlgebra::Vector<double>> &&directions,
-         LinearAlgebra::Vector<double> &&lower_bounds,
-         LinearAlgebra::Vector<double> &&upper_bounds);
+         const LinearAlgebra::Vector<double> &upper_bounds,
+         const bool remove_unused_directions = false);
 
   /**
    * @brief A constructor
@@ -440,7 +399,7 @@ public:
    *
    * @return a reference to the vector of directions
    */
-  const std::vector<LinearAlgebra::Vector<double>> &directions() const
+  inline const std::vector<LinearAlgebra::Vector<double>> &directions() const
   {
     return _directions;
   }
@@ -451,10 +410,32 @@ public:
    * @param i is the index of the aimed direction
    * @return  a reference to the i-th direction in the bundle
    */
-  const LinearAlgebra::Vector<double> &
-  get_direction(const unsigned int &i) const
+  inline const LinearAlgebra::Vector<double> &
+  get_direction(const size_t &i) const
   {
     return _directions[i];
+  }
+
+  /**
+   * @brief Check whether the i-th direction is dynamic
+   *
+   * @param i is the index of the considered direction
+   * @return `true` if and only if the i-th direction
+   *      is dynamic
+   */
+  inline bool is_direction_dynamic(const size_t &i) const
+  {
+    return _dynamic_directions.count(i) > 0;
+  }
+
+  /**
+   * @brief Get the set of the bundle dynamic direction indices
+   *
+   * @return the set of bundle dynamic direction indices
+   */
+  inline const std::set<size_t> &dynamic_directions() const
+  {
+    return _dynamic_directions;
   }
 
   /**

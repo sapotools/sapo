@@ -33,24 +33,18 @@ BOOST_AUTO_TEST_CASE(test_bundle)
 
     Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}, T),
            b2(B,{0,0,0,0,0},{3,5,5,7,5}, 
-              {{2,1,4}},  // static templates
-              Bundle::STATIC_TEMPLATES),
+              {{2,1,4}}), // all the directions are static
            b3(B,{0,0,0,0,0},{3,5,5,7,5}, 
-              {{2,1,4}},  // static templates
-              Bundle::DYNAMIC_TEMPLATES),
+              {{2,1,4}},{0,3}), // 0 and 3 are dynamic directions
            b4(B,{0,0,0,0,0},{3,5,5,2,5}, 
-              {{2,1,4}},  // static templates
-              Bundle::STATIC_TEMPLATES),
+              {{2,1,4}}), // all the directions are static
            b5(B,{0,0,0,0,0},{3,5,5,2,5}, 
-              {{2,1,4}},  // static templates
-              Bundle::DYNAMIC_TEMPLATES),
-           b6(B,{0,0,0,0,0},{3,5,5,7,5}, 
-              {{2,1,4}},  // static templates
-              Bundle::REMOVE_DIRECTION),
-           b7(B,{0,0,0,0,0},{3,5,5,7,5}, 
-              {{2,1,4}},  // static templates
-              {{0,1,4}},  // dynamic templates
-              Bundle::REMOVE_DIRECTION);
+              {{2,1,4}},{0,3}), // 0 and 3 are dynamic directions
+           b6(B,{0,0,0,0,0},{3,5,5,7,5},
+              {{2,1,4}},true), // remove unused directions
+           b7(B,{0,0,0,0,0},{3,5,5,7,5},{{2,1,4},
+              {0,1,4}},{0,1,4},true); // 0, 1, and 4 are dynamic directions
+                                      // remove  unused directions
 
 
     BOOST_CHECK(b1.dim()==3);
@@ -80,7 +74,7 @@ BOOST_AUTO_TEST_CASE(test_bundle)
     BOOST_CHECK(b4.templates().size()==2);
 
     const auto num_b5_templates = ceil(float(B.size())/b5.dim());
-    BOOST_CHECK(b5.size()==num_b5_templates*b5.dim());
+    BOOST_CHECK(b5.size()==b4.size());
     BOOST_CHECK(b5.templates().size()==num_b5_templates);
 
     const auto num_b6_templates = 1;

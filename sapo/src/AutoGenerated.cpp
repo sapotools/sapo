@@ -177,11 +177,14 @@ Bundle getBundle(const InputData &id)
   }
   Bundle bundle;
 
-  if (id.areAllDirsDynamics()) {
-    bundle = Bundle(directions, LB, UB, {}, templates, Bundle::DYNAMIC_TEMPLATES);
-  } else {
-    bundle = Bundle(directions, LB, UB, templates, {}, Bundle::STATIC_TEMPLATES);
+  std::set<size_t> dynamic_directions;
+  if (id.areAllDirsDynamics()) {  
+    for (size_t i=0; i<directions.size(); ++i) {
+      dynamic_directions.insert(i);
+    }
   }
+
+  bundle = Bundle(directions, LB, UB, templates, dynamic_directions);
 
   if (id.getUseInvariantDirections()) {
     const auto variables = id.getVarSymbols();
