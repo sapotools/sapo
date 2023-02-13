@@ -528,7 +528,7 @@ average_dynamics(const DynamicalSystem<T> &ds, const Polytope &parameter_set)
 
   auto inter{build_interpretation(ds.parameters(), approx_c)};
 
-  std::vector<SymbolicAlgebra::Expression<>> avg_ds;
+  std::vector<Expression<T>> avg_ds;
   for (const auto &dyn: ds.dynamics()) {
     avg_ds.emplace_back(dyn.apply(inter));
   }
@@ -557,47 +557,6 @@ LinearAlgebra::Vector<T> evaluate(
   }
 
   return result;
-}
-
-std::vector<LinearAlgebra::Vector<double>>
-collect_dir_images(const Bundle &bundle, const DynamicalSystem<double> &ds,
-                   const Polytope &parameter_set)
-{
-  std::vector<LinearAlgebra::Vector<double>> dir_images;
-
-  auto avg_ds = average_dynamics(ds, parameter_set);
-
-  auto approx_c = get_approx_center<double>(bundle);
-
-  const auto lengths = bundle.edge_lengths();
-
-  auto inter = build_interpretation(ds.variables(), approx_c);
-  const auto ac_image{evaluate(avg_ds, inter)};
-
-  for (size_t i = 0; i < bundle.size(); ++i) {
-    using namespace LinearAlgebra;
-
-    const auto &dir = bundle.get_direction(i);
-
-    if (lengths[i] != 0) {
-      Vector<double> delta = (lengths[i] / 2 * dir) / norm_2(dir);
-
-      inter = build_interpretation(ds.variables(), approx_c + delta);
-
-      const auto dir_image{evaluate(avg_ds, inter) - ac_image};
-
-      const auto dir_image_norm{norm_2(dir_image)};
-      if (dir_image_norm != 0) {
-        dir_images.push_back(dir_image / norm_2(dir_image));
-      } else {
-        dir_images.push_back(dir);
-      }
-    } else {
-      dir_images.push_back(dir);
-    }
-  }
-
-  return dir_images;
 }
 
 template<typename T>
@@ -675,53 +634,158 @@ LinearAlgebra::Vector<double> compute_orthogonal_direction(
   return orth_vector / norm_2(orth_vector);
 }
 
-inline void fix_new_dir_verse(LinearAlgebra::Vector<double> &new_dir,
-                              const LinearAlgebra::Vector<double> &dir_image)
+/**
+ * @brief Extract an element from a vector
+ *
+ * This function extracts the i-th element from a
+ * C++ vector in time \f$O(1)\f$. This is done in
+ * two phases: 1) the i-th element and the last
+ * one are swapped 2) the vector size is decreased
+ * by one.
+ *
+ * After the execution of the function:
+ * - the element that was the last element of the
+ *   vector becomes the i-th element
+ * - the element that was the i-th element is
+ *   removed from the vector
+ * - all the remaining elements maintain their
+ *   respective positions
+ *
+ * The two functions `extract_value` and
+ * `insert_value` must be such that
+ * ```
+ * insert_value(v,i,extract_value(v,i))==v
+ * ```
+ *
+ * @tparam T is the element type
+ * @param v is a vector
+ * @param i is the position of the element to be
+ *      removed
+ * @return the value that was in `v[i]` before
+ *      the execution of this function
+ */
+template<typename T>
+T extract_value(std::vector<T> &v, const size_t i)
+{
+  T value;
+  std::swap(v[v.size() - 1], value);
+  std::swap(v[i], value);
+  v.pop_back();
+
+  return value;
+}
+
+/**
+ * @brief Insert an element in a vector
+ *
+ * This function inserts a value in a C++ vector
+ * in position i-th in time \f$O(1)\f$. This is
+ * done in two phases: 1) the new value is inserted
+ * at the end of the vector 2) the i-th value and
+ * the last one in the vector are swapped.
+ *
+ * After the execution of the function:
+ * - the element that was the i-th position becomes
+ *   the last one in the vector
+ * - the inserted value is the i-th element in
+ *   in the vector
+ * - all the remaining values maintain their
+ *   respective positions
+ *
+ * The two functions `extract_value` and
+ * `insert_value` must be such that
+ * ```
+ * insert_value(v,i,extract_value(v,i))==v
+ * ```
+ *
+ * @tparam T is the element type
+ * @param v is a vector
+ * @param i is the position in which the new value
+ *     must be placed
+ * @param value is the value to be inserted in the
+ *     i-th position
+ */
+template<typename T>
+void insert_value(std::vector<T> &v, const size_t i, T &&value)
+{
+  v.push_back(std::move(value));
+  std::swap(v[v.size() - 1], v[i]);
+}
+
+template<typename T>
+inline void fix_new_dir_verse(const LinearAlgebra::Vector<T> &dir_image,
+                              LinearAlgebra::Vector<T> &new_dir)
 {
   using namespace LinearAlgebra;
 
   if (new_dir * dir_image < 0) {
-    for (auto &value: new_dir) {
-      value *= -1;
-    }
+    new_dir *= T(-1);
   }
 }
 
-template<typename T>
-std::vector<LinearAlgebra::Vector<T>>
-compute_a_plan_basis(const LinearAlgebra::Vector<T> &normal)
+/**
+ * @brief Get the basis vertices of a parallelotope
+ *
+ * Every parallelotope is described by a vector of generator
+ * vectors \f$G\f$, their lengths \f$\lambda\f$, and a
+ * base vertices \f$b\f$. The parallelotope basis is
+ * the set of vectors \f$\lambda_i*G_i\f$.
+ * The parallelotope basis vertices are vertices of the
+ * parallelotope in the form \f$\lambda_i*G_i+b\f$.
+ *
+ * @param p is a parallelotope
+ * @return the vector of parallelotope basis vertices
+ */
+std::vector<LinearAlgebra::Vector<double>>
+get_parallelotope_basis_vertices(const Parallelotope &p)
 {
   using namespace LinearAlgebra;
-  std::vector<Vector<T>> basis;
 
-  Vector<T> v(normal.size(), 0);
-  for (size_t i = 0; i < normal.size(); ++i) {
-    if (normal[i] == 0) {
-      v[i] = 1;
-      basis.push_back(v);
-      v[i] = 0;
-    }
+  std::vector<Vector<double>> basis_vertices;
+  for (size_t j = 0; j < p.dim(); ++j) {
+    auto basis_vertex = p.generators()[j] * p.lengths()[j] + p.base_vertex();
+    basis_vertices.push_back(std::move(basis_vertex));
   }
 
-  size_t i = 0;
-  v = normal;
-  T total = 0;
-  for (auto &value: v) {
-    if (value != 0) {
-      total += value;
-      value = 1;
-    }
+  return basis_vertices;
+}
+
+/**
+ * @brief Get the parallelotope basis image
+ *
+ * Every parallelotope is described by a vector of generator
+ * vectors \f$G\f$, their lengths \f$\lambda\f$, and a
+ * base vertices \f$b\f$. The parallelotope basis is
+ * the set of vectors \f$\lambda_i*G_i\f$.
+ * The parallelotope basis vertices are vertices of the
+ * parallelotope in the form \f$\lambda_i*G_i+b\f$.
+ * The image of the parallelotope basis through a function
+ * \f$f\f$ is the set of vectors \f$f(lambda_i*G_i+b)-f(b)\f$.
+ *
+ * @param p is a parallelotope
+ * @return the vector of the parallelotope basis image
+ */
+std::vector<LinearAlgebra::Vector<double>> get_parallelotope_basis_images(
+    const std::vector<SymbolicAlgebra::Expression<double>> &dynamical_system,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+    const Parallelotope &p)
+{
+  using namespace LinearAlgebra;
+
+  auto edge_vertices = get_parallelotope_basis_vertices(p);
+
+  const auto base_vertex_image
+      = compute_image(dynamical_system, variables, p.base_vertex());
+
+  std::vector<Vector<double>> basis_images;
+  for (const auto &edge_vertex: edge_vertices) {
+    auto vertex_image
+        = compute_image(dynamical_system, variables, edge_vertex);
+    vertex_image -= base_vertex_image;
+    basis_images.push_back(std::move(vertex_image));
   }
 
-  while (basis.size() < normal.size() - 1) {
-    if (normal[i] != 0) {
-      v[i] = 1 - total / normal[i];
-      basis.push_back(v / norm_1(v));
-      v[i] = 1;
-    }
-  }
-
-  return basis;
+  return basis_images;
 }
 
 std::vector<LinearAlgebra::Vector<double>>
@@ -738,41 +802,34 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
   std::vector<Vector<double>> new_dirs(bundle.directions());
 
   auto avg_ds = average_dynamics(ds, parameter_set);
-  auto approximate_center = get_approx_center<double>(bundle);
 
-  const auto ac_image
-      = compute_image(avg_ds, ds.variables(), approximate_center);
+  for (const auto &bundle_template: bundle.templates()) {
+    if (bundle_template.is_dynamic()) {
+      Parallelotope p = bundle.get_parallelotope(bundle_template);
 
-  for (const auto &idx: bundle.dynamic_directions()) {
-    const auto &bundle_dir = bundle.get_direction(idx);
+      auto basis_images
+          = get_parallelotope_basis_images(avg_ds, ds.variables(), p);
 
-    // compute a basis of the plan defined by the i-th direction
-    // of the bundle. Its vector will be used as sampling points
-    // for the plan transformation
-    auto sampling = compute_a_plan_basis(bundle_dir);
+      for (const auto &dynamic_index: bundle_template.dynamic_indices()) {
+        const auto &direction_index = bundle_template[dynamic_index];
+        if (bundle.is_direction_dynamic(direction_index)) {
+          // remove the basis vector of the considered direction
+          Vector<double> basis_direction
+              = extract_value(basis_images, dynamic_index);
 
-    // compute the vectors of the plan basis with respect to the
-    // bundle center
-    for (auto &sample: sampling) {
-      sample += approximate_center;
+          // compute one of vectors orthogonal to sampling images
+          new_dirs[direction_index]
+              = compute_orthogonal_direction(basis_images);
+
+          // insert again the basis vector of the considered direction
+          insert_value(basis_images, dynamic_index,
+                       std::move(basis_direction));
+
+          fix_new_dir_verse(bundle.get_direction(direction_index),
+                            new_dirs[direction_index]);
+        }
+      }
     }
-
-    // evaluate the image of the sampling points through the
-    // dynamical system
-    auto sampling_image = compute_images(avg_ds, ds.variables(), sampling);
-
-    // compute the vectors of the plan basis with respect to the
-    // bundle center
-    for (auto &sample_image: sampling_image) {
-      sample_image -= ac_image;
-    }
-
-    // compute one of vectors orthogonal to sampling images
-    new_dirs[idx] = compute_orthogonal_direction(sampling_image);
-
-    // fix the verse of the computed vector so that it is
-    // consistent with the i-th direction image
-    fix_new_dir_verse(new_dirs[idx], bundle_dir);
   }
 
   return new_dirs;

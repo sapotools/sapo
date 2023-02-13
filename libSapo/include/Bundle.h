@@ -57,7 +57,9 @@ class Bundle;
 class BundleTemplate
 {
   std::vector<unsigned int>
-      _dir_indices; //!< Indices of the template directions
+      _dir_indices; //!< indices of the template directions
+  std::set<size_t>
+      _dynamic_indices; //!< the template dynamic direction indices
 
 public:
   /**
@@ -77,18 +79,11 @@ public:
   /**
    * @brief A constructor for bundle templates
    *
-   * @param[in] dir_indices is the vector of linearly independent directions of
-   * the template
+   * @param dir_indices is a vector of bundle direction indices
+   * @param dynamic_indices is the set of bundle dynamic direction indices
    */
-  BundleTemplate(const std::vector<unsigned int> &dir_indices);
-
-  /**
-   * @brief A move constructor for bundle templates
-   *
-   * @param[in] dir_indices is the vector of linearly independent directions of
-   * the template
-   */
-  BundleTemplate(std::vector<unsigned int> &&dir_indices);
+  BundleTemplate(const std::vector<unsigned int> &dir_indices,
+                 const std::set<size_t> &dynamic_indices);
 
   /**
    * @brief A move operator
@@ -124,6 +119,27 @@ public:
   inline const std::vector<unsigned int> &direction_indices() const
   {
     return _dir_indices;
+  }
+
+  /**
+   * @brief Get the set of the template dynamic direction indices
+   *
+   * @return the set of the template dynamic direction indices
+   */
+  inline const std::set<size_t> &dynamic_indices() const
+  {
+    return _dynamic_indices;
+  }
+
+  /**
+   * @brief Test whether the template includes dynamic direction indices
+   *
+   * @return `true` if and only if the template includes dynamic
+   *      direction indices
+   */
+  inline bool is_dynamic() const
+  {
+    return _dynamic_indices.size() > 0;
   }
 
   /**

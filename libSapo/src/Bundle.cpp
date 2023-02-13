@@ -43,24 +43,31 @@
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
 
 BundleTemplate::BundleTemplate(const BundleTemplate &orig):
-    _dir_indices(orig._dir_indices)
+    _dir_indices(orig._dir_indices), _dynamic_indices(orig._dynamic_indices)
 {
 }
 
 BundleTemplate::BundleTemplate(BundleTemplate &&orig):
-    BundleTemplate(std::move(orig._dir_indices))
+    _dir_indices(std::move(orig._dir_indices)),
+    _dynamic_indices(std::move(orig._dynamic_indices))
 {
 }
 
-BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices):
-    BundleTemplate(std::vector<unsigned int>(dir_indices))
+BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices,
+                               const std::set<size_t> &dynamic_indices):
+    _dir_indices(dir_indices.size())
 {
-}
+  std::vector<size_t> position(dir_indices.size());
+  std::iota(position.begin(), position.end(), 0);
 
-BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices):
-    _dir_indices(std::move(dir_indices))
-{
-  std::sort(std::begin(_dir_indices), std::end(_dir_indices));
+  std::sort(std::begin(position), std::end(position),
+            [&dir_indices](const size_t &a, const size_t &b) {
+              return dir_indices[a] < dir_indices[b];
+            });
+
+  for (size_t i = 0; i < dir_indices.size(); ++i) {
+    _dir_indices[position[i]] = dir_indices[i];
+  }
 
   for (size_t i = 1; i < _dir_indices.size(); ++i) {
     if (_dir_indices[i] == _dir_indices[i - 1]) {
@@ -69,19 +76,30 @@ BundleTemplate::BundleTemplate(std::vector<unsigned int> &&dir_indices):
                  std::domain_error);
     }
   }
+
+  for (size_t i = 0; i < _dir_indices.size(); ++i) {
+    if (dynamic_indices.count(_dir_indices[i]) > 0) {
+      _dynamic_indices.insert(i);
+    }
+  }
 }
 
 std::ostream &operator<<(std::ostream &os,
                          const BundleTemplate &bundle_template)
 {
-  os << "{";
+  os << "{direction_indices: [";
   std::string sep = "";
   for (const auto &index: bundle_template.direction_indices()) {
     os << sep << index;
     sep = ",";
   }
-
-  os << "}";
+  os << "], dynamic_indices: {";
+  sep = "";
+  for (const auto &index: bundle_template.dynamic_indices()) {
+    os << sep << index;
+    sep = ",";
+  }
+  os << "}}";
 
   return os;
 }
@@ -482,14 +500,14 @@ template<typename T>
 void add_missing_templates(
     std::set<BundleTemplate> &templates,
     const std::vector<LinearAlgebra::Vector<T>> &directions,
-    std::set<size_t> missing_dirs)
+    const std::set<size_t> &dynamic_directions, std::set<size_t> missing_dirs)
 {
   std::set<std::vector<unsigned int>> raw_templates;
 
   add_missing_templates(raw_templates, directions, missing_dirs);
 
   for (auto &raw_template: raw_templates) {
-    templates.insert(std::move(raw_template));
+    templates.emplace(raw_template, dynamic_directions);
   }
 }
 
@@ -715,7 +733,9 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
   duplicate_dynamic_directions(_directions, _dynamic_directions, _lower_bounds,
                                _upper_bounds, templates);
 
-  _templates.insert(std::begin(templates), std::end(templates));
+  for (auto &bundle_template: templates) {
+    _templates.emplace(bundle_template, _dynamic_directions);
+  }
 }
 
 Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
@@ -763,7 +783,7 @@ Bundle::Bundle(const Polytope &P)
     missing_dirs.insert(i);
   }
 
-  add_missing_templates(_templates, _directions, missing_dirs);
+  add_missing_templates(_templates, _directions, {}, missing_dirs);
 }
 
 /**
@@ -1177,7 +1197,7 @@ bool copy_required(const std::vector<unsigned int> &bundle_template,
  * This function is called as the last phase of intersection or
  * approximated union between two bundles. After identifying
  * shared directions and adding non-shared ones to the direction
- * vector, the templates involving non-shared
+ * vector, the templates involving non-shared must be added.
  *
  * @param dest_templates is the destination template set
  * @param source_templates is the source template set
@@ -1198,7 +1218,7 @@ void add_mapped_templates(
     }
 
     // add the new template to the intersected bundle
-    dest_templates.emplace(std::move(t_copy));
+    dest_templates.emplace(t_copy, std::set<size_t>{});
   }
 }
 
@@ -1322,7 +1342,8 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   }
 
   // add missing templates
-  add_missing_templates(_templates, _directions, outside_templates);
+  add_missing_templates(_templates, _directions, _dynamic_directions,
+                        outside_templates);
 
   return this->canonize();
 }
