@@ -30,28 +30,28 @@ const hr = 1;
 
 const delta = 0.01;
 
-dynamic(pn) = pn + (u*(2*q0v*q0v + 2*q1v*q1v - 1) - v*(2*q0v*q3v - 2*q1v*q2v ) + w*(2*q0v*q2v + 2*q1v*q3v ))*delta;
-dynamic(pe) = pe + (v*(2*q0v*q0v + 2*q2v*q2v - 1) + u*(2*q0v*q3v + 2*q1v*q2v ) - w*(2*q0v*q1v - 2*q2v*q3v ))*delta;
-dynamic(h) = h + (w*(2*q0v*q0v + 2*q3v*q3v - 1) - u*(2*q0v*q2v - 2*q1v*q3v ) + v*(2*q0v*q1v + 2*q2v*q3v ))*delta;
+next(pn) = pn + (u*(2*q0v*q0v + 2*q1v*q1v - 1) - v*(2*q0v*q3v - 2*q1v*q2v ) + w*(2*q0v*q2v + 2*q1v*q3v ))*delta;
+next(pe) = pe + (v*(2*q0v*q0v + 2*q2v*q2v - 1) + u*(2*q0v*q3v + 2*q1v*q2v ) - w*(2*q0v*q1v - 2*q2v*q3v ))*delta;
+next(h) = h + (w*(2*q0v*q0v + 2*q3v*q3v - 1) - u*(2*q0v*q2v - 2*q1v*q3v ) + v*(2*q0v*q1v + 2*q2v*q3v ))*delta;
 
-dynamic(u) = u + (r*v - q*w - g*(2*q0v*q2v - 2*q1v*q3v ))*delta;
-dynamic(v) = v + (p*w - r*u + g*(2*q0v*q1v + 2*q2v*q3v ))*delta;
-dynamic(w) = w + (q*u - p*v -(0.0361*hI + 0.0694*h + 0.0603*w)*mInv + g*(2*q0v*q0v + 2*q3v*q3v - 1 ))*delta;
+next(u) = u + (r*v - q*w - g*(2*q0v*q2v - 2*q1v*q3v ))*delta;
+next(v) = v + (p*w - r*u + g*(2*q0v*q1v + 2*q2v*q3v ))*delta;
+next(w) = w + (q*u - p*v -(0.0361*hI + 0.0694*h + 0.0603*w)*mInv + g*(2*q0v*q0v + 2*q3v*q3v - 1 ))*delta;
 
-dynamic(q0v) = q0v +(-(q1v*0.5)*p - (q2v*0.5)*q - (q3v*0.5)*r)*delta;
-dynamic(q1v) = q1v + ((q0v*0.5)*p - (q3v*0.5)*q + (q2v*0.5)*r)*delta;
-dynamic(q2v) = q2v + ((q3v*0.5)*p + (q0v*0.5)*q - (q1v*0.5)*r)*delta;
-dynamic(q3v) = q3v + ((q1v*0.5)*q - (q2v*0.5)*p + (q0v*0.5)*r)*delta;
+next(q0v) = q0v +(-(q1v*0.5)*p - (q2v*0.5)*q - (q3v*0.5)*r)*delta;
+next(q1v) = q1v + ((q0v*0.5)*p - (q3v*0.5)*q + (q2v*0.5)*r)*delta;
+next(q2v) = q2v + ((q3v*0.5)*p + (q0v*0.5)*q - (q1v*0.5)*r)*delta;
+next(q3v) = q3v + ((q1v*0.5)*q - (q2v*0.5)*p + (q0v*0.5)*r)*delta;
 
-dynamic(p) = p + ((1*JxInv)*(-0.0003*vI - 0.0005*v - 0.0018*2*q1v - 0.0004*p) + ((Jy - Jz)*JxInv)*q*r)*delta;
-dynamic(q) = q + ((1*JyInv)*(0.0003*uI + 0.0005*u - 0.0018*2*q2v - 0.0004*q) - ((Jx - Jz)*JyInv)*p*r)*delta;
-dynamic(r) = r + ((1*JzInv)*(-0.0003*psiI - 0.0006*2*q3v - 0.0003*r) + ((Jx - Jy)*JzInv)*p*q)*delta;
+next(p) = p + ((1*JxInv)*(-0.0003*vI - 0.0005*v - 0.0018*2*q1v - 0.0004*p) + ((Jy - Jz)*JxInv)*q*r)*delta;
+next(q) = q + ((1*JyInv)*(0.0003*uI + 0.0005*u - 0.0018*2*q2v - 0.0004*q) - ((Jx - Jz)*JyInv)*p*r)*delta;
+next(r) = r + ((1*JzInv)*(-0.0003*psiI - 0.0006*2*q3v - 0.0003*r) + ((Jx - Jy)*JzInv)*p*q)*delta;
 
 // Controller
-dynamic(hI) = hI + (h - hr)*delta;
-dynamic(uI) = uI +(u - ur)*delta;
-dynamic(vI) = vI + (v - vr)*delta;
-dynamic(psiI) = psiI + (2*q3v - psir)*delta;
+next(hI) = hI + (h - hr)*delta;
+next(uI) = uI +(u - ur)*delta;
+next(vI) = vI + (v - vr)*delta;
+next(psiI) = psiI + (2*q3v - psir)*delta;
 
 
 direction 0.5*h + 0.5*w + 0.5*q0v + 0.25*vI in [-100, 100];

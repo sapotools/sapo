@@ -6,9 +6,9 @@ var s in [0.79, 0.8];
 var i in [0.19, 0.2];
 var r in [0.000099, 0.0001];
 
-dynamic(s) = s - (0.34*s*i)*0.1;
-dynamic(i) = i + (0.34*s*i - 0.05*i)*0.1;
-dynamic(r) = r + 0.05*i*0.1;
+next(s) = s - (0.34*s*i)*0.1;
+next(i) = i + (0.34*s*i - 0.05*i)*0.1;
+next(r) = r + 0.05*i*0.1;
 
 direction s + 0.5*i in [0, 1];
 direction 0.5*s + 0.5*r in [0, 1];

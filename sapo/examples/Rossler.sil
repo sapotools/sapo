@@ -6,9 +6,9 @@ var x in [0.09, 0.1];
 var y in [4.99, 5];
 var z in [0.09, 0.1];
 
-dynamic(x) = x + (-y-z)*0.025;
-dynamic(y) = y + (x + 0.1*y)*0.025;
-dynamic(z) = z + (0.1 + z*(x-14))*0.025;
+next(x) = x + (-y-z)*0.025;
+next(y) = y + (x + 0.1*y)*0.025;
+next(z) = z + (0.1 + z*(x-14))*0.025;
 
 direction x + y/2 in [0, 10];
 direction x/2 + z/2 in [0, 10];

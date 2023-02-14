@@ -5,8 +5,8 @@ var x, y;
 const alpha = 0.9;
 const beta=11/9;
 
-dynamic(x) = alpha*x;
-dynamic(y) = beta*y*x;
+next(x) = alpha*x;
+next(y) = beta*y*x;
 
 invariant: x>=0 && y>=0 && y<=150;
 

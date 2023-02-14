@@ -89,6 +89,7 @@
 	DEFINE
 	IN
 	DYN
+	NEXT
 	SPEC
 	ASSUME
 	ITER
@@ -438,7 +439,7 @@ symbol			: VAR identList IN doubleInterval ";"
 								drv.data.addDefinition(new AbsSyn::Definition(s, $4));
 							}
 						}
-						| DYN "(" IDENT ")" "=" expr ";"
+						| NEXT "(" IDENT ")" "=" expr ";"
 						{
 							if (AbsSyn::getDegree($6, drv.data.getParamSymbols()) > 1) {
 								ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
@@ -456,11 +457,11 @@ symbol			: VAR identList IN doubleInterval ";"
 								}
 							}
 						}
-						| DYN "(" IDENT ")" "=" expr error
+						| NEXT "(" IDENT ")" "=" expr error
 						{
 							MISSING_SC(@6);
 						}
-						| DYN "(" IDENT error "=" expr ";"
+						| NEXT "(" IDENT error "=" expr ";"
 						{
 							ERROR(@3, "Missing \")\"");
 						}

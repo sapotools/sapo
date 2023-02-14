@@ -7,9 +7,9 @@ var s, i, r;
 param beta in [0.18, 0.2];
 param gamma in [0.05, 0.06];
 
-dynamic(s) = s - (beta*s*i)*0.1;
-dynamic(i) = i + (beta*s*i - gamma*i)*0.1;
-dynamic(r) = r + gamma*i*0.1;
+next(s) = s - (beta*s*i)*0.1;
+next(i) = i + (beta*s*i - gamma*i)*0.1;
+next(r) = r + gamma*i*0.1;
 
 spec: G[50, 100] i <= 0.4405;
 

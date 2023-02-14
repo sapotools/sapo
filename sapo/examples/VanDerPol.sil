@@ -6,8 +6,8 @@ iterations: 30;
 var x in [0, 0.01];
 var y in [1.99, 2];
 
-dynamic(x) = x + (y)*0.02;
-dynamic(y) = y + (0.5*(1-x*x)*y - x)*0.02;
+next(x) = x + (y)*0.02;
+next(y) = y + (0.5*(1-x*x)*y - x)*0.02;
 
 direction y - x = 10;
 direction x + y = 10;

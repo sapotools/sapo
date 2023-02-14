@@ -6,8 +6,8 @@ var x, y;
 const a = 0.2;
 const b = 0.3;
 
-dynamic(x) = 2*x*y+b;
-dynamic(y) = y*y-x*x+a;
+next(x) = 2*x*y+b;
+next(y) = y*y-x*x+a;
 
 invariant: x+y<=0.6;
 

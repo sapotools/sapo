@@ -14,8 +14,8 @@ var b in [b0-epsilon, b0+epsilon];
 const alpha = 0.60159;
 const beta = 0.505;
 
-dynamic(a) = 3*a*b*b - a*a*a + alpha;
-dynamic(b) = b*b*b - 3*a*a*b + beta;
+next(a) = 3*a*b*b - a*a*a + alpha;
+next(b) = b*b*b - 3*a*a*b + beta;
 
 spec: a <= 4;
 

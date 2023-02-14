@@ -23,11 +23,11 @@ const sigma = 0.28;
 const Delta = 0.1;
 
 // dynamics
-dynamic(s) = s - ((s*beta*i) + gamma1*q)*Delta;
-dynamic(e) = e + ((s*beta*i) - (kappa1+kappa2)*e)*Delta;
-dynamic(q) = q + (kappa1*e - (gamma1+gamma2)*q)*Delta;
-dynamic(i) = i + (gamma2*q + kappa2*e - sigma*i)*Delta;
-dynamic(r) = r + (sigma*i)*Delta;
+next(s) = s - ((s*beta*i) + gamma1*q)*Delta;
+next(e) = e + ((s*beta*i) - (kappa1+kappa2)*e)*Delta;
+next(q) = q + (kappa1*e - (gamma1+gamma2)*q)*Delta;
+next(i) = i + (gamma2*q + kappa2*e - sigma*i)*Delta;
+next(r) = r + (sigma*i)*Delta;
 
 // specification
 spec: q <= 0.045 U[10,15] i <= 0.23;

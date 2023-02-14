@@ -5,8 +5,8 @@ iterations: 30;
 var x;
 var y;
 
-dynamic(x) = 1/(x+1);
-dynamic(y) = 5-(y-5)/10;
+next(x) = 1/(x+1);
+next(y) = 5-(y-5)/10;
 
 direction x <= 2;
 direction y <= 2;

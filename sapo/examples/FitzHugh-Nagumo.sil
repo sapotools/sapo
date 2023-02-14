@@ -13,8 +13,8 @@ const delta = 0.01;
 // parameters
 
 // dynamics
-dynamic(x) = x + (x - (x^3)/3 - y + 0.875 ) * delta;
-dynamic(y) = y + 0.08 * ( x + 0.7 - 0.8 * y ) * delta;
+next(x) = x + (x - (x^3)/3 - y + 0.875 ) * delta;
+next(y) = y + 0.08 * ( x + 0.7 - 0.8 * y ) * delta;
 
 // initial set
 direction x in [2.7, 2.8];

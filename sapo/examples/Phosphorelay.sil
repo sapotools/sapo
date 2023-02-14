@@ -6,13 +6,13 @@ var x1, x2, x3, x4, x5, x6, x7 in [1, 1.01];
 
 const delta = 0.01;
 
-dynamic(x1) = x1 + ( -0.4*x1 + 5*x3*x4 )*delta;
-dynamic(x2) = x2 + ( 0.4*x1 - x2 )*delta;
-dynamic(x3) = x3 + ( x2-5*x3*x4 )*delta;
-dynamic(x4) = x4 + ( 5*x5*x6 - 5*x3*x4 )*delta;
-dynamic(x5) = x5 + ( -5*x5*x6 + 5*x3*x4 )*delta;
-dynamic(x6) = x6 + ( 0.5*x7 - 5*x5*x6 )*delta;
-dynamic(x7) = x7 + ( -0.5*x7 + 5*x5*x6 )*delta;
+next(x1) = x1 + ( -0.4*x1 + 5*x3*x4 )*delta;
+next(x2) = x2 + ( 0.4*x1 - x2 )*delta;
+next(x3) = x3 + ( x2-5*x3*x4 )*delta;
+next(x4) = x4 + ( 5*x5*x6 - 5*x3*x4 )*delta;
+next(x5) = x5 + ( -5*x5*x6 + 5*x3*x4 )*delta;
+next(x6) = x6 + ( 0.5*x7 - 5*x5*x6 )*delta;
+next(x7) = x7 + ( -0.5*x7 + 5*x5*x6 )*delta;
 
 direction x3 + x4 in [-100, 100];
 direction x5 + x6 in [-100, 100];

@@ -14,10 +14,10 @@ const delta = 0.00008;
 const rho = 0.5;
 //const g = rho*(1-dist)*(i+epsilon*t);
 
-dynamic(s) = s*(1-rho*(1-dist)*(i+epsilon*t));
-dynamic(i) = (1-tau)*(1-sigma1)*(1-delta)*i +s*rho*(1-dist)*(i+epsilon*t);
-dynamic(t) = (1-sigma2)*t + tau*(1-sigma1)*(1-delta)*i;
-dynamic(r) = r + sigma1*(1-delta)*i +sigma2*t;
+next(s) = s*(1-rho*(1-dist)*(i+epsilon*t));
+next(i) = (1-tau)*(1-sigma1)*(1-delta)*i +s*rho*(1-dist)*(i+epsilon*t);
+next(t) = (1-sigma2)*t + tau*(1-sigma1)*(1-delta)*i;
+next(r) = r + sigma1*(1-delta)*i +sigma2*t;
 
 spec: G[0,50] i <= 0.4235;
 

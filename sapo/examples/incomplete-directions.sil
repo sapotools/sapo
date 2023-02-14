@@ -7,8 +7,8 @@ var y;
 
 const timestep = 0.0001;
 
-dynamic(x) = x;
-dynamic(y) = y + x*x*timestep;
+next(x) = x;
+next(y) = y + x*x*timestep;
 
 direction x + y <= 10;
 direction x >= 1;

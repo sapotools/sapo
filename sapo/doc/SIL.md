@@ -104,10 +104,10 @@ define ex = v + c*p/2;
 ```
 
 ### Dynamics
-They represent the evolution of variables with resect to time.
+They represent the evolution of variable value.
 
 ```C++
-dynamic(v1) = v1 + p * (v2 - c + v3);
+next(v1) = v1 + p * (v2 - c + v3);
 ```
 where
 
@@ -354,9 +354,9 @@ param mu in [0.00001, 0.001];
 param gamma in [0.0027, 0.0055];
 param alpha in [0.05, 0.07];
 
-dynamic(s) = s - beta*s*i - mu*s + gamma*r;
-dynamic(i) = i + beta*s*i - alpha*i;
-dynamic(r) = r + mu*s - gamma*r + alpha*i;
+next(s) = s - beta*s*i - mu*s + gamma*r;
+next(i) = i + beta*s*i - alpha*i;
+next(r) = r + mu*s - gamma*r + alpha*i;
 
 spec: r > 0.4;
 
@@ -386,8 +386,8 @@ iterations: 30;
 var x in [0, 0.01];
 var y in [1.99, 2];
 
-dynamic(x) = x + (y)*0.02;
-dynamic(y) = y + (0.5*(1-x^2)*y - x)*0.02;
+next(x) = x + (y)*0.02;
+next(y) = y + (0.5*(1-x^2)*y - x)*0.02;
 
 direction diff: y - x in [-10, 10];
 direction sum: x + y in [-10, 10];
