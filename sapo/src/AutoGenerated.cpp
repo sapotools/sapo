@@ -177,14 +177,14 @@ Bundle getBundle(const InputData &id)
   }
   Bundle bundle;
 
-  std::set<size_t> dynamic_directions;
-  if (id.areAllDirsDynamics()) {  
+  std::set<size_t> adaptive_directions;
+  if (id.areAllDirsAdaptive()) {  
     for (size_t i=0; i<directions.size(); ++i) {
-      dynamic_directions.insert(i);
+      adaptive_directions.insert(i);
     }
   }
 
-  bundle = Bundle(directions, LB, UB, templates, dynamic_directions);
+  bundle = Bundle(directions, LB, UB, templates, adaptive_directions);
 
   if (id.getUseInvariantDirections()) {
     const auto variables = id.getVarSymbols();

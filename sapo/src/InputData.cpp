@@ -19,7 +19,7 @@ InputData::InputData():
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
     templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
     compose_dynamic(false), dynamic_degree(1), approx_type(Sapo::NO_APPROX),
-    bern_caching(true), all_dirs_dynamic(false),
+    bern_caching(true), all_dirs_adaptive(false),
     use_invariant_directions(false)
 {
 }

@@ -108,7 +108,7 @@
 	PACKAGING
 	MERGING
 	NO_CACHE
-	ALL_DIRS_DYN
+	ALL_DIRS_ADAPTIVE
 	TRANS
 	AFO
 	OFO
@@ -1044,9 +1044,9 @@ option	: TRANS transType ";"
 		{
 			drv.data.setBernsteinCaching(false);
 		}
-		| ALL_DIRS_DYN ";"
+		| ALL_DIRS_ADAPTIVE ";"
 		{
-			drv.data.setAllDirsDynamics(true);
+			drv.data.setAllDirsAdaptive(true);
 		}
 		| PRESPLITS ";"
 		{
@@ -1200,7 +1200,7 @@ std::string possibleStatements(std::string s)
 		"direction",
 		"parameter_direction",
 		"template",
-		"all_dirs_dynamic",
+		"all_dirs_adaptive",
 		"option"
 	};
 	

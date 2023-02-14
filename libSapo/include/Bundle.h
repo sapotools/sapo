@@ -59,7 +59,7 @@ class BundleTemplate
   std::vector<unsigned int>
       _dir_indices; //!< indices of the template directions
   std::set<size_t>
-      _dynamic_indices; //!< the template dynamic direction indices
+      _adaptive_indices; //!< the template adaptive direction indices
 
 public:
   /**
@@ -80,10 +80,10 @@ public:
    * @brief A constructor for bundle templates
    *
    * @param dir_indices is a vector of bundle direction indices
-   * @param dynamic_indices is the set of bundle dynamic direction indices
+   * @param adaptive_indices is the set of bundle adaptive direction indices
    */
   BundleTemplate(const std::vector<unsigned int> &dir_indices,
-                 const std::set<size_t> &dynamic_indices);
+                 const std::set<size_t> &adaptive_indices);
 
   /**
    * @brief A move operator
@@ -122,24 +122,24 @@ public:
   }
 
   /**
-   * @brief Get the set of the template dynamic direction indices
+   * @brief Get the set of the template adaptive direction indices
    *
-   * @return the set of the template dynamic direction indices
+   * @return the set of the template adaptive direction indices
    */
-  inline const std::set<size_t> &dynamic_indices() const
+  inline const std::set<size_t> &adaptive_indices() const
   {
-    return _dynamic_indices;
+    return _adaptive_indices;
   }
 
   /**
-   * @brief Test whether the template includes dynamic direction indices
+   * @brief Test whether the template includes adaptive direction indices
    *
-   * @return `true` if and only if the template includes dynamic
+   * @return `true` if and only if the template includes adaptive
    *      direction indices
    */
-  inline bool is_dynamic() const
+  inline bool is_adaptive() const
   {
-    return _dynamic_indices.size() > 0;
+    return _adaptive_indices.size() > 0;
   }
 
   /**
@@ -185,7 +185,7 @@ class Bundle
   std::vector<LinearAlgebra::Vector<double>>
       _directions; //!< the vector of directions
   std::set<size_t>
-      _dynamic_directions; //!< the set of dynamic direction indices
+      _adaptive_directions; //!< the set of adaptive direction indices
   LinearAlgebra::Vector<double> _lower_bounds; //!< direction upper bounds
   LinearAlgebra::Vector<double> _upper_bounds; //!< direction lower bounds
   std::set<BundleTemplate> _templates;         //!< bundle templates
@@ -242,13 +242,13 @@ class Bundle
    * This constructor does not perform any check on the parameter
    * consistency.
    *
-   * @param[in] dynamic_directions is the set of dynamic direction indices
+   * @param[in] adaptive_directions is the set of adaptive direction indices
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
    */
-  Bundle(const std::set<size_t> &dynamic_directions,
+  Bundle(const std::set<size_t> &adaptive_directions,
          const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
@@ -260,13 +260,13 @@ class Bundle
    * This constructor does not perform any check on the parameter
    * consistency.
    *
-   * @param[in] dynamic_directions is the set of dynamic direction indices
+   * @param[in] adaptive_directions is the set of adaptive direction indices
    * @param[in] directions is the direction vector
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
    */
-  Bundle(const std::set<size_t> &dynamic_directions,
+  Bundle(const std::set<size_t> &adaptive_directions,
          std::vector<LinearAlgebra::Vector<double>> &&directions,
          LinearAlgebra::Vector<double> &&lower_bounds,
          LinearAlgebra::Vector<double> &&upper_bounds,
@@ -300,7 +300,7 @@ public:
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
-   * @param[in] dynamic_direction is the set of dynamic directions
+   * @param[in] adaptive_direction is the set of adaptive directions
    * @param[in] remove_unused_directions is a flag to remove
    *      directions not belonging to any template
    */
@@ -308,7 +308,7 @@ public:
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
          std::set<std::vector<unsigned int>> templates,
-         const std::set<size_t> &dynamic_directions,
+         const std::set<size_t> &adaptive_directions,
          const bool remove_unused_directions = false);
 
   /**
@@ -433,25 +433,25 @@ public:
   }
 
   /**
-   * @brief Check whether the i-th direction is dynamic
+   * @brief Check whether the i-th direction is adaptive
    *
    * @param i is the index of the considered direction
    * @return `true` if and only if the i-th direction
-   *      is dynamic
+   *      is adaptive
    */
-  inline bool is_direction_dynamic(const size_t &i) const
+  inline bool is_direction_adaptive(const size_t &i) const
   {
-    return _dynamic_directions.count(i) > 0;
+    return _adaptive_directions.count(i) > 0;
   }
 
   /**
-   * @brief Get the set of the bundle dynamic direction indices
+   * @brief Get the set of the bundle adaptive direction indices
    *
-   * @return the set of bundle dynamic direction indices
+   * @return the set of bundle adaptive direction indices
    */
-  inline const std::set<size_t> &dynamic_directions() const
+  inline const std::set<size_t> &adaptive_directions() const
   {
-    return _dynamic_directions;
+    return _adaptive_directions;
   }
 
   /**

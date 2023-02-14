@@ -35,15 +35,15 @@ BOOST_AUTO_TEST_CASE(test_bundle)
            b2(B,{0,0,0,0,0},{3,5,5,7,5}, 
               {{2,1,4}}), // all the directions are static
            b3(B,{0,0,0,0,0},{3,5,5,7,5}, 
-              {{2,1,4}},{0,3}), // 0 and 3 are dynamic directions
+              {{2,1,4}},{0,3}), // 0 and 3 are adaptive directions
            b4(B,{0,0,0,0,0},{3,5,5,2,5}, 
               {{2,1,4}}), // all the directions are static
            b5(B,{0,0,0,0,0},{3,5,5,2,5}, 
-              {{2,1,4}},{0,3}), // 0 and 3 are dynamic directions
+              {{2,1,4}},{0,3}), // 0 and 3 are adaptive directions
            b6(B,{0,0,0,0,0},{3,5,5,7,5},
               {{2,1,4}},true), // remove unused directions
            b7(B,{0,0,0,0,0},{3,5,5,7,5},{{2,1,4},
-              {0,1,4}},{0,1,4},true); // 0, 1, and 4 are dynamic directions
+              {0,1,4}},{0,1,4},true); // 0, 1, and 4 are adaptive directions
                                       // remove  unused directions
 
 

@@ -386,14 +386,14 @@ public:
     return bern_caching;
   }
 
-  inline void setAllDirsDynamics(const bool flag)
+  inline void setAllDirsAdaptive(const bool flag)
   {
-    all_dirs_dynamic = flag;
+    all_dirs_adaptive = flag;
   }
 
-  inline bool areAllDirsDynamics() const
+  inline bool areAllDirsAdaptive() const
   {
-    return all_dirs_dynamic;
+    return all_dirs_adaptive;
   }
 
   inline void setUseInvariantDirections(bool flag)
@@ -466,7 +466,7 @@ protected:
   unsigned dynamic_degree;
   Sapo::joinApproxType approx_type;
   bool bern_caching;
-  bool all_dirs_dynamic;
+  bool all_dirs_adaptive;
   bool use_invariant_directions;
 };
 

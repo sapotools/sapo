@@ -43,18 +43,18 @@
 #define AVOID_NEG_ZERO(value) ((value) == 0 ? 0 : (value))
 
 BundleTemplate::BundleTemplate(const BundleTemplate &orig):
-    _dir_indices(orig._dir_indices), _dynamic_indices(orig._dynamic_indices)
+    _dir_indices(orig._dir_indices), _adaptive_indices(orig._adaptive_indices)
 {
 }
 
 BundleTemplate::BundleTemplate(BundleTemplate &&orig):
     _dir_indices(std::move(orig._dir_indices)),
-    _dynamic_indices(std::move(orig._dynamic_indices))
+    _adaptive_indices(std::move(orig._adaptive_indices))
 {
 }
 
 BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices,
-                               const std::set<size_t> &dynamic_indices):
+                               const std::set<size_t> &adaptive_indices):
     _dir_indices(dir_indices.size())
 {
   std::vector<size_t> position(dir_indices.size());
@@ -78,8 +78,8 @@ BundleTemplate::BundleTemplate(const std::vector<unsigned int> &dir_indices,
   }
 
   for (size_t i = 0; i < _dir_indices.size(); ++i) {
-    if (dynamic_indices.count(_dir_indices[i]) > 0) {
-      _dynamic_indices.insert(i);
+    if (adaptive_indices.count(_dir_indices[i]) > 0) {
+      _adaptive_indices.insert(i);
     }
   }
 }
@@ -93,9 +93,9 @@ std::ostream &operator<<(std::ostream &os,
     os << sep << index;
     sep = ",";
   }
-  os << "], dynamic_indices: {";
+  os << "], adaptive_indices: {";
   sep = "";
-  for (const auto &index: bundle_template.dynamic_indices()) {
+  for (const auto &index: bundle_template.adaptive_indices()) {
     os << sep << index;
     sep = ",";
   }
@@ -116,7 +116,7 @@ Bundle::Bundle() {}
 
 Bundle::Bundle(const Bundle &orig):
     _directions(orig._directions),
-    _dynamic_directions(orig._dynamic_directions),
+    _adaptive_directions(orig._adaptive_directions),
     _lower_bounds(orig._lower_bounds), _upper_bounds(orig._upper_bounds),
     _templates(orig._templates)
 {
@@ -130,7 +130,7 @@ Bundle::Bundle(Bundle &&orig)
 void swap(Bundle &A, Bundle &B)
 {
   std::swap(A._directions, B._directions);
-  std::swap(A._dynamic_directions, B._dynamic_directions);
+  std::swap(A._adaptive_directions, B._adaptive_directions);
   std::swap(A._upper_bounds, B._upper_bounds);
   std::swap(A._lower_bounds, B._lower_bounds);
   std::swap(A._templates, B._templates);
@@ -248,18 +248,18 @@ template<typename T>
 void mark_linearly_dep_dirs(
     std::vector<size_t> &new_pos,
     const std::vector<LinearAlgebra::Vector<T>> &directions,
-    const std::set<size_t> &dynamic_directions, const size_t &dir_idx)
+    const std::set<size_t> &adaptive_directions, const size_t &dir_idx)
 {
   using namespace LinearAlgebra;
 
-  bool dir_is_dyn = (dynamic_directions.count(dir_idx) > 0);
+  bool dir_is_dyn = (adaptive_directions.count(dir_idx) > 0);
 
   const size_t new_idx = new_pos[dir_idx];
 
   const auto &dir = directions[dir_idx];
   for (size_t j = dir_idx + 1; j < directions.size(); ++j) {
     if (new_pos[j] == j) {
-      bool j_is_dyn = (dynamic_directions.count(j) > 0);
+      bool j_is_dyn = (adaptive_directions.count(j) > 0);
       if (j_is_dyn == dir_is_dyn
           && are_linearly_dependent(dir, directions[j])) {
         new_pos[j] = new_idx;
@@ -273,7 +273,7 @@ void mark_linearly_dep_dirs(
  *
  * @tparam T is the scalar type of the directions
  * @param directions is the direction vector
- * @param dynamic_directions is the set of dynamic direction indices
+ * @param adaptive_directions is the set of adaptive direction indices
  * @param lower_bounds is the vector of the direction lower bounds
  * @param upper_bounds is the vector of the direction upper bounds
  * @return a vector mapping each index of the input direction vector in the
@@ -282,12 +282,12 @@ void mark_linearly_dep_dirs(
 template<typename T>
 std::vector<size_t>
 filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
-                             std::set<size_t> &dynamic_directions,
+                             std::set<size_t> &adaptive_directions,
                              LinearAlgebra::Vector<T> &lower_bounds,
                              LinearAlgebra::Vector<T> &upper_bounds)
 {
   std::vector<LinearAlgebra::Vector<T>> new_directions;
-  std::set<size_t> new_dynamic_dirs;
+  std::set<size_t> new_adaptive_dirs;
   LinearAlgebra::Vector<T> new_lower_bounds, new_upper_bounds;
 
   std::vector<size_t> new_pos(directions.size());
@@ -312,15 +312,15 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
       new_upper_bounds.push_back(upper_bounds[i]);
 
       // if the i-th direction is dynamic add among the
-      // dynamic directions of the new direction vector
-      if (dynamic_directions.count(i) > 0) {
-        new_dynamic_dirs.insert(new_idx);
+      // adaptive directions of the new direction vector
+      if (adaptive_directions.count(i) > 0) {
+        new_adaptive_dirs.insert(new_idx);
       }
 
       // mark in new_pos directions all direction vector that are
       // linearly dependent to directions[i] and are among dynamic
       // directions as direction[i] is/is not.
-      mark_linearly_dep_dirs(new_pos, directions, dynamic_directions, i);
+      mark_linearly_dep_dirs(new_pos, directions, adaptive_directions, i);
     } else {
       // directions[i] has been already inserted in new_directions
       // in position new_pos[i]
@@ -341,9 +341,9 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
     }
   }
 
-  // replace old directions, dynamic_directions, lower_bounds, and upper_bounds
+  // replace old directions, adaptive_directions, lower_bounds, and upper_bounds
   std::swap(directions, new_directions);
-  std::swap(dynamic_directions, new_dynamic_dirs);
+  std::swap(adaptive_directions, new_adaptive_dirs);
   std::swap(lower_bounds, new_lower_bounds);
   std::swap(upper_bounds, new_upper_bounds);
 
@@ -359,20 +359,20 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
  *
  * @tparam T is the scalar type of the directions
  * @param directions is the vector of the directions
- * @param dynamic_directions is the set of dynamic direction indices
+ * @param adaptive_directions is the set of adaptive direction indices
  * @param lower_bounds is the vector of the direction lower bounds
  * @param upper_bounds is the vector of the direction upper bounds
  * @param new_positions is the map of the new positions
  */
 template<typename T>
 void resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
-                       std::set<size_t> &dynamic_directions,
+                       std::set<size_t> &adaptive_directions,
                        LinearAlgebra::Vector<T> &lower_bounds,
                        LinearAlgebra::Vector<T> &upper_bounds,
                        const std::map<size_t, size_t> &new_positions)
 {
   std::vector<LinearAlgebra::Vector<T>> new_directions(new_positions.size());
-  std::set<size_t> new_dynamic_dirs;
+  std::set<size_t> new_adaptive_dirs;
   LinearAlgebra::Vector<T> new_lower_bounds(new_positions.size()),
       new_upper_bounds(new_positions.size());
 
@@ -382,12 +382,12 @@ void resort_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
     std::swap(upper_bounds[new_pos.first], new_upper_bounds[new_pos.second]);
   }
 
-  for (const auto &dynamic_direction: dynamic_directions) {
-    new_dynamic_dirs.insert(new_positions.at(dynamic_direction));
+  for (const auto &adaptive_direction: adaptive_directions) {
+    new_adaptive_dirs.insert(new_positions.at(adaptive_direction));
   }
 
   std::swap(directions, new_directions);
-  std::swap(dynamic_directions, new_dynamic_dirs);
+  std::swap(adaptive_directions, new_adaptive_dirs);
   std::swap(lower_bounds, new_lower_bounds);
   std::swap(upper_bounds, new_upper_bounds);
 }
@@ -500,14 +500,14 @@ template<typename T>
 void add_missing_templates(
     std::set<BundleTemplate> &templates,
     const std::vector<LinearAlgebra::Vector<T>> &directions,
-    const std::set<size_t> &dynamic_directions, std::set<size_t> missing_dirs)
+    const std::set<size_t> &adaptive_directions, std::set<size_t> missing_dirs)
 {
   std::set<std::vector<unsigned int>> raw_templates;
 
   add_missing_templates(raw_templates, directions, missing_dirs);
 
   for (auto &raw_template: raw_templates) {
-    templates.emplace(raw_template, dynamic_directions);
+    templates.emplace(raw_template, adaptive_directions);
   }
 }
 
@@ -601,9 +601,9 @@ void validate_directions(
   }
 }
 
-void duplicate_dynamic_directions(
+void duplicate_adaptive_directions(
     std::vector<LinearAlgebra::Vector<double>> &directions,
-    std::set<size_t> &dynamic_directions,
+    std::set<size_t> &adaptive_directions,
     LinearAlgebra::Vector<double> &lower_bounds,
     LinearAlgebra::Vector<double> &upper_bounds,
     std::set<std::vector<unsigned int>> &templates)
@@ -619,15 +619,15 @@ void duplicate_dynamic_directions(
     for (auto &idx: bundle_template) {
 
       // if one of template directions has been already mentioned
-      if (dynamic_directions.count(idx) > 0 && require_duplicate[idx]) {
+      if (adaptive_directions.count(idx) > 0 && require_duplicate[idx]) {
 
         // the template must be changed
         changed = true;
 
         // add the index of the direction that we are going to
         // insert at the end of the direction vector among
-        // the dynamic direction indices
-        dynamic_directions.insert(directions.size());
+        // the adaptive direction indices
+        adaptive_directions.insert(directions.size());
 
         // copy the mentioned direction as a new direction
         directions.emplace_back(directions[idx]);
@@ -651,24 +651,24 @@ void duplicate_dynamic_directions(
   std::swap(templates, new_templates);
 }
 
-Bundle::Bundle(const std::set<size_t> &dynamic_directions,
+Bundle::Bundle(const std::set<size_t> &adaptive_directions,
                const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
                const std::set<BundleTemplate> &templates):
     _directions(directions),
-    _dynamic_directions(dynamic_directions), _lower_bounds(lower_bounds),
+    _adaptive_directions(adaptive_directions), _lower_bounds(lower_bounds),
     _upper_bounds(upper_bounds), _templates(templates)
 {
 }
 
-Bundle::Bundle(const std::set<size_t> &dynamic_directions,
+Bundle::Bundle(const std::set<size_t> &adaptive_directions,
                std::vector<LinearAlgebra::Vector<double>> &&directions,
                LinearAlgebra::Vector<double> &&lower_bounds,
                LinearAlgebra::Vector<double> &&upper_bounds,
                const std::set<BundleTemplate> &templates):
     _directions(std::move(directions)),
-    _dynamic_directions(dynamic_directions),
+    _adaptive_directions(adaptive_directions),
     _lower_bounds(std::move(lower_bounds)),
     _upper_bounds(std::move(upper_bounds)), _templates(templates)
 {
@@ -678,18 +678,18 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &lower_bounds,
                const LinearAlgebra::Vector<double> &upper_bounds,
                std::set<std::vector<unsigned int>> templates,
-               const std::set<size_t> &dynamic_directions,
+               const std::set<size_t> &adaptive_directions,
                const bool remove_unused_directions):
     _directions(directions),
-    _dynamic_directions(dynamic_directions), _lower_bounds(lower_bounds),
+    _adaptive_directions(adaptive_directions), _lower_bounds(lower_bounds),
     _upper_bounds(upper_bounds), _templates()
 {
   validate_directions(_directions, _lower_bounds, _upper_bounds);
   validate_templates(_directions, templates);
 
-  for (const auto &dir_index: dynamic_directions) {
+  for (const auto &dir_index: adaptive_directions) {
     if (dir_index >= _directions.size()) {
-      SAPO_ERROR("the dynamic directions must be valid "
+      SAPO_ERROR("the adaptive directions must be valid "
                  "indices for the direction vector",
                  std::domain_error);
     }
@@ -697,7 +697,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
 
   // filter duplicated direction, update templates, and bring them in canonical
   // form
-  auto new_pos = filter_duplicated_directions(_directions, _dynamic_directions,
+  auto new_pos = filter_duplicated_directions(_directions, _adaptive_directions,
                                               _lower_bounds, _upper_bounds);
 
   templates = update_templates_directions(templates, new_pos);
@@ -725,16 +725,16 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
       // find a new position for the used directions
       auto new_pos = find_new_position_for(used_dirs);
 
-      resort_directions(_directions, _dynamic_directions, _lower_bounds,
+      resort_directions(_directions, _adaptive_directions, _lower_bounds,
                         _upper_bounds, new_pos);
       templates = update_templates_directions(templates, new_pos);
     }
   }
-  duplicate_dynamic_directions(_directions, _dynamic_directions, _lower_bounds,
+  duplicate_adaptive_directions(_directions, _adaptive_directions, _lower_bounds,
                                _upper_bounds, templates);
 
   for (auto &bundle_template: templates) {
-    _templates.emplace(bundle_template, _dynamic_directions);
+    _templates.emplace(bundle_template, _adaptive_directions);
   }
 }
 
@@ -795,7 +795,7 @@ Bundle::Bundle(const Polytope &P)
 Bundle &Bundle::operator=(const Bundle &orig)
 {
   this->_directions = orig._directions;
-  this->_dynamic_directions = orig._dynamic_directions;
+  this->_adaptive_directions = orig._adaptive_directions;
   this->_templates = orig._templates;
 
   this->_upper_bounds = orig._upper_bounds;
@@ -1066,7 +1066,7 @@ std::list<Bundle> &Bundle::split_bundle(
     const double &max_magnitude, const double &split_ratio) const
 {
   if (idx == this->size()) {
-    Bundle new_bundle(this->_dynamic_directions, this->_directions,
+    Bundle new_bundle(this->_adaptive_directions, this->_directions,
                       this->_lower_bounds, this->_upper_bounds,
                       this->_templates);
     res.push_back(std::move(new_bundle));
@@ -1342,7 +1342,7 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
   }
 
   // add missing templates
-  add_missing_templates(_templates, _directions, _dynamic_directions,
+  add_missing_templates(_templates, _directions, _adaptive_directions,
                         outside_templates);
 
   return this->canonize();

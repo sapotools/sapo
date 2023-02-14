@@ -754,7 +754,7 @@ get_parallelotope_basis_vertices(const Parallelotope &p)
  * @brief Get the parallelotope basis image
  *
  * Every parallelotope is described by a vector of generator
- * vectors \f$G\f$, their lengths \f$\lambda\f$, and a
+ * vectors \f$G\f$, the associated lengths \f$\lambda\f$, and a
  * base vertices \f$b\f$. The parallelotope basis is
  * the set of vectors \f$\lambda_i*G_i\f$.
  * The parallelotope basis vertices are vertices of the
@@ -795,7 +795,7 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
   using namespace LinearAlgebra;
 
   // if no direction is dynamic return the old direction vector
-  if (bundle.dynamic_directions().size() == 0) {
+  if (bundle.adaptive_directions().size() == 0) {
     return bundle.directions();
   }
 
@@ -804,25 +804,25 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
   auto avg_ds = average_dynamics(ds, parameter_set);
 
   for (const auto &bundle_template: bundle.templates()) {
-    if (bundle_template.is_dynamic()) {
+    if (bundle_template.is_adaptive()) {
       Parallelotope p = bundle.get_parallelotope(bundle_template);
 
       auto basis_images
           = get_parallelotope_basis_images(avg_ds, ds.variables(), p);
 
-      for (const auto &dynamic_index: bundle_template.dynamic_indices()) {
-        const auto &direction_index = bundle_template[dynamic_index];
-        if (bundle.is_direction_dynamic(direction_index)) {
+      for (const auto &adaptive_index: bundle_template.adaptive_indices()) {
+        const auto &direction_index = bundle_template[adaptive_index];
+        if (bundle.is_direction_adaptive(direction_index)) {
           // remove the basis vector of the considered direction
           Vector<double> basis_direction
-              = extract_value(basis_images, dynamic_index);
+              = extract_value(basis_images, adaptive_index);
 
           // compute one of vectors orthogonal to sampling images
           new_dirs[direction_index]
               = compute_orthogonal_direction(basis_images);
 
           // insert again the basis vector of the considered direction
-          insert_value(basis_images, dynamic_index,
+          insert_value(basis_images, adaptive_index,
                        std::move(basis_direction));
 
           fix_new_dir_verse(bundle.get_direction(direction_index),
@@ -943,7 +943,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res(bundle._dynamic_directions, std::move(new_dirs),
+  Bundle res(bundle.adaptive_directions(), std::move(new_dirs),
              std::move(lower_bounds), std::move(upper_bounds),
              bundle.templates());
 
@@ -1160,7 +1160,7 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
     lower_bounds.push_back(*it);
   }
 
-  Bundle res(bundle._dynamic_directions, std::move(new_dirs),
+  Bundle res(bundle.adaptive_directions(), std::move(new_dirs),
              std::move(lower_bounds), std::move(upper_bounds),
              bundle.templates());
 
