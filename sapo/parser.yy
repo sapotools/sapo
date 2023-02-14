@@ -186,6 +186,9 @@ s		: statement {}
 		{
 			ERROR(@1, "Empty file");
 			YYERROR;
+			(void)yynerrs_;   // this is just to avoid a clang 
+							  // compilation warning about 
+							  // bison variable yynerrs_
 		}
 
 statement		: header {}

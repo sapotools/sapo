@@ -13,7 +13,7 @@ namespace std
 {
 
 template<typename T>
-std::ostream &operator<<(std::ostream &os, const std::pair<T, T> p)
+std::ostream &operator<<(std::ostream &os, const std::pair<T, T>& p)
 {
   return os << "[" << p.first << "," << p.second << "]";
 }
