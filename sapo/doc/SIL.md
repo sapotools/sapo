@@ -253,8 +253,30 @@ direction default_x: x in [a, b];
 
 Notice that the implicit direction defined during variable declaration is always named `default_<var_name>`.
 
+#### Adaptive directions
+
+*Adaptive directions* are variable directions which change during the computation according to the dynamic law. Their use does not guarantee the minimization of the flow-pipe volume, but they may reduce the approximation with respect to the non-adaptive directions (*static directions*) at the price of a reasonable computational overhead.
+
+To set a direction to be adaptive, use the reserved word `adaptive` before the direction definition itself.
+
+The following example defines a 2D model whose dynamic lets the initial set rotate around the axis origin. The initial set is defined by two directions, `d1` and `d2`, that, at the beginning of the computation, correspond to the axis `x` and `y` respectively. The direction `d2` is a static direction and does not change, while `d1` is adaptive and rotates as the considered set rotate around the axis origin. 
+
+```C++
+iterations: 130;
+
+var x, y;
+
+const delta = 0.01;
+
+next(x) = x - y*delta;
+next(y) = y + x*delta;
+
+adaptive direction d1: x in [-0.06, 0.05];
+direction d2: y in [1.0, 1.1];
+```
+
 ### Template for parallelotope bundle
-In order to represent polytopes, Sapo uses parallelotope bundles. It is possible to define this bundle by explicitly giving a template matrix.
+In order to represent polytopes, Sapo uses parallelotope bundles that are intersection of parallelotopes. A bundle consists in a vector of directions and a set of templates. Each template corresponds to a non-sigular parallelotope and it is a set indices for the direction vector such that the corresponding directions are a basis for the bundle space.
 
 ```C++
 template = {
@@ -300,10 +322,10 @@ These statements provide some options to tune the behavior of Sapo.
 All of them are optional.
 
 We can define
-- how we compute the image of a polytope (optional)
+- bundle image computation approach (optional)
 	
 	```option transformation [AFO | OFO];```
-	In general, `AFO` gives more accurate results but `OFO` is faster.
+	In general, `AFO` (*all-for-one*,) gives more accurate results but `OFO` is faster.
 	The default value is ```AFO```.
 
 - set an approximation technique for set join in `k`-induction invariant proof.
@@ -313,11 +335,14 @@ We can define
 	The default value is `listing`.
 
 - avoid Bernstein coefficients caching during computation. If this option is selected, Bernstein coefficients are numerically evaluated on-the-fly at 
-each epoch instead of being symbollically computed for a generic parallotope with specific generators and cached once and then recovered 
-and instanciated when needed. The default behaviour is more convenient when the time overhead due to the symbolic computation is balanced by 
+each epoch instead of being symbolically computed for a generic parallelotope with specific generators and cached once and then recovered 
+and instantiated when needed. The default behaviour is more convenient when the time overhead due to the symbolic computation is balanced by 
 the savings due to using the same coefficients for many evolution epochs. 
 
 	```option no_caching;``` 
+- set all the bundle directions to be adaptive
+
+	```option all_dirs_adaptive;```
 
 ## Comments
 SIL understands C/C++ like comments, both sigle and multi-line

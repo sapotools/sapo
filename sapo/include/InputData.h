@@ -265,7 +265,7 @@ public:
   }
 
   // add direction with specified name
-  size_t addVarDirectionConstraint(Direction<> *d);
+  size_t addVarDirectionConstraint(Direction<> *d, const bool adaptive=false);
 
   unsigned int getDirectionsNum() const
   {
@@ -391,10 +391,7 @@ public:
     all_dirs_adaptive = flag;
   }
 
-  inline bool areAllDirsAdaptive() const
-  {
-    return all_dirs_adaptive;
-  }
+  std::set<size_t> getAdaptiveDirections() const;
 
   inline void setUseInvariantDirections(bool flag)
   {
@@ -455,6 +452,7 @@ protected:
   std::shared_ptr<STL::STL> spec;
 
   std::vector<Direction<> *> directions;
+  std::set<size_t> adaptive_directions;
 
   std::vector<std::vector<unsigned int>> templateMatrix;
 

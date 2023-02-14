@@ -229,6 +229,20 @@ SymbolicAlgebra::Symbol<> InputData::getSymbol(std::string name) const
   SAPO_ERROR(oss.str(), std::domain_error);
 }
 
+std::set<size_t> InputData::getAdaptiveDirections() const
+{
+  if (all_dirs_adaptive) {
+    std::set<size_t> adaptive_directions;
+    for (size_t i=0; i<directions.size(); ++i) {
+      adaptive_directions.insert(i);
+    }
+
+    return adaptive_directions;
+  }
+
+  return this->adaptive_directions;
+}
+
 const Variable *InputData::getVar(const string &name) const
 {
   for (unsigned i = 0; i < vars.size(); i++)
@@ -357,8 +371,11 @@ size_t InputData::addParamDirectionConstraint(Direction<> *d)
   return paramDirections.size();
 }
 
-size_t InputData::addVarDirectionConstraint(Direction<> *d)
+size_t InputData::addVarDirectionConstraint(Direction<> *d, bool adaptive)
 {
+  if (adaptive) {
+    adaptive_directions.insert(directions.size());
+  }
 
   directions.push_back(d);
 
@@ -368,7 +385,7 @@ size_t InputData::addVarDirectionConstraint(Direction<> *d)
     }
   }
 
-  return directions.size();
+  return directions.size()-1;
 }
 
 unsigned int InputData::findDirectionPos(const std::string &name) const

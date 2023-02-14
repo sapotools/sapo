@@ -12,6 +12,7 @@ using namespace AbsSyn;
 std::set<std::vector<unsigned int>>
 trim_unused_directions(std::vector<std::vector<double>> &directions,
                        std::vector<double> &LB, std::vector<double> &UB,
+                       std::set<size_t>& adaptive_directions,
                        const std::set<std::vector<unsigned int>> &templates)
 {
   /* init new_pos by assigning 1 to any useful direction and
@@ -62,6 +63,12 @@ trim_unused_directions(std::vector<std::vector<double>> &directions,
 
     output.insert(new_T);
   }
+
+  std::set<size_t> new_adaptive_directions;
+  for (const auto& dir: adaptive_directions) {
+    new_adaptive_directions.insert(new_pos[dir] - 1);
+  }
+  std::swap(adaptive_directions, new_adaptive_directions);
 
   return output;
 }
@@ -159,6 +166,7 @@ Bundle getBundle(const InputData &id)
 
   std::vector<std::vector<double>> directions;
   std::vector<double> LB, UB;
+  std::set<size_t> adaptive_directions = id.getAdaptiveDirections();
 
   // the following call also filter linearly dependent direction.
   // These should be already removed by InputData methods, but
@@ -173,18 +181,10 @@ Bundle getBundle(const InputData &id)
     /* Why can't simply uses the template themselve?
        Because Bundle:transform in AFO mode assumes that
        each of the directions belongs to a template at least. */
-    templates = trim_unused_directions(directions, LB, UB, templates);
-  }
-  Bundle bundle;
-
-  std::set<size_t> adaptive_directions;
-  if (id.areAllDirsAdaptive()) {  
-    for (size_t i=0; i<directions.size(); ++i) {
-      adaptive_directions.insert(i);
-    }
+    templates = trim_unused_directions(directions, LB, UB, adaptive_directions, templates);
   }
 
-  bundle = Bundle(directions, LB, UB, templates, adaptive_directions);
+  Bundle bundle = Bundle(directions, LB, UB, templates, adaptive_directions);
 
   if (id.getUseInvariantDirections()) {
     const auto variables = id.getVarSymbols();

@@ -1,0 +1,24 @@
+problem: reachability;
+iterations: 2000;
+max_parameter_splits: 0;
+
+
+// variables
+var x;
+var y;
+
+// constants
+const timestep = 0.01;
+
+// parameters
+
+// dynamics
+next(x) = 0.166667*timestep*(-0.2*x + -y + 2*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + 2*(-0.2*(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + x) + -(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + y)) + -0.2*(timestep*(-0.2*(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + x) + -(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + y)) + x) + -(timestep*(-0.2*(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + y) + 0.5*timestep*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + x) + y)) + x;
+next(y) = 0.166667*timestep*(-0.2*y + x + 2*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + 2*(-0.2*(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + y) + 0.5*timestep*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + x) + -0.2*(timestep*(-0.2*(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + y) + 0.5*timestep*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + x) + y) + timestep*(-0.2*(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*x + -y) + x) + -(0.5*timestep*(-0.2*y + x) + y)) + x) + -(0.5*timestep*(-0.2*(0.5*timestep*(-0.2*y + x) + y) + 0.5*timestep*(-0.2*x + -y) + x) + y)) + x) + y;
+
+// initial set
+direction x in [-0.05, 0.05];
+direction y in [1, 1.1];
+
+option no_caching;
+option all_dirs_adaptive;

@@ -88,7 +88,7 @@
 	CONST
 	DEFINE
 	IN
-	DYN
+	ADAPTIVE
 	NEXT
 	SPEC
 	ASSUME
@@ -172,6 +172,7 @@
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction<>*> constraint
 %nterm <AbsSyn::Direction<>::Type> constraintType
+%nterm <bool> adaptiveDir
 
 %printer { yyo << $$; } <*>;
 
@@ -587,15 +588,18 @@ assumption 	: 	constraint
 					drv.data.addAssumption($3);
 				}
 
-var_constraint	:   DIR constraint ";"
+adaptiveDir :	DIR { $$ = false; }
+				| ADAPTIVE DIR { $$ = true; }
+
+var_constraint	:   adaptiveDir constraint ";"
 					{
 						if (drv.data.getParamSymbols().size()!=0 &&
 					    	$2->contains(drv.data.getParamSymbols())) {
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
-						drv.data.addVarDirectionConstraint($2);
+						drv.data.addVarDirectionConstraint($2,$1);
 					}
-					| DIR constraint error
+					| adaptiveDir constraint error
 					{
 						MISSING_SC(@2);
 						if (drv.data.getParamSymbols().size()!=0 &&
@@ -603,11 +607,11 @@ var_constraint	:   DIR constraint ";"
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
 					}
-					| DIR error ";"
+					| adaptiveDir error ";"
 					{
 						ERROR(@2, "Error in constraint");
 					}
-					| DIR IDENT ":" constraint ";"
+					| adaptiveDir IDENT ":" constraint ";"
 					{
 						if (drv.data.getParamSymbols().size()!=0 &&
 					    	$4->contains(drv.data.getParamSymbols())) {
@@ -618,9 +622,9 @@ var_constraint	:   DIR constraint ";"
 						}
 						SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
 						$4->setSymbol(s);
-						drv.data.addVarDirectionConstraint($4);
+						drv.data.addVarDirectionConstraint($4,$1);
 					}
-					| DIR IDENT ":" constraint error
+					| adaptiveDir IDENT ":" constraint error
 					{
 						MISSING_SC(@3);
 						if (drv.data.getParamSymbols().size()!=0 &&
@@ -632,13 +636,13 @@ var_constraint	:   DIR constraint ";"
 						}
 						SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
 						$4->setSymbol(s);
-						drv.data.addVarDirectionConstraint($4);
+						drv.data.addVarDirectionConstraint($4,$1);
 					}
-					| DIR IDENT error constraint ";"
+					| adaptiveDir IDENT error constraint ";"
 					{
 						ERROR(@2, "Missing \":\"");
 					}
-					| DIR IDENT error ";"
+					| adaptiveDir IDENT error ";"
 					{
 						ERROR(@3, "Error in constraint");
 					}
@@ -1188,7 +1192,7 @@ std::string possibleStatements(std::string s)
 		"param",
 		"const",
 		"define",
-		"dynamic",
+		"next",
 		"invariant",
 		"spec",
 		"assume",
@@ -1197,6 +1201,7 @@ std::string possibleStatements(std::string s)
 		"max_parameter_splits",
 		"presplit_parameters",
 		"max_bundle_magnitude",
+		"adaptive",
 		"direction",
 		"parameter_direction",
 		"template",
