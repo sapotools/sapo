@@ -9,7 +9,7 @@ const delta = 0.01;
 next(x) = x - y*delta;
 next(y) = y + x*delta;
 
-adaptive direction x in [-0.06, 0.05];
+direction x in [-0.06, 0.05] adaptive;
 direction y in [1.0, 1.1];
 
 option no_caching;

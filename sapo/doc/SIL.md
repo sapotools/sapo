@@ -257,7 +257,7 @@ Notice that the implicit direction defined during variable declaration is always
 
 *Adaptive directions* are variable directions which change during the computation according to the dynamic law. Their use does not guarantee the minimization of the flow-pipe volume, but they may reduce the approximation with respect to the non-adaptive directions (*static directions*) at the price of a reasonable computational overhead.
 
-To set a direction to be adaptive, use the reserved word `adaptive` before the direction definition itself.
+To set a direction to be adaptive, use the reserved word `adaptive` at the end of its definition being either a `direction` or `var` statement.
 
 The following example defines a 2D model whose dynamic lets the initial set rotate around the axis origin. The initial set is defined by two directions, `d1` and `d2`, that, at the beginning of the computation, correspond to the axis `x` and `y` respectively. The direction `d2` is a static direction and does not change, while `d1` is adaptive and rotates as the considered set rotate around the axis origin. 
 
@@ -271,12 +271,12 @@ const delta = 0.01;
 next(x) = x - y*delta;
 next(y) = y + x*delta;
 
-adaptive direction d1: x in [-0.06, 0.05];
+direction d1: x in [-0.06, 0.05] adaptive;
 direction d2: y in [1.0, 1.1];
 ```
 
 ### Template for parallelotope bundle
-In order to represent polytopes, Sapo uses parallelotope bundles that are intersection of parallelotopes. A bundle consists in a vector of directions and a set of templates. Each template corresponds to a non-sigular parallelotope and it is a set indices for the direction vector such that the corresponding directions are a basis for the bundle space.
+In order to represent polytopes, Sapo uses parallelotope bundles that are intersection of parallelotopes. A bundle consists in a vector of directions and a set of templates. Each template corresponds to a non-singular parallelotope and it is a set indices for the direction vector such that the corresponding directions are a basis for the bundle space.
 
 ```C++
 template = {

@@ -172,7 +172,7 @@
 %nterm <AbsSyn::transType> transType
 %nterm <AbsSyn::Direction<>*> constraint
 %nterm <AbsSyn::Direction<>::Type> constraintType
-%nterm <bool> adaptiveDir
+%nterm <bool> adaptive_flag
 
 %printer { yyo << $$; } <*>;
 
@@ -271,7 +271,7 @@ header			: PROB ":" problemType ";"
 							MISSING_SC(@3);
 						}
 
-symbol			: VAR identList IN doubleInterval ";"
+symbol			: VAR identList IN doubleInterval adaptive_flag ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
 							{
@@ -284,11 +284,11 @@ symbol			: VAR identList IN doubleInterval ";"
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
 									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
-									drv.data.addVarDirectionConstraint(d);
+									drv.data.addVarDirectionConstraint(d, $5);
 								}
 							}
 						}
-						| VAR identList IN doubleInterval error
+						| VAR identList IN doubleInterval adaptive_flag error
 						{
 							MISSING_SC(@4);
 							for (unsigned i = 0; i < $2.size(); i++)
@@ -302,7 +302,7 @@ symbol			: VAR identList IN doubleInterval ";"
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
 									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
-									drv.data.addVarDirectionConstraint(d);
+									drv.data.addVarDirectionConstraint(d, $5);
 								}
 							}
 						}
@@ -591,18 +591,18 @@ assumption 	: 	constraint
 					drv.data.addAssumption($3);
 				}
 
-adaptiveDir :	DIR { $$ = false; }
-				| ADAPTIVE DIR { $$ = true; }
+adaptive_flag :	%empty { $$ = false; }
+				| ADAPTIVE { $$ = true; }
 
-var_constraint	:   adaptiveDir constraint ";"
+var_constraint	:   DIR constraint adaptive_flag ";"
 					{
 						if (drv.data.getParamSymbols().size()!=0 &&
 					    	$2->contains(drv.data.getParamSymbols())) {
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
-						drv.data.addVarDirectionConstraint($2,$1);
+						drv.data.addVarDirectionConstraint($2,$3);
 					}
-					| adaptiveDir constraint error
+					| DIR constraint adaptive_flag error
 					{
 						MISSING_SC(@2);
 						if (drv.data.getParamSymbols().size()!=0 &&
@@ -610,11 +610,11 @@ var_constraint	:   adaptiveDir constraint ";"
 							ERROR(@2, "Variable constraints cannot contain parameters");
 						}
 					}
-					| adaptiveDir error ";"
+					| DIR error ";"
 					{
 						ERROR(@2, "Error in constraint");
 					}
-					| adaptiveDir IDENT ":" constraint ";"
+					| DIR IDENT ":" constraint adaptive_flag ";"
 					{
 						if (drv.data.getParamSymbols().size()!=0 &&
 					    	$4->contains(drv.data.getParamSymbols())) {
@@ -625,9 +625,9 @@ var_constraint	:   adaptiveDir constraint ";"
 						}
 						SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
 						$4->setSymbol(s);
-						drv.data.addVarDirectionConstraint($4,$1);
+						drv.data.addVarDirectionConstraint($4,$5);
 					}
-					| adaptiveDir IDENT ":" constraint error
+					| DIR IDENT ":" constraint adaptive_flag error
 					{
 						MISSING_SC(@3);
 						if (drv.data.getParamSymbols().size()!=0 &&
@@ -639,13 +639,13 @@ var_constraint	:   adaptiveDir constraint ";"
 						}
 						SymbolicAlgebra::Symbol<> *s = new SymbolicAlgebra::Symbol<>($2);
 						$4->setSymbol(s);
-						drv.data.addVarDirectionConstraint($4,$1);
+						drv.data.addVarDirectionConstraint($4,$5);
 					}
-					| adaptiveDir IDENT error constraint ";"
+					| DIR IDENT error constraint adaptive_flag ";"
 					{
 						ERROR(@2, "Missing \":\"");
 					}
-					| adaptiveDir IDENT error ";"
+					| DIR IDENT error ";"
 					{
 						ERROR(@3, "Error in constraint");
 					}
