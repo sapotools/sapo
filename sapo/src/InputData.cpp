@@ -233,7 +233,7 @@ std::set<size_t> InputData::getAdaptiveDirections() const
 {
   if (all_dirs_adaptive) {
     std::set<size_t> adaptive_directions;
-    for (size_t i=0; i<directions.size(); ++i) {
+    for (size_t i = 0; i < directions.size(); ++i) {
       adaptive_directions.insert(i);
     }
 
@@ -385,7 +385,7 @@ size_t InputData::addVarDirectionConstraint(Direction<> *d, bool adaptive)
     }
   }
 
-  return directions.size()-1;
+  return directions.size() - 1;
 }
 
 unsigned int InputData::findDirectionPos(const std::string &name) const
@@ -489,9 +489,9 @@ bool checkFiniteBounds(const char *what,
   LinearSystem constrSystem = getConstraintsSystem(constraints, symbols);
 
   std::vector<T> sym_array(symbols.size(), 0);
-  
-  if (constrSystem.minimize(sym_array).status() == 
-        OptimizationResult<double>::INFEASIBLE) {
+
+  if (constrSystem.minimize(sym_array).status()
+      == OptimizationResult<double>::INFEASIBLE) {
     return true;
   }
 
@@ -500,16 +500,18 @@ bool checkFiniteBounds(const char *what,
     sym_array[i] = 1;
 
     // check whether it is lower bounded
-    if (constrSystem.minimize(sym_array).status() == 
-        OptimizationResult<double>::UNBOUNDED) {
-      std::cerr << what << " is not lower bounded on " << symbols[i] << std::endl;
+    if (constrSystem.minimize(sym_array).status()
+        == OptimizationResult<double>::UNBOUNDED) {
+      std::cerr << what << " is not lower bounded on " << symbols[i]
+                << std::endl;
       result = false;
     }
 
     // check whether it is bounded
-    if (constrSystem.maximize(sym_array).status() == 
-        OptimizationResult<double>::UNBOUNDED) {
-      std::cerr << what << " is not upper bounded on " << symbols[i] << std::endl;
+    if (constrSystem.maximize(sym_array).status()
+        == OptimizationResult<double>::UNBOUNDED) {
+      std::cerr << what << " is not upper bounded on " << symbols[i]
+                << std::endl;
       result = false;
     }
 
@@ -543,10 +545,13 @@ bool InputData::check()
   }
 
   auto var_symbols = this->getVarSymbols();
-  res = res && checkFiniteBounds<double>("The initial set", directions, var_symbols);
+  res = res
+        && checkFiniteBounds<double>("The initial set", directions,
+                                     var_symbols);
 
-  res = res && checkFiniteBounds<double>("The initial parameter set", paramDirections,
-                                         this->getParamSymbols());
+  res = res
+        && checkFiniteBounds<double>("The initial parameter set",
+                                     paramDirections, this->getParamSymbols());
 
   // each template row must be bounded
   {

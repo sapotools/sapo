@@ -265,7 +265,8 @@ public:
   }
 
   // add direction with specified name
-  size_t addVarDirectionConstraint(Direction<> *d, const bool adaptive=false);
+  size_t addVarDirectionConstraint(Direction<> *d,
+                                   const bool adaptive = false);
 
   unsigned int getDirectionsNum() const
   {

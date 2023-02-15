@@ -1530,7 +1530,8 @@ public:
    *         and `interpretation`
    */
   virtual base_expression_type<C> *
-  apply(const std::map<SymbolIdType, C> &interpretation) const = 0;
+  apply(const std::map<SymbolIdType, C> &interpretation) const
+      = 0;
 
   /**
    * @brief Get the coefficient of a term having a given degree
@@ -1541,7 +1542,8 @@ public:
    *         `symbol_id` has degree `degree`
    */
   virtual base_expression_type<C> *get_coeff(const SymbolIdType &symbol_id,
-                                             const int &degree) const = 0;
+                                             const int &degree) const
+      = 0;
 
   /**
    * @brief Get the coefficients of the polynomial expression
@@ -1591,7 +1593,8 @@ public:
    *         to the symbol associated to `symbol_id`
    */
   virtual base_expression_type<C> *
-  get_derivative_wrt(const SymbolIdType &symbol_id) const = 0;
+  get_derivative_wrt(const SymbolIdType &symbol_id) const
+      = 0;
 
   /**
    * @brief Destroy the base expression type object

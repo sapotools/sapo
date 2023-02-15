@@ -12,7 +12,7 @@ using namespace AbsSyn;
 std::set<std::vector<unsigned int>>
 trim_unused_directions(std::vector<std::vector<double>> &directions,
                        std::vector<double> &LB, std::vector<double> &UB,
-                       std::set<size_t>& adaptive_directions,
+                       std::set<size_t> &adaptive_directions,
                        const std::set<std::vector<unsigned int>> &templates)
 {
   /* init new_pos by assigning 1 to any useful direction and
@@ -65,7 +65,7 @@ trim_unused_directions(std::vector<std::vector<double>> &directions,
   }
 
   std::set<size_t> new_adaptive_directions;
-  for (const auto& dir: adaptive_directions) {
+  for (const auto &dir: adaptive_directions) {
     new_adaptive_directions.insert(new_pos[dir] - 1);
   }
   std::swap(adaptive_directions, new_adaptive_directions);
@@ -181,7 +181,8 @@ Bundle getBundle(const InputData &id)
     /* Why can't simply uses the template themselve?
        Because Bundle:transform in AFO mode assumes that
        each of the directions belongs to a template at least. */
-    templates = trim_unused_directions(directions, LB, UB, adaptive_directions, templates);
+    templates = trim_unused_directions(directions, LB, UB, adaptive_directions,
+                                       templates);
   }
 
   Bundle bundle = Bundle(directions, LB, UB, templates, adaptive_directions);

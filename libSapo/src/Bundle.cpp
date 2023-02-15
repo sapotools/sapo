@@ -341,7 +341,8 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
     }
   }
 
-  // replace old directions, adaptive_directions, lower_bounds, and upper_bounds
+  // replace old directions, adaptive_directions, lower_bounds, and
+  // upper_bounds
   std::swap(directions, new_directions);
   std::swap(adaptive_directions, new_adaptive_dirs);
   std::swap(lower_bounds, new_lower_bounds);
@@ -697,8 +698,8 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
 
   // filter duplicated direction, update templates, and bring them in canonical
   // form
-  auto new_pos = filter_duplicated_directions(_directions, _adaptive_directions,
-                                              _lower_bounds, _upper_bounds);
+  auto new_pos = filter_duplicated_directions(
+      _directions, _adaptive_directions, _lower_bounds, _upper_bounds);
 
   templates = update_templates_directions(templates, new_pos);
 
@@ -730,8 +731,8 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
       templates = update_templates_directions(templates, new_pos);
     }
   }
-  duplicate_adaptive_directions(_directions, _adaptive_directions, _lower_bounds,
-                               _upper_bounds, templates);
+  duplicate_adaptive_directions(_directions, _adaptive_directions,
+                                _lower_bounds, _upper_bounds, templates);
 
   for (auto &bundle_template: templates) {
     _templates.emplace(bundle_template, _adaptive_directions);
