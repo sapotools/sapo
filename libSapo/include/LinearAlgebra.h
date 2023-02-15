@@ -198,7 +198,7 @@ Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
 
   Vector<T> res(a.size());
 
-  for (unsigned int i = 0; i < res.size(); ++i) {
+  for (size_t i = 0; i < res.size(); ++i) {
     res[i] = a[i] + b[i];
   }
 
@@ -220,7 +220,7 @@ Vector<T> &operator+=(Vector<T> &a, const Vector<T> &b)
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  for (unsigned int i = 0; i < a.size(); ++i) {
+  for (size_t i = 0; i < a.size(); ++i) {
     a[i] += b[i];
   }
 
@@ -279,7 +279,7 @@ Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
 
   Vector<T> res(a.size());
 
-  for (unsigned int i = 0; i < res.size(); ++i) {
+  for (size_t i = 0; i < res.size(); ++i) {
     res[i] = a[i] - b[i];
   }
 
@@ -302,7 +302,7 @@ Vector<T> &operator-=(Vector<T> &a, const Vector<T> &b)
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  for (unsigned int i = 0; i < a.size(); ++i) {
+  for (size_t i = 0; i < a.size(); ++i) {
     a[i] -= b[i];
   }
 
@@ -346,7 +346,7 @@ Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  for (unsigned int i = 0; i < a.size(); ++i) {
+  for (size_t i = 0; i < a.size(); ++i) {
     b[i] -= a[i];
     b[i] *= -1;
   }
@@ -455,7 +455,7 @@ Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
   }
 
   Vector<T> res(v1.size());
-  for (unsigned int i = 0; i < v1.size(); ++i) {
+  for (size_t i = 0; i < v1.size(); ++i) {
     res[i] = v1[i] * v2[i];
   }
 
@@ -576,23 +576,20 @@ inline T angle(const Vector<T> &v1, const Vector<T> &v2)
  * belongs to \f$O(m*log m)\f$ where \f$m\f$ is the
  * number of swapped positions.
  */
-class Permutation : public std::map<unsigned int, unsigned int>
+class Permutation : public std::map<size_t, size_t>
 {
 public:
   /**
    * @brief Create a new Permutation object
    */
-  Permutation(): std::map<unsigned int, unsigned int>() {}
+  Permutation(): std::map<size_t, size_t>() {}
 
   /**
    * @brief Copy constructor for Permutation object
    *
    * @param orig
    */
-  Permutation(const Permutation &orig):
-      std::map<unsigned int, unsigned int>(orig)
-  {
-  }
+  Permutation(const Permutation &orig): std::map<size_t, size_t>(orig) {}
 
   /**
    * @brief Swaps two positions
@@ -603,10 +600,10 @@ public:
    * @param j second position to be swapped
    * @return The updated permutation
    */
-  Permutation &swap(const unsigned int i, const unsigned int j)
+  Permutation &swap(const size_t i, const size_t j)
   {
     // for both the positions
-    for (const unsigned int &pos: {i, j}) {
+    for (const size_t &pos: {i, j}) {
       // if the position is not stored among the swaps yet
       if (this->find(pos) == this->end()) {
 
@@ -656,8 +653,8 @@ public:
    */
   Permutation &operator=(const Permutation &P)
   {
-    static_cast<std::map<unsigned int, unsigned int>>(*this)
-        = static_cast<std::map<unsigned int, unsigned int>>(P);
+    static_cast<std::map<size_t, size_t>>(*this)
+        = static_cast<std::map<size_t, size_t>>(P);
 
     return *this;
   }
@@ -707,8 +704,8 @@ bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
 
   // initialize the candidate index to be the first one
   // different from zero in v1 or v2
-  unsigned int non_zero_idx = v1.size();
-  for (unsigned int i = 0; i < v1.size(); ++i) {
+  size_t non_zero_idx = v1.size();
+  for (size_t i = 0; i < v1.size(); ++i) {
 
     // if non zero values has not been discovered yet and
     // at least one of the two elements in the two vectors
@@ -756,8 +753,8 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
 
   // initialize the candidate index to be the first one
   // different from zero in v1 or v2
-  unsigned int non_zero_idx = v1.size();
-  for (unsigned int i = 0; i < v1.size(); ++i) {
+  size_t non_zero_idx = v1.size();
+  for (size_t i = 0; i < v1.size(); ++i) {
 
     // if non zero values has not been discovered yet and
     // at least one of the two elements in the two vectors
@@ -887,10 +884,10 @@ Dense::Matrix<T> operator*(const Dense::Matrix<T> &A,
 
   Dense::Matrix<T> res(A.size(), Vector<T>(B.front().size(), 0));
 
-  for (unsigned int row_idx = 0; row_idx < A.size(); ++row_idx) {
-    for (unsigned int col_idx = 0; col_idx < B.front().size(); ++col_idx) {
+  for (size_t row_idx = 0; row_idx < A.size(); ++row_idx) {
+    for (size_t col_idx = 0; col_idx < B.front().size(); ++col_idx) {
       T value = 0;
-      for (unsigned int k = 0; k < A[row_idx].size(); ++k) {
+      for (size_t k = 0; k < A[row_idx].size(); ++k) {
         value += A[row_idx][k] * B[k][col_idx];
       }
       res[row_idx][col_idx] = std::move(value);
@@ -957,7 +954,7 @@ Vector<size_t> find_first_independent_rows(Dense::Matrix<T> A)
         Vector<T> &row_k = A[k];
         if (row_k[j] != 0) {
           const T ratio = -row_k[j] / v;
-          for (unsigned int i = j + 1; i < row_j.size(); ++i) {
+          for (size_t i = j + 1; i < row_j.size(); ++i) {
             row_k[i] += ratio * row_j[i];
           }
           row_k[j] = -ratio;
@@ -1018,10 +1015,10 @@ class LUP_Factorization
   {
     Vector<T> x(b.size());
 
-    for (unsigned int j = 0; j < _LU.size(); ++j) {
+    for (size_t j = 0; j < _LU.size(); ++j) {
       T value = b[j];
       const Vector<T> &row = _LU[j];
-      for (unsigned int i = 0; i < j; ++i) {
+      for (size_t i = 0; i < j; ++i) {
         if (row[i] != 0) {
           value -= row[i] * x[i];
         }
@@ -1042,8 +1039,8 @@ class LUP_Factorization
   {
     Vector<T> x(b.size());
 
-    for (unsigned int rj = 0; rj < _LU.size(); ++rj) {
-      const unsigned int j = _LU.size() - rj - 1;
+    for (size_t rj = 0; rj < _LU.size(); ++rj) {
+      const size_t j = _LU.size() - rj - 1;
       T value = b[j];
       const Vector<T> &row = _LU[j];
 
@@ -1051,7 +1048,7 @@ class LUP_Factorization
       if (diag_value == 0) {
         SAPO_ERROR("the linear system is undetermined", std::domain_error);
       }
-      for (unsigned int i = j + 1; i < row.size(); ++i) {
+      for (size_t i = j + 1; i < row.size(); ++i) {
         value -= row[i] * x[i];
       }
       x[j] = value / diag_value;
@@ -1132,7 +1129,7 @@ public:
           Vector<T> &row_k = _LU[k];
           if (row_k[j] != 0) {
             const T ratio = -row_k[j] / v;
-            for (unsigned int i = j + 1; i < row_j.size(); ++i) {
+            for (size_t i = j + 1; i < row_j.size(); ++i) {
               row_k[i] += ratio * row_j[i];
             }
             row_k[j] = -ratio;
@@ -1219,10 +1216,10 @@ public:
   {
     Matrix<T> res(_LU.size(), Vector<T>(_LU.size(), 0));
 
-    for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
+    for (size_t row_idx = 0; row_idx < _LU.size(); ++row_idx) {
       const Vector<T> &row = _LU[row_idx];
       Vector<T> &res_row = res[row_idx];
-      for (unsigned int col_idx = 0; col_idx < row_idx && col_idx < row.size();
+      for (size_t col_idx = 0; col_idx < row_idx && col_idx < row.size();
            ++col_idx) {
         res_row[col_idx] = row[col_idx];
       }
@@ -1241,10 +1238,10 @@ public:
   {
     Matrix<T> res(_LU.size(), Vector<T>(_LU.front().size(), 0));
 
-    for (unsigned int row_idx = 0; row_idx < _LU.size(); ++row_idx) {
+    for (size_t row_idx = 0; row_idx < _LU.size(); ++row_idx) {
       const Vector<T> &row = _LU[row_idx];
       Vector<T> &res_row = res[row_idx];
-      for (unsigned int col_idx = row_idx; col_idx < row.size(); ++col_idx) {
+      for (size_t col_idx = row_idx; col_idx < row.size(); ++col_idx) {
         res_row[col_idx] = row[col_idx];
       }
     }
@@ -1328,8 +1325,8 @@ T determinant(const Dense::Matrix<T> &A)
 
   // multiply the elements in U main diagonal
   T det = 1;
-  unsigned int elem_in_diag = std::min(A.size(), A.front().size());
-  for (unsigned int i = 0; i < elem_in_diag; ++i) {
+  size_t elem_in_diag = std::min(A.size(), A.front().size());
+  for (size_t i = 0; i < elem_in_diag; ++i) {
     det *= fact.U()[i][i];
 
     if (det == 0) {
@@ -1342,7 +1339,7 @@ T determinant(const Dense::Matrix<T> &A)
   auto P = fact.P();
   std::vector<bool> swaps(A.size(), true);
   for (auto P_it = P.begin(); P_it != P.end(); ++P_it) {
-    unsigned int j = P_it->first;
+    size_t j = P_it->first;
     while (swaps[j]) {
       swaps[j] = false;
       j = P[j];
@@ -1375,7 +1372,7 @@ Dense::Matrix<T> inverse(Dense::Matrix<T> &A)
   Dense::LUP_Factorization<T> fact(A);
   std::vector<T> vi(A.size(), 0);
 
-  for (unsigned int i = 0; i < A.size(); ++i) {
+  for (size_t i = 0; i < A.size(); ++i) {
     vi[i] = 1;
     A_inv.push_back(fact.solve(vi));
     vi[i] = 0;
@@ -1611,7 +1608,7 @@ template<typename T>
 class Matrix
 {
 public:
-  typedef std::map<unsigned int, T> RowType; //!< the index-row map
+  typedef std::map<size_t, T> RowType; //!< the index-row map
 
 protected:
   class _row_ref_type;
@@ -1621,9 +1618,9 @@ protected:
    */
   class _elem_ref_type
   {
-    Matrix<T> &A;               //!< a reference to the matrix
-    const unsigned int row_idx; //!< the index of the element row
-    const unsigned int col_idx; //!< the index of the element column
+    Matrix<T> &A;         //!< a reference to the matrix
+    const size_t row_idx; //!< the index of the element row
+    const size_t col_idx; //!< the index of the element column
 
     /**
      * @brief Create a new matrix element reference object
@@ -1631,7 +1628,7 @@ protected:
      * @param row is a reference to the element row
      * @param col_idx is the index of the element column
      */
-    _elem_ref_type(_row_ref_type &row, const unsigned int col_idx):
+    _elem_ref_type(_row_ref_type &row, const size_t col_idx):
         A(row.A), row_idx(row.row_idx), col_idx(col_idx)
     {
       if (col_idx >= A.num_of_rows()) {
@@ -1751,8 +1748,8 @@ protected:
    */
   class _row_ref_type
   {
-    Matrix<T> &A;               //!< a reference to the matrix
-    const unsigned int row_idx; //!< the index of the referenced row
+    Matrix<T> &A;         //!< a reference to the matrix
+    const size_t row_idx; //!< the index of the referenced row
 
     /**
      * @brief Create a new row reference object
@@ -1760,8 +1757,7 @@ protected:
      * @param A
      * @param row_idx
      */
-    _row_ref_type(Matrix<T> &A, const unsigned int row_idx):
-        A(A), row_idx(row_idx)
+    _row_ref_type(Matrix<T> &A, const size_t row_idx): A(A), row_idx(row_idx)
     {
       if (row_idx >= A.num_of_rows()) {
         SAPO_ERROR("the row does not exist", std::out_of_range);
@@ -1785,7 +1781,7 @@ protected:
      * @param col_idx is the index of the aimed value
      * @return a reference of the element in position `col_idx`
      */
-    _elem_ref_type operator[](const unsigned int col_idx)
+    _elem_ref_type operator[](const size_t col_idx)
     {
       return _elem_ref_type(*this, col_idx);
     }
@@ -1799,8 +1795,8 @@ protected:
    */
   class _const_row_ref_type
   {
-    const Matrix<T> &A;         //!< a reference to the matrix
-    const unsigned int row_idx; //!< the index of the referenced row
+    const Matrix<T> &A;   //!< a reference to the matrix
+    const size_t row_idx; //!< the index of the referenced row
 
     /**
      * @brief Create a new constant row reference object
@@ -1808,7 +1804,7 @@ protected:
      * @param A
      * @param row_idx
      */
-    _const_row_ref_type(const Matrix<T> &A, const unsigned int row_idx):
+    _const_row_ref_type(const Matrix<T> &A, const size_t row_idx):
         A(A), row_idx(row_idx)
     {
       if (row_idx >= A.num_of_rows()) {
@@ -1833,7 +1829,7 @@ protected:
      * @param col_idx is the index of the aimed value
      * @return a copy of the value in position `col_idx`
      */
-    T operator[](const unsigned int col_idx) const
+    T operator[](const size_t col_idx) const
     {
       if (col_idx >= A.num_of_cols()) {
         SAPO_ERROR("the column does not exist", std::out_of_range);
@@ -1857,9 +1853,9 @@ protected:
     friend class Matrix<T>;
   };
 
-  std::map<unsigned int, RowType> _matrix; //!< indexed list of rows
-  size_t _num_of_rows;                     //!< number of rows
-  size_t _num_of_cols;                     //!< number of columns
+  std::map<size_t, RowType> _matrix; //!< indexed list of rows
+  size_t _num_of_rows;               //!< number of rows
+  size_t _num_of_cols;               //!< number of columns
 
   /**
    * @brief Transform a vector in a RowType
@@ -1870,7 +1866,7 @@ protected:
   static RowType get_RowType(const std::vector<T> &row)
   {
     RowType row_map;
-    unsigned int elem_idx = 0;
+    size_t elem_idx = 0;
     for (auto elem_it = std::begin(row); elem_it != std::end(row); ++elem_it) {
       if (*elem_it != 0) {
         row_map[elem_idx] = *elem_it;
@@ -1897,7 +1893,7 @@ public:
    * @param num_of_rows is the number of rows in the new matrix
    * @param num_of_cols is the number of columns in the new matrix
    */
-  Matrix(const unsigned int num_of_rows, const unsigned int num_of_cols):
+  Matrix(const size_t num_of_rows, const size_t num_of_cols):
       _matrix(), _num_of_rows(num_of_rows), _num_of_cols(num_of_cols)
   {
   }
@@ -1908,10 +1904,8 @@ public:
    * @param orig is the model for the new matrix
    * @param up_to_row is the number of rows to be considered in `orig`
    */
-  Matrix(const std::vector<std::vector<T>> &orig,
-         const unsigned int up_to_row):
-      _matrix(),
-      _num_of_rows(0), _num_of_cols(0)
+  Matrix(const std::vector<std::vector<T>> &orig, const size_t up_to_row):
+      _matrix(), _num_of_rows(0), _num_of_cols(0)
   {
     if (up_to_row == 0) {
       return;
@@ -1919,13 +1913,13 @@ public:
 
     _num_of_cols = orig.front().size();
 
-    for (unsigned int j = 0; j < up_to_row; ++j) {
+    for (size_t j = 0; j < up_to_row; ++j) {
       RowType s_row;
       const std::vector<T> &row = orig[j];
       if (row.size() != _num_of_cols) {
         std::domain_error("The parameter is not a matrix");
       }
-      for (unsigned int i = 0; i < row.size(); ++i) {
+      for (size_t i = 0; i < row.size(); ++i) {
         if (row[i] != 0) {
           s_row[i] = row[i];
         }
@@ -2023,7 +2017,7 @@ public:
    * @return the constant reference of the `row_idx`-th row
    */
   typename Matrix<T>::_const_row_ref_type
-  operator[](const unsigned int row_idx) const
+  operator[](const size_t row_idx) const
   {
     return _const_row_ref_type(*this, row_idx);
   }
@@ -2034,7 +2028,7 @@ public:
    * @param row_idx is the index of the aimed row
    * @return the reference of the `row_idx`-th row
    */
-  typename Matrix<T>::_row_ref_type operator[](const unsigned int row_idx)
+  typename Matrix<T>::_row_ref_type operator[](const size_t row_idx)
   {
     return _row_ref_type(*this, row_idx);
   }
@@ -2147,41 +2141,6 @@ public:
 
     return *this;
   }
-
-  /**
-   * @brief Compute the row-column matrix-matrix multiplication
-   *
-   * @param A is a matrix
-   * @return The row-column multiplication between this object and `A`
-   */
-  /*
-  Matrix<T> operator*(const Matrix<T> &A) const
-  {
-    if (num_of_cols() != A.num_of_rows()) {
-      std::domain_error("The two matrices are not compatible for the "
-                        "matrix-matrix multiplication.");
-    }
-
-    Matrix<T> res(num_of_rows(), A.num_of_cols());
-
-    for (auto row_it = std::cbegin(_matrix); row_it != std::cend(_matrix);
-         ++row_it) {
-      const unsigned int row_idx = row_it->first;
-      for (unsigned int col_idx = 0; col_idx < A.num_of_cols(); ++col_idx) {
-        T value = 0;
-        for (auto elem_it = std::cbegin(row_it->second);
-             elem_it != std::cend(row_it->second); ++elem_it) {
-          value += elem_it->second * A[elem_it->first][col_idx];
-        }
-        if (value != 0) {
-          res._matrix[row_idx][col_idx] = value;
-        }
-      }
-    }
-
-    return res;
-  }
-  */
 
   /**
    * @brief Element-wise scalar multiplication for matrices
@@ -2302,10 +2261,10 @@ class LUP_Factorization
    * @param M is a sparse matrix
    * @return the vector of non-zero rows below the diagonal
    */
-  static std::vector<std::set<unsigned int>>
+  static std::vector<std::set<size_t>>
   get_non_zero_below_diag(const Matrix<T> &M)
   {
-    std::vector<std::set<unsigned int>> non_zero_below_diag(M.num_of_cols());
+    std::vector<std::set<size_t>> non_zero_below_diag(M.num_of_cols());
 
     for (auto row_it = std::cbegin(M._matrix); row_it != std::cend(M._matrix);
          ++row_it) {
@@ -2334,8 +2293,8 @@ class LUP_Factorization
    * @param row_idx is the index of the row that must be swapped down
    */
   void swap_with_the_least_non_zero_row_in_column(
-      std::vector<std::set<unsigned int>> &non_zero_below_diag,
-      const unsigned int &row_idx)
+      std::vector<std::set<size_t>> &non_zero_below_diag,
+      const size_t &row_idx)
   {
     // if no value below the diagonal is non-empty
     if (non_zero_below_diag[row_idx].empty()) {
@@ -2389,7 +2348,7 @@ class LUP_Factorization
   {
     std::vector<T> x(b.size());
 
-    unsigned int i = 0;
+    size_t i = 0;
     for (auto row_it = std::begin(_L._matrix); row_it != std::end(_L._matrix);
          ++row_it, ++i) {
       if (std::begin(row_it->second) == std::end(row_it->second)
@@ -2422,7 +2381,7 @@ class LUP_Factorization
   {
     std::vector<T> x(b.size());
 
-    unsigned int i = _U.num_of_rows();
+    size_t i = _U.num_of_rows();
     for (auto row_it = std::rbegin(_U._matrix);
          row_it != std::rend(_U._matrix); ++row_it, --i) {
 
@@ -2477,12 +2436,12 @@ public:
       SAPO_ERROR("0x0-matrices not supported", std::domain_error);
     }
 
-    std::vector<std::set<unsigned int>> non_zero_below_diag
+    std::vector<std::set<size_t>> non_zero_below_diag
         = get_non_zero_below_diag(M);
 
     for (auto row_it = std::begin(_U._matrix); row_it != std::end(_U._matrix);
          ++row_it) {
-      const unsigned int &row_idx = row_it->first;
+      const size_t &row_idx = row_it->first;
 
       if (row_idx == M.num_of_cols()) {
         return;
@@ -2563,7 +2522,7 @@ public:
       }
     }
 
-    for (unsigned int row_idx = 0; row_idx < _L.num_of_rows(); ++row_idx) {
+    for (size_t row_idx = 0; row_idx < _L.num_of_rows(); ++row_idx) {
       // set the L diagonal to 1
       _L._matrix[row_idx][row_idx] = 1;
     }
@@ -2711,8 +2670,8 @@ T determinant(const Sparse::Matrix<T> &A)
 
   T det = 1;
   // multiply the elements in U main diagonal
-  unsigned int elem_in_diag = std::min(A.num_of_rows(), A.num_of_cols());
-  for (unsigned int i = 0; i < elem_in_diag; ++i) {
+  size_t elem_in_diag = std::min(A.num_of_rows(), A.num_of_cols());
+  for (size_t i = 0; i < elem_in_diag; ++i) {
     det *= fact.U()[i][i];
 
     if (det == 0) {
@@ -2725,7 +2684,7 @@ T determinant(const Sparse::Matrix<T> &A)
   auto P = fact.P();
   std::vector<bool> swaps(A.num_of_rows(), true);
   for (auto P_it = P.begin(); P_it != P.end(); ++P_it) {
-    unsigned int j = P_it->first;
+    size_t j = P_it->first;
     while (swaps[j]) {
       swaps[j] = false;
       j = P[j];
@@ -2781,7 +2740,7 @@ Sparse::Matrix<T> inverse(Sparse::Matrix<T> &A)
   Sparse::LUP_Factorization<T> fact(A);
   std::vector<T> vi(A.num_of_rows(), 0);
 
-  for (unsigned int i = 0; i < A.num_of_rows(); ++i) {
+  for (size_t i = 0; i < A.num_of_rows(); ++i) {
     vi[i] = 1;
     A_inv.add_row(fact.solve(vi));
     vi[i] = 0;
@@ -2930,8 +2889,8 @@ Sparse::Matrix<T> operator*(const Sparse::Matrix<T> &A,
 
   for (auto row_it = std::cbegin(A._matrix); row_it != std::cend(A._matrix);
        ++row_it) {
-    const unsigned int row_idx = row_it->first;
-    for (unsigned int col_idx = 0; col_idx < B.num_of_cols(); ++col_idx) {
+    const size_t row_idx = row_it->first;
+    for (size_t col_idx = 0; col_idx < B.num_of_cols(); ++col_idx) {
       T value = 0;
       for (auto elem_it = std::cbegin(row_it->second);
            elem_it != std::cend(row_it->second); ++elem_it) {
