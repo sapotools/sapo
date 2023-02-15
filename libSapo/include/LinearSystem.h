@@ -151,6 +151,18 @@ public:
                                const double &b);
 
   /**
+   * @brief Add new constraints to the system
+   *
+   * This method add all the constraints of a linear system to the
+   * current linear system.
+   *
+   * @param linear_system is the linear system whose constraints must be
+   *      added to the current one
+   * @return a reference to the updated linear system
+   */
+  LinearSystem &add_constraints(const LinearSystem &linear_system);
+
+  /**
    * Return the template matrix
    *
    * @return template matrix

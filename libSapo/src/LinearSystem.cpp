@@ -82,6 +82,29 @@ LinearSystem::add_constraint(const LinearAlgebra::Vector<double> &v,
   return *this;
 }
 
+LinearSystem &LinearSystem::add_constraints(const LinearSystem &linear_system)
+{
+  if (linear_system.size() == 0) {
+    return *this;
+  }
+
+  if (this->dim() != linear_system.dim()) {
+    SAPO_ERROR("the two linear systems differ "
+               "in the number of variables",
+               std::domain_error);
+  }
+
+  for (const auto &direction: linear_system._A) {
+    _A.push_back(direction);
+  }
+
+  for (const auto &b: linear_system._b) {
+    _b.push_back(b);
+  }
+
+  return *this;
+}
+
 LinearSystem &LinearSystem::operator=(const LinearSystem &orig)
 {
   _A = orig._A;
