@@ -1,6 +1,6 @@
 problem: reachability;
 
-iterations: 150;
+iterations: 650;
 
 var x, y;
 
