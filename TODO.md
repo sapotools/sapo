@@ -7,7 +7,8 @@
  - [ ] Build a Conda/Conan/Brew packages.
  - [ ] Remove BaseConverter class and turn its methods in proper functions.
  - [ ] Review all the code.
+ - [ ] Rewrite symbolic computation module and represent formulae as a DAG.
  - [ ] Use a proper class in place of std::vector<std::vector<double> > for matrices and std::vector<double> for vectors (Eigen?).
  - [ ] Parallel computation for Bundle::{transform} (OpenMP? Cuda?). 
  - [ ] Add documentation/examples on using Sapo C++ classes/functions.
- - [ ] Add continous dynamic support.
+ - [ ] Add continuous dynamic support.
