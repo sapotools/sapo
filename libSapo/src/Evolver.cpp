@@ -810,6 +810,14 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
       auto basis_images
           = get_parallelotope_basis_images(avg_ds, ds.variables(), p);
 
+      // if an basis has length 0, then the corresponding generator
+      // does not change
+      for (size_t i = 0; i < p.dim(); ++i) {
+        if (p.lengths()[i] == 0) {
+          basis_images[i] = p.generators()[i];
+        }
+      }
+
       for (const auto &adaptive_index: bundle_template.adaptive_indices()) {
         const auto &direction_index = bundle_template[adaptive_index];
         if (bundle.is_direction_adaptive(direction_index)) {
