@@ -37,6 +37,7 @@
 	#include "Definition.h"
 	#include "Direction.h"
 	#include "InputData.h"
+	#include "Function.h"
 	
 	#define YYDEBUG 1
 	
@@ -69,6 +70,8 @@
 
 %code {
 #include "driver.h"
+
+std::set<std::string> let_identifiers;
 }
 
 %define api.token.prefix {TOK_}
@@ -83,6 +86,7 @@
 	BOX
 	PARAL
 	POLY
+	LET
 	VAR
 	PARAM
 	CONST
@@ -165,7 +169,9 @@
 %nterm <std::pair<int, int>> intInterval
 %nterm <double> number
 %nterm <std::vector<std::string>> identList
+%nterm <std::vector<std::string>> let_identList
 %nterm <SymbolicAlgebra::Expression<>> expr
+%nterm <std::vector<SymbolicAlgebra::Expression<>>> exprList
 %nterm <std::vector<unsigned int>> matrixRow
 %nterm <std::vector<std::vector<unsigned int>>> rowList
 %nterm <std::shared_ptr<STL::STL> > formula
@@ -192,6 +198,7 @@ s		: statement {}
 		}
 
 statement		: header {}
+						| utility_function {}
 						| symbol {}
 						| matrices {}
 						| footer {}
@@ -270,6 +277,42 @@ header			: PROB ":" problemType ";"
 						{
 							MISSING_SC(@3);
 						}
+
+utility_function: LET IDENT "(" let_identList ")" "=" expr ";"
+				  {
+					if (drv.data.isFunctionDefined($2,$4.size())) {
+						ERROR(@2, "Error: function has been already defined");
+					} else {
+						std::vector<SymbolicAlgebra::Symbol<double>> symbols;
+
+						for (const auto& ident: $4) {
+							symbols.emplace_back(ident);
+						}
+						drv.data.addFunction($2, symbols, $7);
+					}
+
+					let_identifiers = {};
+				  }
+				  | LET IDENT "(" let_identList ")" "=" error ";"
+				  {
+					ERROR(@7, "Error in expression definition");
+
+					let_identifiers = {};
+				  }
+				  | LET IDENT "(" error ";"
+				  {
+					ERROR(@4, "Error in formal parameter definition");
+
+					let_identifiers = {};
+				  }
+				  | LET IDENT error ";"
+				  {
+					ERROR(@3, "Error in utility function definition");
+				  }
+				  | LET error ";"
+				  {
+					ERROR(@2, "Error in utility function definition");
+				  }
 
 symbol			: VAR identList IN doubleInterval adaptive_flag ";"
 						{
@@ -836,6 +879,12 @@ modeType	: BOX { $$ = AbsSyn::modeType::BOX; }
 identList	: IDENT { $$ = std::vector<std::string>{$1}; }
 					| identList "," IDENT { $1.push_back($3); $$ = $1; }
 
+let_identList : identList {
+					let_identifiers = std::set<std::string>($1.begin(), $1.end());
+
+					$$ = $1;
+				}
+				
 intInterval			: "[" expr "," expr "]"
 								{
 									double x1, x2;
@@ -915,7 +964,18 @@ expr		: number	{ $$ = $1; }
 				| "+" expr { $$ = $2; }
 				| IDENT	
 				{
-					if (!drv.data.isSymbolDefined($1)) {
+					if (let_identifiers.size() != 0) {
+						if (let_identifiers.count($1)==0) {
+							if (drv.data.isConstDefined($1)) {
+								$$ = drv.data.getConst($1)->getValue();
+							} else {
+								ERROR(@1, "Symbol " + $1 + " is undefined");
+								$$ = 0;
+							}
+						} else {				
+							$$ = SymbolicAlgebra::Symbol<double>($1);
+						}
+					} else if (!drv.data.isSymbolDefined($1)) {
 						ERROR(@1, "Symbol " + $1 + " is undefined");
 						$$ = 0;
 					} else if (drv.data.isConstDefined($1)) {
@@ -924,6 +984,18 @@ expr		: number	{ $$ = $1; }
 						$$ = drv.data.getDef($1)->getValue();
 					} else {
 						$$ = drv.data.getSymbol($1);
+					}
+				}
+				| IDENT "(" exprList ")"
+				{
+					// this is a function evaluation
+					if (!drv.data.isFunctionDefined($1,$3.size())) {
+						ERROR(@$, "Function not defined");
+					} else {
+						const auto& function = drv.data.getFunction($1,$3.size());
+
+						// evaluate the function
+						$$ = simplify(function($3));
 					}
 				}
 				| expr "*" expr { $$ = $1 * $3; }
@@ -970,6 +1042,13 @@ expr		: number	{ $$ = $1; }
 					ERROR(@2, "Missing \")\"");
 					$$ = $2;
 				}
+
+exprList: expr { 
+			$$ = std::vector<SymbolicAlgebra::Expression<double>>{$1}; 
+		}
+		| exprList "," expr { 
+			$1.push_back($3); $$ = $1; 
+		}
 
 formula	: expr ">" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }
 		| expr ">=" expr { $$ = std::make_shared<STL::Atom>($3 - $1); }

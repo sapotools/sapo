@@ -19,6 +19,7 @@
 #include "Constant.h"
 #include "Definition.h"
 #include "Direction.h"
+#include "Function.h"
 
 namespace AbsSyn
 {
@@ -160,6 +161,12 @@ public:
     return defs.size();
   }
 
+  inline bool isFunctionDefined(const std::string &name,
+                                const size_t number_of_parameters) const
+  {
+    return functions.find({name, number_of_parameters}) != std::end(functions);
+  }
+
   bool isVarDefined(const std::string &name)
       const; // checks if a variable named 'name' already exists
   bool isParamDefined(const std::string &name)
@@ -176,6 +183,12 @@ public:
 
   SymbolicAlgebra::Symbol<> getSymbol(
       std::string name) const; // returns the symbol named "name" (must exist)
+
+  inline const Function<double> &
+  getFunction(const std::string &name, const size_t number_of_parameters) const
+  {
+    return functions.at({name, number_of_parameters});
+  }
 
   const Variable *getVar(int i) const
   {
@@ -220,6 +233,15 @@ public:
   const std::list<Direction<> *> &getAssumptions() const
   {
     return assumptions;
+  }
+
+  void addFunction(
+      const std::string &name,
+      const std::vector<SymbolicAlgebra::Symbol<double>> &formal_parameters,
+      const SymbolicAlgebra::Expression<double> expression)
+  {
+    functions.emplace(FunctionSignature(name, formal_parameters.size()),
+                      Function(name, formal_parameters, expression));
   }
 
   void addVariable(
@@ -446,6 +468,7 @@ protected:
   std::vector<Parameter *> params;
   std::vector<Constant *> consts;
   std::vector<Definition *> defs;
+  std::map<FunctionSignature, Function<double>> functions;
 
   std::list<Direction<> *> assumptions;
   std::list<Direction<> *> invariant;

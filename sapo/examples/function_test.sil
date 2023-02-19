@@ -1,0 +1,16 @@
+problem: reachability;
+
+iterations: 10;
+
+const delta = 0.01;
+
+let f_x(x,y) = y*delta; 
+let f_x2(x,a) = - f_x(x,a); 
+
+var x, y;
+
+next(x) = x + f_x2(x,y);
+next(y) = y + x*delta;
+
+direction x in [-0.06, 0.05];
+direction y in [1.0, 1.1];

@@ -56,6 +56,8 @@ reachability		return yy::parser::make_REACH(loc);
 synthesis		return yy::parser::make_SYNTH(loc);
 invariant_validation		return yy::parser::make_INVCHECK(loc);
 
+let					return yy::parser::make_LET(loc);
+
 variable_mode		return yy::parser::make_VARMODE(loc);
 parameter_mode		return yy::parser::make_PARAMMODE(loc);
 boxes			return yy::parser::make_BOX(loc);
