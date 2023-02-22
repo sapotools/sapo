@@ -33,17 +33,20 @@
  * @param[in] model is the model to analyze
  * @param[in] cached is a flag to cache Bernstein coefficients
  */
-Sapo::Sapo(const Model &model, bool cached):
+Sapo::Sapo(const DiscreteModel &model, bool cached):
     max_param_splits(0), num_of_pre_splits(0),
     max_bundle_magnitude(std::numeric_limits<double>::max()),
     max_k_induction(0), delta_thickness_threshold(0),
     missed_thickness_threshold(1), join_approx(joinApproxType::NO_APPROX),
     _evolver(nullptr), assumptions(model.assumptions())
 {
+  const DiscreteSystem<double> &ds
+      = static_cast<const DiscreteSystem<double> &>(model.dynamical_system());
+
   if (cached) {
-    _evolver = new CachedEvolver<double>(model.dynamical_system());
+    _evolver = new CachedEvolver<double>(ds);
   } else {
-    _evolver = new Evolver<double>(model.dynamical_system());
+    _evolver = new Evolver<double>(ds);
   }
 }
 

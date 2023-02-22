@@ -7,6 +7,6 @@
 
 #include "InputData.h"
 
-Model get_model(const AbsSyn::InputData &id);
+Model *get_model(const AbsSyn::InputData &id);
 
 #endif

@@ -201,7 +201,7 @@ public:
    * @param[in] model is the model to analyze
    * @param[in] cached is a flag to cache Bernstein coefficients
    */
-  Sapo(const Model &model, bool cached = true);
+  Sapo(const DiscreteModel &model, bool cached = true);
 
   /**
    * @brief Get the dynamical system

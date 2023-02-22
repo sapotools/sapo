@@ -27,10 +27,11 @@ using namespace std;
 
 #define BAR_LENGTH 50
 
-Sapo init_sapo(const Model &model, const AbsSyn::InputData &data,
+Sapo init_sapo(const Model *model, const AbsSyn::InputData &data,
                const unsigned int num_of_pre_splits)
 {
-  Sapo sapo(model, data.useBernsteinCaching());
+  Sapo sapo(*(static_cast<const DiscreteModel *>(model)),
+            data.useBernsteinCaching());
 
   if (data.getTransValue() == AbsSyn::transType::OFO) {
     sapo.set_evolver_mode(Evolver<double>::ONE_FOR_ONE);
@@ -79,22 +80,22 @@ void print_symbol_vector(OSTREAM &os,
 }
 
 template<typename OSTREAM>
-void print_variables_and_parameters(OSTREAM &os, const Model &model)
+void print_variables_and_parameters(OSTREAM &os, const Model *model)
 {
   using OF = OutputFormater<OSTREAM>;
 
   os << OF::field_begin("variables");
-  print_symbol_vector(os, model.variables());
+  print_symbol_vector(os, model->variables());
   os << OF::field_end();
-  if (model.parameters().size() != 0) {
+  if (model->parameters().size() != 0) {
     os << OF::field_separator() << OF::field_begin("parameters");
-    print_symbol_vector(os, model.parameters());
+    print_symbol_vector(os, model->parameters());
     os << OF::field_end();
   }
 }
 
 template<typename OSTREAM>
-void reach_analysis(OSTREAM &os, Sapo &sapo, const Model &model,
+void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model,
                     const bool display_progress)
 {
   using OF = OutputFormater<OSTREAM>;
@@ -113,14 +114,14 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model &model,
   }
 
   // if the model does not specify any parameter set
-  if (model.parameters().size() == 0) {
+  if (model->parameters().size() == 0) {
 
     // perform the reachability analysis
-    os << sapo.reach(*(model.initial_set()), sapo.time_horizon, accounter);
+    os << sapo.reach(*(model->initial_set()), sapo.time_horizon, accounter);
   } else {
 
     // perform the parametric reachability analysis
-    os << sapo.reach(*(model.initial_set()), model.parameter_set(),
+    os << sapo.reach(*(model->initial_set()), model->parameter_set(),
                      sapo.time_horizon, accounter);
   }
 
@@ -133,7 +134,7 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model &model,
 }
 
 template<typename OSTREAM>
-void output_synthesis(OSTREAM &os, const Model &model,
+void output_synthesis(OSTREAM &os, const Model *model,
                       const std::list<SetsUnion<Polytope>> &synth_params,
                       const std::vector<Flowpipe> &flowpipes)
 {
@@ -170,24 +171,24 @@ void output_synthesis(OSTREAM &os, const Model &model,
   os << OF::field_end() << OF::object_footer();
 }
 
-unsigned int get_max_steps(const Sapo &sapo, const Model &model)
+unsigned int get_max_steps(const Sapo &sapo, const Model *model)
 // const unsigned int &max_param_splits, const unsigned int &num_of_params,
 // const unsigned int &time_horizon)
 {
   unsigned int max_steps = 0;
-  const unsigned int num_of_params = model.parameters().size();
+  const unsigned int num_of_params = model->parameters().size();
 
   for (unsigned int splits = 0; splits <= sapo.max_param_splits; ++splits) {
     max_steps += std::pow(1 << splits, num_of_params);
   }
 
-  return max_steps * model.specification()->time_bounds().end()
+  return max_steps * model->specification()->time_bounds().end()
          + sapo.time_horizon
                * std::pow(1 << sapo.max_param_splits, num_of_params);
 }
 
 template<typename OSTREAM>
-void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
+void invariant_validate(OSTREAM &os, Sapo &sapo, const Model *model,
                         const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
@@ -198,8 +199,9 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
 
   InvariantValidationResult result;
 
-  result = sapo.check_invariant(*(model.initial_set()), model.parameter_set(),
-                                model.invariant(), accounter);
+  result
+      = sapo.check_invariant(*(model->initial_set()), model->parameter_set(),
+                             model->invariant(), accounter);
 
   using OF = OutputFormater<OSTREAM>;
 
@@ -207,7 +209,7 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
   print_variables_and_parameters(os, model);
   os << OF::field_separator() << OF::field_begin("task")
      << "\"invariant validation\"" << OF::field_end() << OF::field_separator()
-     << OF::field_begin("invariant") << model.invariant() << OF::field_end()
+     << OF::field_begin("invariant") << model->invariant() << OF::field_end()
      << OF::field_separator() << OF::field_begin("epochs")
      << static_cast<unsigned int>(result.flowpipe.size()) << OF::field_end()
      << OF::field_separator() << OF::field_begin("result");
@@ -227,8 +229,8 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
   }
 
   os << OF::field_end() << OF::field_separator();
-  if (model.parameters().size() != 0) {
-    os << OF::field_begin("parameter set") << model.parameter_set()
+  if (model->parameters().size() != 0) {
+    os << OF::field_begin("parameter set") << model->parameter_set()
        << OF::field_end() << OF::field_separator();
   }
   os << OF::field_begin("flowpipe") << result.flowpipe << OF::field_end();
@@ -246,7 +248,7 @@ void invariant_validate(OSTREAM &os, Sapo &sapo, const Model &model,
 }
 
 template<typename OSTREAM>
-void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
+void synthesis(OSTREAM &os, Sapo &sapo, const Model *model,
                const bool display_progress)
 {
   ProgressAccounter *accounter = NULL;
@@ -260,7 +262,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
 
   // Synthesize parameters
   std::list<SetsUnion<Polytope>> synth_params = sapo.synthesize(
-      *(model.initial_set()), model.parameter_set(), model.specification(),
+      *(model->initial_set()), model->parameter_set(), model->specification(),
       sapo.max_param_splits, sapo.num_of_pre_splits, accounter);
 
   if (display_progress) {
@@ -275,7 +277,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
     auto compute_reachability
         = [&flowpipes, &sapo, &model, &accounter](
               const SetsUnion<Polytope> &pSet, unsigned int params_idx) {
-            flowpipes[params_idx] = sapo.reach(*(model.initial_set()), pSet,
+            flowpipes[params_idx] = sapo.reach(*(model->initial_set()), pSet,
                                                sapo.time_horizon, accounter);
           };
 
@@ -299,7 +301,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
     unsigned int params_idx = 0;
     for (auto p_it = std::cbegin(synth_params);
          p_it != std::cend(synth_params); ++p_it) {
-      flowpipes[params_idx++] = sapo.reach(*(model.initial_set()), *p_it,
+      flowpipes[params_idx++] = sapo.reach(*(model->initial_set()), *p_it,
                                            sapo.time_horizon, accounter);
     }
 #endif
@@ -316,7 +318,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model &model,
 
 template<typename OSTREAM>
 void perform_computation_and_get_output(OSTREAM &os, Sapo &sapo,
-                                        const Model &model,
+                                        const Model *model,
                                         const AbsSyn::problemType &type,
                                         const bool display_progress)
 {
@@ -466,7 +468,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  Model model = get_model(drv.data);
+  Model *model = get_model(drv.data);
 
 #ifdef WITH_THREADS
   Sapo sapo = init_sapo(model, drv.data, opts.num_of_threads);
@@ -482,6 +484,8 @@ int main(int argc, char **argv)
     perform_computation_and_get_output(std::cout, sapo, model,
                                        drv.data.getProblem(), opts.progress);
   }
+
+  delete model;
 
   exit(EXIT_SUCCESS);
 }

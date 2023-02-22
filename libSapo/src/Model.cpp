@@ -13,43 +13,38 @@
 
 #include "ErrorHandling.h"
 
-Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-             const Bundle &init_set, const std::string name):
-    Model(variables, {}, dynamics, init_set, SetsUnion<Polytope>(), name)
+Model::Model(const Bundle &init_set, const std::string name):
+    Model(init_set, SetsUnion<Polytope>(), name)
 {
 }
 
-Model::Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-             const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-             const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-             const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
+Model::Model(const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
              const std::string name):
-    Model(DynamicalSystem<double>(variables, parameters, dynamics), init_set,
-          parameter_set, name)
+    _init_set(std::make_shared<Bundle>(init_set)),
+    _param_set(parameter_set), _spec(nullptr), _assumptions(), _invariant(),
+    _name(name)
 {
 }
 
-Model::Model(const DynamicalSystem<double> &dynamical_system,
-             const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
-             const std::string name):
-    _dynamical_system(dynamical_system),
-    _init_set(std::make_shared<Bundle>(init_set)), _param_set(parameter_set),
-    _spec(nullptr), _assumptions(), _name(name)
+void Model::validate_parameters(
+    const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+    const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
+    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+    const Bundle &init_set, const SetsUnion<Polytope> &parameter_set)
 {
   using namespace SymbolicAlgebra;
   std::set<Symbol<>> dyn_symbols;
 
-  for (const auto &dyn: _dynamical_system.dynamics()) {
+  for (const auto &dyn: dynamics) {
     auto symbols = dyn.get_symbols();
     dyn_symbols.insert(std::begin(symbols), std::end(symbols));
   }
 
-  for (const auto &var: _dynamical_system.variables()) {
+  for (const auto &var: variables) {
     dyn_symbols.erase(var);
   }
 
-  for (const auto &param: _dynamical_system.parameters()) {
+  for (const auto &param: parameters) {
     dyn_symbols.erase(param);
   }
 
@@ -60,19 +55,18 @@ Model::Model(const DynamicalSystem<double> &dynamical_system,
     SAPO_ERROR(oss.str(), std::domain_error);
   }
 
-  if (init_set.dim() != _dynamical_system.dim()) {
+  if (init_set.dim() != variables.size()) {
     std::ostringstream oss;
     oss << "the space dimension of the initial set (" << init_set.dim()
-        << ") differs from the variable number (" << _dynamical_system.dim()
-        << ")";
+        << ") differs from the variable number (" << variables.size() << ")";
     SAPO_ERROR(oss.str(), std::domain_error);
   }
 
-  if (parameter_set.dim() != _dynamical_system.parameters().size()) {
+  if (parameter_set.dim() != parameters.size()) {
     std::ostringstream oss;
     oss << "the space dimension of the parameter set (" << parameter_set.dim()
-        << ") differs from the parameter number ("
-        << _dynamical_system.parameters().size() << ")";
+        << ") differs from the parameter number (" << parameter_set.dim()
+        << ")";
     SAPO_ERROR(oss.str(), std::domain_error);
   }
 }
@@ -82,7 +76,7 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
   if (specification != nullptr) {
     auto spec_vars = specification->get_variables();
 
-    for (const auto &var: _dynamical_system.variables()) {
+    for (const auto &var: variables()) {
       spec_vars.erase(var);
     }
 
@@ -101,7 +95,7 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
 
 Model &Model::set_assumptions(const LinearSystem &assumptions)
 {
-  if (assumptions.size() > 0 && assumptions.dim() != _dynamical_system.dim()) {
+  if (assumptions.size() > 0 && assumptions.dim() != dim()) {
     SAPO_ERROR("the assumptions space and the model variables differ "
                "in the number of dimensions",
                std::domain_error);
@@ -114,7 +108,7 @@ Model &Model::set_assumptions(const LinearSystem &assumptions)
 
 Model &Model::set_invariant(const LinearSystem &invariant)
 {
-  if (invariant.size() > 0 && invariant.dim() != _dynamical_system.dim()) {
+  if (invariant.size() > 0 && invariant.dim() != dim()) {
     SAPO_ERROR("the invariant space and the model variables differ "
                "in the number of dimensions",
                std::domain_error);
@@ -123,4 +117,24 @@ Model &Model::set_invariant(const LinearSystem &invariant)
   _invariant = LinearSystem(invariant);
 
   return *this;
+}
+
+DiscreteModel::DiscreteModel(
+    const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+    const Bundle &init_set, const std::string name):
+    DiscreteModel(variables, {}, dynamics, init_set, {}, name)
+{
+}
+
+DiscreteModel::DiscreteModel(
+    const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+    const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
+    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+    const Bundle &init_set, const SetsUnion<Polytope> &param_set,
+    const std::string name):
+    Model(init_set, param_set, name),
+    _discrete_system(variables, parameters, dynamics)
+{
+  validate_parameters(variables, parameters, dynamics, init_set, param_set);
 }

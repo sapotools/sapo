@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2022
  */
 
-#ifndef DYNAMICS_H_
-#define DYNAMICS_H_
+#ifndef _DYNAMICAL_SYSTEM_
+#define _DYNAMICAL_SYSTEM_
 
 #include <map>
 #include <vector>
@@ -20,11 +20,16 @@
 #include "LinearAlgebraIO.h"
 
 /**
- * @brief This class represents dynamical systems
+ * @brief Dynamic type
+ */
+enum class DynamicType { DISCRETE, CONTINUOUS, UNDEFINED };
+
+/**
+ * @brief This class represents parametric dynamical systems
  *
- * This class represents dynamical systems. Each
- * variable of the system is updated according with
- * the corresponding expression.
+ * This class represents parametric dynamical systems.
+ * Each variable of the system is associated to an
+ * expression that describes the variable dynamic law.
  *
  * @tparam T is the type of expression value domain
  */
@@ -48,69 +53,14 @@ protected:
   /**
    * @brief Validate constructor parameters and initialize objects
    */
-  void validate_and_initialize()
-  {
-    using namespace SymbolicAlgebra;
-
-    if (_variables.size() != _dynamics.size()) {
-      SAPO_ERROR("the vectors of the dynamics laws and that "
-                 "of the variables must have the same size",
-                 std::domain_error);
-    }
-
-    std::set<Symbol<T>> symbols;
-
-    for (auto d_it = std::begin(_dynamics); d_it != std::end(_dynamics);
-         ++d_it) {
-
-      std::set<Symbol<T>> d_symbols = d_it->get_symbols();
-
-      for (auto ds_it = std::begin(d_symbols); ds_it != std::end(d_symbols);
-           ++ds_it) {
-        symbols.insert(*ds_it);
-      }
-    }
-
-    for (auto v_it = std::begin(_variables); v_it != std::end(_variables);
-         ++v_it) {
-      symbols.erase(*v_it);
-      if (!_var_index.emplace(v_it->get_id(), _var_index.size()).second) {
-        SAPO_ERROR("the vector or the variables must not "
-                   "contain duplicates",
-                   std::domain_error);
-      }
-    }
-
-    std::set<SymbolIdType> param_index;
-    for (auto p_it = std::begin(_parameters); p_it != std::end(_parameters);
-         ++p_it) {
-      symbols.erase(*p_it);
-      if (_var_index.find(p_it->get_id()) != std::end(_var_index)) {
-        std::ostringstream oss;
-
-        oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id())
-            << "\" is reported as both a variable and a parameter";
-
-        SAPO_ERROR(oss.str(), std::domain_error);
-      }
-      if (!param_index.emplace(p_it->get_id()).second) {
-        SAPO_ERROR("the vector of the parameters must not "
-                   "contain duplicates",
-                   std::domain_error);
-      }
-    }
-
-    if (!symbols.empty()) {
-      std::ostringstream oss;
-
-      oss << "The symbols in " << symbols << " are neither variables "
-          << "nor parameters";
-
-      SAPO_ERROR(oss.str(), std::domain_error);
-    }
-  }
+  void validate_and_initialize();
 
 public:
+  /**
+   * @brief An empty constructor
+   */
+  DynamicalSystem();
+
   /**
    * @brief A constructor
    *
@@ -120,12 +70,7 @@ public:
    */
   DynamicalSystem(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
                   const std::vector<SymbolicAlgebra::Symbol<T>> &parameters,
-                  const std::vector<SymbolicAlgebra::Expression<T>> &dynamics):
-      _variables(variables),
-      _parameters(parameters), _dynamics(dynamics), _var_index()
-  {
-    validate_and_initialize();
-  }
+                  const std::vector<SymbolicAlgebra::Expression<T>> &dynamics);
 
   /**
    * @brief A swap constructor
@@ -136,18 +81,7 @@ public:
    */
   DynamicalSystem(std::vector<SymbolicAlgebra::Symbol<T>> &&variables,
                   std::vector<SymbolicAlgebra::Symbol<T>> &&parameters,
-                  std::vector<SymbolicAlgebra::Expression<T>> &&dynamics):
-      _variables(std::move(variables)),
-      _parameters(std::move(parameters)), _dynamics(std::move(dynamics)),
-      _var_index()
-  {
-    validate_and_initialize();
-  }
-
-  /**
-   * @brief An empty constructor
-   */
-  DynamicalSystem(): DynamicalSystem({}, {}, {}) {}
+                  std::vector<SymbolicAlgebra::Expression<T>> &&dynamics);
 
   /**
    * @brief A constructor
@@ -155,21 +89,7 @@ public:
    * @param[in] dynamics is the map that relates variables and dynamics laws
    */
   DynamicalSystem(const std::map<SymbolicAlgebra::Symbol<T>,
-                                 SymbolicAlgebra::Expression<T>> &dynamics):
-      _variables(),
-      _parameters(), _dynamics(), _var_index()
-  {
-    _variables.reserve(dynamics.size());
-    _dynamics.reserve(dynamics.size());
-
-    for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics);
-         ++d_it) {
-      _variables.push_back(d_it->first);
-      _dynamics.push_back(d_it->second);
-    }
-
-    validate_and_initialize();
-  }
+                                 SymbolicAlgebra::Expression<T>> &dynamics);
 
   /**
    * @brief A constructor
@@ -179,21 +99,7 @@ public:
    */
   DynamicalSystem(const std::map<SymbolicAlgebra::Symbol<T>,
                                  SymbolicAlgebra::Expression<T>> &dynamics,
-                  const std::vector<SymbolicAlgebra::Symbol<T>> &parameters):
-      _variables(),
-      _parameters(parameters), _dynamics(), _var_index()
-  {
-    _variables.reserve(dynamics.size());
-    _dynamics.reserve(dynamics.size());
-
-    for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics);
-         ++d_it) {
-      _variables.push_back(d_it->first);
-      _dynamics.push_back(d_it->second);
-    }
-
-    validate_and_initialize();
-  }
+                  const std::vector<SymbolicAlgebra::Symbol<T>> &parameters);
 
   /**
    * @brief A constructor
@@ -203,21 +109,7 @@ public:
    */
   DynamicalSystem(const std::map<SymbolicAlgebra::Symbol<T>,
                                  SymbolicAlgebra::Expression<T>> &&dynamics,
-                  std::vector<SymbolicAlgebra::Symbol<T>> &&parameters):
-      _variables(),
-      _parameters(std::move(parameters)), _dynamics(), _var_index()
-  {
-    _variables.reserve(dynamics.size());
-    _dynamics.reserve(dynamics.size());
-
-    for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics);
-         ++d_it) {
-      _variables.push_back(std::move(d_it->first));
-      _dynamics.push_back(std::move(d_it->second));
-    }
-
-    validate_and_initialize();
-  }
+                  std::vector<SymbolicAlgebra::Symbol<T>> &&parameters);
 
   /**
    * @brief A constructor
@@ -226,10 +118,7 @@ public:
    * @param[in] dynamics is the vector of the dynamic laws
    */
   DynamicalSystem(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
-                  const std::vector<SymbolicAlgebra::Expression<T>> &dynamics):
-      DynamicalSystem(variables, {}, dynamics)
-  {
-  }
+                  const std::vector<SymbolicAlgebra::Expression<T>> &dynamics);
 
   /**
    * @brief A swap constructor
@@ -238,44 +127,28 @@ public:
    * @param[in] dynamics is the vector of the dynamic laws
    */
   DynamicalSystem(std::vector<SymbolicAlgebra::Symbol<T>> &&variables,
-                  std::vector<SymbolicAlgebra::Expression<T>> &&dynamics):
-      DynamicalSystem(std::move(variables), {}, std::move(dynamics))
-  {
-  }
+                  std::vector<SymbolicAlgebra::Expression<T>> &&dynamics);
 
   /**
    * @brief A copy constructor
    *
    * @param[in] orig the original dynamic laws
    */
-  DynamicalSystem(const DynamicalSystem<T> &orig):
-      _variables(orig._variables), _parameters(orig._parameters),
-      _dynamics(orig._dynamics), _var_index(orig._var_index)
-  {
-  }
+  DynamicalSystem(const DynamicalSystem<T> &orig);
 
   /**
    * @brief A swap constructor
    *
    * @param[in] orig the original dynamic laws
    */
-  DynamicalSystem(DynamicalSystem<T> &&orig)
-  {
-    std::swap(orig._variables, _variables);
-    std::swap(orig._parameters, _parameters);
-    std::swap(orig._dynamics, _dynamics);
-    std::swap(orig._var_index, _var_index);
-  }
+  DynamicalSystem(DynamicalSystem<T> &&orig);
 
   /**
    * @brief Number of dynamic laws
    *
    * @return return the number of represented dynamic laws
    */
-  size_t dim() const
-  {
-    return _variables.size();
-  }
+  size_t dim() const;
 
   /**
    * @brief A copy operator
@@ -283,15 +156,7 @@ public:
    * @param orig the original dynamic laws
    * @return a reference to the updated object
    */
-  DynamicalSystem &operator=(const DynamicalSystem<T> &orig)
-  {
-    _variables = orig._variables;
-    _parameters = orig._parameters;
-    _dynamics = orig._dynamics;
-    _var_index = orig._var_index;
-
-    return *this;
-  }
+  DynamicalSystem &operator=(const DynamicalSystem<T> &orig);
 
   /**
    * @brief A copy operator
@@ -299,15 +164,7 @@ public:
    * @param orig the original dynamic laws
    * @return a reference to the updated object
    */
-  DynamicalSystem &operator=(DynamicalSystem<T> &&orig)
-  {
-    std::swap(orig._variables, _variables);
-    std::swap(orig._parameters, _parameters);
-    std::swap(orig._dynamics, _dynamics);
-    std::swap(orig._var_index, _var_index);
-
-    return *this;
-  }
+  DynamicalSystem &operator=(DynamicalSystem<T> &&orig);
 
   /**
    * @brief Replace the dynamic law of a variable
@@ -317,12 +174,7 @@ public:
    * @return a reference to the updated object
    */
   DynamicalSystem &replace(const SymbolicAlgebra::Symbol<T> &variable,
-                           const SymbolicAlgebra::Expression<T> &dynamic)
-  {
-    _dynamics[_var_index.at[variable.get_id()]] = dynamic;
-
-    return *this;
-  }
+                           const SymbolicAlgebra::Expression<T> &dynamic);
 
   /**
    * @brief Replace the dynamic law of a variable
@@ -332,211 +184,348 @@ public:
    * @return a reference to the updated object
    */
   DynamicalSystem &replace(const SymbolicAlgebra::Symbol<T> &variable,
-                           SymbolicAlgebra::Expression<T> &&dynamic)
-  {
-
-    _dynamics[_var_index.at[variable.get_id()]] = std::move(dynamic);
-
-    return *this;
-  }
+                           SymbolicAlgebra::Expression<T> &&dynamic);
 
   /**
    * @brief Get the system variables
    *
    * @return a reference to the vector of the system variables
    */
-  inline const std::vector<SymbolicAlgebra::Symbol<T>> &variables() const
-  {
-    return _variables;
-  }
+  const std::vector<SymbolicAlgebra::Symbol<T>> &variables() const;
 
   /**
    * @brief Get the system parameters
    *
    * @return a reference to the vector of the system parameters
    */
-  inline const std::vector<SymbolicAlgebra::Symbol<T>> &parameters() const
-  {
-    return _parameters;
-  }
+  const std::vector<SymbolicAlgebra::Symbol<T>> &parameters() const;
 
   /**
    * @brief Get the system dynamic laws
    *
    * @return a reference to the system dynamic law vector
    */
-  inline const std::vector<SymbolicAlgebra::Expression<T>> &dynamics() const
-  {
-    return _dynamics;
-  }
+  const std::vector<SymbolicAlgebra::Expression<T>> &dynamics() const;
 
   /**
    * @brief Get the i-th variable
    *
    * @return a reference to the i-th variable
    */
-  inline const SymbolicAlgebra::Symbol<T> &variable(const unsigned int i) const
-  {
-    return _variables[i];
-  }
+  const SymbolicAlgebra::Symbol<T> &variable(const size_t i) const;
 
   /**
    * @brief Get the i-th parameter
    *
    * @return a reference to the i-th parameter
    */
-  inline const SymbolicAlgebra::Symbol<T> &
-  parameter(const unsigned int i) const
-  {
-    return _parameters[i];
-  }
+  const SymbolicAlgebra::Symbol<T> &parameter(const size_t i) const;
 
   /**
    * @brief Get the i-th dynamic law
    *
    * @return a reference to the i-th dynamic law
    */
-  inline const SymbolicAlgebra::Expression<T> &
-  dynamic(const unsigned int i) const
-  {
-    return _dynamics[i];
-  }
+  const SymbolicAlgebra::Expression<T> &dynamic(const size_t i) const;
 
   /**
    * @brief Get the dynamic law associated to a variable
    *
    * @return a reference to the dynamic law associated to a variable
    */
-  inline const SymbolicAlgebra::Expression<T> &
-  operator[](const SymbolicAlgebra::Symbol<T> &variable) const
-  {
-    return _dynamics[_var_index.at[variable.get_id()]];
-  }
+  const SymbolicAlgebra::Expression<T> &
+  operator[](const SymbolicAlgebra::Symbol<T> &variable) const;
+
+  /**
+   * @brief Obtain the type of the dynamical system
+   *
+   * @return the type of the dynamical system
+   */
+  virtual DynamicType type() const;
 };
 
-/**
- * @brief Integrate an ODE by using the 4th degree Runge-Kutta method
- *
- * @tparam T is the constant type in the dynamical system
- * @tparam DELTA_TYPE is the type of the delta step
- * @param variables is the variable vector
- * @param ODE is the ODE vector
- * @param time is the time variable
- * @param timestep is the integration time step
- * @return the integration of `ODE` according to the 4th degree
- *         Runge-Kutta method
- */
-template<typename T, typename DELTA_TYPE>
-std::vector<SymbolicAlgebra::Expression<T>>
-runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
-             const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
-             const SymbolicAlgebra::Symbol<T> *time,
-             const DELTA_TYPE &timestep)
+template<typename T>
+void DynamicalSystem<T>::validate_and_initialize()
 {
   using namespace SymbolicAlgebra;
-  using namespace LinearAlgebra;
 
-  const auto &k1 = ODE;
+  if (_variables.size() != _dynamics.size()) {
+    SAPO_ERROR("the vectors of the dynamics laws and that "
+               "of the variables must have the same size",
+               std::domain_error);
+  }
 
-  // get k2
-  auto k2 = ODE;
-  {
-    Expression<>::replacement_type repl;
-    for (size_t i = 0; i < variables.size(); ++i) {
-      repl[variables[i]] = variables[i] + k1[i] * timestep / 2;
-    }
-    if (time != nullptr) {
-      repl[*time] = *time + timestep / 2;
-    }
+  std::set<Symbol<T>> symbols;
 
-    for (auto &k: k2) {
-      k.replace(repl);
+  for (auto d_it = std::begin(_dynamics); d_it != std::end(_dynamics);
+       ++d_it) {
+
+    std::set<Symbol<T>> d_symbols = d_it->get_symbols();
+
+    for (auto ds_it = std::begin(d_symbols); ds_it != std::end(d_symbols);
+         ++ds_it) {
+      symbols.insert(*ds_it);
     }
   }
 
-  // get k3
-  auto k3 = ODE;
-  {
-    Expression<>::replacement_type repl;
-    for (size_t i = 0; i < variables.size(); ++i) {
-      repl[variables[i]] = variables[i] + k2[i] * timestep / 2;
-    }
-    if (time != nullptr) {
-      repl[*time] = *time + timestep / 2;
-    }
-
-    for (auto &k: k3) {
-      k.replace(repl);
+  for (auto v_it = std::begin(_variables); v_it != std::end(_variables);
+       ++v_it) {
+    symbols.erase(*v_it);
+    if (!_var_index.emplace(v_it->get_id(), _var_index.size()).second) {
+      SAPO_ERROR("the vector or the variables must not "
+                 "contain duplicates",
+                 std::domain_error);
     }
   }
 
-  // get k4
-  auto k4 = ODE;
-  {
-    Expression<>::replacement_type repl;
-    for (size_t i = 0; i < variables.size(); ++i) {
-      repl[variables[i]] = variables[i] + k3[i] * timestep;
-    }
-    if (time != nullptr) {
-      repl[*time] = *time + timestep;
-    }
+  std::set<SymbolIdType> param_index;
+  for (auto p_it = std::begin(_parameters); p_it != std::end(_parameters);
+       ++p_it) {
+    symbols.erase(*p_it);
+    if (_var_index.find(p_it->get_id()) != std::end(_var_index)) {
+      std::ostringstream oss;
 
-    for (auto &k: k4) {
-      k.replace(repl);
+      oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id())
+          << "\" is reported as both a variable and a parameter";
+
+      SAPO_ERROR(oss.str(), std::domain_error);
+    }
+    if (!param_index.emplace(p_it->get_id()).second) {
+      SAPO_ERROR("the vector of the parameters must not "
+                 "contain duplicates",
+                 std::domain_error);
     }
   }
 
-  std::vector<Expression<T>> rk_dyn(variables.size());
+  if (!symbols.empty()) {
+    std::ostringstream oss;
 
-  for (size_t i = 0; i < variables.size(); ++i) {
-    rk_dyn[i] = variables[i]
-                + (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) * timestep / 6;
+    oss << "The symbols in " << symbols << " are neither variables "
+        << "nor parameters";
+
+    SAPO_ERROR(oss.str(), std::domain_error);
   }
-
-  return rk_dyn;
 }
 
-/**
- * @brief Integrate an ODE by using the 4th degree Runge-Kutta method
- *
- * @tparam T is the constant type in the dynamical system
- * @tparam DELTA_TYPE is the type of the delta step
- * @param variables is the variable vector
- * @param ODE is the ODE vector
- * @param time is the time variable
- * @param timestep is the integration time step
- * @return the integration of `ODE` according to the 4th degree
- *         Runge-Kutta method
- */
-template<typename T, typename DELTA_TYPE>
-inline std::vector<SymbolicAlgebra::Expression<T>>
-runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
-             const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
-             const SymbolicAlgebra::Symbol<T> &time,
-             const DELTA_TYPE &timestep)
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &parameters,
+    const std::vector<SymbolicAlgebra::Expression<T>> &dynamics):
+    _variables(variables),
+    _parameters(parameters), _dynamics(dynamics), _var_index()
 {
-  return runge_kutta4<T, DELTA_TYPE>(variables, ODE, &time, timestep);
+  validate_and_initialize();
 }
 
-/**
- * @brief Integrate an time-invariant ODE by using the 4th degree Runge-Kutta
- * method
- *
- * @tparam T is the constant type in the dynamical system
- * @tparam DELTA_TYPE is the type of the delta step
- * @param variables is the variable vector
- * @param ODE is the ODE vector
- * @param timestep is the integration time step
- * @return the integration of `ODE` according to the 4th degree
- *         Runge-Kutta method
- */
-template<typename T, typename DELTA_TYPE>
-inline std::vector<SymbolicAlgebra::Expression<T>>
-runge_kutta4(const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
-             const std::vector<SymbolicAlgebra::Expression<T>> &ODE,
-             const DELTA_TYPE &timestep)
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    std::vector<SymbolicAlgebra::Symbol<T>> &&variables,
+    std::vector<SymbolicAlgebra::Symbol<T>> &&parameters,
+    std::vector<SymbolicAlgebra::Expression<T>> &&dynamics):
+    _variables(std::move(variables)),
+    _parameters(std::move(parameters)), _dynamics(std::move(dynamics)),
+    _var_index()
 {
-  return runge_kutta4<T, DELTA_TYPE>(variables, ODE, nullptr, timestep);
+  validate_and_initialize();
 }
 
-#endif // DYNAMICS_H_
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(): DynamicalSystem({}, {}, {})
+{
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    const std::map<SymbolicAlgebra::Symbol<T>, SymbolicAlgebra::Expression<T>>
+        &dynamics):
+    _variables(),
+    _parameters(), _dynamics(), _var_index()
+{
+  _variables.reserve(dynamics.size());
+  _dynamics.reserve(dynamics.size());
+
+  for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics); ++d_it) {
+    _variables.push_back(d_it->first);
+    _dynamics.push_back(d_it->second);
+  }
+
+  validate_and_initialize();
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    const std::map<SymbolicAlgebra::Symbol<T>, SymbolicAlgebra::Expression<T>>
+        &dynamics,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &parameters):
+    _variables(),
+    _parameters(parameters), _dynamics(), _var_index()
+{
+  _variables.reserve(dynamics.size());
+  _dynamics.reserve(dynamics.size());
+
+  for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics); ++d_it) {
+    _variables.push_back(d_it->first);
+    _dynamics.push_back(d_it->second);
+  }
+
+  validate_and_initialize();
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    const std::map<SymbolicAlgebra::Symbol<T>, SymbolicAlgebra::Expression<T>>
+        &&dynamics,
+    std::vector<SymbolicAlgebra::Symbol<T>> &&parameters):
+    _variables(),
+    _parameters(std::move(parameters)), _dynamics(), _var_index()
+{
+  _variables.reserve(dynamics.size());
+  _dynamics.reserve(dynamics.size());
+
+  for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics); ++d_it) {
+    _variables.push_back(std::move(d_it->first));
+    _dynamics.push_back(std::move(d_it->second));
+  }
+
+  validate_and_initialize();
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    const std::vector<SymbolicAlgebra::Symbol<T>> &variables,
+    const std::vector<SymbolicAlgebra::Expression<T>> &dynamics):
+    DynamicalSystem(variables, {}, dynamics)
+{
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(
+    std::vector<SymbolicAlgebra::Symbol<T>> &&variables,
+    std::vector<SymbolicAlgebra::Expression<T>> &&dynamics):
+    DynamicalSystem(std::move(variables), {}, std::move(dynamics))
+{
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(const DynamicalSystem<T> &orig):
+    _variables(orig._variables), _parameters(orig._parameters),
+    _dynamics(orig._dynamics), _var_index(orig._var_index)
+{
+}
+
+template<typename T>
+DynamicalSystem<T>::DynamicalSystem(DynamicalSystem<T> &&orig)
+{
+  std::swap(orig._variables, _variables);
+  std::swap(orig._parameters, _parameters);
+  std::swap(orig._dynamics, _dynamics);
+  std::swap(orig._var_index, _var_index);
+}
+
+template<typename T>
+size_t DynamicalSystem<T>::dim() const
+{
+  return _variables.size();
+}
+
+template<typename T>
+DynamicalSystem<T> &
+DynamicalSystem<T>::operator=(const DynamicalSystem<T> &orig)
+{
+  _variables = orig._variables;
+  _parameters = orig._parameters;
+  _dynamics = orig._dynamics;
+  _var_index = orig._var_index;
+
+  return *this;
+}
+
+template<typename T>
+DynamicalSystem<T> &DynamicalSystem<T>::operator=(DynamicalSystem<T> &&orig)
+{
+  std::swap(orig._variables, _variables);
+  std::swap(orig._parameters, _parameters);
+  std::swap(orig._dynamics, _dynamics);
+  std::swap(orig._var_index, _var_index);
+
+  return *this;
+}
+
+template<typename T>
+DynamicalSystem<T> &
+DynamicalSystem<T>::replace(const SymbolicAlgebra::Symbol<T> &variable,
+                            const SymbolicAlgebra::Expression<T> &dynamic)
+{
+  _dynamics[_var_index.at[variable.get_id()]] = dynamic;
+
+  return *this;
+}
+
+template<typename T>
+DynamicalSystem<T> &
+DynamicalSystem<T>::replace(const SymbolicAlgebra::Symbol<T> &variable,
+                            SymbolicAlgebra::Expression<T> &&dynamic)
+{
+
+  _dynamics[_var_index.at[variable.get_id()]] = std::move(dynamic);
+
+  return *this;
+}
+
+template<typename T>
+inline const std::vector<SymbolicAlgebra::Symbol<T>> &
+DynamicalSystem<T>::variables() const
+{
+  return _variables;
+}
+
+template<typename T>
+inline const std::vector<SymbolicAlgebra::Symbol<T>> &
+DynamicalSystem<T>::parameters() const
+{
+  return _parameters;
+}
+
+template<typename T>
+inline const std::vector<SymbolicAlgebra::Expression<T>> &
+DynamicalSystem<T>::dynamics() const
+{
+  return _dynamics;
+}
+
+template<typename T>
+inline const SymbolicAlgebra::Symbol<T> &
+DynamicalSystem<T>::variable(const size_t i) const
+{
+  return _variables[i];
+}
+
+template<typename T>
+inline const SymbolicAlgebra::Symbol<T> &
+DynamicalSystem<T>::parameter(const size_t i) const
+{
+  return _parameters[i];
+}
+
+template<typename T>
+inline const SymbolicAlgebra::Expression<T> &
+DynamicalSystem<T>::dynamic(const size_t i) const
+{
+  return _dynamics[i];
+}
+
+template<typename T>
+inline const SymbolicAlgebra::Expression<T> &DynamicalSystem<T>::operator[](
+    const SymbolicAlgebra::Symbol<T> &variable) const
+{
+  return _dynamics[_var_index.at[variable.get_id()]];
+}
+
+template<typename T>
+inline DynamicType DynamicalSystem<T>::type() const
+{
+  return DynamicType::UNDEFINED;
+}
+
+#endif // _DYNAMICAL_SYSTEM_

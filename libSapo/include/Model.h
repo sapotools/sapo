@@ -20,7 +20,7 @@
 #include "SetsUnion.h"
 #include "STL/STL.h"
 
-#include "DynamicalSystem.h"
+#include "DiscreteSystem.h"
 
 /**
  * @brief Dynamical system models
@@ -31,8 +31,6 @@ class Model
 {
 
 protected:
-  DynamicalSystem<double> _dynamical_system; //!< A dynamical system
-
   std::shared_ptr<Bundle> _init_set; //!< The initial set
   SetsUnion<Polytope> _param_set;    //!< The parameter set
 
@@ -43,6 +41,24 @@ protected:
 
   std::string _name; //!< The model name
 
+  /**
+   * @brief Validate the validate constructor parameters
+   *
+   * This method validate constructor parameters and throws a
+   * `std::domain_error` exception if they are not consistent.
+   *
+   * @param variables is the vector of the variables
+   * @param parameters is the vector of the parameter
+   * @param dynamics is the vector of the dynamic laws
+   * @param init_set is the initial set
+   * @param param_set is the set of the parameter
+   */
+  static void validate_parameters(
+      const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+      const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
+      const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+      const Bundle &init_set, const SetsUnion<Polytope> &parameter_set);
+
 public:
   /**
    * @brief Constructor
@@ -52,9 +68,7 @@ public:
    * @param init_set is the initial set
    * @param name is the model name
    */
-  Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-        const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-        const Bundle &init_set, const std::string name = "Unknown");
+  Model(const Bundle &init_set, const std::string name = "Unknown");
 
   /**
    * @brief Constructor
@@ -66,22 +80,7 @@ public:
    * @param param_set is the set of the parameter
    * @param name is the model name
    */
-  Model(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-        const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-        const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-        const Bundle &init_set, const SetsUnion<Polytope> &param_set,
-        const std::string name = "Unknown");
-
-  /**
-   * @brief Constructor
-   *
-   * @param dynamical_system is the dynamical system
-   * @param init_set is the initial set
-   * @param param_set is the set of the parameter
-   * @param name is the model name
-   */
-  Model(const DynamicalSystem<double> &dynamical_system,
-        const Bundle &init_set, const SetsUnion<Polytope> &param_set,
+  Model(const Bundle &init_set, const SetsUnion<Polytope> &param_set,
         const std::string name = "Unknown");
 
   /**
@@ -99,10 +98,7 @@ public:
    *
    * @return a reference to the model dynamical system
    */
-  inline const DynamicalSystem<double> &dynamical_system() const
-  {
-    return this->_dynamical_system;
-  }
+  virtual inline const DynamicalSystem<double> &dynamical_system() const = 0;
 
   /**
    * @brief Get the model variables
@@ -204,6 +200,91 @@ public:
    * @return a reference to the candidate model invariant
    */
   Model &set_invariant(const LinearSystem &invariant);
+
+  /**
+   * @brief Get the number of variables in the model
+   *
+   * @return the number of variables in the model
+   */
+  inline size_t dim() const
+  {
+    return variables().size();
+  }
+
+  /**
+   * @brief Get the model type
+   *
+   * @return the model type
+   */
+  virtual inline DynamicType type() const
+  {
+    return DynamicType::UNDEFINED;
+  }
+
+  /**
+   * @brief The destroyer
+   */
+  virtual ~Model() {}
+};
+
+/**
+ * @brief Dynamical system models
+ *
+ * This class represents dynamical system models
+ */
+class DiscreteModel : public Model
+{
+
+  DiscreteSystem<double> _discrete_system; //!< A discrete system
+
+public:
+  /**
+   * @brief Constructor
+   *
+   * @param variables is the vector of the variables
+   * @param dynamics is the vector of the dynamic laws
+   * @param init_set is the initial set
+   * @param name is the model name
+   */
+  DiscreteModel(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+                const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+                const Bundle &init_set, const std::string name = "Unknown");
+
+  /**
+   * @brief Constructor
+   *
+   * @param variables is the vector of the variables
+   * @param parameters is the vector of the parameter
+   * @param dynamics is the vector of the dynamic laws
+   * @param init_set is the initial set
+   * @param param_set is the set of the parameter
+   * @param name is the model name
+   */
+  DiscreteModel(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
+                const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
+                const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+                const Bundle &init_set, const SetsUnion<Polytope> &param_set,
+                const std::string name = "Unknown");
+
+  /**
+   * @brief Get the model discrete system
+   *
+   * @return a reference to the model discrete system
+   */
+  inline const DynamicalSystem<double> &dynamical_system() const
+  {
+    return this->_discrete_system;
+  }
+
+  /**
+   * @brief Get the model type
+   *
+   * @return the model type
+   */
+  inline DynamicType type() const
+  {
+    return _discrete_system.type();
+  }
 };
 
 #endif /* MODEL_H_ */

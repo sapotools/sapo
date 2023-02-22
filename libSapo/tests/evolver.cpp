@@ -1,5 +1,5 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE transformer
+#define BOOST_TEST_MODULE evolver
 
 #include <boost/test/unit_test.hpp>
 
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
 
     Bundle pSet(pA, {0.5,0.1}, {0.6,0.2});
 
-    Evolver<double> T(DynamicalSystem<double>(varDyn, {alpha, beta}));
+    Evolver<double> T(DiscreteSystem<double>(varDyn, {alpha, beta}));
 
     Dense::Matrix<double> rA{
         {1,0,0},
@@ -95,37 +95,6 @@ BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
     BOOST_REQUIRE_THROW(T(rSet, errParam2), std::domain_error);
 }
 
-BOOST_AUTO_TEST_CASE(test_transform_dynamic_bundle)
-{
-    using namespace SymbolicAlgebra;
-    using namespace LinearAlgebra;
-
-    Symbol<> x("x"), y("y");
-
-    // variable vector
-    DynamicalSystem<double> ODE({
-        {x, -y},
-        {y, x}
-    });
-
-    auto rk_system = runge_kutta4(ODE.variables(), ODE.dynamics(), 0.011990811705);
-
-    Evolver<double> T(DynamicalSystem<double>(ODE.variables(), rk_system));
-
-    Dense::Matrix<double> rA{
-        {1,0},
-        {0,1}
-    };
-
-    Bundle rSet(rA, {-0.05,0.05}, {9.95,10.05}, {}, {0,1});
-
-    Bundle next = T(rSet);
-    for (size_t i=0; i<523; ++i) {
-        next = T(next);
-    }
-    BOOST_CHECK(epsilon_equivalent(rSet, next, 3e-7));
-}
-
 BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
 {
     using namespace SymbolicAlgebra;
@@ -154,7 +123,7 @@ BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
         {0,-1}
     };
 
-    DynamicalSystem<double> f(vars, params, dyns); 
+    DiscreteSystem<double> f(vars, params, dyns); 
 
     std::shared_ptr<STL::Atom> atom1=std::make_shared<STL::Atom>(i-0.365),
                                atom2=std::make_shared<STL::Atom>(r-2);

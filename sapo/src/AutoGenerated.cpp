@@ -241,7 +241,7 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
   return SetsUnion<Polytope>(Polytope(pA, pb));
 }
 
-Model get_model(const InputData &id)
+Model *get_model(const InputData &id)
 {
   using namespace SymbolicAlgebra;
 
@@ -268,18 +268,21 @@ Model get_model(const InputData &id)
 
   SetsUnion<Polytope> param_set = getParameterSet(id);
 
-  Model model(variables, parameters, dynamics, init_set, param_set);
+  Model *model;
+
+  model = new DiscreteModel(variables, parameters, dynamics, init_set,
+                            param_set);
 
   if (id.isSpecDefined()) {
-    model.set_specification(id.specification());
+    model->set_specification(id.specification());
   }
 
   auto ls = getConstraintsSystem(id.getAssumptions(), variables);
 
-  model.set_assumptions(ls);
+  model->set_assumptions(ls);
 
   ls = getConstraintsSystem(id.getInvariant(), variables);
-  model.set_invariant(ls);
+  model->set_invariant(ls);
 
   return model;
 }

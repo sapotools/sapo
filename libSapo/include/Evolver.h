@@ -1,7 +1,7 @@
 /**
  * @file Evolver.h
  * @author Alberto Casagrande <acasagrande@units.it>
- * @brief Handle evolution of geometric sets subject to a dynamical system
+ * @brief Handle evolution of geometric sets subject to a discrete system
  * @version 0.1
  * @date 2022-07-02
  *
@@ -15,7 +15,7 @@
 #include <shared_mutex>
 #endif // WITH_THREADS
 
-#include "DynamicalSystem.h"
+#include "DiscreteSystem.h"
 
 #include "Bundle.h"
 #include "Polytope.h"
@@ -24,12 +24,12 @@
 #include "STL/Atom.h"
 
 /**
- * @brief Handle evolution of geometric sets subject to a dynamical system
+ * @brief Handle evolution of geometric sets subject to a discrete system
  *
  * The objects of this class let geometric objects, such as
- * `Parallelotope` or `Bundle`, subject to a dynamical system evolve.
+ * `Parallelotope` or `Bundle`, evolve according to a discrete system.
  * This class computes the Bernstein coefficients of the associated
- * dynamical system and the evolving geometric set and use them
+ * discrete system and the evolving geometric set and use them
  * to over-approximate the set reachable from the source.
  *
  * @tparam T is the type of expression value domain
@@ -57,7 +57,7 @@ public:
   } evolver_mode;
 
 protected:
-  DynamicalSystem<T> _ds; //!< The dynamical system
+  DiscreteSystem<T> _ds; //!< The discrete system
 
   const T _edge_threshold{static_cast<T>(1e18)};
 
@@ -67,12 +67,12 @@ public:
   /**
    * @brief A constructor
    *
-   * @param dynamical_system is the investigated dynamical system
+   * @param discrete_system is the investigated discrete system
    * @param mode is the mode used to compute the evolution
    */
-  Evolver(const DynamicalSystem<T> &dynamical_system,
+  Evolver(const DiscreteSystem<T> &discrete_system,
           const evolver_mode mode = ALL_FOR_ONE):
-      _ds(dynamical_system),
+      _ds(discrete_system),
       mode(mode)
   {
   }
@@ -80,12 +80,12 @@ public:
   /**
    * @brief A constructor
    *
-   * @param dynamical_system is the investigated dynamical system
+   * @param discrete_system is the investigated discrete system
    * @param mode is the mode used to compute the evolution
    */
-  Evolver(const DynamicalSystem<T> &&dynamical_system,
+  Evolver(const DiscreteSystem<T> &&discrete_system,
           const evolver_mode mode = ALL_FOR_ONE):
-      _ds(std::move(dynamical_system)),
+      _ds(std::move(discrete_system)),
       mode(mode)
   {
   }
@@ -217,7 +217,7 @@ public:
  * This method computes a set of parameters such that the
  * evolution of a bundle satisfies the provided atom.
  *
- * @param[in] evolver is the dynamical system evolver
+ * @param[in] evolver is the discrete system evolver
  * @param[in] bundle is the set from which the evolution occurs
  * @param[in] parameter_set is the initial parameter set
  * @param[in] atom is the specification to be satisfied
@@ -232,12 +232,12 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
                                const std::shared_ptr<STL::Atom> atom);
 
 /**
- * @brief Handle evolution of geometric sets subject to a dynamical system
+ * @brief Handle evolution of geometric sets subject to a discrete system
  *
  * The objects of this class let geometric objects, such as
- * `Parallelotope` or `Bundle`, subject to a dynamical system evolve.
+ * `Parallelotope` or `Bundle`, subject to a discrete system evolve.
  * This class computes the symbolic Bernstein coefficients of the
- * associated dynamical system and the evolving geometric set and
+ * associated discrete system and the evolving geometric set and
  * store them in a cache. When needed the computed symbolic
  * coefficient are recovered and instantiated for the specific
  * geometric set.
@@ -374,13 +374,13 @@ public:
   /**
    * @brief A constructor
    *
-   * @param dynamical_system is the investigated dynamical system
+   * @param discrete_system is the investigated discrete system
    * @param mode is the mode used to compute the evolution
    */
-  CachedEvolver(const DynamicalSystem<T> &dynamical_system,
+  CachedEvolver(const DiscreteSystem<T> &discrete_system,
                 const typename Evolver<T>::evolver_mode mode
                 = Evolver<T>::ALL_FOR_ONE):
-      Evolver<T>(dynamical_system, mode),
+      Evolver<T>(discrete_system, mode),
       _cache()
   {
   }
@@ -388,13 +388,13 @@ public:
   /**
    * @brief A constructor
    *
-   * @param dynamical_system is the investigated dynamical system
+   * @param discrete_system is the investigated discrete system
    * @param mode is the mode used to compute the evolution
    */
-  CachedEvolver(DynamicalSystem<T> &&dynamical_system,
+  CachedEvolver(DiscreteSystem<T> &&discrete_system,
                 const typename Evolver<T>::evolver_mode mode
                 = Evolver<T>::ALL_FOR_ONE):
-      Evolver<T>(std::move(dynamical_system), mode),
+      Evolver<T>(std::move(discrete_system), mode),
       _cache()
   {
   }
@@ -417,7 +417,7 @@ public:
   }
 
   /**
-   * @brief Let a bundle evolve according with the dynamical system
+   * @brief Let a bundle evolve according with the discrete system
    *
    * @param bundle is the bundle to evolve
    * @param parameter_set is the parameter set

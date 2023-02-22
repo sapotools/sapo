@@ -48,28 +48,3 @@ BOOST_AUTO_TEST_CASE(test_dynamical_system)
     DynamicalSystem<double>(varDyn, {alpha, beta});
     BOOST_REQUIRE_THROW(DynamicalSystem<double>(varDyn, {alpha}), std::domain_error);
 }
-
-BOOST_AUTO_TEST_CASE(test_runge_kutta)
-{
-    using namespace SymbolicAlgebra;
-    using namespace LinearAlgebra;
-
-    Symbol<> x("x"), y("y");
-    Symbol<> timestep{"timestep"};
-
-    // variable vector
-    DynamicalSystem<double> ODE({
-        {x, -y},
-        {y, x}
-    });
-
-    auto rk_system = runge_kutta4(ODE.variables(), ODE.dynamics(), timestep);
-
-    std::vector<Expression<double>> ds{
-        timestep*(-2*(0.5*timestep*x + y) + -y + -2*(0.5*timestep*(-0.5*y*timestep + x) + y) + -(timestep*(-0.5*(0.5*timestep*x + y)*timestep + x) + y))/6 + x,
-        timestep*(2*(-0.5*y*timestep + x) + x + 2*(-0.5*(0.5*timestep*x + y)*timestep + x) + -(0.5*timestep*(-0.5*y*timestep + x) + y)*timestep + x)/6 + y
-    };
-
-    BOOST_REQUIRE(rk_system[0] - ds[0] == 0);
-    BOOST_REQUIRE(rk_system[1] - ds[1] == 0);
-}
