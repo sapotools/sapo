@@ -45,9 +45,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_runge_kutta, T, test_types)
     Symbol<T> x("x"), y("y");
     ODE<T> ode({x,y},{-y,x}, "time");
 
-    RungeKutta4Integrator<T> rk4;
+    RungeKutta4Integrator rk4;
 
-    auto rk_system = rk4(ode, "time step");
+    auto rk_system = rk4(ode,  Symbol<T>("time step"));
     auto time_step = rk_system.time_variable();
 
     std::vector<Expression<T>> ds{
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_transform_dynamic_bundle)
     Symbol<double> x("x"), y("y");
     ODE<double> ode({x,y},{-y,x}, "time");
 
-    RungeKutta4Integrator<double> rk4;
+    RungeKutta4Integrator rk4;
 
     auto rk_system = rk4(ode, 0.011990811705);
 
