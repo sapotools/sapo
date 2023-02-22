@@ -23,6 +23,165 @@
 
 #include "STL/Atom.h"
 
+// define the maximum admissible length for a parallelotope edge
+#define EDGE_MAX_LENGTH 1e18
+
+template<typename T>
+class BernsteinCache
+{
+  /**
+   * @brief Direction type
+   */
+  using direction_type = LinearAlgebra::Vector<T>;
+
+  /**
+   * @brief Symbolic Bernstein coefficient vector type
+   */
+  using coefficients_type = std::vector<SymbolicAlgebra::Expression<T>>;
+
+  /**
+   * @brief Parallelotope generators type
+   */
+  using generators_type = std::vector<LinearAlgebra::Vector<T>>;
+
+  /**
+   * @brief Maps that associate directions to Bernstein coefficients
+   */
+  using direction2coefficient_type
+      = std::map<direction_type, coefficients_type>;
+
+  /**
+   * @brief Maps that associate generators to direction to Bernstein
+   * coefficient map
+   */
+  using cache_type = std::map<generators_type, direction2coefficient_type>;
+
+  cache_type _cache;
+
+#ifdef WITH_THREADS
+
+  mutable std::shared_timed_mutex _mutex; //!< Cache mutex
+
+#endif // WITH_THREADS
+
+public:
+  /**
+   * @brief The empty constructor
+   */
+  BernsteinCache(): _cache() {}
+
+  /**
+   * @brief The copy constructor
+   *
+   * @param orig is the original instance of the object
+   */
+  BernsteinCache(const BernsteinCache &orig): _cache(orig._cache) {}
+
+  /**
+   * @brief Check whether the Bernstein coefficients are cached
+   *
+   * This method checks whether the symbolic Bernstein coefficients
+   * for a parallelotope and a direction are stored in the cache.
+   *
+   * @param P is a parallelotope
+   * @param direction is a direction
+   * @return `true` if and only if the coefficients for `P` and
+   *         `direction` are cached
+   */
+  bool coefficients_in_cache(const Parallelotope &P,
+                             const LinearAlgebra::Vector<T> &direction) const
+  {
+#ifdef WITH_THREADS
+    std::shared_lock<std::shared_timed_mutex> readlock(_mutex);
+#endif // WITH_THREADS
+
+    auto P_found = _cache.find(P.generators());
+
+    if (P_found == std::end(_cache)) {
+      return false;
+    }
+
+    auto dir_found = P_found->second.find(direction);
+
+    return dir_found != std::end(P_found->second);
+  }
+
+  /**
+   * @brief Get the cached Bernstein coefficients
+   *
+   * This method returns a reference to the cached symbolic
+   * Bernstein coefficients for a parallelotope and a
+   * direction.
+   *
+   * @param P is a parallelotope
+   * @param direction is a direction
+   * @return the cached symbolic Bernstein coefficients for `P`,
+   *         `direction`, and the current evolver
+   */
+  const std::vector<SymbolicAlgebra::Expression<T>> &
+  get_coefficients(const Parallelotope &P,
+                   const LinearAlgebra::Vector<T> &direction) const
+  {
+#ifdef WITH_THREADS
+    std::shared_lock<std::shared_timed_mutex> readlock(_mutex);
+#endif // WITH_THREADS
+
+    return _cache.at(P.generators()).at(direction);
+  }
+
+public:
+  /**
+   * @brief Store the Bernstein coefficients
+   *
+   * This method stores the Bernstein coefficients
+   * of a parallelotope and a direction in the cache.
+   *
+   * @param[in] P is a parallelotope
+   * @param[in] direction is a direction
+   * @param[in] coefficients is the vector of Bernstein coefficients
+   */
+  const std::vector<SymbolicAlgebra::Expression<T>> &save_coefficients(
+      const Parallelotope &P, const LinearAlgebra::Vector<T> &direction,
+      const std::vector<SymbolicAlgebra::Expression<T>> &coefficients)
+  {
+#ifdef WITH_THREADS
+    std::unique_lock<std::shared_timed_mutex> writelock(_mutex);
+#endif // WITH_THREADS
+
+    auto &cached_coefficients = _cache[P.generators()][direction];
+
+    cached_coefficients = coefficients;
+
+    return cached_coefficients;
+  }
+
+  /**
+   * @brief Store the Bernstein coefficients
+   *
+   * This method stores the Bernstein coefficients
+   * of a parallelotope and a direction in the cache.
+   *
+   * @param[in] P is a parallelotope
+   * @param[in] direction is a direction
+   * @param[in] coefficients is the vector of Bernstein coefficients
+   */
+  const std::vector<SymbolicAlgebra::Expression<T>> &
+  save_coefficients(const Parallelotope &P,
+                    const LinearAlgebra::Vector<T> &direction,
+                    std::vector<SymbolicAlgebra::Expression<T>> &&coefficients)
+  {
+#ifdef WITH_THREADS
+    std::unique_lock<std::shared_timed_mutex> writelock(_mutex);
+#endif // WITH_THREADS
+
+    auto &cached_coefficients = _cache[P.generators()][direction];
+
+    cached_coefficients = std::move(coefficients);
+
+    return cached_coefficients;
+  }
+};
+
 /**
  * @brief Handle evolution of geometric sets subject to a discrete system
  *
@@ -37,6 +196,10 @@
 template<typename T>
 class Evolver
 {
+protected:
+  DiscreteSystem<T> _ds; //!< the dynamic system
+
+  BernsteinCache<T> *_cache; //!< the symbolic Bernstein coefficient cache
 public:
   /**
    * @brief Approach to evaluate the image of a bundle
@@ -56,12 +219,6 @@ public:
     ALL_FOR_ONE  /* All-For-One */
   } evolver_mode;
 
-protected:
-  DiscreteSystem<T> _ds; //!< The discrete system
-
-  const T _edge_threshold{static_cast<T>(1e18)};
-
-public:
   evolver_mode mode; //!< the mode used to compute the evolution
 
   /**
@@ -71,10 +228,14 @@ public:
    * @param mode is the mode used to compute the evolution
    */
   Evolver(const DiscreteSystem<T> &discrete_system,
+          const bool cache_Bernstein_coefficients = true,
           const evolver_mode mode = ALL_FOR_ONE):
       _ds(discrete_system),
-      mode(mode)
+      _cache(nullptr), mode(mode)
   {
+    if (cache_Bernstein_coefficients) {
+      _cache = new BernsteinCache<T>();
+    }
   }
 
   /**
@@ -84,18 +245,15 @@ public:
    * @param mode is the mode used to compute the evolution
    */
   Evolver(const DiscreteSystem<T> &&discrete_system,
+          const bool cache_Bernstein_coefficients = true,
           const evolver_mode mode = ALL_FOR_ONE):
       _ds(std::move(discrete_system)),
-      mode(mode)
+      _cache(nullptr), mode(mode)
   {
+    if (cache_Bernstein_coefficients) {
+      _cache = new BernsteinCache<T>();
+    }
   }
-
-  /**
-   * @brief A copy constructor
-   *
-   * @param orig is the template object
-   */
-  Evolver(const Evolver<T> &orig): _ds(orig._ds), mode(orig.mode) {}
 
   /**
    * @brief Return the dynamical system
@@ -125,15 +283,18 @@ public:
   }
 
   /**
-   * @brief Transform a bundle according with the system dynamics
+   * @brief Compute the image of a bundle
+   *
+   * This method over-approximates the image of a
+   * bundle according to the dynamical system associated
+   * to the current evolver.
    *
    * @param bundle is the bundle to evolve
    * @param parameter_set is the parameter set
    * @return an over-approximation of the bundle transformed
    *         by the dynamic laws
    */
-  virtual Bundle operator()(const Bundle &bundle,
-                            const Polytope &parameter_set);
+  Bundle operator()(const Bundle &bundle, const Polytope &parameter_set);
 
   /**
    * @brief Transform a bundles union according with the system dynamics
@@ -208,7 +369,12 @@ public:
   /**
    * @brief Destroyer
    */
-  virtual ~Evolver() {}
+  ~Evolver()
+  {
+    if (_cache != nullptr) {
+      delete _cache;
+    }
+  }
 };
 
 /**
@@ -230,201 +396,5 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
                                const Bundle &bundle,
                                const SetsUnion<Polytope> &parameter_set,
                                const std::shared_ptr<STL::Atom> atom);
-
-/**
- * @brief Handle evolution of geometric sets subject to a discrete system
- *
- * The objects of this class let geometric objects, such as
- * `Parallelotope` or `Bundle`, subject to a discrete system evolve.
- * This class computes the symbolic Bernstein coefficients of the
- * associated discrete system and the evolving geometric set and
- * store them in a cache. When needed the computed symbolic
- * coefficient are recovered and instantiated for the specific
- * geometric set.
- *
- * @tparam T is the type of expression value domain
- */
-template<typename T>
-class CachedEvolver : public Evolver<T>
-{
-protected:
-  /**
-   * @brief Direction type
-   */
-  typedef LinearAlgebra::Vector<T> dir_type;
-
-  /**
-   * @brief Maps that associate directions to Bernstein coefficients
-   */
-  typedef std::map<dir_type, std::vector<SymbolicAlgebra::Expression<T>>>
-      dir2coeffs_type;
-
-  /**
-   * @brief Maps that associate generators to direction to Bernstein
-   * coefficient map
-   */
-  typedef std::map<LinearAlgebra::Dense::Matrix<T>, dir2coeffs_type>
-      cache_type;
-
-  cache_type _cache; //!< The evolver cache for symbolic Bernstein coefficients
-
-#ifdef WITH_THREADS
-  mutable std::shared_timed_mutex _cache_mutex; //!< Cache mutex
-#endif                                          // WITH_THREADS
-
-public:
-  /**
-   * @brief Check whether the Bernstein coefficients are cached
-   *
-   * @param P is a parallelotope
-   * @param direction is a direction
-   * @return `true` if and only if the coefficients for `P` and
-   *         `direction` are cached
-   */
-  bool coefficients_in_cache(const Parallelotope &P,
-                             const LinearAlgebra::Vector<T> &direction) const
-  {
-#ifdef WITH_THREADS
-    std::shared_lock<std::shared_timed_mutex> readlock(_cache_mutex);
-#endif // WITH_THREADS
-
-    auto P_found = _cache.find(P.generators());
-
-    if (P_found == std::end(_cache)) {
-      return false;
-    }
-
-    auto dir_found = P_found->second.find(direction);
-
-    return dir_found != std::end(P_found->second);
-  }
-
-  /**
-   * @brief Get the cached Bernstein coefficients of a parallelotope
-   *
-   * @param P is a parallelotope
-   * @param direction is a direction
-   * @return the cached symbolic Bernstein coefficients for `P`,
-   *         `direction`, and the current evolver
-   */
-  const std::vector<SymbolicAlgebra::Expression<T>> &
-  get_cached_coefficients(const Parallelotope &P,
-                          const LinearAlgebra::Vector<T> &direction) const
-  {
-#ifdef WITH_THREADS
-    std::shared_lock<std::shared_timed_mutex> readlock(_cache_mutex);
-#endif // WITH_THREADS
-
-    return _cache.at(P.generators()).at(direction);
-  }
-
-  /**
-   * @brief Cache the Bernstein coefficients
-   *
-   * This method saves the Bernstein coefficients
-   * of a parallelotope, a direction, and the
-   * dynamics of the current evaluator in the cache.
-   *
-   * @param[in] P is a parallelotope
-   * @param[in] direction is a direction
-   * @param[in] coeffs is the vector of Bernstein coefficients
-   */
-  const std::vector<SymbolicAlgebra::Expression<T>> &set_cache_coefficients(
-      const Parallelotope &P, const LinearAlgebra::Vector<T> &direction,
-      const std::vector<SymbolicAlgebra::Expression<T>> &coeffs)
-  {
-#ifdef WITH_THREADS
-    std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
-#endif // WITH_THREADS
-
-    auto &cache = _cache[P.generators()][direction];
-
-    cache = coeffs;
-
-    return cache;
-  }
-
-  /**
-   * @brief Cache the Bernstein coefficients
-   *
-   * This method saves the Bernstein coefficients
-   * of a parallelotope, a direction, and the
-   * dynamics of the current evaluator in the cache.
-   *
-   * @param P is a parallelotope
-   * @param direction is a direction
-   * @param coeffs is the vector of Bernstein coefficients
-   */
-  const std::vector<SymbolicAlgebra::Expression<T>> &
-  set_cache_coefficients(const Parallelotope &P,
-                         const LinearAlgebra::Vector<T> &direction,
-                         std::vector<SymbolicAlgebra::Expression<T>> &&coeffs)
-  {
-#ifdef WITH_THREADS
-    std::unique_lock<std::shared_timed_mutex> writelock(_cache_mutex);
-#endif // WITH_THREADS
-
-    // auto & cache = _cache[P.generators()][direction];
-
-    _cache[P.generators()][direction] = std::move(coeffs);
-
-    return _cache[P.generators()][direction];
-  }
-
-  /**
-   * @brief A constructor
-   *
-   * @param discrete_system is the investigated discrete system
-   * @param mode is the mode used to compute the evolution
-   */
-  CachedEvolver(const DiscreteSystem<T> &discrete_system,
-                const typename Evolver<T>::evolver_mode mode
-                = Evolver<T>::ALL_FOR_ONE):
-      Evolver<T>(discrete_system, mode),
-      _cache()
-  {
-  }
-
-  /**
-   * @brief A constructor
-   *
-   * @param discrete_system is the investigated discrete system
-   * @param mode is the mode used to compute the evolution
-   */
-  CachedEvolver(DiscreteSystem<T> &&discrete_system,
-                const typename Evolver<T>::evolver_mode mode
-                = Evolver<T>::ALL_FOR_ONE):
-      Evolver<T>(std::move(discrete_system), mode),
-      _cache()
-  {
-  }
-
-  /**
-   * @brief A constructor
-   *
-   * @param evolver is the original evolver
-   */
-  CachedEvolver(const Evolver<T> &evolver): Evolver<T>(evolver), _cache() {}
-
-  /**
-   * @brief A copy constructor
-   *
-   * @param orig is the template object
-   */
-  CachedEvolver(const CachedEvolver<T> &orig):
-      Evolver<T>(orig), _cache(orig._cache)
-  {
-  }
-
-  /**
-   * @brief Let a bundle evolve according with the discrete system
-   *
-   * @param bundle is the bundle to evolve
-   * @param parameter_set is the parameter set
-   * @return an over-approximation of the bundle transformed
-   *         by the dynamic laws
-   */
-  Bundle operator()(const Bundle &bundle, const Polytope &parameter_set);
-};
 
 #endif // EVOLVER_H_

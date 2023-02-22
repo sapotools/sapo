@@ -43,11 +43,7 @@ Sapo::Sapo(const DiscreteModel &model, bool cached):
   const DiscreteSystem<double> &ds
       = static_cast<const DiscreteSystem<double> &>(model.dynamical_system());
 
-  if (cached) {
-    _evolver = new CachedEvolver<double>(ds);
-  } else {
-    _evolver = new Evolver<double>(ds);
-  }
+  _evolver = new Evolver<double>(ds, cached);
 }
 
 Flowpipe Sapo::reach(Bundle init_set, unsigned int k,

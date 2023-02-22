@@ -1,7 +1,7 @@
 /**
  * @file Evolver.cpp
  * @author Alberto Casagrande <acasagrande@units.it>
- * @brief Transform geometric sets subject to a dynamical system
+ * @brief Transform geometric sets subject to a discrete system
  * @version 0.1
  * @date 2022-07-02
  *
@@ -78,6 +78,7 @@ replace_in_rational(
  * This function replaces all the occurrences of the variable `vars[i]`
  * in any expression in `expressions` with `subs[i]`.
  *
+ * @tparam T is the numeric type of the coefficients
  * @param expressions is the vector of expressions whose variable
  *                    occurrences must be replaced
  * @param vars is the vector variables whose occurrences must be
@@ -88,23 +89,25 @@ replace_in_rational(
  *         in which each occurrence of the variables in `vars`
  *         have been replaced by the expressions in `subs`
  */
-std::vector<SymbolicAlgebra::Expression<>>
-replace_in(const std::vector<SymbolicAlgebra::Expression<>> &expressions,
-           const std::vector<SymbolicAlgebra::Symbol<>> &vars,
-           const std::vector<SymbolicAlgebra::Expression<>> &subs)
+
+template<typename T>
+std::vector<SymbolicAlgebra::Expression<T>>
+replace_in(const std::vector<SymbolicAlgebra::Expression<T>> &expressions,
+           const std::vector<SymbolicAlgebra::Symbol<T>> &vars,
+           const std::vector<SymbolicAlgebra::Expression<T>> &subs)
 {
   using namespace SymbolicAlgebra;
 
-  Expression<>::replacement_type repl;
+  typename Expression<T>::replacement_type repl;
 
   for (unsigned int k = 0; k < vars.size(); ++k) {
     repl[vars[k]] = subs[k];
   }
 
-  std::vector<Expression<>> results;
+  std::vector<Expression<T>> results;
   for (auto ex_it = std::begin(expressions); ex_it != std::end(expressions);
        ++ex_it) {
-    results.push_back(Expression<>(*ex_it).replace(repl));
+    results.push_back(Expression<T>(*ex_it).replace(repl));
   }
 
   return results;
@@ -113,17 +116,19 @@ replace_in(const std::vector<SymbolicAlgebra::Expression<>> &expressions,
 /**
  * @brief Compute the Bernstein coefficients for a direction
  *
+ * @tparam T is the numeric type of the coefficients
  * @param alpha is the vector of the variables
  * @param f is the function whose Bernstein coefficients must be computed
  * @param direction is the direction along
  * @return the Bernstein coefficients for `f` on `direction`
  */
-std::vector<SymbolicAlgebra::Expression<>>
-compute_Bern_coefficients(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
-                          const std::vector<SymbolicAlgebra::Expression<>> &f,
-                          const LinearAlgebra::Vector<double> &direction)
+template<typename T>
+std::vector<SymbolicAlgebra::Expression<T>> compute_Bernstein_coefficients(
+    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+    const std::vector<SymbolicAlgebra::Expression<T>> &f,
+    const LinearAlgebra::Vector<T> &direction)
 {
-  SymbolicAlgebra::Expression<> Lfog = 0;
+  SymbolicAlgebra::Expression<T> Lfog = 0;
   // upper facets
   for (unsigned int k = 0; k < direction.size(); k++) {
     if (direction[k] != 0) {
@@ -137,21 +142,23 @@ compute_Bern_coefficients(const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
 /**
  * @brief Compute the variable substitutions for a parallelotope
  *
- * @param P is a parallelotope.
- * @param q are the variables associated to the parallelotope's base vertex.
- * @param beta are the variables associated to the parallelotope's lengths.
+ * @tparam T is the numeric type of the coefficients
+ * @param P is a parallelotope
+ * @param q are the variables associated to the parallelotope's base vertex
+ * @param beta are the variables associated to the parallelotope's lengths
  * @return the symbolic equations representing the the variable
- *         substitutions for `P`.
+ *         substitutions for `P`
  */
-SymbolicAlgebra::Expression<>::replacement_type
+template<typename T>
+typename SymbolicAlgebra::Expression<T>::replacement_type
 get_subs_from(const Parallelotope &P,
-              const std::vector<SymbolicAlgebra::Symbol<>> &q,
-              const std::vector<SymbolicAlgebra::Symbol<>> &beta)
+              const std::vector<SymbolicAlgebra::Symbol<T>> &q,
+              const std::vector<SymbolicAlgebra::Symbol<T>> &beta)
 {
   using namespace SymbolicAlgebra;
 
-  const LinearAlgebra::Vector<double> &base_vertex = P.base_vertex();
-  const LinearAlgebra::Vector<double> &lengths = P.lengths();
+  const LinearAlgebra::Vector<T> &base_vertex = P.base_vertex();
+  const LinearAlgebra::Vector<T> &lengths = P.lengths();
 
   Expression<>::replacement_type repl;
 
@@ -174,23 +181,23 @@ get_subs_from(const Parallelotope &P,
  * the generator lengths vector, the generators matrix
  * of the parallelotope \f$P\f$, respectively.
  *
+ * @tparam T is a numeric type
  * @param alpha is a vector of variables
  * @param P is the considered parallelotope
  * @return The generator function of `P`
  */
-std::vector<SymbolicAlgebra::Expression<>> build_instantiated_generator_functs(
-    const std::vector<SymbolicAlgebra::Symbol<>> &alpha,
-    const Parallelotope &P)
+template<typename T>
+std::vector<SymbolicAlgebra::Expression<T>>
+build_generator_functions(const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+                          const Parallelotope &P)
 {
   using namespace LinearAlgebra;
 
-  std::vector<SymbolicAlgebra::Expression<>> gen_functs;
-  for (auto it = std::begin(P.base_vertex()); it != std::end(P.base_vertex());
-       ++it) {
-    gen_functs.push_back(*it);
-  }
+  std::vector<SymbolicAlgebra::Expression<T>> gen_functs;
+  std::copy(P.base_vertex().begin(), P.base_vertex().end(),
+            std::back_inserter(gen_functs));
 
-  const std::vector<Vector<double>> &generators = P.generators();
+  const std::vector<Vector<T>> &generators = P.generators();
 
   for (unsigned int i = 0; i < generators.size(); i++) {
     // some of the non-null rows of the generator matrix
@@ -220,6 +227,7 @@ std::vector<SymbolicAlgebra::Expression<>> build_instantiated_generator_functs(
  * the generator lengths vector, the generators matrix
  * of a generic parallelotope, respectively.
  *
+ * @tparam T is a numeric type
  * @param base is the base vertex variable vector
  * @param alpha is a vector of variables
  * @param lambda is the generator length variable vector
@@ -228,11 +236,11 @@ std::vector<SymbolicAlgebra::Expression<>> build_instantiated_generator_functs(
  *       `D` as generator matrix
  */
 template<typename T>
-std::vector<SymbolicAlgebra::Expression<T>>
-build_generator_functs(const std::vector<SymbolicAlgebra::Symbol<T>> &base,
-                       const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
-                       const std::vector<SymbolicAlgebra::Symbol<T>> &lambda,
-                       const LinearAlgebra::Dense::Matrix<T> &D)
+std::vector<SymbolicAlgebra::Expression<T>> build_symbolic_generator_functions(
+    const std::vector<SymbolicAlgebra::Symbol<T>> &base,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
+    const std::vector<SymbolicAlgebra::Symbol<T>> &lambda,
+    const LinearAlgebra::Dense::Matrix<T> &D)
 {
   using namespace LinearAlgebra;
 
@@ -263,7 +271,8 @@ build_generator_functs(const std::vector<SymbolicAlgebra::Symbol<T>> &base,
  * call `COND::operator()` on the stored value and the
  * possible new value, returns `true`.
  *
- * @tparam COND
+ * @tparam T is the numeric type of the value
+ * @tparam COND is the type of the condition to update
  */
 template<typename T, typename COND>
 class CondSyncUpdater
@@ -326,16 +335,17 @@ public:
 /**
  * @brief A class to find the minimum and the maximum Bernstein coefficients
  */
+template<typename T>
 class MinMaxCoeffFinder
 {
   /**
    * @brief Evaluate a Bernstein coefficient
    *
-   * @param bernCoeff is the symbolical representation of Bernstein
+   * @param coefficient is the symbolical representation of Bernstein
    *    coefficient
    * @return The numerical evaluation of Bernstein coefficient
    */
-  double eval_coeff(const SymbolicAlgebra::Expression<> &bernCoeff) const;
+  T eval_coeff(const SymbolicAlgebra::Expression<T> &coefficient) const;
 
 public:
   /**
@@ -346,12 +356,12 @@ public:
   /**
    * @brief Find the interval containing the Bernstein coefficients.
    *
-   * @param b_coeffs is a list of symbolical Bernstein coefficients.
+   * @param coefficients is the vector of symbolical Bernstein coefficients
    * @return The pair minimum-maximum among all the Bernstein
-   *          coefficients in `b_coeffs`.
+   *          coefficients in `coefficients`
    */
-  virtual std::pair<double, double>
-  operator()(const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const;
+  virtual std::pair<T, T> operator()(
+      const std::vector<SymbolicAlgebra::Expression<T>> &coefficients) const;
 
   virtual ~MinMaxCoeffFinder() {}
 };
@@ -360,29 +370,31 @@ public:
  * @brief  A class to find the minimum and the maximum parametric Bernstein
  * coefficients
  */
-class ParamMinMaxCoeffFinder : public MinMaxCoeffFinder
+template<typename T>
+class ParamMinMaxCoeffFinder : public MinMaxCoeffFinder<T>
 {
-  const std::vector<SymbolicAlgebra::Symbol<>> &params;
+  const std::vector<SymbolicAlgebra::Symbol<T>> &params;
   const Polytope &paraSet;
+
   /**
    * @brief Evaluate the parametric Bernstein coefficient upper-bound
    *
-   * @param bernCoeff is the symbolical representation of Bernstein
+   * @param coefficient is the symbolical representation of Bernstein
    *                  coefficient
    * @return The numerical evaluation of parametric Bernstein
    *         coefficient upper-bound
    */
-  double maximize_coeff(const SymbolicAlgebra::Expression<> &bernCoeff) const;
+  T maximize_coeff(const SymbolicAlgebra::Expression<T> &coefficient) const;
 
   /**
    * @brief Evaluate the parametric Bernstein coefficient lower-bound
    *
-   * @param bernCoeff is the symbolical representation of Bernstein
+   * @param coefficient is the symbolical representation of Bernstein
    *                  coefficient
    * @return The numerical evaluation of parametric Bernstein coefficient
    *         lower-bound
    */
-  double minimize_coeff(const SymbolicAlgebra::Expression<> &bernCoeff) const;
+  T minimize_coeff(const SymbolicAlgebra::Expression<T> &coefficient) const;
 
 public:
   /**
@@ -391,58 +403,58 @@ public:
    * @param params is the list of parameters
    * @param paraSet is the set of admissible values for parameters
    */
-  ParamMinMaxCoeffFinder(const std::vector<SymbolicAlgebra::Symbol<>> &params,
+  ParamMinMaxCoeffFinder(const std::vector<SymbolicAlgebra::Symbol<T>> &params,
                          const Polytope &paraSet):
-      MinMaxCoeffFinder(),
+      MinMaxCoeffFinder<T>(),
       params(params), paraSet(paraSet)
   {
   }
 
   /**
-   * @brief Find the interval containing the Bernstein coefficients
+   * @brief Find the interval containing the Bernstein coefficients.
    *
-   * @param b_coeffs is a list of symbolical Bernstein coefficients
+   * @param coefficients is the vector of symbolical Bernstein coefficients
    * @return The pair minimum-maximum among all the Bernstein
-   *          coefficients in `b_coeffs`
+   *          coefficients in `coefficients`
    */
-  std::pair<double, double>
-  operator()(const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const;
+  std::pair<T, T> operator()(
+      const std::vector<SymbolicAlgebra::Expression<T>> &coefficients) const;
 
   ~ParamMinMaxCoeffFinder() {}
 };
 
-double MinMaxCoeffFinder::eval_coeff(
-    const SymbolicAlgebra::Expression<> &bernCoeff) const
+template<typename T>
+T MinMaxCoeffFinder<T>::eval_coeff(
+    const SymbolicAlgebra::Expression<T> &coefficient) const
 {
-  double value = bernCoeff.evaluate();
-
-  // TODO: The following conditional evaluation avoids -0
-  //       values. Check the difference between -0 and 0.
-  return AVOID_NEG_ZERO(value);
+  return AVOID_NEG_ZERO(coefficient.evaluate());
 }
 
-double ParamMinMaxCoeffFinder::maximize_coeff(
-    const SymbolicAlgebra::Expression<> &bernCoeff) const
+template<typename T>
+T ParamMinMaxCoeffFinder<T>::maximize_coeff(
+    const SymbolicAlgebra::Expression<T> &coefficient) const
 {
-  return paraSet.maximize(params, bernCoeff).objective_value();
+  return paraSet.maximize(params, coefficient).objective_value();
 }
 
-double ParamMinMaxCoeffFinder::minimize_coeff(
-    const SymbolicAlgebra::Expression<> &bernCoeff) const
+template<typename T>
+T ParamMinMaxCoeffFinder<T>::minimize_coeff(
+    const SymbolicAlgebra::Expression<T> &coefficient) const
 {
-  return paraSet.minimize(params, bernCoeff).objective_value();
+  return paraSet.minimize(params, coefficient).objective_value();
 }
 
-std::pair<double, double> MinMaxCoeffFinder::operator()(
-    const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const
+template<typename T>
+std::pair<T, T> MinMaxCoeffFinder<T>::operator()(
+    const std::vector<SymbolicAlgebra::Expression<T>> &coefficients) const
 {
-  auto b_coeff_it = b_coeffs.begin();
+  auto b_coeff_it = coefficients.begin();
 
-  double max_value = eval_coeff(*b_coeff_it);
-  double min_value = max_value;
+  T max_value = eval_coeff(*b_coeff_it);
+  T min_value = max_value;
 
-  for (++b_coeff_it; b_coeff_it != b_coeffs.end(); ++b_coeff_it) {
-    double coeff_value = eval_coeff(*b_coeff_it);
+  for (++b_coeff_it; b_coeff_it != coefficients.end(); ++b_coeff_it) {
+    T coeff_value = eval_coeff(*b_coeff_it);
 
     if (coeff_value > max_value) {
       max_value = coeff_value;
@@ -453,19 +465,20 @@ std::pair<double, double> MinMaxCoeffFinder::operator()(
     }
   }
 
-  return std::pair<double, double>(min_value, max_value);
+  return std::pair<T, T>(std::move(min_value), std::move(max_value));
 }
 
-std::pair<double, double> ParamMinMaxCoeffFinder::operator()(
-    const std::vector<SymbolicAlgebra::Expression<>> &b_coeffs) const
+template<typename T>
+std::pair<T, T> ParamMinMaxCoeffFinder<T>::operator()(
+    const std::vector<SymbolicAlgebra::Expression<T>> &coefficients) const
 {
-  auto b_coeff_it = b_coeffs.begin();
+  auto b_coeff_it = coefficients.begin();
 
-  double max_value = maximize_coeff(*b_coeff_it);
-  double min_value = minimize_coeff(*b_coeff_it);
+  T max_value = maximize_coeff(*b_coeff_it);
+  T min_value = minimize_coeff(*b_coeff_it);
 
-  for (++b_coeff_it; b_coeff_it != b_coeffs.end(); ++b_coeff_it) {
-    double coeff_value = maximize_coeff(*b_coeff_it);
+  for (++b_coeff_it; b_coeff_it != coefficients.end(); ++b_coeff_it) {
+    T coeff_value = maximize_coeff(*b_coeff_it);
 
     if (coeff_value > max_value) {
       max_value = coeff_value;
@@ -477,7 +490,7 @@ std::pair<double, double> ParamMinMaxCoeffFinder::operator()(
     }
   }
 
-  return std::pair<double, double>(min_value, max_value);
+  return std::pair<T, T>(std::move(min_value), std::move(max_value));
 }
 
 template<typename T>
@@ -788,6 +801,20 @@ std::vector<LinearAlgebra::Vector<double>> get_parallelotope_basis_images(
   return basis_images;
 }
 
+/**
+ * @brief Compute new directions for a bundle
+ *
+ * This method computes new directions for a bundle subject to a
+ * parametric dynamical system. This is achieved by computing
+ * the images of each parallelotope edge on the base-vertex side
+ * so to map the original parallelotope in a new parallelotope
+ * whose directions are the new dictions.
+ *
+ * @param bundle is a bundle
+ * @param ds is a dynamical system
+ * @param parameter_set is a parameter set
+ * @return a vector of new directions for the bundle
+ */
 std::vector<LinearAlgebra::Vector<double>>
 compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
                        const Polytope &parameter_set)
@@ -843,6 +870,274 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
   return new_dirs;
 }
 
+/**
+ * @brief Bundle bound refiner
+ *
+ * When a bundle is transformed according to a parametric
+ * dynamical system, the bounds of its image on a set of
+ * new directions must be computed. For each of the new
+ * directions, we must evaluate the maximum and the minimum
+ * among the Bernstein coefficients of a set of generator
+ * functions which depend on the considered direction, on
+ * the bundle parallelotopes, and on the dynamical system.
+ * This class manages the computation of bundle image bounds
+ * and provides an practical interface to process bundle
+ * templates one by one.
+ *
+ * @tparam T is the constant numeric type
+ */
+template<typename T>
+class BoundRefiner
+{
+  const Bundle _bundle;                        //!< the considered bundle
+  const DynamicalSystem<T> &_dynamical_system; //!< the dynamical system
+
+  std::vector<CondSyncUpdater<T, std::greater<T>>>
+      _lower_bound; //!< the vector of identified lower bounds
+  std::vector<CondSyncUpdater<T, std::less<T>>>
+      _upper_bound; //!< the vector of identified upper bounds
+
+  const std::vector<LinearAlgebra::Vector<T>>
+      &_new_directions; //!< the vector of bundle new directions
+
+  const std::vector<SymbolicAlgebra::Symbol<T>>
+      _alpha; //!< the dynamical law variables
+
+  const std::vector<SymbolicAlgebra::Symbol<T>>
+      _lambda; //!< the variables representing parallelotope edge lengths
+  const std::vector<SymbolicAlgebra::Symbol<T>>
+      _base; //!< the variables representing parallelotope base
+
+  MinMaxCoeffFinder<T>
+      *_minmax_finder; //!< an object minimize and maximize Bernstein
+                       //!< coefficient in the parameter set
+
+  /**
+   * @brief Parallelotope processor
+   *
+   * This class refines the bundle image bounds considering one
+   * of the bundle templates.
+   */
+  class ParallelotopeProcessor
+  {
+    const Parallelotope
+        _parallelotope; //!< the parallelotope of the considered template
+
+    std::vector<SymbolicAlgebra::Expression<T>>
+        _generator_functions; //!< the generator functions that maps [0,1]^n in
+                              //!< the parallelotope image
+
+    typename SymbolicAlgebra::Expression<T>::interpretation_type
+        _parallelotope_interpretation; //!< the interpretation of the lambda
+                                       //!< and beta variables for the
+                                       //!< considered parallelotope
+
+    BernsteinCache<T>
+        *_cache; //!< a pointer to the symbolic Bernstein coefficient cache
+
+    /**
+     * @brief Get the symbolic Bernstein coefficients of a direction
+     *
+     * This method search for the symbolic Bernstein coefficients of a
+     * direction in the cache. If it does not contain them, they are computed
+     * and stored in the cache. Finally, a reference to the stored symbolic
+     * Bernstein coefficients is returned.
+     *
+     * @param alpha is the vector of alpha variables to be used
+     * @param direction is the direction whose symbolic Bernstein coefficients
+     * are aimed
+     * @return a reference to the computed symbolic Bernstein coefficients of a
+     * direction
+     */
+    const std::vector<SymbolicAlgebra::Expression<T>> &
+    get_symbolic_coefficients(
+        const std::vector<SymbolicAlgebra::Symbol<T>> alpha,
+        const LinearAlgebra::Vector<T> &direction)
+    {
+      if (_cache->coefficients_in_cache(_parallelotope,
+                                        direction)) { // Bernstein coefficients
+                                                      // have been computed
+
+        return _cache->get_coefficients(_parallelotope, direction);
+      }
+
+      auto coefficients = compute_Bernstein_coefficients(
+          alpha, _generator_functions, direction);
+      return _cache->save_coefficients(_parallelotope, direction,
+                                       std::move(coefficients));
+    }
+
+  public:
+    /**
+     * @brief A constructor
+     *
+     * @param refiner is the bound refiner that is about to process a bundle
+     * parallelotope
+     * @param bundle_template is one of the bundle templates
+     * @param cache is a pointer to the symbolic Bernstein coefficient cache
+     */
+    ParallelotopeProcessor(BoundRefiner &refiner,
+                           const BundleTemplate &bundle_template,
+                           BernsteinCache<T> *cache):
+        _parallelotope(refiner._bundle.get_parallelotope(bundle_template)),
+        _cache(cache)
+    {
+      std::vector<SymbolicAlgebra::Expression<T>> genFun;
+      if (_cache == nullptr) {
+        genFun = build_generator_functions(refiner._alpha, _parallelotope);
+      } else {
+        genFun = build_symbolic_generator_functions(
+            refiner._base, refiner._alpha, refiner._lambda,
+            _parallelotope.generators());
+      }
+
+      _generator_functions
+          = replace_in(refiner._dynamical_system.dynamics(),
+                       refiner._dynamical_system.variables(), genFun);
+
+      for (size_t i = 0; i < _parallelotope.dim(); ++i) {
+        _parallelotope_interpretation[refiner._base[i]]
+            = _parallelotope.base_vertex()[i];
+        _parallelotope_interpretation[refiner._lambda[i]]
+            = _parallelotope.lengths()[i];
+      }
+    }
+
+    /**
+     * @brief Get the direction bounds in the bundle image
+     *
+     * @param alpha is the alpha variable vector
+     * @param direction is the direction whose bounds are aimed
+     * @param minmax_finder is the object that search among Bernstein
+     * coefficients for their maximum and minimum
+     * @return a pair minimum-maximum bounds for the specified direction in the
+     * image of the bundle through the dynamical system
+     */
+    std::pair<T, T>
+    get_direction_bounds(const std::vector<SymbolicAlgebra::Symbol<T>> alpha,
+                         const LinearAlgebra::Vector<T> &direction,
+                         MinMaxCoeffFinder<T> *minmax_finder)
+    {
+      std::vector<SymbolicAlgebra::Expression<double>> coefficients;
+
+      if (_cache == nullptr) {
+        coefficients = compute_Bernstein_coefficients(
+            alpha, _generator_functions, direction);
+      } else {
+        auto &symbolic_coefficients
+            = get_symbolic_coefficients(alpha, direction);
+
+        coefficients.reserve(symbolic_coefficients.size());
+        for (auto &symbolic_coefficient: symbolic_coefficients) {
+          coefficients.push_back(
+              symbolic_coefficient.apply(_parallelotope_interpretation));
+        }
+      }
+
+      return (*minmax_finder)(coefficients);
+    }
+  };
+
+public:
+  BoundRefiner(const Bundle &bundle,
+               const DynamicalSystem<T> &dynamical_system,
+               const Polytope &parameter_set,
+               const std::vector<LinearAlgebra::Vector<T>> &new_directions):
+      _bundle(bundle),
+      _dynamical_system(dynamical_system), _lower_bound(bundle.size()),
+      _upper_bound(bundle.size()), _new_directions(new_directions),
+      _alpha(get_symbol_vector<T>("alpha", dynamical_system.dim())),
+      _lambda(get_symbol_vector<T>("lambda", dynamical_system.dim())),
+      _base(get_symbol_vector<T>("base", dynamical_system.dim()))
+  {
+    if (dynamical_system.parameters().size() == 0) {
+      _minmax_finder = new MinMaxCoeffFinder<T>();
+    } else {
+      _minmax_finder = new ParamMinMaxCoeffFinder<T>(
+          dynamical_system.parameters(), parameter_set);
+    }
+  }
+
+  /**
+   * @brief Process a bundle template
+   *
+   * @param bundle_template is a template of the considered bundle
+   * @param mode is the bound computation mode, i.e., one-for-one or
+   * all-for-one
+   * @param cache is the symbolic Bernstein coefficient cache
+   * @return a reference to the current object
+   */
+  BoundRefiner<T> &
+  process_template(const BundleTemplate &bundle_template,
+                   const typename Evolver<T>::evolver_mode &mode,
+                   BernsteinCache<T> *cache = nullptr)
+  {
+    ParallelotopeProcessor processor(*this, bundle_template, cache);
+
+    // for each direction
+    const size_t num_of_directions
+        = (mode == Evolver<T>::ONE_FOR_ONE ? bundle_template.dim()
+                                           : _bundle.size());
+
+    for (size_t j = 0; j < num_of_directions; j++) {
+      auto direction_index
+          = (mode == Evolver<T>::ONE_FOR_ONE ? bundle_template[j] : j);
+
+      const auto &direction = _new_directions[direction_index];
+
+      auto coefficients
+          = processor.get_direction_bounds(_alpha, direction, _minmax_finder);
+
+      _lower_bound[direction_index].update(coefficients.first);
+      _upper_bound[direction_index].update(coefficients.second);
+    }
+
+    return *this;
+  }
+
+  /**
+   * @brief Get the bundle image upper bounds
+   *
+   * @return the bundle image upper bounds as identified in the processed
+   * templates
+   */
+  LinearAlgebra::Vector<T> get_upper_bounds() const
+  {
+    LinearAlgebra::Vector<T> upper_bounds;
+
+    std::copy(_upper_bound.begin(), _upper_bound.end(),
+              std::back_inserter(upper_bounds));
+
+    return upper_bounds;
+  }
+
+  /**
+   * @brief Get the bundle image lower bounds
+   *
+   * @return the bundle image lower bounds as identified in the processed
+   * templates
+   */
+  LinearAlgebra::Vector<T> get_lower_bounds() const
+  {
+    LinearAlgebra::Vector<T> lower_bounds;
+
+    std::copy(_lower_bound.begin(), _lower_bound.end(),
+              std::back_inserter(lower_bounds));
+
+    return lower_bounds;
+  }
+
+  /**
+   * @brief The destroyer
+   */
+  ~BoundRefiner()
+  {
+    delete _minmax_finder;
+  }
+
+  friend class ParallelotopeProcessor;
+};
+
 template<>
 Bundle Evolver<double>::operator()(const Bundle &bundle,
                                    const Polytope &parameter_set)
@@ -863,51 +1158,16 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
                std::domain_error);
   }
 
-  // compute new directions
-  const auto new_dirs = compute_new_directions(bundle, _ds, parameter_set);
+  auto new_directions = compute_new_directions(bundle, _ds, parameter_set);
 
-  vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
-  vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
-      bundle.size());
-  MinMaxCoeffFinder *itvl_finder;
+  BoundRefiner bound_refiner(bundle, _ds, parameter_set, new_directions);
 
-  if (_ds.parameters().size() == 0) {
-    itvl_finder = new MinMaxCoeffFinder();
-  } else {
-    itvl_finder = new ParamMinMaxCoeffFinder(_ds.parameters(), parameter_set);
-  }
-
-  std::vector<Symbol<double>> alpha
-      = get_symbol_vector<double>("alpha", _ds.dim());
-
-  auto refine_coeff_itvl = [&max_coeffs, &min_coeffs, &bundle, &new_dirs,
-                            &alpha, &itvl_finder](
-                               const DynamicalSystem<double> &ds,
-                               const BundleTemplate &bundle_template,
-                               const evolver_mode t_mode) {
-    Parallelotope P = bundle.get_parallelotope(bundle_template);
-
-    const auto &genFun = build_instantiated_generator_functs(alpha, P);
-    const auto genFun_f = replace_in(ds.dynamics(), ds.variables(), genFun);
-
-    unsigned int dir_b;
-
-    // for each direction
-    const size_t num_of_dirs
-        = (t_mode == ONE_FOR_ONE ? bundle_template.dim() : bundle.size());
-
-    for (unsigned int j = 0; j < num_of_dirs; j++) {
-      dir_b = (t_mode == ONE_FOR_ONE ? bundle_template[j] : j);
-
-      const auto coefficients
-          = compute_Bern_coefficients(alpha, genFun_f, new_dirs[dir_b]);
-
-      const auto coeff_itvl = (*itvl_finder)(coefficients);
-
-      min_coeffs[dir_b].update(coeff_itvl.first);
-      max_coeffs[dir_b].update(coeff_itvl.second);
-    }
-  };
+  auto refine_bounds
+      = [&bound_refiner](Evolver<double> *evolver,
+                         const BundleTemplate &bundle_template) {
+          bound_refiner.process_template(bundle_template, evolver->mode,
+                                         evolver->_cache);
+        };
 
   try {
 #ifdef WITH_THREADS
@@ -917,225 +1177,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
          t_it != std::end(bundle.templates()); ++t_it) {
 
       // submit the task to the thread pool
-      thread_pool.submit_to_batch(batch_id, refine_coeff_itvl, std::ref(_ds),
-                                  std::ref(*t_it), this->mode);
-    }
-
-    // join to the pool threads
-    thread_pool.join_threads(batch_id);
-
-    // close the batch
-    thread_pool.close_batch(batch_id);
-#else  // WITH_THREADS
-    for (auto t_it = std::begin(bundle.templates());
-         t_it != std::end(bundle.templates()); ++t_it) {
-      refine_coeff_itvl(std::ref(_ds), std::ref(*t_it), this->mode);
-    }
-#endif // WITH_THREADS
-    delete itvl_finder;
-  } catch (SymbolicAlgebra::symbol_evaluation_error &e) {
-
-    delete itvl_finder;
-    std::ostringstream oss;
-
-    oss << "the symbol \"" << e.get_symbol_name() << "\" is unknown";
-
-    SAPO_ERROR(oss.str(), std::domain_error);
-  }
-
-  LinearAlgebra::Vector<double> lower_bounds, upper_bounds;
-  for (auto it = std::begin(max_coeffs); it != std::end(max_coeffs); ++it) {
-    upper_bounds.push_back(*it);
-  }
-  for (auto it = std::begin(min_coeffs); it != std::end(min_coeffs); ++it) {
-    lower_bounds.push_back(*it);
-  }
-
-  Bundle res(bundle.adaptive_directions(), std::move(new_dirs),
-             std::move(lower_bounds), std::move(upper_bounds),
-             bundle.templates());
-
-  for (const auto &len: bundle.edge_lengths()) {
-    if (len > _edge_threshold) {
-      SAPO_ERROR("one of the computed bundle edge lengths "
-                 "is larger than the set threshold",
-                 std::runtime_error);
-    }
-  }
-
-  if (this->mode == ONE_FOR_ONE) {
-    res.canonize();
-  }
-
-  return res;
-}
-
-template<typename T>
-inline void init_genFun_if_necessary(
-    std::pair<std::vector<SymbolicAlgebra::Expression<T>>,
-              std::vector<SymbolicAlgebra::Expression<T>>> &genFun_f,
-    const Parallelotope &P, const DynamicalSystem<T> &ds,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &base,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &lambda)
-{
-  if (genFun_f.first.size() == 0) { // not initialized yet
-    auto genFun = build_generator_functs(base, alpha, lambda, P.generators());
-
-    genFun_f = replace_in_rational(ds.dynamics(), ds.variables(), genFun);
-  }
-}
-
-template<typename T>
-const std::vector<SymbolicAlgebra::Expression<T>> &get_symbolic_coefficients(
-    CachedEvolver<T> *evolver, const Parallelotope &P,
-    std::pair<std::vector<SymbolicAlgebra::Expression<T>>,
-              std::vector<SymbolicAlgebra::Expression<T>>> &genFun_f,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &base,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &lambda,
-    const LinearAlgebra::Vector<double> &bundle_dir)
-{
-  if (evolver->coefficients_in_cache(P,
-                                     bundle_dir)) { // Bernstein coefficients
-                                                    // have been computed
-
-    return evolver->get_cached_coefficients(P, bundle_dir);
-  }
-
-  init_genFun_if_necessary(genFun_f, P, evolver->dynamical_system(), base,
-                           alpha, lambda);
-
-  auto coeff = compute_Bern_coefficients(alpha, genFun_f, bundle_dir);
-
-  return evolver->set_cache_coefficients(P, bundle_dir, std::move(coeff));
-}
-
-template<typename T>
-inline void
-init_genFun_if_necessary(std::vector<SymbolicAlgebra::Expression<T>> &genFun_f,
-                         const Parallelotope &P, const DynamicalSystem<T> &ds,
-                         const std::vector<SymbolicAlgebra::Symbol<T>> &base,
-                         const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
-                         const std::vector<SymbolicAlgebra::Symbol<T>> &lambda)
-{
-  if (genFun_f.size() == 0) { // not initialized yet
-    auto genFun = build_generator_functs(base, alpha, lambda, P.generators());
-
-    genFun_f = replace_in(ds.dynamics(), ds.variables(), genFun);
-  }
-}
-
-template<typename T>
-const std::vector<SymbolicAlgebra::Expression<T>> &get_symbolic_coefficients(
-    CachedEvolver<T> *evolver, const Parallelotope &P,
-    std::vector<SymbolicAlgebra::Expression<T>> &genFun_f,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &base,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
-    const std::vector<SymbolicAlgebra::Symbol<T>> &lambda,
-    const LinearAlgebra::Vector<double> &bundle_dir)
-{
-  if (evolver->coefficients_in_cache(P,
-                                     bundle_dir)) { // Bernstein coefficients
-                                                    // have been computed
-
-    return evolver->get_cached_coefficients(P, bundle_dir);
-  }
-
-  init_genFun_if_necessary(genFun_f, P, evolver->dynamical_system(), base,
-                           alpha, lambda);
-
-  return evolver->set_cache_coefficients(
-      P, bundle_dir, compute_Bern_coefficients(alpha, genFun_f, bundle_dir));
-}
-
-template<>
-Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
-                                         const Polytope &parameter_set)
-{
-  using namespace std;
-  using namespace SymbolicAlgebra;
-  using namespace LinearAlgebra;
-
-  if (bundle.dim() != _ds.variables().size()) {
-    SAPO_ERROR("the bundle and the dynamic laws must have the "
-               "same number of dimensions",
-               std::domain_error);
-  }
-
-  if (parameter_set.dim() != _ds.parameters().size()) {
-    SAPO_ERROR("the vector of parameters and the parameter "
-               "set must have same number of dimensions",
-               std::domain_error);
-  }
-
-  // compute new directions
-  const auto new_dirs = compute_new_directions(bundle, _ds, parameter_set);
-
-  vector<CondSyncUpdater<double, std::less<double>>> max_coeffs(bundle.size());
-  vector<CondSyncUpdater<double, std::greater<double>>> min_coeffs(
-      bundle.size());
-  MinMaxCoeffFinder *itvl_finder;
-
-  if (_ds.parameters().size() == 0) {
-    itvl_finder = new MinMaxCoeffFinder();
-  } else {
-    itvl_finder = new ParamMinMaxCoeffFinder(_ds.parameters(), parameter_set);
-  }
-
-  auto alpha = get_symbol_vector<double>("alpha", _ds.dim());
-  auto lambda = get_symbol_vector<double>("lambda", _ds.dim());
-  auto base = get_symbol_vector<double>("base", _ds.dim());
-
-  auto refine_coeff_itvl =
-      [&max_coeffs, &min_coeffs, &bundle, &new_dirs, &alpha, &lambda, &base,
-       &itvl_finder](CachedEvolver<double> *evolver,
-                     const BundleTemplate &bundle_template) {
-        Parallelotope P = bundle.get_parallelotope(bundle_template);
-
-        Expression<double>::interpretation_type P_interpretation;
-
-        for (size_t i = 0; i < P.dim(); ++i) {
-          P_interpretation[base[i]] = P.base_vertex()[i];
-          P_interpretation[lambda[i]] = P.lengths()[i];
-        }
-
-        std::vector<SymbolicAlgebra::Expression<double>> genFun_f;
-
-        // for each direction
-        const size_t num_of_dirs
-            = (evolver->mode == ONE_FOR_ONE ? bundle_template.dim()
-                                            : bundle.size());
-
-        for (unsigned int j = 0; j < num_of_dirs; j++) {
-          auto dir_b = (evolver->mode == ONE_FOR_ONE ? bundle_template[j] : j);
-
-          auto symb_coeff = get_symbolic_coefficients(
-              evolver, P, genFun_f, base, alpha, lambda, new_dirs[dir_b]);
-
-          std::vector<Expression<double>> coefficients;
-
-          coefficients.reserve(symb_coeff.size());
-          for (auto &coeff: symb_coeff) {
-            coefficients.push_back(coeff.apply(P_interpretation));
-          }
-
-          auto coeff_itvl = (*itvl_finder)(coefficients);
-
-          min_coeffs[dir_b].update(coeff_itvl.first);
-          max_coeffs[dir_b].update(coeff_itvl.second);
-        }
-      };
-
-  try {
-#ifdef WITH_THREADS
-    ThreadPool::BatchId batch_id = thread_pool.create_batch();
-
-    for (auto t_it = std::begin(bundle.templates());
-         t_it != std::end(bundle.templates()); ++t_it) {
-
-      // submit the task to the thread pool
-      thread_pool.submit_to_batch(batch_id, refine_coeff_itvl, this,
+      thread_pool.submit_to_batch(batch_id, refine_bounds, this,
                                   std::ref(*t_it));
     }
 
@@ -1147,44 +1189,34 @@ Bundle CachedEvolver<double>::operator()(const Bundle &bundle,
 #else  // WITH_THREADS
     for (auto t_it = std::begin(bundle.templates());
          t_it != std::end(bundle.templates()); ++t_it) {
-      refine_coeff_itvl(this, std::ref(*t_it));
+      refine_bounds(this, std::ref(*t_it));
     }
 #endif // WITH_THREADS
-    delete itvl_finder;
   } catch (SymbolicAlgebra::symbol_evaluation_error &e) {
-
-    delete itvl_finder;
     std::ostringstream oss;
 
     oss << "the symbol \"" << e.get_symbol_name() << "\" is unknown";
     SAPO_ERROR(oss.str(), std::domain_error);
   }
 
-  LinearAlgebra::Vector<double> lower_bounds, upper_bounds;
-  for (auto it = std::begin(max_coeffs); it != std::end(max_coeffs); ++it) {
-    upper_bounds.push_back(*it);
-  }
-  for (auto it = std::begin(min_coeffs); it != std::end(min_coeffs); ++it) {
-    lower_bounds.push_back(*it);
-  }
-
-  Bundle res(bundle.adaptive_directions(), std::move(new_dirs),
-             std::move(lower_bounds), std::move(upper_bounds),
-             bundle.templates());
+  Bundle new_bundle(bundle.adaptive_directions(), std::move(new_directions),
+                    bound_refiner.get_lower_bounds(),
+                    bound_refiner.get_upper_bounds(), bundle.templates());
 
   for (const auto &len: bundle.edge_lengths()) {
-    if (len > _edge_threshold) {
+    if (len > EDGE_MAX_LENGTH) {
       SAPO_ERROR("one of the computed bundle edge lengths is "
-                 "larger than the set threshold",
+                 "larger than the set threshold (i.e., "
+                     << EDGE_MAX_LENGTH << ")",
                  std::runtime_error);
     }
   }
 
   if (this->mode == ONE_FOR_ONE) {
-    res.canonize();
+    new_bundle.canonize();
   }
 
-  return res;
+  return new_bundle;
 }
 
 SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
@@ -1224,8 +1256,7 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
        ++t_it) { // for each parallelotope
 
     Parallelotope P = bundle.get_parallelotope(*t_it);
-    std::vector<Expression<>> genFun
-        = build_instantiated_generator_functs(alpha, P);
+    std::vector<Expression<>> genFun = build_generator_functions(alpha, P);
 
     const auto fog = replace_in(ds.dynamics(), ds.variables(), genFun);
 
