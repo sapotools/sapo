@@ -156,6 +156,19 @@ public:
   }
 
   /**
+   * @brief Test whether two symbols are the same
+   *
+   * @param a is a symbol
+   * @return `true` if and only if `a` and `*this`
+   *    represent the same symbol
+   *
+   */
+  inline bool operator==(const Symbol<C> &a) const
+  {
+    return get_id() == a.get_id();
+  }
+
+  /**
    * @brief Get the Symbol id
    *
    * @return The id of the represented symbol
@@ -176,6 +189,38 @@ public:
     return _symbol_names[id];
   }
 };
+
+/**
+ * @brief Test whether two symbols are the same
+ *
+ * @tparam C is the type of constants
+ * @param a is a symbol
+ * @param b is a symbol name
+ * @return `true` if and only if `a` and `b`
+ *    represent the same symbol
+ *
+ */
+template<typename C>
+inline bool operator==(const Symbol<C> &a, const std::string &b)
+{
+  return a == Symbol<C>(b);
+}
+
+/**
+ * @brief Test whether two symbols are the same
+ *
+ * @tparam C is the type of constants
+ * @param a is a symbol name
+ * @param b is a symbol
+ * @return `true` if and only if `a` and `b`
+ *    represent the same symbol
+ *
+ */
+template<typename C>
+inline bool operator==(const std::string &a, const Symbol<C> &b)
+{
+  return b == Symbol<C>(a);
+}
 }
 
 /**
@@ -1028,7 +1073,7 @@ public:
       return lhs;
     }
 
-    return lhs * (1 / static_cast<C>(value));
+    return lhs * static_cast<C>(1 / static_cast<C>(value));
   }
 
   /**
