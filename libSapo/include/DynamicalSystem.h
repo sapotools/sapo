@@ -25,11 +25,11 @@
 enum class DynamicType { DISCRETE, CONTINUOUS, UNDEFINED };
 
 /**
- * @brief This class represents parametric dynamical systems
+ * @brief This class represents parametric polynomial dynamical systems
  *
- * This class represents parametric dynamical systems.
- * Each variable of the system is associated to an
- * expression that describes the variable dynamic law.
+ * This class represents parametric polynomial dynamical systems.
+ * Each variable of the system is associated to an expression that
+ * describes the variable dynamic law.
  *
  * @tparam T is the type of expression value domain
  */
@@ -51,15 +51,14 @@ protected:
                   //!< indices
 
   /**
-   * @brief Validate constructor parameters and initialize objects
+   * @brief Conclude initialization
    */
-  void validate_and_initialize();
+  void build_variable_index();
 
-public:
   /**
-   * @brief An empty constructor
+   * @brief Validate the object
    */
-  DynamicalSystem();
+  void validate() const;
 
   /**
    * @brief A constructor
@@ -143,6 +142,12 @@ public:
    */
   DynamicalSystem(DynamicalSystem<T> &&orig);
 
+public:
+  /**
+   * @brief An empty constructor
+   */
+  DynamicalSystem();
+
   /**
    * @brief Number of dynamic laws
    *
@@ -159,32 +164,12 @@ public:
   DynamicalSystem &operator=(const DynamicalSystem<T> &orig);
 
   /**
-   * @brief A copy operator
+   * @brief A move operator
    *
    * @param orig the original dynamic laws
    * @return a reference to the updated object
    */
   DynamicalSystem &operator=(DynamicalSystem<T> &&orig);
-
-  /**
-   * @brief Replace the dynamic law of a variable
-   *
-   * @param variable is the variable changed by the dynamic
-   * @param dynamic is the new dynamic law for `variable`
-   * @return a reference to the updated object
-   */
-  DynamicalSystem &replace(const SymbolicAlgebra::Symbol<T> &variable,
-                           const SymbolicAlgebra::Expression<T> &dynamic);
-
-  /**
-   * @brief Replace the dynamic law of a variable
-   *
-   * @param variable is the variable changed by the dynamic
-   * @param dynamic is the new dynamic law for `variable`
-   * @return a reference to the updated object
-   */
-  DynamicalSystem &replace(const SymbolicAlgebra::Symbol<T> &variable,
-                           SymbolicAlgebra::Expression<T> &&dynamic);
 
   /**
    * @brief Get the system variables
@@ -245,65 +230,42 @@ public:
 };
 
 template<typename T>
-void DynamicalSystem<T>::validate_and_initialize()
+void DynamicalSystem<T>::build_variable_index()
 {
   using namespace SymbolicAlgebra;
 
-  if (_variables.size() != _dynamics.size()) {
-    SAPO_ERROR("the vectors of the dynamics laws and that "
-               "of the variables must have the same size",
-               std::domain_error);
-  }
-
-  std::set<Symbol<T>> symbols;
-
-  for (auto d_it = std::begin(_dynamics); d_it != std::end(_dynamics);
-       ++d_it) {
-
-    std::set<Symbol<T>> d_symbols = d_it->get_symbols();
-
-    for (auto ds_it = std::begin(d_symbols); ds_it != std::end(d_symbols);
-         ++ds_it) {
-      symbols.insert(*ds_it);
-    }
-  }
-
-  for (auto v_it = std::begin(_variables); v_it != std::end(_variables);
-       ++v_it) {
-    symbols.erase(*v_it);
-    if (!_var_index.emplace(v_it->get_id(), _var_index.size()).second) {
-      SAPO_ERROR("the vector or the variables must not "
-                 "contain duplicates",
+  for (const auto &variable: _variables) {
+    if (!_var_index.emplace(variable.get_id(), _var_index.size()).second) {
+      SAPO_ERROR("The variable vector contains \""
+                     << Symbol<T>::get_symbol_name(variable.get_id())
+                     << "\" twice",
                  std::domain_error);
     }
   }
 
   std::set<SymbolIdType> param_index;
-  for (auto p_it = std::begin(_parameters); p_it != std::end(_parameters);
-       ++p_it) {
-    symbols.erase(*p_it);
-    if (_var_index.find(p_it->get_id()) != std::end(_var_index)) {
-      std::ostringstream oss;
-
-      oss << "Symbol \"" << Symbol<>::get_symbol_name(p_it->get_id())
-          << "\" is reported as both a variable and a parameter";
-
-      SAPO_ERROR(oss.str(), std::domain_error);
+  for (const auto &parameter: _parameters) {
+    if (_var_index.find(parameter.get_id()) != std::end(_var_index)) {
+      SAPO_ERROR("Symbol \"" << Symbol<T>::get_symbol_name(parameter.get_id())
+                             << "\" must be either a variable or a parameter",
+                 std::domain_error);
     }
-    if (!param_index.emplace(p_it->get_id()).second) {
-      SAPO_ERROR("the vector of the parameters must not "
-                 "contain duplicates",
+    if (!param_index.emplace(parameter.get_id()).second) {
+      SAPO_ERROR("The parameter vector contains \""
+                     << Symbol<T>::get_symbol_name(parameter.get_id())
+                     << "\" twice",
                  std::domain_error);
     }
   }
+}
 
-  if (!symbols.empty()) {
-    std::ostringstream oss;
-
-    oss << "The symbols in " << symbols << " are neither variables "
-        << "nor parameters";
-
-    SAPO_ERROR(oss.str(), std::domain_error);
+template<typename T>
+void DynamicalSystem<T>::validate() const
+{
+  if (_variables.size() != _dynamics.size()) {
+    SAPO_ERROR("the vectors of the dynamics laws and that "
+               "of the variables must have the same size",
+               std::domain_error);
   }
 }
 
@@ -315,7 +277,8 @@ DynamicalSystem<T>::DynamicalSystem(
     _variables(variables),
     _parameters(parameters), _dynamics(dynamics), _var_index()
 {
-  validate_and_initialize();
+  build_variable_index();
+  validate();
 }
 
 template<typename T>
@@ -327,7 +290,8 @@ DynamicalSystem<T>::DynamicalSystem(
     _parameters(std::move(parameters)), _dynamics(std::move(dynamics)),
     _var_index()
 {
-  validate_and_initialize();
+  build_variable_index();
+  validate();
 }
 
 template<typename T>
@@ -350,7 +314,8 @@ DynamicalSystem<T>::DynamicalSystem(
     _dynamics.push_back(d_it->second);
   }
 
-  validate_and_initialize();
+  build_variable_index();
+  validate();
 }
 
 template<typename T>
@@ -364,12 +329,13 @@ DynamicalSystem<T>::DynamicalSystem(
   _variables.reserve(dynamics.size());
   _dynamics.reserve(dynamics.size());
 
-  for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics); ++d_it) {
-    _variables.push_back(d_it->first);
-    _dynamics.push_back(d_it->second);
+  for (const auto &dynamic: dynamics) {
+    _variables.push_back(dynamic.first);
+    _dynamics.push_back(dynamic.second);
   }
 
-  validate_and_initialize();
+  build_variable_index();
+  validate();
 }
 
 template<typename T>
@@ -383,12 +349,13 @@ DynamicalSystem<T>::DynamicalSystem(
   _variables.reserve(dynamics.size());
   _dynamics.reserve(dynamics.size());
 
-  for (auto d_it = std::begin(dynamics); d_it != std::end(dynamics); ++d_it) {
-    _variables.push_back(std::move(d_it->first));
-    _dynamics.push_back(std::move(d_it->second));
+  for (auto &dynamic: dynamics) {
+    _variables.push_back(std::move(dynamic.first));
+    _dynamics.push_back(std::move(dynamic.second));
   }
 
-  validate_and_initialize();
+  build_variable_index();
+  validate();
 }
 
 template<typename T>
@@ -448,27 +415,6 @@ DynamicalSystem<T> &DynamicalSystem<T>::operator=(DynamicalSystem<T> &&orig)
   std::swap(orig._parameters, _parameters);
   std::swap(orig._dynamics, _dynamics);
   std::swap(orig._var_index, _var_index);
-
-  return *this;
-}
-
-template<typename T>
-DynamicalSystem<T> &
-DynamicalSystem<T>::replace(const SymbolicAlgebra::Symbol<T> &variable,
-                            const SymbolicAlgebra::Expression<T> &dynamic)
-{
-  _dynamics[_var_index.at[variable.get_id()]] = dynamic;
-
-  return *this;
-}
-
-template<typename T>
-DynamicalSystem<T> &
-DynamicalSystem<T>::replace(const SymbolicAlgebra::Symbol<T> &variable,
-                            SymbolicAlgebra::Expression<T> &&dynamic)
-{
-
-  _dynamics[_var_index.at[variable.get_id()]] = std::move(dynamic);
 
   return *this;
 }

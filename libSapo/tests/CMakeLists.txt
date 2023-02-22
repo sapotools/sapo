@@ -19,9 +19,9 @@ if(${Boost_unit_test_framework_FOUND})
     endif()
 
     set(LIBSAPO_TESTS linear_algebra symbolic_algebra linear_systems
-                    polytopes parallelotopes bundles dynamical_systems
+                    polytopes parallelotopes bundles
                     evolver sets_unions sticky_unions Bernstein
-                    simplex approximations)
+                    simplex approximations ode discrete_systems)
     foreach(TEST ${LIBSAPO_TESTS})
         ADD_EXECUTABLE( test_${TEST} ${TEST}.cpp )
         if (${GMP_FOUND})
