@@ -980,7 +980,7 @@ class BoundRefiner
                            const BundleTemplate &bundle_template,
                            BernsteinCache<T> *cache):
         _parallelotope(refiner._bundle.get_parallelotope(bundle_template)),
-        _cache(cache)
+        _cache(bundle_template.is_adaptive() ? nullptr : cache)
     {
       std::vector<SymbolicAlgebra::Expression<T>> genFun;
       if (_cache == nullptr) {
