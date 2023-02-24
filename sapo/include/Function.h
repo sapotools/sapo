@@ -74,6 +74,8 @@ std::ostream &operator<<(std::ostream &os, const Function<T> &function)
     sep = ",";
   }
   os << ") = " << function.expression();
+
+  return os;
 }
 
 typedef std::pair<std::string, size_t> FunctionSignature;
