@@ -14,6 +14,7 @@
 #include <algorithm> // std::min, std::max
 #include <cmath>
 
+#include "FloatingPoints.h"
 #include "ErrorHandling.h"
 
 /**
@@ -240,22 +241,6 @@ inline Approximation<T> &Approximation<T>::set_bounds(const T &lower_bound,
 }
 
 template<typename T>
-inline Approximation<T> &
-Approximation<T>::set_bounds_and_approximate(const T &lower_bound,
-                                             const T &upper_bound)
-{
-  if constexpr (std::is_floating_point_v<T>) {
-    this->set_bounds(
-        nextafter(lower_bound, std::min<T>(2 * lower_bound - 1, -1)),
-        nextafter(upper_bound, std::max<T>(2 * upper_bound + 1, 1)));
-  } else {
-    this->set_bounds(lower_bound, upper_bound);
-  }
-
-  return *this;
-}
-
-template<typename T>
 Approximation<T>::Approximation(): Approximation(0, 0)
 {
 }
@@ -319,8 +304,7 @@ inline bool Approximation<T>::strictly_contains(const T &value) const
 template<typename T>
 inline const T Approximation<T>::error() const
 {
-  T delta = _upper_bound - _lower_bound;
-  return nextafter(delta, 2 * delta + 1);
+  return subtract(_upper_bound, _lower_bound, FE_UPWARD);
 }
 
 template<typename T>
@@ -342,50 +326,8 @@ Approximation<T>::operator+=(const Approximation<T> &a)
     return *this;
   }
 
-  // find min-max magnitude among lower bounds
-  T lower_max{this->lower_bound()}, lower_min{a.lower_bound()};
-  if (abs(lower_min) > abs(lower_max)) {
-    std::swap(lower_min, lower_max);
-  }
-
-  // evaluate lower bound sum
-  T lower_bound = this->lower_bound() + a.lower_bound();
-
-  // if the sum minus the value having the maximum magnitude among
-  // the lower bounds is greater that the value having the min
-  // magnitude in the same set, the sum has been over-approximated
-  if (lower_bound - lower_max > lower_min) {
-    // under-approximate the sum
-    this->_lower_bound
-        = nextafter(lower_bound, std::min<T>(2 * lower_bound - 1, -1));
-  } else { // otherwise
-
-    // the sum has not been over-approximated
-    this->_lower_bound = lower_bound;
-  }
-
-  // find min-max magnitude among upper bounds
-  T upper_max{this->upper_bound()}, upper_min{a.upper_bound()};
-  if (abs(upper_min) > abs(upper_max)) {
-    std::swap(upper_min, upper_max);
-  }
-
-  // evaluate upper bound sum
-  T upper_bound = this->upper_bound() + a.upper_bound();
-
-  // if the sum minus the value having the maximum magnitude among
-  // the upper bounds is greater that the value having the min
-  // magnitude in the same set, the sum has been over-approximated
-  if (upper_bound - upper_max < upper_min) {
-
-    // over-approximate the sum
-    this->_upper_bound
-        = nextafter(upper_bound, std::max<T>(2 * upper_bound + 1, 1));
-  } else { // otherwise
-
-    // the sum has not been under-approximated
-    this->_upper_bound = upper_bound;
-  }
+  this->_lower_bound = add(_lower_bound, a._lower_bound, FE_DOWNWARD);
+  this->_upper_bound = add(_upper_bound, a._upper_bound, FE_UPWARD);
 
   return *this;
 }
@@ -394,7 +336,21 @@ template<typename T>
 inline Approximation<T> &
 Approximation<T>::operator-=(const Approximation<T> &a)
 {
-  *this += -a;
+  if (this == &a) {
+    this->set_bounds(0, 0);
+
+    return *this;
+  }
+
+  if constexpr (!std::is_floating_point_v<T>) {
+    this->_lower_bound -= a._upper_bound;
+    this->_upper_bound += a._lower_bound;
+
+    return *this;
+  }
+
+  this->_lower_bound = subtract(_lower_bound, a._upper_bound, FE_DOWNWARD);
+  this->_upper_bound = subtract(_upper_bound, a._lower_bound, FE_UPWARD);
 
   return *this;
 }
@@ -459,6 +415,12 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
 template<typename T>
 Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
 {
+  if (this == &a) {
+    this->set_bounds(1, 1);
+
+    return *this;
+  }
+
   if (a > 0) {
     if (*this >= 0) {
       // [a_l, a_u] > 0 && [*this_l, *this_u] >= 0:
@@ -911,6 +873,10 @@ template<typename T>
 Approximation<T> operator-(const Approximation<T> &a,
                            const Approximation<T> &b)
 {
+  if (&a == &b) {
+    return Approximation<T>(0, 0);
+  }
+
   return (-b) + a;
 }
 
@@ -1032,6 +998,10 @@ template<typename T>
 inline Approximation<T> operator/(const Approximation<T> &a,
                                   const Approximation<T> &b)
 {
+  if (&a == &b) {
+    return Approximation<T>(1, 1);
+  }
+
   return Approximation<T>(a) / b;
 }
 
