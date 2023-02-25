@@ -113,23 +113,16 @@ struct IEEE754WorkingType {
 
 template<>
 struct IEEE754WorkingType<float> {
-  using mantissa_type = unsigned int;
-  using exponent_type = unsigned int;
-  using sign_type = unsigned int;
+  using mantissa_type = uint32_t;
+  using exponent_type = uint32_t;
+  using sign_type = uint32_t;
 };
 
 template<>
 struct IEEE754WorkingType<double> {
-  using mantissa_type = unsigned long int;
-  using exponent_type = unsigned int;
-  using sign_type = unsigned int;
-};
-
-template<>
-struct IEEE754WorkingType<long double> {
-  using mantissa_type = unsigned long long int;
-  using exponent_type = unsigned int;
-  using sign_type = unsigned int;
+  using mantissa_type = uint64_t;
+  using exponent_type = uint32_t;
+  using sign_type = uint32_t;
 };
 
 /**
@@ -625,17 +618,6 @@ public:
 
 
 template<typename T>
-std::ostream& operator<<(std::ostream& os, const typename IEEE754Rounding<T>::fp_codec& a)
-{
-  os << "value: " << a->value << std::endl
-     << "  negative: " << std::bitset<1>(a->binary.negative) << std::endl
-     << "  exponent: " << std::bitset<IEEE754Rounding<T>::exponent_size>(a->binary.exponent) << std::endl
-     << "  mantissa: " << std::bitset<IEEE754Rounding<T>::mantissa_size>(a->binary.mantissa) << std::endl;
-  
-  return os;
-}
-
-template<typename T>
 inline T add(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
@@ -655,6 +637,18 @@ inline T subtract(const T &a, const T &b, int rounding)
       (const fp_codec *)(&a), ((const fp_codec *)(&a))->binary.negative,
       (const fp_codec *)(&b), ((const fp_codec *)(&b))->binary.negative,
       rounding);
+}
+
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const typename IEEE754Rounding<T>::fp_codec& a)
+{
+  os << "value: " << a->value << std::endl
+     << "  negative: " << std::bitset<1>(a->binary.negative) << std::endl
+     << "  exponent: " << std::bitset<IEEE754Rounding<T>::exponent_size>(a->binary.exponent) << std::endl
+     << "  mantissa: " << std::bitset<IEEE754Rounding<T>::mantissa_size>(a->binary.mantissa) << std::endl;
+  
+  return os;
 }
 
 #endif // _FLOATING_POINTS_H_

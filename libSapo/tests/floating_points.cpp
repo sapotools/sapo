@@ -9,7 +9,7 @@
 
 #include "FloatingPoints.h"
 
-typedef boost::mpl::list<float, double, long double> test_types;
+typedef boost::mpl::list<float, double> test_types;
 
 template<typename T>
 inline T apply(const std::function<T (const T&, const T&, int)> f, const T& init_value, const T& value, int rounding, const size_t num_of_terms)
