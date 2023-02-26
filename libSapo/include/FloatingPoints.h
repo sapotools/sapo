@@ -616,7 +616,6 @@ public:
   }
 };
 
-
 template<typename T>
 inline T add(const T &a, const T &b, int rounding)
 {
@@ -639,15 +638,19 @@ inline T subtract(const T &a, const T &b, int rounding)
       rounding);
 }
 
-
 template<typename T>
-std::ostream& operator<<(std::ostream& os, const typename IEEE754Rounding<T>::fp_codec& a)
+std::ostream &operator<<(std::ostream &os,
+                         const typename IEEE754Rounding<T>::fp_codec &a)
 {
   os << "value: " << a->value << std::endl
      << "  negative: " << std::bitset<1>(a->binary.negative) << std::endl
-     << "  exponent: " << std::bitset<IEEE754Rounding<T>::exponent_size>(a->binary.exponent) << std::endl
-     << "  mantissa: " << std::bitset<IEEE754Rounding<T>::mantissa_size>(a->binary.mantissa) << std::endl;
-  
+     << "  exponent: "
+     << std::bitset<IEEE754Rounding<T>::exponent_size>(a->binary.exponent)
+     << std::endl
+     << "  mantissa: "
+     << std::bitset<IEEE754Rounding<T>::mantissa_size>(a->binary.mantissa)
+     << std::endl;
+
   return os;
 }
 
