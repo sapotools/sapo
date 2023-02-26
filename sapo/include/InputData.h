@@ -29,6 +29,10 @@ class InputData
   friend std::ostream &operator<<(std::ostream &os, const InputData &id);
 
 public:
+  typedef enum { NOT_DECLARED, ODE, DISCRETE } SpecificationType;
+
+  typedef enum { EULER, RUNGE_KUTTA_4 } IntegratorType;
+
   InputData();
 
   ~InputData();
@@ -426,6 +430,69 @@ public:
     return use_invariant_directions;
   }
 
+  void setSpecificationType(const SpecificationType &type)
+  {
+    if (isSpecificationTypeSet()) {
+      std::runtime_error("The specification type has already been defined");
+    }
+    specification_type = type;
+  }
+
+  inline const SpecificationType &getSpecificationType() const
+  {
+    return specification_type;
+  }
+
+  inline bool isSpecificationTypeSet() const
+  {
+    return specification_type != NOT_DECLARED;
+  }
+
+  void setIntegratorType(const std::string type_name)
+  {
+    auto it = available_integrators.find(type_name);
+    if (it == available_integrators.end()) {
+      std::runtime_error("The selected integrator is not available");
+    }
+
+    setIntegratorType(it->second);
+  }
+
+  void setIntegratorType(const IntegratorType &type)
+  {
+    if (isIntegratorTypeSet()) {
+      std::runtime_error("The integrator type has already been specified");
+    }
+    integrator_type = type;
+    integrator_type_set = true;
+  }
+
+  inline const IntegratorType &getIntegratorType() const
+  {
+    return integrator_type;
+  }
+
+  inline bool isIntegratorTypeSet() const
+  {
+    return integrator_type_set;
+  }
+
+  inline void setIntegrationStep(const double &step)
+  {
+    integration_step = step;
+    integration_step_set = true;
+  }
+
+  inline double getIntegrationStep() const
+  {
+    return integration_step;
+  }
+
+  inline bool isIntegrationStepSet() const
+  {
+    return integration_step_set;
+  }
+
   /**
    * @brief Fix boundaries according to the whole input
    *
@@ -444,6 +511,8 @@ public:
   void optimize_boundaries();
 
   bool check(); // checks for errors in model
+
+  const std::map<std::string, IntegratorType> available_integrators;
 
 protected:
   problemType problem;
@@ -482,6 +551,10 @@ protected:
 
   std::vector<Direction<> *> paramDirections;
 
+  SpecificationType specification_type;
+  bool integration_step_set;
+  bool integrator_type_set;
+
   // SAPO options
   transType trans;
   bool compose_dynamic;
@@ -490,6 +563,8 @@ protected:
   bool bern_caching;
   bool all_dirs_adaptive;
   bool use_invariant_directions;
+  double integration_step;
+  IntegratorType integrator_type;
 };
 
 /**

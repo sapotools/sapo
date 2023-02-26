@@ -646,8 +646,7 @@ std::ostream &operator<<(std::ostream &os,
      << "  negative: " << std::bitset<1>(a->binary.negative) << std::endl
      << "  exponent: "
      << std::bitset<IEEE754Rounding<T>::exponent_size>(a->binary.exponent)
-     << std::endl
-     << "  mantissa: "
+     << std::endl << "  mantissa: "
      << std::bitset<IEEE754Rounding<T>::mantissa_size>(a->binary.mantissa)
      << std::endl;
 

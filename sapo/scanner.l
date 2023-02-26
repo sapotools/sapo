@@ -90,6 +90,8 @@ all_dirs_adaptive		return yy::parser::make_ALL_DIRS_ADAPTIVE(loc);
 use_invariant_dirs		return yy::parser::make_USE_INVARIANT_DIRS(loc);
 max_k_induction	return yy::parser::make_MAX_K_INDUCTION(loc);
 delta_thickness_threshold	return yy::parser::make_DELTA_THICKNESS(loc);
+integration_step 		return yy::parser::make_INTEGRATION_STEP(loc);
+integrator 		return yy::parser::make_INTEGRATOR(loc);
 
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);
@@ -123,6 +125,10 @@ U			return yy::parser::make_UNTIL(loc);
 ":"			return yy::parser::make_COLON(loc);
 ";"			return yy::parser::make_SEMICOLON(loc);
 ","			return yy::parser::make_COMMA(loc);
+
+^"'"		return yy::parser::make_DERIVATIVE_MISSING_VARIABLE(loc);
+[\t ]"'"	return yy::parser::make_SPACE_BEFORE_DERIVATIVE(loc);
+"'"			return yy::parser::make_DERIVATIVE(loc);
 
 {natural}		return yy::parser::make_NATURAL(std::stoi(yytext), loc);
 

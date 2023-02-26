@@ -94,11 +94,16 @@ std::set<std::string> let_identifiers;
 	IN
 	ADAPTIVE
 	NEXT
+	DERIVATIVE
+	SPACE_BEFORE_DERIVATIVE
+	DERIVATIVE_MISSING_VARIABLE
 	SPEC
 	ASSUME
 	ITER
 	MAX_K_INDUCTION
 	DELTA_THICKNESS
+	INTEGRATION_STEP
+	INTEGRATOR
 	PSPLITS
 	PRESPLITS
 	USE_INVARIANT_DIRS
@@ -486,22 +491,104 @@ symbol			: VAR identList IN doubleInterval adaptive_flag ";"
 								drv.data.addDefinition(new AbsSyn::Definition(s, $4));
 							}
 						}
+						| IDENT DERIVATIVE "=" expr ";"
+						{
+							switch (drv.data.getSpecificationType()) {
+								case AbsSyn::InputData::NOT_DECLARED:
+								case AbsSyn::InputData::ODE:
+									drv.data.setSpecificationType(AbsSyn::InputData::ODE);
+									if (AbsSyn::getDegree($4, drv.data.getParamSymbols()) > 1) {
+										ERROR(@4, "Expression in dynamic must be at most linear w.r.t. parameters");
+										$4 = 0;
+									}
+									
+									if (!drv.data.isVarDefined($1)) {
+										ERROR(@1, "Symbol '" + $1 + "' is not a variable");
+									} else {
+										AbsSyn::Variable *v = drv.data.getVar($1);
+										if (v->isDynamicDefined()) {
+											WARNING(@$, "Redefinition of dynamic for variable '" + $1 + "'");
+										} else {
+											v->setDynamic($4);
+										}
+									}
+									break;
+								default:
+									ERROR(@2, "The dynamic is specified as discrete below");
+							}
+						}
+						| IDENT DERIVATIVE "=" expr error
+						{
+							MISSING_SC(@5);
+						}
+						| IDENT DERIVATIVE "=" error
+						{
+							ERROR(@4, "Error in the expression");
+						}
+						| IDENT DERIVATIVE error
+						{
+							ERROR(@3, "\"=\" expected");
+						}
+						| DERIVATIVE_MISSING_VARIABLE "=" expr ";"
+						{
+							ERROR(@1, "Missing variable before the derivative symbol");
+						}
+						| DERIVATIVE_MISSING_VARIABLE "=" expr error
+						{
+							ERROR(@1, "Missing variable before the derivative symbol");
+						}
+						| DERIVATIVE_MISSING_VARIABLE "=" error
+						{
+							ERROR(@1, "Missing variable before the derivative symbol");
+						}
+						| DERIVATIVE_MISSING_VARIABLE error
+						{
+							ERROR(@1, "Missing variable before the derivative symbol");
+						}
+						| IDENT SPACE_BEFORE_DERIVATIVE "=" expr ";"
+						{
+							ERROR(@2, "No space admitted before the derivative symbol");
+						}
+						| IDENT SPACE_BEFORE_DERIVATIVE "=" expr error
+						{
+							ERROR(@2, "No space admitted before the derivative symbol");
+						}
+						| IDENT SPACE_BEFORE_DERIVATIVE "=" error
+						{
+							ERROR(@2, "No space admitted before the derivative symbol");
+						}
+						| IDENT SPACE_BEFORE_DERIVATIVE error
+						{
+							ERROR(@2, "No space admitted before the derivative symbol");
+						}
+						| SPACE_BEFORE_DERIVATIVE error
+						{
+							ERROR(@1, "No space admitted before the derivative symbol");
+						}
 						| NEXT "(" IDENT ")" "=" expr ";"
 						{
-							if (AbsSyn::getDegree($6, drv.data.getParamSymbols()) > 1) {
-								ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
-								$6 = 0;
-							}
-							
-							if (!drv.data.isVarDefined($3)) {
-								ERROR(@3, "Symbol '" + $3 + "' is not a variable");
-							} else {
-								AbsSyn::Variable *v = drv.data.getVar($3);
-								if (v->isDynamicDefined()) {
-									WARNING(@$, "Redefinition of dynamic for variable '" + $3 + "'");
-								} else {
-									v->setDynamic($6);
-								}
+							switch (drv.data.getSpecificationType()) {
+								case AbsSyn::InputData::NOT_DECLARED:
+								case AbsSyn::InputData::DISCRETE:
+									drv.data.setSpecificationType(AbsSyn::InputData::DISCRETE);
+									if (AbsSyn::getDegree($6, drv.data.getParamSymbols()) > 1) {
+										ERROR(@6, "Expression in dynamic must be at most linear w.r.t. parameters");
+										$6 = 0;
+									}
+									
+									if (!drv.data.isVarDefined($3)) {
+										ERROR(@3, "Symbol '" + $3 + "' is not a variable");
+									} else {
+										AbsSyn::Variable *v = drv.data.getVar($3);
+										if (v->isDynamicDefined()) {
+											WARNING(@$, "Redefinition of dynamic for variable '" + $3 + "'");
+										} else {
+											v->setDynamic($6);
+										}
+									}
+									break;
+								default:
+									ERROR(@2, "The dynamics is specified as an ODE below");
 							}
 						}
 						| NEXT "(" IDENT ")" "=" expr error
@@ -1201,6 +1288,47 @@ option	: TRANS transType ";"
 		{
 			MISSING_SC(@2);
 		}
+		| INTEGRATION_STEP DOUBLE ";"
+		{
+			if (drv.data.getSpecificationType()==AbsSyn::InputData::DISCRETE) {
+				WARNING(@0,"The dynamics is specified as discrete: the integration "
+				           " step will be ignored");
+			} else {
+				if (drv.data.isIntegrationStepSet()) {
+					ERROR(@0, "Integration step is specified also below");
+				} else {
+					drv.data.setIntegrationStep($2);
+				}
+			}
+		}
+		| INTEGRATION_STEP DOUBLE error
+		{
+			MISSING_SC(@3);
+		}
+		| INTEGRATION_STEP error
+		{
+			MISSING_SC(@2);
+		}
+		| INTEGRATOR IDENT ";"
+		{
+			if (drv.data.isIntegratorTypeSet()) {
+				ERROR(@0, "Integration step is specified also below");
+			} else {
+				auto it = drv.data.available_integrators.find($2);
+				if (it == drv.data.available_integrators.end()) {
+					ERROR(@2, "Unknown integrator");
+				}
+				drv.data.setIntegratorType(it->second);
+			}
+		}
+		| INTEGRATOR IDENT error
+		{
+			MISSING_SC(@3);
+		}
+		| INTEGRATOR error
+		{
+			MISSING_SC(@2);
+		}
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
 					| OFO { $$ = AbsSyn::transType::OFO; }
@@ -1275,6 +1403,7 @@ std::string possibleStatements(std::string s)
 		"const",
 		"define",
 		"next",
+		"'",
 		"invariant",
 		"spec",
 		"assume",

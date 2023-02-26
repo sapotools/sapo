@@ -104,17 +104,24 @@ define ex = v + c*p/2;
 ```
 
 ### Dynamics
-They represent the evolution of variable value.
 
+They represent the evolution of variable values. 
+`sapo` supports both discrete-time dynamics and 
+continous-time dynamics specified by means of an ODE.
+
+The discrete-time dynamic specification has the following syntax
 ```C++
-next(v1) = v1 + p * (v2 - c + v3);
+next(<variable name>) = <polynomial expression> ;
 ```
-where
+where `<polynomial expression>` is a polynomial expression such that:
+- all symbols occurring in it must be already defined
+- it must be linear with regard to parameters
 
-- `v1` is a name of an already defined variable
-- all symbols occurring in the expression must be already defined
-- the expression must be linear with regard to parameters
-- the expression must be polynomial with respect to the variables
+The ODE specification use a similar syntax:
+```C++
+<variable name>' = <polynomial expression> ;
+```
+but it requires **its solution** to be linear with respect to the parameters. Non-linear solutions with respect to the parameters are not supported yet.
 
 Each variable must have a corresponding dynamic defined.
 
@@ -343,6 +350,12 @@ the savings due to using the same coefficients for many evolution epochs.
 - set all the bundle directions to be adaptive
 
 	```option all_dirs_adaptive;```
+- set the ODE intergrator (Euler method is used by default)
+	
+	```option integrator [euler|runge_kutta4];```
+- set the ODE integration step
+
+	```option integration_step <numeric value>;```
 
 ## Comments
 SIL understands C/C++ like comments, both sigle and multi-line
@@ -407,7 +420,6 @@ problem: reachability;
 
 iterations: 30;
 
-
 var x in [0, 0.01];
 var y in [1.99, 2];
 
@@ -426,4 +438,22 @@ template = {
 	{diff, sum}
 }
 
+### A simple ODE system
+
+problem: reachability;
+
+iterations: 65;
+
+var x, y;
+
+x' = -y;
+y' = x;
+
+direction x in [-0.5, 0.5];
+direction y in [5.5, 6.5];
+
+option no_caching; 
+option all_dirs_adaptive;
+option integration_step 0.1;
+option integrator runge_kutta4;
 ```

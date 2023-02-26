@@ -11,16 +11,19 @@ namespace AbsSyn
 {
 
 InputData::InputData():
+    available_integrators{{"euler", EULER}, {"runge_kutta4", RUNGE_KUTTA_4}},
     problem(problemType::P_UNDEF), varMode(modeType::M_UNDEF),
     paramMode(modeType::M_UNDEF), iterations(0), iter_set(false),
     max_k_induction(0), delta_thickness_threshold(0),
     missed_thickness_threshold(1), max_param_splits(0), presplits(false),
     max_bundle_magnitude(std::numeric_limits<double>::max()), vars(), params(),
     consts(), defs(), assumptions(), invariant(), spec(NULL), directions(),
-    templateMatrix(), paramDirections(), trans(transType::T_UNDEF),
-    compose_dynamic(false), dynamic_degree(1), approx_type(Sapo::NO_APPROX),
-    bern_caching(true), all_dirs_adaptive(false),
-    use_invariant_directions(false)
+    templateMatrix(), paramDirections(),
+    specification_type(SpecificationType::NOT_DECLARED),
+    integration_step_set(false), integrator_type_set(false),
+    trans(transType::T_UNDEF), compose_dynamic(false), dynamic_degree(1),
+    approx_type(Sapo::NO_APPROX), bern_caching(true), all_dirs_adaptive(false),
+    use_invariant_directions(false), integration_step(), integrator_type()
 {
 }
 

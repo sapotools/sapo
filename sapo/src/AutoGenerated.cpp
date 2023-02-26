@@ -2,6 +2,8 @@
 
 #include <SymbolicAlgebra.h>
 #include <LinearAlgebra.h>
+#include <DifferentialSystem.h>
+#include <Integrator.h>
 
 #include <ErrorHandling.h>
 
@@ -241,6 +243,34 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
   return SetsUnion<Polytope>(Polytope(pA, pb));
 }
 
+DiscreteSystem<double> get_integrated_dynamics(const InputData &id,
+                                               const ODE<double> &ode)
+{
+  if (!id.isIntegrationStepSet()) {
+    std::cerr << "Integration step is required for ODEs" << std::endl;
+    exit(1);
+  }
+
+  InputData::IntegratorType integrator_type;
+  if (id.isIntegratorTypeSet()) {
+    integrator_type = id.getIntegratorType();
+  } else {
+    std::cerr << "Integator not specified. Using Euler method." << std::endl;
+    integrator_type = InputData::EULER;
+  }
+
+  switch (integrator_type) {
+  case InputData::EULER: {
+    EulerIntegrator euler;
+    return euler(ode, id.getIntegrationStep());
+  } break;
+  case InputData::RUNGE_KUTTA_4: {
+    RungeKutta4Integrator rk4;
+    return rk4(ode, id.getIntegrationStep());
+  }
+  }
+}
+
 Model *get_model(const InputData &id)
 {
   using namespace SymbolicAlgebra;
@@ -270,8 +300,28 @@ Model *get_model(const InputData &id)
 
   Model *model;
 
-  model = new DiscreteModel(variables, parameters, dynamics, init_set,
-                            param_set);
+  if (id.getSpecificationType() == InputData::DISCRETE) {
+    model = new DiscreteModel(variables, parameters, dynamics, init_set,
+                              param_set);
+  } else {
+    SymbolicAlgebra::Symbol time("time");
+    ODE<double> ode(variables, parameters, dynamics, time);
+
+    DiscreteSystem<double> ds = get_integrated_dynamics(id, ode);
+
+    for (size_t i = 0; i < variables.size(); ++i) {
+      if (getDegree(ds.dynamics()[i], id.getParamSymbols()) > 1) {
+        std::cerr << "The solution of the ODE for \"" << variables[i] << "\" ("
+                  << ds.dynamics()[i] << ") is not linear in the parameters "
+                  << std::set(parameters.begin(), parameters.end())
+                  << std::endl;
+        exit(1);
+      }
+    }
+
+    model = new DiscreteModel(ds.variables(), ds.parameters(), ds.dynamics(),
+                              init_set, param_set);
+  }
 
   if (id.isSpecDefined()) {
     model->set_specification(id.specification());
