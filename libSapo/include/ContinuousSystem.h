@@ -152,7 +152,7 @@ public:
    * @param orig the original dynamic laws
    * @return a reference to the updated object
    */
-  ContinuousSystem &operator=(ContinuousSystem<T> &&orig);
+  ContinuousSystem<T> &operator=(ContinuousSystem<T> &&orig);
 
   /**
    * @brief Get the time variable

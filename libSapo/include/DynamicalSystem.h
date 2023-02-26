@@ -161,7 +161,7 @@ public:
    * @param orig the original dynamic laws
    * @return a reference to the updated object
    */
-  DynamicalSystem &operator=(const DynamicalSystem<T> &orig);
+  DynamicalSystem<T> &operator=(const DynamicalSystem<T> &orig);
 
   /**
    * @brief A move operator
@@ -169,7 +169,7 @@ public:
    * @param orig the original dynamic laws
    * @return a reference to the updated object
    */
-  DynamicalSystem &operator=(DynamicalSystem<T> &&orig);
+  DynamicalSystem<T> &operator=(DynamicalSystem<T> &&orig);
 
   /**
    * @brief Get the system variables
