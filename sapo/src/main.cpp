@@ -470,6 +470,10 @@ int main(int argc, char **argv)
 
   Model *model = get_model(drv.data);
 
+  if (model==nullptr) {
+    exit(1);
+  }
+
 #ifdef WITH_THREADS
   Sapo sapo = init_sapo(model, drv.data, opts.num_of_threads);
 #else

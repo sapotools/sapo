@@ -294,6 +294,14 @@ Model *get_model(const InputData &id)
     compose_dynamics(variables, dynamics, id.getDynamicDegree());
   }
 
+  if (id.getDirectionsNum()<id.getVarNum()) {
+    std::cerr << "Not enough bundle directions: the directions "
+              << "must be as many as the variables at least"
+              << std::endl;
+
+    return nullptr;
+  }
+
   Bundle init_set = getBundle(id);
 
   SetsUnion<Polytope> param_set = getParameterSet(id);
