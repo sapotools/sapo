@@ -12,6 +12,7 @@
 	#include <string>
 	#include <fstream>
 	#include <cmath>
+	#include <limits>
 	
 	#include <LinearAlgebraIO.h>
 
@@ -170,9 +171,11 @@ std::set<std::string> let_identifiers;
 
 %nterm <AbsSyn::problemType> problemType
 %nterm <AbsSyn::modeType> modeType
+%nterm <double> numericExpression
 %nterm <std::pair<double, double>> doubleInterval
 %nterm <std::pair<int, int>> intInterval
 %nterm <double> number
+%nterm <size_t> naturalExpression
 %nterm <std::vector<std::string>> identList
 %nterm <std::vector<std::string>> let_identList
 %nterm <SymbolicAlgebra::Expression<>> expr
@@ -250,7 +253,7 @@ header			: PROB ":" problemType ";"
 						{
 							MISSING_SC(@3);
 						}
-						| ITER ":" NATURAL ";"
+						| ITER ":" naturalExpression ";"
 						{
 							if (drv.data.isIterationSet()) {
 								WARNING(@$, "Iteration number already defined");
@@ -354,6 +357,41 @@ symbol			: VAR identList IN doubleInterval adaptive_flag ";"
 								}
 							}
 						}
+						| VAR identList "=" number adaptive_flag ";"
+						{
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addVariable(new AbsSyn::Variable(s));
+									
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4, $4, sym);
+									drv.data.addVarDirectionConstraint(d, $5);
+								}
+							}
+						}
+						| VAR identList "=" number adaptive_flag error
+						{
+							MISSING_SC(@4);
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addVariable(new AbsSyn::Variable(s));
+									
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4, $4, sym);
+									drv.data.addVarDirectionConstraint(d, $5);
+								}
+							}
+						}
 						| VAR identList ";"
 						{
 							for (unsigned i = 0; i < $2.size(); i++)
@@ -414,6 +452,41 @@ symbol			: VAR identList IN doubleInterval adaptive_flag ";"
 									std::string str = "default_" + $2[i];
 									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
 									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4.first, $4.second, sym);
+									drv.data.addParamDirectionConstraint(d);
+								}
+							}
+						}
+						| PARAM identList "=" number ";"
+						{
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addParameter(new AbsSyn::Parameter(s));
+									
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4, $4, sym);
+									drv.data.addParamDirectionConstraint(d);
+								}
+							}
+						}
+						| PARAM identList "=" number error
+						{
+							MISSING_SC(@4);
+							for (unsigned i = 0; i < $2.size(); i++)
+							{
+								if (drv.data.isSymbolDefined($2[i])) {
+									ERROR(@2, "Symbol '" + $2[i] + "' already defined");
+								} else {
+									SymbolicAlgebra::Symbol<> s($2[i]);
+									drv.data.addParameter(new AbsSyn::Parameter(s));
+									
+									std::string str = "default_" + $2[i];
+									SymbolicAlgebra::Symbol<> *sym = new SymbolicAlgebra::Symbol<>(str);
+									AbsSyn::Direction<>*d = new AbsSyn::Direction<>(s, $4, $4, sym);
 									drv.data.addParamDirectionConstraint(d);
 								}
 							}
@@ -1012,39 +1085,63 @@ intInterval			: "[" expr "," expr "]"
 									$$ = std::pair<int, int>(0, 1);
 								}
 
-doubleInterval	: "[" expr "," expr "]"
-								{
-									double x1, x2;
-									
-									if (!AbsSyn::isNumeric($2)) {
-										ERROR(@2, "Intervals require numeric expressions");
-										x1 = 0;
-									} else {
-										x1 = $2.evaluate();
-									}
-									
-									if (!AbsSyn::isNumeric($4)) {
-										ERROR(@4, "Intervals require numeric expressions");
-										x2 = 1;
-									} else {
-										x2 = $4.evaluate();
-									}
-									
-									if (x2 < x1) {
-										ERROR(@$, "Right endpoint must be greater than or equal to the left one");
-										x1 = 0;
-										x2 = 1;
-									}
-									
-									$$ = std::pair<double, double>(x1, x2);
+numericExpression: expr 
+					{
+						if (!AbsSyn::isNumeric($1)) {
+							ERROR(@1, "A numeric expression is expected");
+							$$ = 0;
+						} else {
+							$$ = $1.evaluate();
+						}
+					}
+
+naturalExpression: expr
+					{
+						if (!AbsSyn::isNumeric($1)) {
+							ERROR(@1, "A numeric expression is expected");
+							$$ = 0;
+						} else {
+							double number = $1.evaluate();
+
+							if (number < 0) {
+								ERROR(@1, "Expected a non-negative number");
+								$$ = 0;
+							} else {
+								double integral;
+								if (std::modf(number, &integral) != 0) {
+									WARNING(@1, "Provided a rational number. "
+											    "Rounded to the next integer.");
+									++integral;
 								}
-								| "[" expr "," expr error
+								if (integral>std::numeric_limits<size_t>::max()) {
+									WARNING(@1, "Number to large to be an  natural number. "
+											    "Flatted down to the largest natural number.");
+									integral = std::numeric_limits<size_t>::max();
+								}
+								$$ = integral;
+							}
+						}
+					}
+doubleInterval	: "[" numericExpression "," numericExpression "]"
+								{									
+									if ($2 > $4) {
+										ERROR(@$, "The interval left boundary must "
+												  "be smaller than or equal to the "
+												  "interval right boundary.");
+										$$ = std::pair<double, double>(0, 1);
+									} else {
+										$$ = std::pair<double, double>($2, $4);
+									}
+								}
+								| "[" numericExpression "," numericExpression error
 								{
 									ERROR(@4, "Missing \"]\"");
 									$$ = std::pair<double, double>(0, 1);
 								}
 
-number		: DOUBLE { $$ = $1; }
+number		: DOUBLE {
+					$$ = $1; 
+				}
 				| NATURAL { $$ = (double) $1; }
 
 expr		: number	{ $$ = $1; }
@@ -1055,6 +1152,8 @@ expr		: number	{ $$ = $1; }
 						if (let_identifiers.count($1)==0) {
 							if (drv.data.isConstDefined($1)) {
 								$$ = drv.data.getConst($1)->getValue();
+							} else if (drv.data.isDefDefined($1)) {
+								$$ = drv.data.getDef($1)->getValue();
 							} else {
 								ERROR(@1, "Symbol " + $1 + " is undefined");
 								$$ = 0;
@@ -1288,7 +1387,7 @@ option	: TRANS transType ";"
 		{
 			MISSING_SC(@2);
 		}
-		| INTEGRATION_STEP DOUBLE ";"
+		| INTEGRATION_STEP number ";"
 		{
 			if (drv.data.getSpecificationType()==AbsSyn::InputData::DISCRETE) {
 				WARNING(@0,"The dynamics is specified as discrete: the integration "
