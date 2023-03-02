@@ -6,15 +6,7 @@
 
 #include "Approximation.h"
 
-#ifdef HAVE_GMP
-#include <gmpxx.h>
-
-//typedef boost::mpl::list<double, mpq_class> test_types;
-
 typedef boost::mpl::list<double> test_types;
-#else
-typedef boost::mpl::list<double> test_types;
-#endif
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_init, T, test_types)
 {
@@ -444,13 +436,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_sum, T, test_types)
 
     T large_value{T(mantissa_type(1) << (IEEE754Rounding<T>::mantissa_size+1))};
 
-    const std::vector<T> larges = {large_value};
-    const std::vector<T> smalls = {1};
+    const std::vector<T> larges = {large_value, 1, T(1)/3000, 1, large_value, 1};
+    const std::vector<T> smalls = {1, T(1)/large_value, 1, T(1)/3000, T(1)/3000, 1};
     constexpr size_t num_of_terms{1<<7};
 
     for (size_t i=0; i<larges.size(); ++i) {
-        for (const auto& l_sign: {1}) {
-            for (const auto& s_sign: {1}) {
+        for (const auto& l_sign: {1, -1}) {
+            for (const auto& s_sign: {1, -1}) {
                 const auto large = l_sign*larges[i];
                 const auto small = s_sign*smalls[i];
                 const auto approx = sum<T>(large, small, num_of_terms);
@@ -483,8 +475,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_subtraction, T, test_types)
 
     T large_value{T(mantissa_type(1) << (IEEE754Rounding<T>::mantissa_size+1))};
 
-    const std::vector<T> larges = {large_value, 1};
-    const std::vector<T> smalls = {1, T(1)/large_value};
+    const std::vector<T> larges = {large_value, 1, T(1)/3000, 1, large_value, 1};
+    const std::vector<T> smalls = {1, T(1)/large_value, 1, T(1)/3000, T(1)/3000, 1};
     constexpr size_t num_of_terms{1<<7};
 
     for (size_t i=0; i<larges.size(); ++i) {
@@ -501,6 +493,43 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_subtraction, T, test_types)
                 BOOST_CHECK_MESSAGE(approx.error()>0, "Null error: "<< large << "-" << num_of_terms <<"*" 
                                     << small << "= "<< large << " - Sum_{i=1}^{"<<num_of_terms<< "} " 
                                     << small );
+            }
+        }
+    }
+}
+
+template<typename T, typename R=Approximation<T>>
+R product(const T& init_value, const T& value, const size_t num_of_terms)
+{
+    R a{init_value};
+    for (size_t i=0; i<num_of_terms; ++i) {
+        a *= value;
+    }
+
+    return a;
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_product, T, test_types)
+{
+    using mantissa_type = typename IEEE754Rounding<T>::mantissa_type;
+
+    T large_value{T(mantissa_type(1) << (IEEE754Rounding<T>::mantissa_size+1))};
+
+    const std::vector<T> larges = {large_value, 1, 5, 1023, 0, 1, large_value};
+    const std::vector<T> smalls = {1, T(1)/large_value, T(1)/large_value, T(1)/3000, 
+                                   T(1)/large_value, T(1)/3000, large_value};
+    constexpr size_t num_of_terms{1<<7};
+
+    for (size_t i=0; i<larges.size(); ++i) {
+        for (const auto& l_sign: {1, -1}) {
+            for (const auto& s_sign: {1, -1}) {
+                const auto large = l_sign*larges[i];
+                const auto small = s_sign*(smalls[i]);
+                const auto approx = product(large, small, num_of_terms);
+                const auto fp_product = large*pow(small, num_of_terms);
+
+                BOOST_CHECK_MESSAGE(approx.contains(fp_product), 
+                                    approx <<  " does not contain " << fp_product);
             }
         }
     }
