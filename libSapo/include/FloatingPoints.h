@@ -399,9 +399,7 @@ public:
 
         lost_bits <<= (mantissa_type_size - exp_delta);
         if (lost_bits) {
-          r_mantissa -= 1;
-          lost_bits = ((~lost_bits) >> (mantissa_type_size - exp_delta))
-                      << (mantissa_type_size - exp_delta);
+          lost_bits = mantissa_type(0) - lost_bits;
         }
       }
       while (!(r_mantissa & implicit_bit)) {   // mantissa lost implicit bit
@@ -416,8 +414,10 @@ public:
         }
         r_pointer->binary.exponent -= 1; // decrease exponent
         r_mantissa = ((r_mantissa << 1)  // shift r_mantissa by one
-                      | (mantissa_MS_bit & lost_bits)); // and recover one bit
-                                                        // from lost_bits
+                      | ((mantissa_MS_bit & lost_bits) == 0
+                             ? 0
+                             : 1)); // and recover one bit
+                                    // from lost_bits
         lost_bits <<= 1;
       }
     }
@@ -425,8 +425,8 @@ public:
     if (lost_bits != 0) { // some of the lost bits are not 0s and the
                           // candidate answer is larger than the absolute
                           // value of the real sum among a and b
-      if ((r_pointer->binary.negative == 1 && rounding == FE_UPWARD)
-          || (r_pointer->binary.negative == 0 && rounding == FE_DOWNWARD)) {
+      if ((r_pointer->binary.negative && rounding == FE_UPWARD)
+          || (!r_pointer->binary.negative && rounding == FE_DOWNWARD)) {
 
         --r_mantissa;                            // reduce the mantissa
         if (!(r_mantissa & implicit_bit)) {      // if the mantissa lost
@@ -589,8 +589,8 @@ public:
     if (lost_bits != 0) { // some of the lost bits are not 0s and the
                           // candidate answer is lesser than the absolute
                           // value of the real sum among a and b
-      if ((r_pointer->binary.negative == 0 && rounding == FE_UPWARD)
-          || (r_pointer->binary.negative == 1 && rounding == FE_DOWNWARD)) {
+      if ((!r_pointer->binary.negative && rounding == FE_UPWARD)
+          || (r_pointer->binary.negative && rounding == FE_DOWNWARD)) {
 
         if (r_mantissa == implicit_mantissa_maximum) { // if the mantissa
                                                        // already contains the
@@ -642,12 +642,12 @@ template<typename T>
 std::ostream &operator<<(std::ostream &os,
                          const typename IEEE754Rounding<T>::fp_codec &a)
 {
-  os << "value: " << a->value << std::endl
-     << "  negative: " << std::bitset<1>(a->binary.negative) << std::endl
+  os << "value: " << a.value << std::endl
+     << "  negative: " << std::bitset<1>(a.binary.negative) << std::endl
      << "  exponent: "
-     << std::bitset<IEEE754Rounding<T>::exponent_size>(a->binary.exponent)
+     << std::bitset<IEEE754Rounding<T>::exponent_size>(a.binary.exponent)
      << std::endl << "  mantissa: "
-     << std::bitset<IEEE754Rounding<T>::mantissa_size>(a->binary.mantissa)
+     << std::bitset<IEEE754Rounding<T>::mantissa_size>(a.binary.mantissa)
      << std::endl;
 
   return os;
