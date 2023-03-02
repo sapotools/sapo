@@ -130,3 +130,43 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_difference_upward, T, test_types)
         }
     }
 }
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_product_downward, T, test_types)
+{
+    using mantissa_type = typename IEEE754Rounding<T>::mantissa_type;
+
+    T large_value{T(mantissa_type(1) << (IEEE754Rounding<T>::mantissa_size))};
+
+    const std::vector<T> larges = {large_value, 1, -large_value, -1, 7, -7, 0};
+    const std::vector<T> smalls = {1, T(1)/large_value, -1, -T(1)/large_value, 
+                                   2047, -2047, 0, T(1)/3000};
+
+    for (const auto& large : larges) {
+        for (const auto& small : smalls) {
+            const auto a = multiply(large,small,FE_DOWNWARD);
+            BOOST_CHECK_MESSAGE(a<=large*small, "product("<< large << "," << small << ")=" 
+                                                << a << " > " << large << "*"<< small 
+                                                << "=" << large*small);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_product_upward, T, test_types)
+{
+    using mantissa_type = typename IEEE754Rounding<T>::mantissa_type;
+
+    T large_value{T(mantissa_type(1) << (IEEE754Rounding<T>::mantissa_size))};
+
+    const std::vector<T> larges = {large_value, 1, -large_value, -1, 7, -7, 0};
+    const std::vector<T> smalls = {1, T(1)/large_value, -1, -T(1)/large_value, 
+                                   2047, -2047, 0, T(1)/3000};
+
+    for (const auto& large : larges) {
+        for (const auto& small : smalls) {
+            const auto a = multiply(large,small,FE_UPWARD);
+            BOOST_CHECK_MESSAGE(a>=large*small, "product("<< large << "," << small << ")=" 
+                                                << a << " < " << large << "*"<< small 
+                                                << "=" << large*small);
+        }
+    }
+}

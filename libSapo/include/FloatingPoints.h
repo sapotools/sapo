@@ -147,6 +147,9 @@ public:
   static constexpr size_t exponent_size
       = 8 * sizeof(T) - std::numeric_limits<T>::digits;
 
+  static constexpr exponent_type exponent_bias
+      = ((exponent_type(1) << (exponent_size - 1)) - 1);
+
   /**
    * @brief A union to extract sign, mantissa, exponent bits from IEEE754
    * floating point values
@@ -181,6 +184,14 @@ private:
 
   static constexpr mantissa_type mantissa_MS_bit
       = (mantissa_type(1) << (mantissa_type_size - 1));
+
+  static constexpr mantissa_type mantissa_mask = (implicit_bit - 1);
+
+  static constexpr size_t half_mantissa_type_size = mantissa_type_size / 2;
+  static constexpr mantissa_type low_mantissa_mask
+      = (mantissa_type(1) << half_mantissa_type_size) - 1;
+  static constexpr mantissa_type high_mantissa_mask
+      = (low_mantissa_mask << half_mantissa_type_size);
 
   /**
    * @brief Return a floating point value fixing its sign
@@ -614,6 +625,132 @@ public:
 
     return result;
   }
+
+  static inline mantissa_type high_part(const mantissa_type &mantissa)
+  {
+    return mantissa >> half_mantissa_type_size;
+  }
+
+  static inline mantissa_type low_part(const mantissa_type &mantissa)
+  {
+    return (mantissa << half_mantissa_type_size) >> half_mantissa_type_size;
+  }
+
+  /**
+   * @brief Multiply two floating point values by using the specified rounding
+   *
+   * This method computes the tightest floating point approximation of the
+   * sum of two numbers that respects a specified rounding mode. This goal is
+   * achieved by implementing the Karatsuba's algorithm.
+   *
+   * @tparam T is a floating point type
+   * @param a is an `fp_codec` pointer to a floating point number
+   * @param b is an `fp_codec` pointer to a floating point number
+   * @param rounding is one of the supported rounding mode, i.e.,
+   *      `FE_UPWARD`, `FE_DOWNWARD`, `FE_NEAREST`
+   * @return the tightest floating point approximation of \f$a*b\f$ that
+   *       respects `rounding`.
+   *       When `rounding` is `FE_UPWARD`, the returned value is the least
+   *       number representable in `T` that is greater that or equal to
+   *       \f$a*b\f$. When `rounding` is `FE_DOWNWARD`, the returned value
+   *       is the greatest number representable in `T` that is lesser that
+   *       or equal to \f$a*b\f$. When `rounding` is `FE_NEAREST`, the
+   *       returned value is a number, representable in `T`, whose distance
+   *       from \f$a*b\f$ is the least one.
+   */
+  static T multiply(const fp_codec *a, const fp_codec *b, int rounding)
+  {
+    if ((a->value == 0) || (b->value == 0)) {
+      return 0;
+    }
+
+    bool negative = a->binary.negative ^ b->binary.negative;
+    if (a->binary.exponent == exponent_maximum_value) {
+      // either std::abs(a) == inf or a == nan
+      return (negative ? -a->value : a->value);
+    }
+    if (b->binary.exponent == exponent_maximum_value) {
+      // either std::abs(b) == inf or b == nan
+      return (negative ? -b->value : b->value);
+    }
+
+    exponent_type new_exponent = a->binary.exponent + b->binary.exponent;
+
+    if (new_exponent <= exponent_bias) {
+      if (!negative && rounding == FE_UPWARD) {
+        return std::numeric_limits<T>::min();
+      }
+      if (negative && rounding == FE_DOWNWARD) {
+        return -std::numeric_limits<T>::min();
+      }
+
+      return 0;
+    }
+
+    new_exponent -= exponent_bias;
+    if (new_exponent >= exponent_maximum_value) { // overflow
+      return (negative ? -std::numeric_limits<T>::infinity()
+                       : std::numeric_limits<T>::infinity());
+    }
+
+    const mantissa_type A = a->binary.mantissa | implicit_bit;
+    const mantissa_type B = b->binary.mantissa | implicit_bit;
+
+    const mantissa_type a_high{high_part(A)}, a_low{low_part(A)},
+        b_high{high_part(B)}, b_low{low_part(B)};
+
+    mantissa_type H = a_high * b_high;
+    mantissa_type L = a_low * b_low;
+    mantissa_type M = (a_high + a_low) * (b_high + b_low) - H - L;
+
+    H += high_part(M);
+    M = low_part(M) + high_part(L);
+    H += high_part(M);
+    M = low_part(M);
+    L = low_part(L);
+
+    constexpr size_t H_shift = (mantissa_type_size - (mantissa_size));
+
+    H = (H << H_shift) | (M >> (half_mantissa_type_size - H_shift));
+    M = (M << (half_mantissa_type_size + H_shift)) | L << 1;
+
+    if (H & implicit_bit_successor) {
+      M = ((H | 1) << (mantissa_type_size - 1)) | (M > 1);
+      H >>= 1;
+
+      new_exponent++;
+
+      if (new_exponent >= exponent_maximum_value) { // exponent overflow
+        return (negative ? -std::numeric_limits<T>::infinity()
+                         : std::numeric_limits<T>::infinity());
+      }
+    }
+
+    if (M != 0) {
+      if ((!negative && rounding == FE_UPWARD)
+          || (negative && rounding == FE_DOWNWARD)) {
+        H++;
+        if (H & implicit_bit_successor) {
+          H >>= 1;
+          new_exponent++;
+
+          if (new_exponent >= exponent_maximum_value) { // exponent overflow
+            return (negative ? -std::numeric_limits<T>::infinity()
+                             : std::numeric_limits<T>::infinity());
+          }
+        }
+      }
+    }
+
+    T result{0};
+    fp_codec *r_pointer = (fp_codec *)(&result);
+
+    r_pointer->binary.negative = (negative ? 1 : 0);
+    r_pointer->binary.exponent = new_exponent;
+    r_pointer->binary.mantissa = H;
+
+    return result;
+  }
 };
 
 template<typename T>
@@ -639,6 +776,15 @@ inline T subtract(const T &a, const T &b, int rounding)
 }
 
 template<typename T>
+inline T multiply(const T &a, const T &b, int rounding)
+{
+  using fp_codec = typename IEEE754Rounding<T>::fp_codec;
+
+  return IEEE754Rounding<T>::multiply((const fp_codec *)(&a),
+                                      (const fp_codec *)(&b), rounding);
+}
+
+template<typename T>
 std::ostream &operator<<(std::ostream &os,
                          const typename IEEE754Rounding<T>::fp_codec &a)
 {
@@ -646,7 +792,8 @@ std::ostream &operator<<(std::ostream &os,
      << "  negative: " << std::bitset<1>(a.binary.negative) << std::endl
      << "  exponent: "
      << std::bitset<IEEE754Rounding<T>::exponent_size>(a.binary.exponent)
-     << std::endl << "  mantissa: "
+     << std::endl
+     << "  mantissa: "
      << std::bitset<IEEE754Rounding<T>::mantissa_size>(a.binary.mantissa)
      << std::endl;
 
