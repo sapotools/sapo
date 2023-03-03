@@ -11,6 +11,7 @@
 #ifndef SIMPLEX_H_
 #define SIMPLEX_H_
 
+#include "Approximation.h"
 #include "LinearAlgebra.h"
 
 #include "ErrorHandling.h"
@@ -68,7 +69,7 @@ public:
   OptimizationResult(const Status status): _status(status)
   {
     if (status == OPTIMUM_AVAILABLE) {
-      SAPO_ERROR("this construtor requires a status "
+      SAPO_ERROR("this constructor requires a status "
                  "different from OPTIMUM_AVAILABLE",
                  std::domain_error);
     }
@@ -213,17 +214,21 @@ class SimplexMethodOptimizer
    * - index 2*num_cols(A)+num_rows(A): the artificial variable
    * - index 2*num_cols(A)+num_rows(A)+1: the constant coefficient
    *
+   * @tparam T is the system coefficient type
+   * @tparam APPROX_TYPE is the type of approximation used in place of T
+   *      during the computation
    * @param A is the linear system matrix
    * @param b is the linear system vector
    * @param objective is the objective coefficient vector
    * @param optimization_type is the type of optimization
    *      to achieve, i.e., MAXIMIZE or MINIMIZE
    */
-  template<typename T>
+  template<typename T, typename APPROX_TYPE = T>
   class Tableau
   {
-    std::vector<LinearAlgebra::Vector<T>> _tableau; //!< simplex method tableau
-    std::vector<size_t> _basic_variables;           //!< basic variable vector
+    std::vector<LinearAlgebra::Vector<APPROX_TYPE>>
+        _tableau;                         //!< simplex method tableau
+    std::vector<size_t> _basic_variables; //!< basic variable vector
 
     /**
      * @brief Initialize the initial basic variable vector
@@ -243,8 +248,9 @@ class SimplexMethodOptimizer
      */
     void add_omega_row()
     {
-      LinearAlgebra::Vector<T> omega_row(_tableau[0].size(), 0);
-      omega_row[last_artificial_column_index()] = 1;
+      LinearAlgebra::Vector<APPROX_TYPE> omega_row(_tableau[0].size(),
+                                                   APPROX_TYPE(0));
+      omega_row[last_artificial_column_index()] = APPROX_TYPE(1);
       _tableau.push_back(std::move(omega_row));
     }
 
@@ -258,12 +264,19 @@ class SimplexMethodOptimizer
      */
     void init_tableau(const std::vector<LinearAlgebra::Vector<T>> &A,
                       const LinearAlgebra::Vector<T> &b,
-                      LinearAlgebra::Vector<T> &&objective)
+                      LinearAlgebra::Vector<APPROX_TYPE> &&objective)
     {
       const size_t num_rows = A.size();
       const size_t num_cols = (num_rows == 0 ? 0 : A[0].size());
 
-      _tableau = A;
+      _tableau = std::vector<LinearAlgebra::Vector<APPROX_TYPE>>();
+      for (const auto &row: A) {
+        LinearAlgebra::Vector<APPROX_TYPE> approx_row;
+
+        std::copy(row.begin(), row.end(), std::back_inserter(approx_row));
+
+        _tableau.push_back(std::move(approx_row));
+      }
 
       // add objective row
       _tableau.push_back(std::move(objective));
@@ -279,14 +292,14 @@ class SimplexMethodOptimizer
 
         // add slack/artificial variables
         for (size_t i = 0; i < num_rows; ++i) {
-          row.push_back(row_idx == i ? 1 : 0);
+          row.push_back(APPROX_TYPE(row_idx == i ? 1 : 0));
         }
 
         // add the last artificial variable
-        row.push_back(b[row_idx] < 0 ? -1 : 0);
+        row.push_back(APPROX_TYPE(b[row_idx] < 0 ? -1 : 0));
 
         // add the constant coefficient
-        row.push_back(row_idx < num_rows ? b[row_idx] : 0);
+        row.push_back(APPROX_TYPE(row_idx < num_rows ? b[row_idx] : 0));
 
         ++row_idx;
       }
@@ -362,7 +375,7 @@ class SimplexMethodOptimizer
 
           if (entering < num_of_columns()) {
             basic_vector[entering] = true;
-            artificial_row[artificial_column] = 0;
+            artificial_row[artificial_column] = APPROX_TYPE(0);
             _basic_variables[artificial_in_basics] = entering;
             pivot_operation(artificial_in_basics);
           }
@@ -381,7 +394,7 @@ class SimplexMethodOptimizer
         const auto end_it
             = std::begin(row) + last_artificial_column_index() + 1;
         for (auto elem_it = begin_it; elem_it != end_it; ++elem_it) {
-          *elem_it = 0;
+          *elem_it = APPROX_TYPE(0);
         }
       }
     }
@@ -392,7 +405,7 @@ class SimplexMethodOptimizer
      *
      * @return the tableau
      */
-    inline std::vector<LinearAlgebra::Vector<T>> &get_tableau() const
+    inline std::vector<LinearAlgebra::Vector<APPROX_TYPE>> &get_tableau() const
     {
       return _tableau;
     }
@@ -495,7 +508,7 @@ class SimplexMethodOptimizer
      *
      * @return a reference to the objective row
      */
-    inline LinearAlgebra::Vector<T> &objective_row()
+    inline LinearAlgebra::Vector<APPROX_TYPE> &objective_row()
     {
       return _tableau[num_of_rows() - 1];
     }
@@ -505,7 +518,7 @@ class SimplexMethodOptimizer
      *
      * @return a reference to the objective row
      */
-    inline const LinearAlgebra::Vector<T> &objective_row() const
+    inline const LinearAlgebra::Vector<APPROX_TYPE> &objective_row() const
     {
       return _tableau[num_of_rows() - 1];
     }
@@ -524,7 +537,7 @@ class SimplexMethodOptimizer
      */
     Tableau(const std::vector<LinearAlgebra::Vector<T>> &A,
             const LinearAlgebra::Vector<T> &b,
-            const LinearAlgebra::Vector<T> &objective,
+            const LinearAlgebra::Vector<APPROX_TYPE> &objective,
             const OptimizationGoal optimization_type)
 
     {
@@ -550,7 +563,7 @@ class SimplexMethodOptimizer
       if (optimization_type == MAXIMIZE) {
         init_tableau(A, b, -objective);
       } else {
-        init_tableau(A, b, Vector<T>(objective));
+        init_tableau(A, b, Vector<APPROX_TYPE>(objective));
       }
 
       add_omega_row();
@@ -568,13 +581,13 @@ class SimplexMethodOptimizer
       using namespace LinearAlgebra;
 
       const size_t pivot_column_index = _basic_variables[pivot_index];
-      Vector<T> &pivot_row = _tableau[pivot_index];
-      const T pivot_value{pivot_row[pivot_column_index]};
+      Vector<APPROX_TYPE> &pivot_row = _tableau[pivot_index];
+      const APPROX_TYPE pivot_value{pivot_row[pivot_column_index]};
 
       for (size_t row_index = 0; row_index < num_of_rows(); ++row_index) {
         if (row_index != pivot_index) {
-          Vector<T> &row = _tableau[row_index];
-          const T coeff = row[pivot_column_index];
+          Vector<APPROX_TYPE> &row = _tableau[row_index];
+          const APPROX_TYPE coeff = row[pivot_column_index];
           if (coeff != 0) {
 
             // row = row - coeff * pivot_row / pivot_value;
@@ -582,18 +595,24 @@ class SimplexMethodOptimizer
               const auto term = coeff * pivot_row[i];
               // row[i] -= coeff * pivot_row[i] / pivot_value;
               if (row[i] * pivot_value == term) {
-                row[i] = 0;
+                row[i] = APPROX_TYPE(0);
               } else {
-                row[i] -= term / pivot_value;
+                row[i] = row[i] - (term / pivot_value);
               }
             }
+            row[pivot_column_index] = APPROX_TYPE(0);
           }
         }
       }
 
       if (pivot_value != 1) {
-        pivot_row /= pivot_value;
+        if (pivot_value != -1) {
+          pivot_row /= pivot_value;
+        } else {
+          pivot_row = -pivot_row;
+        }
       }
+      pivot_row[pivot_column_index] = APPROX_TYPE(1);
     }
 
     /**
@@ -626,7 +645,7 @@ class SimplexMethodOptimizer
     }
 
     /**
-     * @brief Find the first negative objetive coefficient
+     * @brief Find the first negative objective coefficient
      *
      * This function implements the "Bland's rule"
      *
@@ -659,7 +678,7 @@ class SimplexMethodOptimizer
     {
       auto coeff_col = b_column_index();
       size_t min_ratio_row = _basic_variables.size();
-      T min_ratio = 0;
+      APPROX_TYPE min_ratio{0};
       for (size_t i = 0; i < _basic_variables.size(); ++i) {
         const auto &row{_tableau[i]};
         if (row[entering_variable] > 0) {
@@ -691,9 +710,10 @@ class SimplexMethodOptimizer
      *
      * @return the candidate linear problem solution
      */
-    LinearAlgebra::Vector<T> get_candidate_solution() const
+    LinearAlgebra::Vector<APPROX_TYPE> get_candidate_solution() const
     {
-      std::vector<T> candidate_solution(num_of_system_variables(), 0);
+      std::vector<APPROX_TYPE> candidate_solution(num_of_system_variables(),
+                                                  APPROX_TYPE(0));
 
       for (size_t i = 0; i < _basic_variables.size(); ++i) {
         const size_t var_column = _basic_variables[i];
@@ -714,7 +734,7 @@ class SimplexMethodOptimizer
      * This method minimize the tableau objective by repeating the
      * follow four steps:
      * 1. identify an entering variable
-     * 2. identify the correspoding leaving variable
+     * 2. identify the corresponding leaving variable
      * 3. replace the leaving variable by the entering variable in
      *    the basic variable vector
      * 4. apply a pivot operation on the entering variable
@@ -730,21 +750,21 @@ class SimplexMethodOptimizer
      *      `OptimizationResult<T>::UNBOUNDED` (when no new
      *      entering variable are available)
      */
-    typename OptimizationResult<T>::Status minimize_objective()
+    typename OptimizationResult<APPROX_TYPE>::Status minimize_objective()
     {
       while (true) {
         // using the Bald's rule to avoid loops
         size_t entering_variable = find_the_first_negative_obj_coefficient();
 
         if (entering_variable >= num_of_columns()) {
-          return OptimizationResult<T>::OPTIMUM_AVAILABLE;
+          return OptimizationResult<APPROX_TYPE>::OPTIMUM_AVAILABLE;
         }
 
         const size_t leaving_variable
             = choose_leaving_variable(entering_variable);
 
         if (leaving_variable >= _basic_variables.size()) {
-          return OptimizationResult<T>::UNBOUNDED;
+          return OptimizationResult<APPROX_TYPE>::UNBOUNDED;
         }
 
         _basic_variables[leaving_variable] = entering_variable;
@@ -761,7 +781,7 @@ class SimplexMethodOptimizer
     size_t get_the_minimum_coefficient_index() const
     {
       size_t min_coefficient_index = 0;
-      T min_coeff = _tableau[0][b_column_index()];
+      auto min_coeff = _tableau[0][b_column_index()];
       for (size_t i = 1; i < _basic_variables.size(); ++i) {
         if (_tableau[i][b_column_index()] < min_coeff) {
           min_coeff = _tableau[i][b_column_index()];
@@ -777,9 +797,9 @@ class SimplexMethodOptimizer
      *
      * @return the vertex currently considered by the tableau
      */
-    LinearAlgebra::Vector<T> get_current_vertex() const
+    LinearAlgebra::Vector<APPROX_TYPE> get_current_vertex() const
     {
-      LinearAlgebra::Vector<T> vertex(num_of_tableau_variables(), 0);
+      LinearAlgebra::Vector<APPROX_TYPE> vertex(num_of_tableau_variables(), 0);
 
       size_t row = 0;
       for (const auto &variable: _basic_variables) {
@@ -791,7 +811,7 @@ class SimplexMethodOptimizer
     }
 
     /**
-     * @brief Simplex method boostrap phase
+     * @brief Simplex method bootstrap phase
      *
      * The simplex method minimization phase jumps from one vertex of the
      * polytope defined by the linear system to another vertex reducing the
@@ -823,7 +843,12 @@ class SimplexMethodOptimizer
         let_artificial_variables_in_null_constraints_be_non_basic();
       }
 
-      const bool feasible = _tableau[num_of_rows() - 1][b_column_index()] == 0;
+      // the system is feasible if and only if the omega row coefficient is 0
+      // Due to approximation errors, the coefficient can be different from 0.
+      // The condition was rewritten as follow to support approximation types.
+      const bool feasible
+          = !(_tableau[num_of_rows() - 1][b_column_index()] < 0
+              || _tableau[num_of_rows() - 1][b_column_index()] > 0);
 
       nullify_artificial_variable_coefficients();
 
@@ -847,6 +872,8 @@ public:
    * method.
    *
    * @tparam T is the type of the linear system coefficients
+   * @tparam APPROX_TYPE is the type of approximation used in place of T
+   *      during the computation
    * @param A is the linear system matrix
    * @param b is the linear system vector
    * @param objective is the objective coefficient vector
@@ -854,11 +881,11 @@ public:
    *                          minimize or maximize
    * @return the result of the optimization process
    */
-  template<typename T>
-  OptimizationResult<T>
+  template<typename T, typename APPROX_TYPE = T>
+  OptimizationResult<APPROX_TYPE>
   operator()(const std::vector<LinearAlgebra::Vector<T>> &A,
              const LinearAlgebra::Vector<T> &b,
-             const LinearAlgebra::Vector<T> objective,
+             const LinearAlgebra::Vector<T> &objective,
              OptimizationGoal optimization_type = MINIMIZE)
   {
     if (A.size() != b.size()) {
@@ -875,25 +902,31 @@ public:
     }
 
     if (A.size() == 0) {
-      return OptimizationResult<T>(OptimizationResult<T>::UNBOUNDED);
+      return OptimizationResult<APPROX_TYPE>(
+          OptimizationResult<APPROX_TYPE>::UNBOUNDED);
     }
 
-    Tableau<T> tableau{A, b, objective, optimization_type};
+    LinearAlgebra::Vector<APPROX_TYPE> approx_objective;
+    std::copy(objective.begin(), objective.end(),
+              std::back_inserter(approx_objective));
+
+    Tableau<T, APPROX_TYPE> tableau{A, b, approx_objective, optimization_type};
 
     if (!tableau.bootstrap()) {
-      return OptimizationResult<T>(OptimizationResult<T>::INFEASIBLE);
+      return OptimizationResult<APPROX_TYPE>(
+          OptimizationResult<APPROX_TYPE>::INFEASIBLE);
     }
 
     const auto status = tableau.minimize_objective();
     switch (status) {
-    case OptimizationResult<T>::OPTIMUM_AVAILABLE: {
+    case OptimizationResult<APPROX_TYPE>::OPTIMUM_AVAILABLE: {
       using namespace LinearAlgebra;
 
       auto candidate = tableau.get_candidate_solution();
-      return {candidate, candidate * objective};
+      return {candidate, candidate * approx_objective};
     }
-    case OptimizationResult<T>::UNBOUNDED:
-      return OptimizationResult<T>::UNBOUNDED;
+    case OptimizationResult<APPROX_TYPE>::UNBOUNDED:
+      return OptimizationResult<APPROX_TYPE>::UNBOUNDED;
     default:
       SAPO_ERROR("unknown \"solve\" result", std::runtime_error);
     }
