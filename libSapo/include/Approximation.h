@@ -17,18 +17,21 @@
 #include "FloatingPoints.h"
 #include "ErrorHandling.h"
 
+#include "LinearAlgebra.h"
+
 /**
  * @brief Interval-based approximation for numeric types
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<is_punctual<T>::value>::type>
 class Approximation;
 
 /**
  * @brief The over-approximated absolute value of an approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @return the over-approximation of the absolute value of `a`
  */
@@ -36,9 +39,19 @@ template<typename T>
 Approximation<T> abs(Approximation<T> &&a);
 
 /**
+ * @brief The over-approximated square root of an approximation
+ *
+ * @tparam T is a punctual numeric type
+ * @param a is an approximation
+ * @return the over-approximation of the square root of `a`
+ */
+template<typename T>
+Approximation<T> sqrt(Approximation<T> &&a);
+
+/**
  * @brief The over-approximated quotient of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a/b\f$
@@ -49,7 +62,7 @@ Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b);
 /**
  * @brief Approximation for floating point numbers
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  *
  * @todo This template exploits `std::nextafter` to blindly lower
  *       and upper bounds the result of arithmetic operations.
@@ -58,10 +71,9 @@ Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b);
  *       and `std::fesetround()`, however, it is much faster
  *       (about 10 time faster in a MacBook Pro 2020). This
  *       performance drop is due to the contest switch required
- *       by `std::fesetround()`. A more accurate approach should
- *       be investigated.
+ *       by `std::fesetround()`.
  */
-template<typename T>
+template<typename T, typename>
 class Approximation
 {
   T _lower_bound; //!< the approximation lower bound
@@ -223,14 +235,15 @@ public:
   Approximation<T> &operator/=(const Approximation<T> &a);
 
   friend Approximation<T> abs<T>(Approximation<T> &&a);
+  friend Approximation<T> sqrt<T>(Approximation<T> &&a);
 
   friend Approximation<T> operator/<T>(const Approximation<T> &a,
                                        Approximation<T> &&b);
 };
 
-template<typename T>
-inline Approximation<T> &Approximation<T>::set_bounds(const T &lower_bound,
-                                                      const T &upper_bound)
+template<typename T, typename B>
+inline Approximation<T> &Approximation<T, B>::set_bounds(const T &lower_bound,
+                                                         const T &upper_bound)
 {
   _lower_bound = lower_bound;
   _upper_bound = upper_bound;
@@ -238,10 +251,10 @@ inline Approximation<T> &Approximation<T>::set_bounds(const T &lower_bound,
   return *this;
 }
 
-template<typename T>
+template<typename T, typename B>
 inline Approximation<T> &
-Approximation<T>::set_bounds_and_approximate(const T &lower_bound,
-                                             const T &upper_bound)
+Approximation<T, B>::set_bounds_and_approximate(const T &lower_bound,
+                                                const T &upper_bound)
 {
   if constexpr (std::is_floating_point_v<T>) {
     this->set_bounds(
@@ -254,13 +267,13 @@ Approximation<T>::set_bounds_and_approximate(const T &lower_bound,
   return *this;
 }
 
-template<typename T>
-Approximation<T>::Approximation(): Approximation(0, 0)
+template<typename T, typename B>
+Approximation<T, B>::Approximation(): Approximation(0, 0)
 {
 }
 
-template<typename T>
-Approximation<T>::Approximation(const T &lower_bound, const T &upper_bound):
+template<typename T, typename B>
+Approximation<T, B>::Approximation(const T &lower_bound, const T &upper_bound):
     _lower_bound(lower_bound), _upper_bound(upper_bound)
 {
   if (_upper_bound < _lower_bound) {
@@ -270,85 +283,83 @@ Approximation<T>::Approximation(const T &lower_bound, const T &upper_bound):
   }
 }
 
-template<typename T>
-Approximation<T>::Approximation(const T &value): Approximation(value, value)
+template<typename T, typename B>
+Approximation<T, B>::Approximation(const T &value): Approximation(value, value)
 {
 }
 
-template<typename T>
-inline const T &Approximation<T>::lower_bound() const
+template<typename T, typename B>
+inline const T &Approximation<T, B>::lower_bound() const
 {
   return _lower_bound;
 }
 
-template<typename T>
-inline const T &Approximation<T>::upper_bound() const
+template<typename T, typename B>
+inline const T &Approximation<T, B>::upper_bound() const
 {
   return _upper_bound;
 }
 
-template<typename T>
+template<typename T, typename B>
 inline bool
-Approximation<T>::contains(const Approximation<T> &approximation) const
+Approximation<T, B>::contains(const Approximation<T> &approximation) const
 {
   return _lower_bound <= approximation.lower_bound()
          && _upper_bound >= approximation.upper_bound();
 }
 
-template<typename T>
-inline bool Approximation<T>::strictly_contains(
+template<typename T, typename B>
+inline bool Approximation<T, B>::strictly_contains(
     const Approximation<T> &approximation) const
 {
   return _lower_bound < approximation.lower_bound()
          && approximation.upper_bound() < _upper_bound;
 }
 
-template<typename T>
-inline bool Approximation<T>::contains(const T &value) const
+template<typename T, typename B>
+inline bool Approximation<T, B>::contains(const T &value) const
 {
   return _lower_bound <= value && value <= _upper_bound;
 }
 
-template<typename T>
-inline bool Approximation<T>::strictly_contains(const T &value) const
+template<typename T, typename B>
+inline bool Approximation<T, B>::strictly_contains(const T &value) const
 {
   return _lower_bound < value && value < _upper_bound;
 }
 
-template<typename T>
-inline const T Approximation<T>::error() const
+template<typename T, typename B>
+inline const T Approximation<T, B>::error() const
 {
   return subtract(_upper_bound, _lower_bound, FE_UPWARD);
 }
 
-template<typename T>
-inline Approximation<T> &Approximation<T>::negate()
+template<typename T, typename B>
+inline Approximation<T> &Approximation<T, B>::negate()
 {
   this->set_bounds(-_upper_bound, -_lower_bound);
 
   return *this;
 }
 
-template<typename T>
+template<typename T, typename B>
 inline Approximation<T> &
-Approximation<T>::operator+=(const Approximation<T> &a)
+Approximation<T, B>::operator+=(const Approximation<T> &a)
 {
   if constexpr (!std::is_floating_point_v<T>) {
     this->_lower_bound += a._lower_bound;
     this->_upper_bound += a._upper_bound;
-
-    return *this;
+  } else {
+    this->_lower_bound = add(_lower_bound, a._lower_bound, FE_DOWNWARD);
+    this->_upper_bound = add(_upper_bound, a._upper_bound, FE_UPWARD);
   }
-
-  this->_lower_bound = add(_lower_bound, a._lower_bound, FE_DOWNWARD);
-  this->_upper_bound = add(_upper_bound, a._upper_bound, FE_UPWARD);
 
   return *this;
 }
 
-template<typename T>
+template<typename T, typename B>
 inline Approximation<T> &
-Approximation<T>::operator-=(const Approximation<T> &a)
+Approximation<T, B>::operator-=(const Approximation<T> &a)
 {
   if (a == 0) {
     return *this;
@@ -371,8 +382,8 @@ Approximation<T>::operator-=(const Approximation<T> &a)
   return *this;
 }
 
-template<typename T>
-Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
+template<typename T, typename B>
+Approximation<T> &Approximation<T, B>::operator*=(const Approximation<T> &a)
 {
   if (a == 0) {
     this->set_bounds(0, 0);
@@ -389,11 +400,11 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
       if constexpr (!std::is_floating_point_v<T>) {
         return set_bounds(this->lower_bound() * a.lower_bound(),
                           this->upper_bound() * a.upper_bound());
+      } else {
+        return set_bounds(
+            multiply(this->lower_bound(), a.lower_bound(), FE_DOWNWARD),
+            multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
       }
-
-      return set_bounds(
-          multiply(this->lower_bound(), a.lower_bound(), FE_DOWNWARD),
-          multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
     }
 
     if (a.upper_bound() >= 0) {
@@ -402,11 +413,11 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
       if constexpr (!std::is_floating_point_v<T>) {
         return set_bounds(this->upper_bound() * a.lower_bound(),
                           this->upper_bound() * a.upper_bound());
+      } else {
+        return set_bounds(
+            multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
+            multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
       }
-
-      return set_bounds(
-          multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
-          multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
     }
 
     // [*this_l, *this_u] >= 0 && [a_l , a_u] < 0:
@@ -414,11 +425,11 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
     if constexpr (!std::is_floating_point_v<T>) {
       return set_bounds(this->upper_bound() * a.lower_bound(),
                         this->lower_bound() * a.upper_bound());
+    } else {
+      return set_bounds(
+          multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
+          multiply(this->lower_bound(), a.upper_bound(), FE_UPWARD));
     }
-
-    return set_bounds(
-        multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
-        multiply(this->lower_bound(), a.upper_bound(), FE_UPWARD));
   }
 
   if (*this < 0) {
@@ -436,11 +447,11 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
     if constexpr (!std::is_floating_point_v<T>) {
       return set_bounds(this->lower_bound() * a.upper_bound(),
                         this->upper_bound() * a.upper_bound());
+    } else {
+      return set_bounds(
+          multiply(this->lower_bound(), a.upper_bound(), FE_DOWNWARD),
+          multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
     }
-
-    return set_bounds(
-        multiply(this->lower_bound(), a.upper_bound(), FE_DOWNWARD),
-        multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
   }
 
   if (a.upper_bound() >= 0) {
@@ -471,17 +482,15 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
   if constexpr (!std::is_floating_point_v<T>) {
     return set_bounds(this->upper_bound() * a.lower_bound(),
                       this->lower_bound() * a.lower_bound());
+  } else {
+    return set_bounds(
+        multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
+        multiply(this->lower_bound(), a.lower_bound(), FE_UPWARD));
   }
-
-  return set_bounds(
-      multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
-      multiply(this->lower_bound(), a.lower_bound(), FE_UPWARD));
-
-  return *this;
 }
 
-template<typename T>
-Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
+template<typename T, typename B>
+Approximation<T> &Approximation<T, B>::operator/=(const Approximation<T> &a)
 {
   if (a.contains(0)) {
     // divisor contains 0
@@ -527,7 +536,7 @@ Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
 /**
  * @brief Test whether an approximations equals a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` equals `value`
@@ -541,7 +550,7 @@ inline bool operator==(const Approximation<T> &a, const T &value)
 /**
  * @brief Test whether an approximations equals a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
@@ -549,8 +558,7 @@ inline bool operator==(const Approximation<T> &a, const T &value)
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
-             !(std::is_same<T, K>::value
-               || std::is_same<K, Approximation<T>>::value)>::type>
+             !(std::is_same<K, Approximation<T>>::value)>::type>
 inline bool operator==(const Approximation<T> &a, const K &value)
 {
   return a == T(value);
@@ -559,7 +567,7 @@ inline bool operator==(const Approximation<T> &a, const K &value)
 /**
  * @brief Test whether a value equals an approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
@@ -567,8 +575,7 @@ inline bool operator==(const Approximation<T> &a, const K &value)
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
-             !(std::is_same<T, K>::value
-               || std::is_same<K, Approximation<T>>::value)>::type>
+             !(std::is_same<K, Approximation<T>>::value)>::type>
 inline bool operator==(const K &value, const Approximation<T> &a)
 {
   return a == T(value);
@@ -577,7 +584,7 @@ inline bool operator==(const K &value, const Approximation<T> &a)
 /**
  * @brief Test whether two approximations are the same
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return `true` if and only if `a` and `b` are the same
@@ -592,7 +599,7 @@ inline bool operator==(const Approximation<T> &a, const Approximation<T> &b)
 /**
  * @brief Test whether an approximations differs from a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if some possible values of `a` differ from
@@ -607,7 +614,7 @@ inline bool operator!=(const Approximation<T> &a, const T &value)
 /**
  * @brief Test whether an approximations differs from a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
@@ -616,8 +623,7 @@ inline bool operator!=(const Approximation<T> &a, const T &value)
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
-             !(std::is_same<T, K>::value
-               || std::is_same<K, Approximation<T>>::value)>::type>
+             !(std::is_same<K, Approximation<T>>::value)>::type>
 inline bool operator!=(const Approximation<T> &a, const K &value)
 {
   return !(a == T(value));
@@ -626,7 +632,7 @@ inline bool operator!=(const Approximation<T> &a, const K &value)
 /**
  * @brief Test whether a value differs from an approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` differs from some possible values of
@@ -641,7 +647,7 @@ inline bool operator!=(const T &value, const Approximation<T> &a)
 /**
  * @brief Test whether a value differs from an approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
@@ -650,8 +656,7 @@ inline bool operator!=(const T &value, const Approximation<T> &a)
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
-             !(std::is_same<T, K>::value
-               || std::is_same<K, Approximation<T>>::value)>::type>
+             !(std::is_same<K, Approximation<T>>::value)>::type>
 inline bool operator!=(const K &value, const Approximation<T> &a)
 {
   return !(a == T(value));
@@ -660,7 +665,7 @@ inline bool operator!=(const K &value, const Approximation<T> &a)
 /**
  * @brief Test whether two approximations differ
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return `true` if and only if `a` and `b` differ
@@ -674,7 +679,7 @@ inline bool operator!=(const Approximation<T> &a, const Approximation<T> &b)
 /**
  * @brief The "lesser than" relation between an approximation and a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` is lesser than
@@ -689,7 +694,7 @@ inline bool operator<(const Approximation<T> &a, const T &value)
 /**
  * @brief The "lesser than" relation between a value and an approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if `value` is lesser than any possible value of
@@ -705,7 +710,7 @@ inline bool operator<(const T &value, const Approximation<T> &a)
  * @brief The "lesser than or equal to" relation between an approximation and a
  * value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` are lesser than or
@@ -721,7 +726,7 @@ inline bool operator<=(const Approximation<T> &a, const T &value)
  * @brief The "lesser than or equal to" relation between a value and an
  * approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if `value` is lesser than or equal to any
@@ -736,7 +741,7 @@ inline bool operator<=(const T &value, const Approximation<T> &a)
 /**
  * @brief The "greater than" relation between an approximation and a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if and only if any possible value of `a` is
@@ -751,7 +756,7 @@ inline bool operator>(const Approximation<T> &a, const T &value)
 /**
  * @brief The "greater than" relation between a value and an approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` is greater than any possible value of
@@ -767,7 +772,7 @@ inline bool operator>(const T &value, const Approximation<T> &a)
  * @brief The "greater than or equal to" relation between an approximation and
  * a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if any possible value of `a` are greater than or
@@ -783,7 +788,7 @@ inline bool operator>=(const Approximation<T> &a, const T &value)
  * @brief The "greater than or equal to" relation between a value and an
  * approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` is greater than or equal to any
@@ -798,7 +803,7 @@ inline bool operator>=(const T &value, const Approximation<T> &a)
 /**
  * @brief The "lesser than" relation between approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return `true` if and only if any possible value of `a` is lesser
@@ -813,7 +818,7 @@ inline bool operator<(const Approximation<T> &a, const Approximation<T> &b)
 /**
  * @brief The "lesser than or equal to" relation between approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return `true` if and only if any possible value of `a` is lesser than or
@@ -828,7 +833,7 @@ inline bool operator<=(const Approximation<T> &a, const Approximation<T> &b)
 /**
  * @brief The "greater than or equal to" relation between approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return `true` if and only if any possible value of `a` is greater than or
@@ -844,7 +849,7 @@ inline bool operator>(const Approximation<T> &a, const Approximation<T> &b)
  * @brief The "greater than or equal to" relation between a value and an
  * approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
@@ -864,7 +869,7 @@ inline bool operator>=(const K &value, const Approximation<T> &a)
  * @brief The "greater than or equal to" relation between an
  * approximation and a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
@@ -884,7 +889,7 @@ inline bool operator>=(const Approximation<T> &a, const K &value)
  * @brief The "lesser than" relation between a value and an
  * approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
@@ -904,7 +909,7 @@ inline bool operator<(const K &value, const Approximation<T> &a)
  * @brief The "lesser than" relation between an approximation
  * and a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
@@ -924,7 +929,7 @@ inline bool operator<(const Approximation<T> &a, const K &value)
  * @brief The "lesser than or equal to" relation between a value and an
  * approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
@@ -944,7 +949,7 @@ inline bool operator<=(const K &value, const Approximation<T> &a)
  * @brief The "lesser than or equal to" relation between an
  * approximation and a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
@@ -964,7 +969,7 @@ inline bool operator<=(const Approximation<T> &a, const K &value)
  * @brief The "greater than or equal to" relation between a value and an
  * approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
@@ -984,7 +989,7 @@ inline bool operator>(const K &value, const Approximation<T> &a)
  * @brief The "greater than or equal to" relation between an
  * approximation and a value
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
@@ -1003,7 +1008,7 @@ inline bool operator>(const Approximation<T> &a, const K &value)
 /**
  * @brief The "greater than or equal to" relation between approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return `true` if and only if any possible value of `a` is greater than or
@@ -1018,7 +1023,7 @@ inline bool operator>=(const Approximation<T> &a, const Approximation<T> &b)
 /**
  * @brief The over-approximated sum of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a+b\f$
@@ -1035,7 +1040,7 @@ inline Approximation<T> operator+(Approximation<T> &&a,
 /**
  * @brief The over-approximated sum of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a+b\f$
@@ -1050,9 +1055,43 @@ inline Approximation<T> operator+(const Approximation<T> &a,
 }
 
 /**
+ * @brief The over-approximated sum
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param b is a value
+ * @return an over-approximation of \f$a+b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator+(const Approximation<T> &a, const K &b)
+{
+  return a + Approximation<T>(b);
+}
+
+/**
+ * @brief The over-approximated sum
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is a value
+ * @param b is an approximation
+ * @return an over-approximation of \f$a+b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator+(const K &a, const Approximation<T> &b)
+{
+  return Approximation<T>(a) + b;
+}
+
+/**
  * @brief The over-approximated sum of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a+b\f$
@@ -1067,7 +1106,7 @@ inline Approximation<T> operator+(const Approximation<T> &a,
 /**
  * @brief Negative approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @return the approximation of \f$-a\f$
  */
@@ -1082,7 +1121,7 @@ inline Approximation<T> operator-(Approximation<T> &&a)
 /**
  * @brief Negative approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @return the approximation of \f$-a\f$
  */
@@ -1095,7 +1134,7 @@ inline Approximation<T> operator-(const Approximation<T> &a)
 /**
  * @brief The over-approximated difference of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a-b\f$
@@ -1114,13 +1153,14 @@ inline Approximation<T> operator-(const Approximation<T> &a,
 /**
  * @brief The over-approximated difference of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a-b\f$
  */
 template<typename T>
-Approximation<T> operator-(Approximation<T> &&a, const Approximation<T> &b)
+inline Approximation<T> operator-(Approximation<T> &&a,
+                                  const Approximation<T> &b)
 {
   a -= b;
 
@@ -1128,9 +1168,43 @@ Approximation<T> operator-(Approximation<T> &&a, const Approximation<T> &b)
 }
 
 /**
+ * @brief The over-approximated difference
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is a value
+ * @param b is an approximation
+ * @return an over-approximation of \f$a-b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator-(const K &a, const Approximation<T> &b)
+{
+  return Approximation<T>(a) - b;
+}
+
+/**
+ * @brief The over-approximated difference
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param b is a value
+ * @return an over-approximation of \f$a-b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator-(const Approximation<T> &a, const K &b)
+{
+  return a - Approximation<T>(b);
+}
+
+/**
  * @brief The over-approximated difference of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a-b\f$
@@ -1147,15 +1221,16 @@ Approximation<T> operator-(const Approximation<T> &a,
 }
 
 /**
- * @brief The over-approximated products of two approximations
+ * @brief The over-approximated product of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a*b\f$
  */
 template<typename T>
-Approximation<T> operator*(Approximation<T> &&a, const Approximation<T> &b)
+inline Approximation<T> operator*(Approximation<T> &&a,
+                                  const Approximation<T> &b)
 {
   a *= b;
 
@@ -1163,9 +1238,9 @@ Approximation<T> operator*(Approximation<T> &&a, const Approximation<T> &b)
 }
 
 /**
- * @brief The over-approximated products of two approximations
+ * @brief The over-approximated product of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a*b\f$
@@ -1174,15 +1249,47 @@ template<typename T>
 inline Approximation<T> operator*(const Approximation<T> &a,
                                   Approximation<T> &&b)
 {
-  b *= a;
-
-  return std::move(b);
+  return std::move(b) * a;
 }
 
 /**
- * @brief The over-approximated products of two approximations
+ * @brief The over-approximated product
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param b is a value
+ * @return an over-approximation of \f$a*b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator*(const Approximation<T> &a, const K &b)
+{
+  return a * Approximation<T>(b);
+}
+
+/**
+ * @brief The over-approximated product
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is a value
+ * @param b is an approximation
+ * @return an over-approximation of \f$a*b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator*(const K &a, const Approximation<T> &b)
+{
+  return Approximation<T>(a) * b;
+}
+
+/**
+ * @brief The over-approximated product of two approximations
+ *
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a*b\f$
@@ -1197,7 +1304,7 @@ inline Approximation<T> operator*(const Approximation<T> &a,
 /**
  * @brief The over-approximated quotient of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a/b\f$
@@ -1213,7 +1320,7 @@ Approximation<T> operator/(Approximation<T> &&a, const Approximation<T> &b)
 /**
  * @brief The over-approximated quotient of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a/b\f$
@@ -1247,9 +1354,43 @@ Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b)
 }
 
 /**
+ * @brief The over-approximated quotient
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is a value
+ * @param b is an approximation
+ * @return an over-approximation of \f$a/b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator/(const K &a, const Approximation<T> &b)
+{
+  return Approximation<T>(a) / b;
+}
+
+/**
+ * @brief The over-approximated quotient
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param b is a value
+ * @return an over-approximation of \f$a/b\f$
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<K, Approximation<T>>::value)>::type>
+inline Approximation<T> operator/(const Approximation<T> &a, const K &b)
+{
+  return a / Approximation<T>(b);
+}
+
+/**
  * @brief The over-approximated quotient of two approximations
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
  * @return an over-approximation of \f$a/b\f$
@@ -1272,7 +1413,7 @@ inline Approximation<T> operator/(const Approximation<T> &a,
 /**
  * @brief The over-approximated absolute value of an approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @return the over-approximation of the absolute value of `a`
  */
@@ -1296,7 +1437,7 @@ Approximation<T> abs(Approximation<T> &&a)
 /**
  * @brief The over-approximated absolute value of an approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @return the over-approximation of the absolute value of `a`
  */
@@ -1307,9 +1448,47 @@ inline Approximation<T> abs(const Approximation<T> &a)
 }
 
 /**
+ * @brief The over-approximated square root of an approximation
+ *
+ * @tparam T is a punctual numeric type
+ * @param a is an approximation
+ * @return the over-approximation of the square root of `a`
+ */
+template<typename T>
+Approximation<T> sqrt(Approximation<T> &&a)
+{
+  auto lower_bound = sqrt(a.lower_bound());
+
+  while (lower_bound * lower_bound > a.lower_bound()) {
+    lower_bound = nextafter(lower_bound, -std::numeric_limits<T>::infinity());
+  }
+
+  auto upper_bound = sqrt(a.upper_bound());
+  while (upper_bound * upper_bound < a.lower_bound()) {
+    upper_bound = nextafter(upper_bound, std::numeric_limits<T>::infinity());
+  }
+  a.set_bounds(lower_bound, upper_bound);
+
+  return std::move(a);
+}
+
+/**
+ * @brief The over-approximated square root of an approximation
+ *
+ * @tparam T is a punctual numeric type
+ * @param a is an approximation
+ * @return the over-approximation of the square root of `a`
+ */
+template<typename T>
+Approximation<T> sqrt(const Approximation<T> &a)
+{
+  return sqrt(Approximation<T>(a));
+}
+
+/**
  * @brief Write in a stream an approximation
  *
- * @tparam T is a numeric type
+ * @tparam T is a punctual numeric type
  * @param os is an output stream
  * @param approximation is an approximation
  * @return a reference to the output stream
@@ -1322,6 +1501,294 @@ std::ostream &operator<<(std::ostream &os,
      << approximation.upper_bound() << "]";
 
   return os;
+}
+
+namespace LinearAlgebra
+{
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
+ * @return the element-wise difference of the second parameter from the first
+ *         one
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator+(const Vector<APPROX<T, B>> &a,
+                               const Vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+  }
+
+  Vector<APPROX<T, B>> res(a.size());
+
+  for (size_t i = 0; i < res.size(); ++i) {
+    res[i] = a[i] + b[i];
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
+ * @return the element-wise difference of the second parameter from the first
+ *         one
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator+(const Vector<T> &a,
+                               const Vector<APPROX<T, B>> &b)
+{
+  return b + a;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
+ * @return the element-wise difference of the second parameter from the first
+ *         one
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator-(const Vector<T> &a,
+                               const Vector<APPROX<T, B>> &b)
+{
+  if (a.size() != b.size()) {
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+  }
+
+  Vector<APPROX<T, B>> res(a.size());
+
+  for (size_t i = 0; i < res.size(); ++i) {
+    res[i] = a[i] - b[i];
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param a is the vector from which the second parameter must be subtracted
+ * @param b is the vector that must be subtracted
+ * @return the element-wise difference of the second parameter from the first
+ *         one
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator-(const Vector<APPROX<T, B>> &a,
+                               const Vector<T> &b)
+{
+  if (a.size() != b.size()) {
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+  }
+
+  Vector<APPROX<T, B>> res(a.size());
+
+  for (size_t i = 0; i < res.size(); ++i) {
+    res[i] = a[i] - b[i];
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar product \f$v * s\f$
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator*(const Vector<APPROX<T, B>> &v, const T &s)
+{
+  return v * APPROX<T, B>(s);
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param s is a scalar value
+ * @param v is a vector
+ * @return the element-wise scalar product \f$s * v\f$
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+inline Vector<APPROX<T, B>> operator*(const T &s,
+                                      const Vector<APPROX<T, B>> &v)
+{
+  return v * s;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar product \f$v * s\f$
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator*(const Vector<T> &v, const APPROX<T, B> &s)
+{
+  Vector<APPROX<T, B>> res(v.size());
+
+  for (size_t i = 0; i < res.size(); ++i) {
+    res[i] = v[i] * s;
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the element-wise difference of two vectors
+ *
+ * @tparam T ia a numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
+ * @param s is a scalar value
+ * @param v is a vector
+ * @return the element-wise scalar product \f$s * v\f$
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+inline Vector<APPROX<T, B>> operator*(const APPROX<T, B> &s,
+                                      const Vector<T> &v)
+{
+  return v * s;
+}
+
+/**
+ * @brief Compute the element-wise scalar division
+ *
+ * @tparam APPROX is an approximation type
+ * @tparam T is a punctual numeric type
+ * @param v is a vector
+ * @param s is a scalar value
+ * @return the element-wise scalar division \f$v/\f$
+ */
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator/(const Vector<T> &v, const APPROX<T, B> &s)
+{
+  Vector<APPROX<T, B>> res(v.size());
+
+  for (size_t i = 0; i < res.size(); ++i) {
+    res[i] = v[i] / s;
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the vector product
+ *
+ * @tparam T is a punctual numeric type
+ * @param v1 is a vector
+ * @param v2 is a vector
+ * @return the vector product \f$v1 \cdot v2\f$
+ */
+template<typename T>
+Approximation<T> operator*(const Vector<T> &v1,
+                           const Vector<Approximation<T>> &v2)
+{
+  if (v1.size() != v2.size()) {
+    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+  }
+
+  Approximation<T> res = 0;
+  auto it2 = std::begin(v2);
+  for (auto it1 = std::begin(v1); it1 != std::end(v1); ++it1) {
+    res += (*it1) * (*it2);
+
+    ++it2;
+  }
+
+  return res;
+}
+
+/**
+ * @brief Compute the vector product
+ *
+ * @tparam T is a punctual numeric type
+ * @param v1 is a vector
+ * @param v2 is a vector
+ * @return the vector product \f$v1 \cdot v2\f$
+ */
+template<typename T>
+inline Approximation<T> operator*(const Vector<Approximation<T>> &v1,
+                                  const Vector<T> &v2)
+{
+  return v2 * v1;
+}
+
+/**
+ * @brief Compute the row-column matrix-vector multiplication
+ *
+ * @tparam T is a punctual numeric type
+ * @param A is a dense matrix
+ * @param v is a vector
+ * @return the row-column matrix-vector multiplication \f$A \cdot v\f$
+ */
+template<typename T>
+Vector<Approximation<T>> operator*(const Dense::Matrix<T> &A,
+                                   const Vector<Approximation<T>> &v)
+{
+  if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
+      && v.size() == 0) {
+    return Vector<Approximation<T>>();
+  }
+
+  if (A.size() == 0 || A.front().size() != v.size()) {
+    SAPO_ERROR("the number of columns in the matrix differs from "
+               "the vector size",
+               std::domain_error);
+  }
+
+  Vector<Approximation<T>> res(A.size(), 0);
+
+  auto res_it = std::begin(res);
+  for (auto A_row_it = std::begin(A); A_row_it != std::end(A);
+       ++A_row_it, ++res_it) {
+    auto A_elem_it = std::begin(*A_row_it);
+    for (auto v_it = std::begin(v); v_it != std::end(v); ++v_it, ++A_elem_it) {
+      *res_it += (*A_elem_it) * (*v_it);
+    }
+  }
+
+  return res;
+}
+
 }
 
 #endif // _APPROXIMATION_H_
