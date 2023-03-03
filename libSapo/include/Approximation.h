@@ -11,7 +11,7 @@
 #ifndef _APPROXIMATION_H_
 #define _APPROXIMATION_H_
 
-#include <algorithm> // std::min, std::max
+#include <limits>
 #include <cmath>
 
 #include "FloatingPoints.h"
@@ -239,6 +239,22 @@ inline Approximation<T> &Approximation<T>::set_bounds(const T &lower_bound,
 }
 
 template<typename T>
+inline Approximation<T> &
+Approximation<T>::set_bounds_and_approximate(const T &lower_bound,
+                                             const T &upper_bound)
+{
+  if constexpr (std::is_floating_point_v<T>) {
+    this->set_bounds(
+        nextafter(lower_bound, -std::numeric_limits<T>::infinity()),
+        nextafter(upper_bound, std::numeric_limits<T>::infinity()));
+  } else {
+    this->set_bounds(lower_bound, upper_bound);
+  }
+
+  return *this;
+}
+
+template<typename T>
 Approximation<T>::Approximation(): Approximation(0, 0)
 {
 }
@@ -334,6 +350,10 @@ template<typename T>
 inline Approximation<T> &
 Approximation<T>::operator-=(const Approximation<T> &a)
 {
+  if (a == 0) {
+    return *this;
+  }
+
   if (this == &a) {
     this->set_bounds(0, 0);
 
@@ -343,12 +363,10 @@ Approximation<T>::operator-=(const Approximation<T> &a)
   if constexpr (!std::is_floating_point_v<T>) {
     this->_lower_bound -= a._upper_bound;
     this->_upper_bound += a._lower_bound;
-
-    return *this;
+  } else {
+    this->_lower_bound = subtract(_lower_bound, a._upper_bound, FE_DOWNWARD);
+    this->_upper_bound = subtract(_upper_bound, a._lower_bound, FE_UPWARD);
   }
-
-  this->_lower_bound = subtract(_lower_bound, a._upper_bound, FE_DOWNWARD);
-  this->_upper_bound = subtract(_upper_bound, a._lower_bound, FE_UPWARD);
 
   return *this;
 }
@@ -356,8 +374,16 @@ Approximation<T>::operator-=(const Approximation<T> &a)
 template<typename T>
 Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
 {
-  if (*this >= 0) {
-    if (a >= 0) {
+  if (a == 0) {
+    this->set_bounds(0, 0);
+    return *this;
+  }
+  if (*this == 0) {
+    return *this;
+  }
+
+  if (*this > 0) {
+    if (a > 0) {
       // [*this_l, *this_u] >= 0 && [a_l , a_u] >= 0:
       // min is this_l*a_l and max is this_u*a_u
       if constexpr (!std::is_floating_point_v<T>) {
@@ -404,7 +430,7 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
   }
 
   // this->contains(0)
-  if (a >= 0) {
+  if (a > 0) {
     // *this_l < 0 && *this_u >= 0 && [a_l, a_u] >= 0:
     // min is *this_l*a_u and max is *this_u*a_u
     if constexpr (!std::is_floating_point_v<T>) {
@@ -457,10 +483,17 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
 template<typename T>
 Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
 {
-  if (this == &a) {
-    this->set_bounds(1, 1);
+  if (a.contains(0)) {
+    // divisor contains 0
+    SAPO_ERROR("division by 0", std::runtime_error);
+  }
 
+  if (*this == 0) {
     return *this;
+  }
+
+  if (this == &a) {
+    return this->set_bounds(1, 1);
   }
 
   if (a > 0) {
@@ -483,15 +516,12 @@ Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
     return *this;
   }
 
-  if (a < 0) {
-    // compute -(*this/(-a))
-    *this /= (-a);
+  // !a.contains(0)&&a>0, hence, a<0
 
-    return this->negate();
-  }
+  // compute -(*this/(-a))
+  *this /= (-a);
 
-  // divisor contains 0
-  SAPO_ERROR("division by 0", std::runtime_error);
+  return this->negate();
 }
 
 /**
@@ -509,17 +539,39 @@ inline bool operator==(const Approximation<T> &a, const T &value)
 }
 
 /**
+ * @brief Test whether an approximations equals a value
+ *
+ * @tparam T is a numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param value is a value
+ * @return `true` if and only if any possible value of `a` equals `value`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<T, K>::value
+               || std::is_same<K, Approximation<T>>::value)>::type>
+inline bool operator==(const Approximation<T> &a, const K &value)
+{
+  return a == T(value);
+}
+
+/**
  * @brief Test whether a value equals an approximations
  *
  * @tparam T is a numeric type
+ * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` equals any possible value of `a`
  */
-template<typename T>
-inline bool operator==(const T &value, const Approximation<T> &a)
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<T, K>::value
+               || std::is_same<K, Approximation<T>>::value)>::type>
+inline bool operator==(const K &value, const Approximation<T> &a)
 {
-  return a == value;
+  return a == T(value);
 }
 
 /**
@@ -553,6 +605,25 @@ inline bool operator!=(const Approximation<T> &a, const T &value)
 }
 
 /**
+ * @brief Test whether an approximations differs from a value
+ *
+ * @tparam T is a numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param value is a value
+ * @return `true` if and only if some possible values of `a` differ from
+ * `value`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<T, K>::value
+               || std::is_same<K, Approximation<T>>::value)>::type>
+inline bool operator!=(const Approximation<T> &a, const K &value)
+{
+  return !(a == T(value));
+}
+
+/**
  * @brief Test whether a value differs from an approximations
  *
  * @tparam T is a numeric type
@@ -565,6 +636,25 @@ template<typename T>
 inline bool operator!=(const T &value, const Approximation<T> &a)
 {
   return !(a == value);
+}
+
+/**
+ * @brief Test whether a value differs from an approximations
+ *
+ * @tparam T is a numeric type
+ * @tparam K is a numeric type
+ * @param value is a value
+ * @param a is an approximation
+ * @return `true` if and only if `value` differs from some possible values of
+ * `a`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if<
+             !(std::is_same<T, K>::value
+               || std::is_same<K, Approximation<T>>::value)>::type>
+inline bool operator!=(const K &value, const Approximation<T> &a)
+{
+  return !(a == T(value));
 }
 
 /**
@@ -755,17 +845,17 @@ inline bool operator>(const Approximation<T> &a, const Approximation<T> &b)
  * approximation
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` is greater than or equal to any
  * possible value of `a`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator>=(const T2 &value, const Approximation<T> &a)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator>=(const K &value, const Approximation<T> &a)
 {
   return T(value) >= a;
 }
@@ -775,17 +865,17 @@ inline bool operator>=(const T2 &value, const Approximation<T> &a)
  * approximation and a value
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` is
  * greater than or equal to `value`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator>=(const Approximation<T> &a, const T2 &value)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator>=(const Approximation<T> &a, const K &value)
 {
   return a >= T(value);
 }
@@ -795,17 +885,17 @@ inline bool operator>=(const Approximation<T> &a, const T2 &value)
  * approximation
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` is lesser than any
  * possible value of `a`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator<(const T2 &value, const Approximation<T> &a)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator<(const K &value, const Approximation<T> &a)
 {
   return T(value) < a;
 }
@@ -815,17 +905,17 @@ inline bool operator<(const T2 &value, const Approximation<T> &a)
  * and a value
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` is lesser than
  * `value
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator<(const Approximation<T> &a, const T2 &value)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator<(const Approximation<T> &a, const K &value)
 {
   return a < T(value);
 }
@@ -835,17 +925,17 @@ inline bool operator<(const Approximation<T> &a, const T2 &value)
  * approximation
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` is lesser than or
  *      equal to any possible value of `a`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator<=(const T2 &value, const Approximation<T> &a)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator<=(const K &value, const Approximation<T> &a)
 {
   return T(value) <= a;
 }
@@ -855,17 +945,17 @@ inline bool operator<=(const T2 &value, const Approximation<T> &a)
  * approximation and a value
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` is lesser than or
  *      equal to `value`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator<=(const Approximation<T> &a, const T2 &value)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator<=(const Approximation<T> &a, const K &value)
 {
   return a <= T(value);
 }
@@ -875,17 +965,17 @@ inline bool operator<=(const Approximation<T> &a, const T2 &value)
  * approximation
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
  * @return `true` if and only if `value` is greater than or
  *      equal to any possible value of `a`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator>(const T2 &value, const Approximation<T> &a)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator>(const K &value, const Approximation<T> &a)
 {
   return T(value) > a;
 }
@@ -895,17 +985,17 @@ inline bool operator>(const T2 &value, const Approximation<T> &a)
  * approximation and a value
  *
  * @tparam T is a numeric type
- * @tparam T2 is a numeric type
+ * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
  * @return `true` if and only if any possible value of `a` is greater than or
  *      equal to `value`
  */
-template<typename T, typename T2,
+template<typename T, typename K,
          typename = typename std::enable_if_t<
-             !(std::is_same<T2, T>::value
-               || std::is_same<T2, Approximation<T>>::value)>>
-inline bool operator>(const Approximation<T> &a, const T2 &value)
+             !(std::is_same<K, T>::value
+               || std::is_same<K, Approximation<T>>::value)>>
+inline bool operator>(const Approximation<T> &a, const K &value)
 {
   return a > T(value);
 }
@@ -1050,7 +1140,7 @@ Approximation<T> operator-(const Approximation<T> &a,
                            const Approximation<T> &b)
 {
   if (&a == &b) {
-    return Approximation<T>(0, 0);
+    return Approximation<T>(0);
   }
 
   return (-b) + a;
@@ -1168,8 +1258,12 @@ template<typename T>
 inline Approximation<T> operator/(const Approximation<T> &a,
                                   const Approximation<T> &b)
 {
+  if (b.contains(0)) {
+    SAPO_ERROR("division by 0", std::runtime_error);
+  }
+
   if (&a == &b) {
-    return Approximation<T>(1, 1);
+    return Approximation<T>(1);
   }
 
   return Approximation<T>(a) / b;
