@@ -24,6 +24,24 @@
 
 #include "ErrorHandling.h"
 
+/**
+ * @brief A structure to distinguish punctual types from interval types
+ *
+ * This structure is only meant to distinguish punctual arithmetic types,
+ * like `float`, `double`, or `int`, from interval-based types, such as
+ * `Approximation`. This is required to disable `operator==` and
+ * `operator!=` between interval-based vector because of their
+ * puzzling semantics.
+ * In order to use the `LinearAlgebra` implementation of `operator==`
+ * and `operator!=` to compare vectors having a non-standard scalar
+ * type, please, specialize `is_punctual`.
+ *
+ * @tparam T is the type to be tested
+ */
+template<typename T>
+struct is_punctual : public std::is_arithmetic<T> {
+};
+
 namespace LinearAlgebra
 {
 
@@ -115,6 +133,7 @@ bool is_null(const Vector<T> &v)
 /**
  * Compute the complementary of a vector of values.
  *
+ * @tparam T is the scalar value type
  * @param[in] orig the vector of values to be complemented
  * @return A vector containing the complement of the parameter values
  */
@@ -136,11 +155,12 @@ Vector<T> operator-(const Vector<T> &orig)
  * @param b is the second vector to be compared
  * @return `true` if and only if the two vectors are the same
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<is_punctual<T>::value>::type>
 bool operator==(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
-    SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
+    return false;
   }
 
   auto b_it = std::cbegin(b);
@@ -161,7 +181,8 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
  * @param b is the second vector to be compared
  * @return `true` if and only if the two vectors differ
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<is_punctual<T>::value>::type>
 bool operator!=(const Vector<T> &a, const Vector<T> &b)
 {
   return !(a == b);
@@ -184,7 +205,7 @@ Vector<T> operator-(Vector<T> &&v)
 /**
  * @brief Compute the element-wise sum of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the first vector to be added
  * @param b is the second vector to be added
  * @return the element-wise sum of the two parameters
@@ -208,7 +229,7 @@ Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
 /**
  * @brief Compute the in-place element-wise sum of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the first vector to be added and the destination of the sum
  * @param b is the second vector to be added
  * @return a reference to the updated vector `a`
@@ -230,7 +251,7 @@ Vector<T> &operator+=(Vector<T> &a, const Vector<T> &b)
 /**
  * @brief Compute the element-wise sum of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the first vector to be added
  * @param b is the second vector to be added
  * @return the element-wise sum of the two parameters
@@ -250,7 +271,7 @@ Vector<T> operator+(Vector<T> &&a, const Vector<T> &b)
 /**
  * @brief Compute the element-wise sum of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the first vector to be added
  * @param b is the second vector to be added
  * @return the element-wise sum of the two parameters
@@ -264,7 +285,7 @@ inline Vector<T> operator+(const Vector<T> &a, Vector<T> &&b)
 /**
  * @brief Compute the element-wise difference of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
@@ -289,7 +310,7 @@ Vector<T> operator-(const Vector<T> &a, const Vector<T> &b)
 /**
  * @brief Compute the in-place element-wise subtraction of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the vector from which the second parameter must be subtracted
  *      and destination of the subtraction
  * @param b is the vector that must be subtracted
@@ -312,7 +333,7 @@ Vector<T> &operator-=(Vector<T> &a, const Vector<T> &b)
 /**
  * @brief Compute the element-wise difference of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
@@ -333,7 +354,7 @@ Vector<T> operator-(Vector<T> &&a, const Vector<T> &b)
 /**
  * @brief Compute the element-wise difference of two vectors
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the
@@ -357,11 +378,11 @@ Vector<T> operator-(const Vector<T> &a, Vector<T> &&b)
 /**
  * @brief Compute the in-place element-wise scalar product
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v is a vector
  * @param s is a scalar value
  * @return a reference to the object `v` that will be updated
- *       to \f$v * \f$
+ *       to \f$v * s\f$
  */
 template<typename T>
 Vector<T> &operator*=(Vector<T> &v, const T s)
@@ -378,10 +399,10 @@ Vector<T> &operator*=(Vector<T> &v, const T s)
 /**
  * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v is a vector
  * @param s is a scalar value
- * @return the element-wise scalar product \f$v * \f$
+ * @return the element-wise scalar product \f$v * s\f$
  */
 template<typename T>
 inline Vector<T> operator*(const Vector<T> &v, const T s)
@@ -396,10 +417,10 @@ inline Vector<T> operator*(const Vector<T> &v, const T s)
 /**
  * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param s is a scalar value
  * @param v is a vector
- * @return the element-wise scalar product \f$s * \f$
+ * @return the element-wise scalar product \f$s * v\f$
  */
 template<typename T>
 inline Vector<T> operator*(const T s, const Vector<T> &v)
@@ -410,10 +431,10 @@ inline Vector<T> operator*(const T s, const Vector<T> &v)
 /**
  * @brief Compute the vector product
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v1 is a vector
  * @param v2 is a vector
- * @return the vector product \f$v1 \cdot v\f$
+ * @return the vector product \f$v1 \cdot v2\f$
  */
 template<typename T>
 T operator*(const Vector<T> &v1, const Vector<T> &v2)
@@ -422,7 +443,7 @@ T operator*(const Vector<T> &v1, const Vector<T> &v2)
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  T res = 0;
+  T res(0);
   auto it2 = std::begin(v2);
   for (auto it1 = std::begin(v1); it1 != std::end(v1); ++it1) {
     res += (*it1) * (*it2);
@@ -442,7 +463,7 @@ T operator*(const Vector<T> &v1, const Vector<T> &v2)
  * parameters.
  * \f$(v_1 \circ v_2)[i] = v_1[i]*v_2[i]\f$
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v1 is a vector
  * @param v2 is a vector
  * @return the vector product \f$v1 \circ v2\f$
@@ -465,7 +486,7 @@ Vector<T> H_prod(const Vector<T> &v1, const Vector<T> &v2)
 /**
  * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param s is a scalar value
  * @param v is a vector
  * @return the element-wise scalar product \f$s * \f$
@@ -481,7 +502,7 @@ inline Vector<T> operator*(const T s, Vector<T> &&v)
 /**
  * @brief Compute the element-wise scalar product
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v is a vector
  * @param s is a scalar value
  * @return the element-wise scalar product \f$v * \f$
@@ -495,7 +516,7 @@ inline Vector<T> operator*(Vector<T> &&v, const T s)
 /**
  * @brief Compute the element-wise scalar division
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v is a vector
  * @param s is a scalar value
  * @return a reference to the updated vector
@@ -517,10 +538,10 @@ Vector<T> &operator/=(Vector<T> &v, const T s)
 /**
  * @brief Compute the element-wise scalar division
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v is a vector
  * @param s is a scalar value
- * @return the element-wise scalar division \f$v/\f$
+ * @return the element-wise scalar division \f$v/s\f$
  */
 template<typename T>
 inline Vector<T> operator/(const Vector<T> &v, const T s)
@@ -535,10 +556,10 @@ inline Vector<T> operator/(const Vector<T> &v, const T s)
 /**
  * @brief Compute the element-wise scalar division
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  * @param v is a vector
  * @param s is a scalar value
- * @return the element-wise scalar division \f$v/\f$
+ * @return the element-wise scalar division \f$v/s\f$
  */
 template<typename T>
 inline Vector<T> operator/(Vector<T> &&v, const T s)
@@ -829,7 +850,7 @@ Dense::Matrix<T> transpose(const Dense::Matrix<T> &A)
  * @tparam T is a numeric type
  * @param A is a dense matrix
  * @param v is a vector
- * @return the row-column matrix-vector multiplication \f$A \cdot \f$
+ * @return the row-column matrix-vector multiplication \f$A \cdot v\f$
  */
 template<typename T>
 Vector<T> operator*(const Dense::Matrix<T> &A, const Vector<T> &v)
@@ -865,7 +886,7 @@ Vector<T> operator*(const Dense::Matrix<T> &A, const Vector<T> &v)
  * @tparam T is a numeric type
  * @param A is a dense matrix
  * @param B is a dense matrix
- * @return the row-column matrix-matrix multiplication \f$A \cdot \f$
+ * @return the row-column matrix-matrix multiplication \f$A \cdot B\f$
  */
 template<typename T>
 Dense::Matrix<T> operator*(const Dense::Matrix<T> &A,
@@ -997,7 +1018,7 @@ namespace Dense
  * represented by a matrix, but instead by using a
  * vector of indexes swaps.
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  */
 template<typename T>
 class LUP_Factorization
@@ -1519,7 +1540,7 @@ namespace Sparse
  * index-row type and each row is a index-element
  * type.
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  */
 template<typename T>
 class Matrix;
@@ -1602,7 +1623,7 @@ namespace Sparse
  * index-row type and each row is a index-element
  * type.
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  */
 template<typename T>
 class Matrix
@@ -2242,7 +2263,7 @@ public:
  * represented by a matrix, but instead by using a
  * vector of indexes swaps.
  *
- * @tparam T any numeric type
+ * @tparam T is a numeric type
  */
 template<typename T>
 class LUP_Factorization

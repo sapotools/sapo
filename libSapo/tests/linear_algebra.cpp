@@ -11,6 +11,10 @@
 #include <gmpxx.h>
 
 typedef boost::mpl::list<double, mpq_class> test_types;
+
+template<>
+struct is_punctual<mpq_class> : std::integral_constant<bool, true> {};
+
 #else
 typedef boost::mpl::list<double> test_types;
 #endif
@@ -97,6 +101,8 @@ BOOST_AUTO_TEST_CASE(test_eq)  // mpq_class is not supported: it misses sqrt()
         {{{-1,-7,-5,-5,0}, {0,1,7,5,5}}, false},
         {{{1,7,5,5,0}, {1,7,5,5,0}}, true},
         {{{1,7,5,5,0}, {1,7,5,-5,0}}, false},
+        {{{1,7,5,5}, {0,1,7,5,5}}, false},
+        {{{1,7,5,5,0}, {1,7,5,5}}, false},
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
@@ -106,9 +112,6 @@ BOOST_AUTO_TEST_CASE(test_eq)  // mpq_class is not supported: it misses sqrt()
                                           << test_it->first.second  << ") == " 
                                           << eq << " != " << test_it->second);  
     }
-
-    std::vector<double> v1{1,7,5,5}, v2{0,1,7,5,5};
-    BOOST_REQUIRE_THROW(operator==(v1,v2), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_neq, T, test_types)
@@ -128,6 +131,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_neq, T, test_types)
         {{{-1,-7,-5,-5,0}, {0,1,7,5,5}}, true},
         {{{1,7,5,5,0}, {1,7,5,5,0}}, false},
         {{{1,7,5,5,0}, {1,7,5,-5,0}}, true},
+        {{{1,7,5,5}, {0,1,7,5,5}}, true},
+        {{{1,7,5,5,0}, {1,7,5,5}}, true},
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
@@ -137,9 +142,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_neq, T, test_types)
                                           << test_it->first.second  << ") == " 
                                           << eq << " != " << test_it->second);  
     }
-
-    std::vector<T> v1{1,7,5,5}, v2{0,1,7,5,5};
-    BOOST_REQUIRE_THROW(operator!=(v1,v2), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_subtraction, T, test_types)
@@ -448,7 +450,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_eq, T, test_types)
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{6,7,8}}}, true},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,-4,5},{6,7,8}}}, false},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,3,6},{1,4,7},{2,5,8}}}, false},
-        {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{0,7,8}}}, false}
+        {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{0,7,8}}}, false},
+        {{{{0,1,2},{3,4,5}}, {{0,0,1,2},{1,3,4,5}}}, false},
+        {{{{0,1,2,0},{3,4,5,0}}, {{0,0,1,2},{1,3,4,5},{2,6,7,8}}}, false},
+        {{{{0,0,1,2},{1,3,4,5},{2,6,7,8}}, {{2,6,7,8},{3,0,7,1}}}, false},
+        {{{{1,3,4,5},{2,6,7,8}}, {{6,7,8},{0,7,1}}}, false},
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
@@ -457,14 +463,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_eq, T, test_types)
         BOOST_REQUIRE_MESSAGE(beval, "(" << test_it->first.first << " == "
                                           << test_it->first.second  << ") == " 
                                           << meq << " != " << test_it->second);   
-    }
-
-    std::vector<std::pair<Matrix<T>, Matrix<T>>> err_test{
-        {{{0,1,2},{3,4,5},{6,7,8}},
-         {{0,0,1,2},{1,3,4,5},{2,6,7,8},{3,0,7,1}}},
-    };
-    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
-        BOOST_REQUIRE_THROW(operator==(test_it->first,test_it->second), std::domain_error); 
     }
 }
 
@@ -478,7 +476,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_neq, T, test_types)
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{6,7,8}}}, false},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,-4,5},{6,7,8}}}, true},
         {{{{0,1,2},{3,4,5},{6,7,8}},{{0,3,6},{1,4,7},{2,5,8}}}, true},
-        {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{0,7,8}}}, true}
+        {{{{0,1,2},{3,4,5},{6,7,8}},{{0,1,2},{3,4,5},{0,7,8}}}, true},
+        {{{{0,1,2},{3,4,5}}, {{0,0,1,2},{1,3,4,5}}}, true},
+        {{{{0,1,2,0},{3,4,5,0}}, {{0,0,1,2},{1,3,4,5},{2,6,7,8}}}, true},
+        {{{{0,0,1,2},{1,3,4,5},{2,6,7,8}}, {{2,6,7,8},{3,0,7,1}}}, true},
+        {{{{1,3,4,5},{2,6,7,8}}, {{6,7,8},{0,7,1}}}, true},
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
@@ -487,14 +489,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_dense_matrix_neq, T, test_types)
         BOOST_REQUIRE_MESSAGE(beval, "(" << test_it->first.first << " != "
                                           << test_it->first.second  << ") == " 
                                           << mneq << " != " << test_it->second);   
-    }
-
-    std::vector<std::pair<Matrix<T>, Matrix<T>>> err_test{
-        {{{0,1,2},{3,4,5},{6,7,8}},
-         {{0,0,1,2},{1,3,4,5},{2,6,7,8},{3,0,7,1}}},
-    };
-    for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
-        BOOST_REQUIRE_THROW(operator!=(test_it->first,test_it->second), std::domain_error); 
     }
 }
 
