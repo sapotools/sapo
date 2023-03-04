@@ -1,0 +1,16 @@
+problem: reachability;
+
+iterations: 650;
+
+var x, y;
+
+const delta = 0.01;
+
+next(x) = x + y*x*delta;
+next(y) = y;
+
+direction x in [-0.5, 0.5];
+direction y in [0, 1];
+
+option no_caching; 
+option all_dirs_adaptive;
