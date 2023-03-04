@@ -1113,15 +1113,16 @@ naturalExpression: expr
 											    "Rounded to the next integer.");
 									++integral;
 								}
-								if (integral>std::numeric_limits<size_t>::max()) {
+								if (integral>static_cast<double>(std::numeric_limits<size_t>::max())) {
 									WARNING(@1, "Number to large to be an  natural number. "
 											    "Flatted down to the largest natural number.");
-									integral = std::numeric_limits<size_t>::max();
+									integral = static_cast<double>(std::numeric_limits<size_t>::max());
 								}
 								$$ = integral;
 							}
 						}
 					}
+
 doubleInterval	: "[" numericExpression "," numericExpression "]"
 								{									
 									if ($2 > $4) {
