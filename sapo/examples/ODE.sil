@@ -1,0 +1,16 @@
+problem: reachability;
+
+iterations: 65;
+
+var x, y;
+
+x' = -y;
+y' = x;
+
+direction x in [-0.5, 0.5];
+direction y in [5.5, 6.5];
+
+option no_caching; 
+option all_dirs_adaptive;
+option integration_step 0.1;
+option integrator runge_kutta4;
