@@ -22,7 +22,7 @@ if(${Boost_unit_test_framework_FOUND})
                     simplex linear_systems symbolic_algebra 
                     Bernstein polytopes parallelotopes bundles
                     evolver ode sets_unions sticky_unions
-                    discrete_systems)
+                    discrete_systems tribool)
     foreach(TEST ${LIBSAPO_TESTS})
         ADD_EXECUTABLE( test_${TEST} ${TEST}.cpp )
         if (${GMP_FOUND})
