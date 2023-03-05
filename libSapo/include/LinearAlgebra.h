@@ -3135,8 +3135,9 @@ inline Vector<APPROX<T, B>> operator*(const APPROX<T, B> &s,
 /**
  * @brief Compute the element-wise scalar division
  *
- * @tparam APPROX is an approximation type
  * @tparam T is a punctual numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
  * @param v is a vector
  * @param s is a scalar value
  * @return the element-wise scalar division \f$v/\f$
@@ -3158,19 +3159,21 @@ Vector<APPROX<T, B>> operator/(const Vector<T> &v, const APPROX<T, B> &s)
  * @brief Compute the vector product
  *
  * @tparam T is a punctual numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
  * @param v1 is a vector
  * @param v2 is a vector
  * @return the vector product \f$v1 \cdot v2\f$
  */
-template<typename T>
-Approximation<T> operator*(const Vector<T> &v1,
-                           const Vector<Approximation<T>> &v2)
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+APPROX<T, B> operator*(const Vector<T> &v1, const Vector<APPROX<T, B>> &v2)
 {
   if (v1.size() != v2.size()) {
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  Approximation<T> res = 0;
+  APPROX<T, B> res = 0;
   auto it2 = std::begin(v2);
   for (auto it1 = std::begin(v1); it1 != std::end(v1); ++it1) {
     res += (*it1) * (*it2);
@@ -3185,13 +3188,16 @@ Approximation<T> operator*(const Vector<T> &v1,
  * @brief Compute the vector product
  *
  * @tparam T is a punctual numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
  * @param v1 is a vector
  * @param v2 is a vector
  * @return the vector product \f$v1 \cdot v2\f$
  */
-template<typename T>
-inline Approximation<T> operator*(const Vector<Approximation<T>> &v1,
-                                  const Vector<T> &v2)
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+inline APPROX<T, B> operator*(const Vector<APPROX<T, B>> &v1,
+                              const Vector<T> &v2)
 {
   return v2 * v1;
 }
@@ -3200,17 +3206,20 @@ inline Approximation<T> operator*(const Vector<Approximation<T>> &v1,
  * @brief Compute the row-column matrix-vector multiplication
  *
  * @tparam T is a punctual numeric type
+ * @tparam B is the second type parameter of the APPROX template
+ * @tparam APPROX is an approximation type
  * @param A is a dense matrix
  * @param v is a vector
  * @return the row-column matrix-vector multiplication \f$A \cdot v\f$
  */
-template<typename T>
-Vector<Approximation<T>> operator*(const Dense::Matrix<T> &A,
-                                   const Vector<Approximation<T>> &v)
+template<typename T, typename B,
+         template<class, class> class APPROX = Approximation>
+Vector<APPROX<T, B>> operator*(const Dense::Matrix<T> &A,
+                               const Vector<APPROX<T, B>> &v)
 {
   if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
       && v.size() == 0) {
-    return Vector<Approximation<T>>();
+    return Vector<APPROX<T, B>>();
   }
 
   if (A.size() == 0 || A.front().size() != v.size()) {
@@ -3219,7 +3228,7 @@ Vector<Approximation<T>> operator*(const Dense::Matrix<T> &A,
                std::domain_error);
   }
 
-  Vector<Approximation<T>> res(A.size(), 0);
+  Vector<APPROX<T, B>> res(A.size(), 0);
 
   auto res_it = std::begin(res);
   for (auto A_row_it = std::begin(A); A_row_it != std::end(A);
