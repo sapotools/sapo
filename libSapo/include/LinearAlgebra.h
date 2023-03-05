@@ -140,7 +140,7 @@ Vector<T> operator-(const Vector<T> &orig)
  * @return `true` if and only if the two vectors are the same
  */
 template<typename T,
-         typename = typename std::enable_if<is_punctual<T>::value>::type>
+         typename = typename std::enable_if<is_punctual_v<T>>::type>
 bool operator==(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
@@ -166,7 +166,7 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
  * @return `true` if and only if the two vectors differ
  */
 template<typename T,
-         typename = typename std::enable_if<is_punctual<T>::value>::type>
+         typename = typename std::enable_if<is_punctual_v<T>>::type>
 bool operator!=(const Vector<T> &a, const Vector<T> &b)
 {
   return !(a == b);
@@ -508,8 +508,14 @@ inline Vector<T> operator*(Vector<T> &&v, const T s)
 template<typename T>
 Vector<T> &operator/=(Vector<T> &v, const T s)
 {
-  if (s == 0) {
-    SAPO_ERROR("division by 0", std::domain_error);
+  if constexpr (is_punctual_v<T>) {
+    if (s == 0) {
+      SAPO_ERROR("division by 0", std::domain_error);
+    }
+  } else {
+    if (!((s == 0).is_false())) {
+      SAPO_ERROR("division by 0", std::domain_error);
+    }
   }
 
   for (auto &elem: v) {

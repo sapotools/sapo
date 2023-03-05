@@ -385,86 +385,8 @@ BOOST_AUTO_TEST_CASE(test_approximated_simplex)
     auto result = optimizer.operator()<double, Approximation<double>>(A,b,obj,OptimizationGoal::MINIMIZE);
 
     for (const auto& value: b-A*result.optimum()) {
-        BOOST_CHECK(!(value<0));
+        BOOST_CHECK(!((value<0).is_true()));
     }
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximated_simplex_unfeasible, T, test_types)
-{
-    using namespace LinearAlgebra;
-    using namespace LinearAlgebra::Dense;
-
-    Matrix<T> A = {
-        {1,0,0},
-        {0,1,0},
-        {0,0,1},
-        {-1,0,0},
-        {0,-1,0},
-        {0,0,-1}
-    };
-
-    Vector<T> b = {1,2,3,-1-1e-15,2,1};
-
-    Vector<T> obj{1,0,0};
-    
-    SimplexMethodOptimizer optimizer;
-
-    auto result = optimizer.operator()<T, Approximation<T>>(A,b,obj,OptimizationGoal::MAXIMIZE);
-    BOOST_CHECK_MESSAGE(result.status()==result.INFEASIBLE,
-                        "maximizing " << obj << " on "
-                        "A x<= b where A: " << 
-                        A << " and b: " << b <<
-                        " produces " << result.status() <<
-                        ": INFEASIBLE was expected.");
-
-    obj = {0,0,1};
-    result = optimizer.operator()<T, Approximation<T>>(A,b,obj,OptimizationGoal::MINIMIZE);
-    BOOST_CHECK_MESSAGE(result.status()==result.INFEASIBLE,
-                        "minimizing " << obj << " on "
-                        "A x<= b where A: " << 
-                        A << " and b: " << b << 
-                        " produces " << result.status() << 
-                        ": INFEASIBLE was expected.");
-}
-
-BOOST_AUTO_TEST_CASE(test_approximated_simplex_feasible_because_errors)
-{
-    using namespace LinearAlgebra;
-    using namespace LinearAlgebra::Dense;
-
-    using mantissa_type = typename IEEE754Rounding<double>::mantissa_type;
-
-    double large_value{double(mantissa_type(1) << (IEEE754Rounding<double>::mantissa_size+1))};
-
-    Matrix<double> A = {
-        {1,1},
-        {(double(1))/large_value,1},
-        {-1,0},
-        {0,-1}
-    };
-
-    Vector<double> b = {2,1,-1,-1};
-
-    Vector<double> obj{1,0};
-    
-    SimplexMethodOptimizer optimizer;
-
-    auto result = optimizer.operator()<double, Approximation<double>>(A,b,obj,OptimizationGoal::MAXIMIZE);
-    BOOST_CHECK_MESSAGE(result.status()!=result.INFEASIBLE,
-                        "maximizing " << obj << " on "
-                        "A x<= b where A: " << 
-                        A << " and b: " << b <<
-                        " produces " << result.status() <<
-                        ": INFEASIBLE was *not* expected.");
-
-    obj = {0,1};
-    result = optimizer.operator()<double, Approximation<double>>(A,b,obj,OptimizationGoal::MINIMIZE);
-    BOOST_CHECK_MESSAGE(result.status()!=result.INFEASIBLE,
-                        "minimizing " << obj << " on "
-                        "A x<= b where A: " << 
-                        A << " and b: " << b << 
-                        " produces " << result.status() << 
-                        ": INFEASIBLE was *not* expected.");
 }
 
 

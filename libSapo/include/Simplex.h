@@ -364,12 +364,24 @@ class SimplexMethodOptimizer
             = _basic_variables[artificial_in_basics];
 
         auto &artificial_row = _tableau[artificial_in_basics];
-        if (artificial_row[b_column_index()] == 0) {
+        bool is_zero;
+        if constexpr (is_punctual_v<APPROX_TYPE>) {
+          is_zero = (artificial_row[b_column_index()] == 0);
+        } else {
+          is_zero = (artificial_row[b_column_index()] == 0).is_true();
+        }
+        if (is_zero) {
 
           size_t entering = num_of_columns();
           for (size_t i = 0; i < first_artificial_column_index(); ++i) {
-            if (!basic_vector[i] && artificial_row[i] != 0) {
-              entering = i;
+            if constexpr (is_punctual_v<APPROX_TYPE>) {
+              if (!basic_vector[i] && artificial_row[i] != 0) {
+                entering = i;
+              }
+            } else {
+              if (!basic_vector[i] && (artificial_row[i] == 0).is_false()) {
+                entering = i;
+              }
             }
           }
 
@@ -588,14 +600,27 @@ class SimplexMethodOptimizer
         if (row_index != pivot_index) {
           Vector<APPROX_TYPE> &row = _tableau[row_index];
           const APPROX_TYPE coeff = row[pivot_column_index];
-          if (coeff != 0) {
+
+          bool not_zero;
+          if constexpr (is_punctual_v<APPROX_TYPE>) {
+            not_zero = (coeff != 0);
+          } else {
+            not_zero = (coeff != 0).is_true();
+          }
+
+          if (not_zero) {
 
             // row = row - coeff * pivot_row / pivot_value;
             for (size_t i = 0; i < row.size(); ++i) {
               const auto term = coeff * pivot_row[i];
-              // row[i] -= coeff * pivot_row[i] / pivot_value;
-              if (row[i] * pivot_value == term) {
-                row[i] = APPROX_TYPE(0);
+
+              if constexpr (is_punctual_v<APPROX_TYPE>) {
+                // row[i] -= coeff * pivot_row[i] / pivot_value;
+                if (row[i] * pivot_value == term) {
+                  row[i] = APPROX_TYPE(0);
+                } else {
+                  row[i] = row[i] - (term / pivot_value);
+                }
               } else {
                 row[i] = row[i] - (term / pivot_value);
               }
@@ -605,13 +630,7 @@ class SimplexMethodOptimizer
         }
       }
 
-      if (pivot_value != 1) {
-        if (pivot_value != -1) {
-          pivot_row /= pivot_value;
-        } else {
-          pivot_row = -pivot_row;
-        }
-      }
+      pivot_row /= pivot_value;
       pivot_row[pivot_column_index] = APPROX_TYPE(1);
     }
 
@@ -659,8 +678,14 @@ class SimplexMethodOptimizer
       const auto &obj_row = objective_row();
       const size_t num_of_vars = num_of_tableau_variables();
       for (size_t i = 0; i < num_of_vars; ++i) {
-        if (obj_row[i] < 0) {
-          return i;
+        if constexpr (is_punctual_v<APPROX_TYPE>) {
+          if (obj_row[i] < 0) {
+            return i;
+          }
+        } else {
+          if ((obj_row[i] < 0).is_true()) {
+            return i;
+          }
         }
       }
 
@@ -681,24 +706,40 @@ class SimplexMethodOptimizer
       APPROX_TYPE min_ratio{0};
       for (size_t i = 0; i < _basic_variables.size(); ++i) {
         const auto &row{_tableau[i]};
-        if (row[entering_variable] > 0) {
+        bool entering_greater_than_zero;
+        if constexpr (is_punctual_v<APPROX_TYPE>) {
+          entering_greater_than_zero = (row[entering_variable] > 0);
+        } else {
+          entering_greater_than_zero = (row[entering_variable] > 0).is_true();
+        }
+        if (entering_greater_than_zero) {
           const auto candidate_min = row[coeff_col] / row[entering_variable];
+          bool new_min_found;
+          if constexpr (is_punctual_v<APPROX_TYPE>) {
+            new_min_found = (candidate_min < min_ratio);
+          } else {
+            new_min_found = (candidate_min < min_ratio).is_true();
+          }
 
-          if (min_ratio_row == _basic_variables.size()
-              || candidate_min < min_ratio) {
+          if (min_ratio_row == _basic_variables.size() || new_min_found) {
             min_ratio = candidate_min;
             min_ratio_row = i;
           }
         }
       }
-
       if (min_ratio_row == _basic_variables.size()) {
         return _basic_variables.size();
       }
 
       for (size_t i = 0; i < _basic_variables.size(); ++i) {
-        if (_tableau[min_ratio_row][_basic_variables[i]] == 1) {
-          return i;
+        if constexpr (is_punctual_v<APPROX_TYPE>) {
+          if (_tableau[min_ratio_row][_basic_variables[i]] == 1) {
+            return i;
+          }
+        } else {
+          if ((_tableau[min_ratio_row][_basic_variables[i]] == 1).is_true()) {
+            return i;
+          }
         }
       }
 
@@ -783,7 +824,14 @@ class SimplexMethodOptimizer
       size_t min_coefficient_index = 0;
       auto min_coeff = _tableau[0][b_column_index()];
       for (size_t i = 1; i < _basic_variables.size(); ++i) {
-        if (_tableau[i][b_column_index()] < min_coeff) {
+        bool new_min_found;
+        if constexpr (is_punctual_v<APPROX_TYPE>) {
+          new_min_found = (_tableau[i][b_column_index()] < min_coeff);
+        } else {
+          new_min_found
+              = (_tableau[i][b_column_index()] < min_coeff).is_true();
+        }
+        if (new_min_found) {
           min_coeff = _tableau[i][b_column_index()];
           min_coefficient_index = i;
         }
@@ -833,7 +881,15 @@ class SimplexMethodOptimizer
       const size_t entering_variable = last_artificial_column_index();
       size_t leaving_variable = get_the_minimum_coefficient_index();
 
-      if (_tableau[leaving_variable][b_column_index()] < 0) {
+      bool negative_cell;
+      if constexpr (is_punctual_v<APPROX_TYPE>) {
+        negative_cell = _tableau[leaving_variable][b_column_index()] < 0;
+      } else {
+        negative_cell
+            = (_tableau[leaving_variable][b_column_index()] < 0).is_true();
+      }
+
+      if (negative_cell) {
         _basic_variables[leaving_variable] = entering_variable;
 
         pivot_operation(leaving_variable);
@@ -843,12 +899,13 @@ class SimplexMethodOptimizer
         let_artificial_variables_in_null_constraints_be_non_basic();
       }
 
-      // the system is feasible if and only if the omega row coefficient is 0
-      // Due to approximation errors, the coefficient can be different from 0.
-      // The condition was rewritten as follow to support approximation types.
-      const bool feasible
-          = !(_tableau[num_of_rows() - 1][b_column_index()] < 0
-              || _tableau[num_of_rows() - 1][b_column_index()] > 0);
+      bool feasible;
+      if constexpr (is_punctual_v<APPROX_TYPE>) {
+        feasible = _tableau[num_of_rows() - 1][b_column_index()] == 0;
+      } else {
+        feasible = !(
+            (_tableau[num_of_rows() - 1][b_column_index()] == 0).is_false());
+      }
 
       nullify_artificial_variable_coefficients();
 

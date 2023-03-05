@@ -54,74 +54,74 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_contains, T, test_types)
 }
 
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_strictly_contains, T, test_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_interior_contains, T, test_types)
 {
     Approximation<T> a(0,1), b(0,0), c(1,1), d(-1,2), e(0, 1);
 
-    BOOST_CHECK(!a.strictly_contains(a));
-    BOOST_CHECK(!a.strictly_contains(b));
-    BOOST_CHECK(!a.strictly_contains(c));
-    BOOST_CHECK(!a.strictly_contains(d));
-    BOOST_CHECK(!a.strictly_contains(e));
+    BOOST_CHECK(!a.interior_contains(a));
+    BOOST_CHECK(!a.interior_contains(b));
+    BOOST_CHECK(!a.interior_contains(c));
+    BOOST_CHECK(!a.interior_contains(d));
+    BOOST_CHECK(!a.interior_contains(e));
 
-    BOOST_CHECK(!b.strictly_contains(a));
-    BOOST_CHECK(!b.strictly_contains(b));
-    BOOST_CHECK(!b.strictly_contains(c));
-    BOOST_CHECK(!b.strictly_contains(d));
-    BOOST_CHECK(!b.strictly_contains(e));
+    BOOST_CHECK(!b.interior_contains(a));
+    BOOST_CHECK(!b.interior_contains(b));
+    BOOST_CHECK(!b.interior_contains(c));
+    BOOST_CHECK(!b.interior_contains(d));
+    BOOST_CHECK(!b.interior_contains(e));
 
-    BOOST_CHECK(!c.strictly_contains(a));
-    BOOST_CHECK(!c.strictly_contains(b));
-    BOOST_CHECK(!c.strictly_contains(c));
-    BOOST_CHECK(!c.strictly_contains(d));
-    BOOST_CHECK(!c.strictly_contains(e));
+    BOOST_CHECK(!c.interior_contains(a));
+    BOOST_CHECK(!c.interior_contains(b));
+    BOOST_CHECK(!c.interior_contains(c));
+    BOOST_CHECK(!c.interior_contains(d));
+    BOOST_CHECK(!c.interior_contains(e));
 
-    BOOST_CHECK(d.strictly_contains(a));
-    BOOST_CHECK(d.strictly_contains(b));
-    BOOST_CHECK(d.strictly_contains(c));
-    BOOST_CHECK(!d.strictly_contains(d));
-    BOOST_CHECK(d.strictly_contains(e));
+    BOOST_CHECK(d.interior_contains(a));
+    BOOST_CHECK(d.interior_contains(b));
+    BOOST_CHECK(d.interior_contains(c));
+    BOOST_CHECK(!d.interior_contains(d));
+    BOOST_CHECK(d.interior_contains(e));
 
-    BOOST_CHECK(!e.strictly_contains(a));
-    BOOST_CHECK(!e.strictly_contains(b));
-    BOOST_CHECK(!e.strictly_contains(c));
-    BOOST_CHECK(!e.strictly_contains(d));
-    BOOST_CHECK(!e.strictly_contains(e));
+    BOOST_CHECK(!e.interior_contains(a));
+    BOOST_CHECK(!e.interior_contains(b));
+    BOOST_CHECK(!e.interior_contains(c));
+    BOOST_CHECK(!e.interior_contains(d));
+    BOOST_CHECK(!e.interior_contains(e));
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_equality_inequality, T, test_types)
 {
     Approximation<T> a(0,1), b(0,0), c(1,1), d(-1,2), e(0, 1);
 
-    BOOST_CHECK(a==a);
-    BOOST_CHECK(a!=b);
-    BOOST_CHECK(a!=c);
-    BOOST_CHECK(a!=d);
-    BOOST_CHECK(a==e);
+    BOOST_CHECK((a==a).is_true());
+    BOOST_CHECK((a!=b).is_uncertain());
+    BOOST_CHECK((a!=c).is_uncertain());
+    BOOST_CHECK((a!=d).is_uncertain());
+    BOOST_CHECK((a==e).is_uncertain());
 
-    BOOST_CHECK(b!=a);
-    BOOST_CHECK(b==b);
-    BOOST_CHECK(b!=c);
-    BOOST_CHECK(b!=d);
-    BOOST_CHECK(b!=e);
+    BOOST_CHECK((b!=a).is_uncertain());
+    BOOST_CHECK((b==b).is_true());
+    BOOST_CHECK((b!=c).is_true());
+    BOOST_CHECK((b!=d).is_uncertain());
+    BOOST_CHECK((b!=e).is_uncertain());
 
-    BOOST_CHECK(c!=a);
-    BOOST_CHECK(c!=b);
-    BOOST_CHECK(c==c);
-    BOOST_CHECK(c!=d);
-    BOOST_CHECK(c!=e);
+    BOOST_CHECK((c!=a).is_uncertain());
+    BOOST_CHECK((c!=b).is_true());
+    BOOST_CHECK((c==c).is_true());
+    BOOST_CHECK((c!=d).is_uncertain());
+    BOOST_CHECK((c!=e).is_uncertain());
 
-    BOOST_CHECK(d!=a);
-    BOOST_CHECK(d!=b);
-    BOOST_CHECK(d!=c);
-    BOOST_CHECK(d==d);
-    BOOST_CHECK(d!=e);
+    BOOST_CHECK((d!=a).is_uncertain());
+    BOOST_CHECK((d!=b).is_uncertain());
+    BOOST_CHECK((d!=c).is_uncertain());
+    BOOST_CHECK((d==d).is_true());
+    BOOST_CHECK((d!=e).is_uncertain());
 
-    BOOST_CHECK(e==a);
-    BOOST_CHECK(e!=b);
-    BOOST_CHECK(e!=c);
-    BOOST_CHECK(e!=d);
-    BOOST_CHECK(e==e);
+    BOOST_CHECK((e==a).is_uncertain());
+    BOOST_CHECK((e!=b).is_uncertain());
+    BOOST_CHECK((e!=c).is_uncertain());
+    BOOST_CHECK((e!=d).is_uncertain());
+    BOOST_CHECK((e==e).is_true());
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_lesser, T, test_types)
@@ -129,85 +129,85 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_lesser, T, test_types)
     Approximation<T> a(0,1), b(0,0), c(1,1), d(-1,2), e(0, 1);
     T v0{0}, v1{1}, v2{2}, v3{-1};
 
-    BOOST_CHECK(!(a<a));
-    BOOST_CHECK(!(a<b));
-    BOOST_CHECK(!(a<c));
-    BOOST_CHECK(!(a<d));
-    BOOST_CHECK(!(a<e));
+    BOOST_CHECK((a<a).is_false());
+    BOOST_CHECK((a<b).is_false());
+    BOOST_CHECK((a<c).is_uncertain());
+    BOOST_CHECK((a<d).is_uncertain());
+    BOOST_CHECK((a<e).is_uncertain());
 
-    BOOST_CHECK(!(a<v0));
-    BOOST_CHECK(!(a<v1));
-    BOOST_CHECK(a<v2);
-    BOOST_CHECK(!(a<v3));
+    BOOST_CHECK((a<v0).is_false());
+    BOOST_CHECK((a<v1).is_uncertain());
+    BOOST_CHECK((a<v2).is_true());
+    BOOST_CHECK((a<v3).is_false());
 
-    BOOST_CHECK(!(v0<a));
-    BOOST_CHECK(!(v1<a));
-    BOOST_CHECK(!(v2<a));
-    BOOST_CHECK(v3<a);
+    BOOST_CHECK((v0<a).is_uncertain());
+    BOOST_CHECK((v1<a).is_false());
+    BOOST_CHECK((v2<a).is_false());
+    BOOST_CHECK((v3<a).is_true());
 
-    BOOST_CHECK(!(b<a));
-    BOOST_CHECK(!(b<b));
-    BOOST_CHECK(b<c);
-    BOOST_CHECK(!(b<d));
-    BOOST_CHECK(!(b<e));
+    BOOST_CHECK((b<a).is_uncertain());
+    BOOST_CHECK((b<b).is_false());
+    BOOST_CHECK((b<c).is_true());
+    BOOST_CHECK((b<d).is_uncertain());
+    BOOST_CHECK((b<e).is_uncertain());
 
-    BOOST_CHECK(!(b<v0));
-    BOOST_CHECK(b<v1);
-    BOOST_CHECK(b<v2);
-    BOOST_CHECK(!(b<v3));
+    BOOST_CHECK((b<v0).is_false());
+    BOOST_CHECK((b<v1).is_true());
+    BOOST_CHECK((b<v2).is_true());
+    BOOST_CHECK((b<v3).is_false());
 
-    BOOST_CHECK(!(v0<b));
-    BOOST_CHECK(!(v1<b));
-    BOOST_CHECK(!(v2<b));
-    BOOST_CHECK(v3<b);
+    BOOST_CHECK((v0<b).is_false());
+    BOOST_CHECK((v1<b).is_false());
+    BOOST_CHECK((v2<b).is_false());
+    BOOST_CHECK((v3<b).is_true());
 
-    BOOST_CHECK(!(c<a));
-    BOOST_CHECK(!(c<b));
-    BOOST_CHECK(!(c<c));
-    BOOST_CHECK(!(c<d));
-    BOOST_CHECK(!(c<e));
+    BOOST_CHECK((c<a).is_false());
+    BOOST_CHECK((c<b).is_false());
+    BOOST_CHECK((c<c).is_false());
+    BOOST_CHECK((c<d).is_uncertain());
+    BOOST_CHECK((c<e).is_false());
 
-    BOOST_CHECK(!(c<v0));
-    BOOST_CHECK(!(c<v1));
-    BOOST_CHECK(c<v2);
-    BOOST_CHECK(!(c<v3));
+    BOOST_CHECK((c<v0).is_false());
+    BOOST_CHECK((c<v1).is_false());
+    BOOST_CHECK((c<v2).is_true());
+    BOOST_CHECK((c<v3).is_false());
 
-    BOOST_CHECK(v0<c);
-    BOOST_CHECK(!(v1<c));
-    BOOST_CHECK(!(v2<c));
-    BOOST_CHECK(v3<c);
+    BOOST_CHECK((v0<c).is_true());
+    BOOST_CHECK((v1<c).is_false());
+    BOOST_CHECK((v2<c).is_false());
+    BOOST_CHECK((v3<c).is_true());
 
-    BOOST_CHECK(!(d<a));
-    BOOST_CHECK(!(d<b));
-    BOOST_CHECK(!(d<c));
-    BOOST_CHECK(!(d<d));
-    BOOST_CHECK(!(d<e));
+    BOOST_CHECK((d<a).is_uncertain());
+    BOOST_CHECK((d<b).is_uncertain());
+    BOOST_CHECK((d<c).is_uncertain());
+    BOOST_CHECK((d<d).is_false());
+    BOOST_CHECK((d<e).is_uncertain());
 
-    BOOST_CHECK(!(d<v0));
-    BOOST_CHECK(!(d<v1));
-    BOOST_CHECK(!(d<v2));
-    BOOST_CHECK(!(d<v3));
+    BOOST_CHECK((d<v0).is_uncertain());
+    BOOST_CHECK((d<v1).is_uncertain());
+    BOOST_CHECK((d<v2).is_uncertain());
+    BOOST_CHECK((d<v3).is_false());
 
-    BOOST_CHECK(!(v0<d));
-    BOOST_CHECK(!(v1<d));
-    BOOST_CHECK(!(v2<d));
-    BOOST_CHECK(!(v3<d));
+    BOOST_CHECK((v0<d).is_uncertain());
+    BOOST_CHECK((v1<d).is_uncertain());
+    BOOST_CHECK((v2<d).is_false());
+    BOOST_CHECK((v3<d).is_uncertain());
 
-    BOOST_CHECK(!(e<a));
-    BOOST_CHECK(!(e<b));
-    BOOST_CHECK(!(e<c));
-    BOOST_CHECK(!(e<d));
-    BOOST_CHECK(!(e<e));
+    BOOST_CHECK((e<a).is_uncertain());
+    BOOST_CHECK((e<b).is_false());
+    BOOST_CHECK((e<c).is_uncertain());
+    BOOST_CHECK((e<d).is_uncertain());
+    BOOST_CHECK((e<e).is_false());
 
-    BOOST_CHECK(!(e<v0));
-    BOOST_CHECK(!(e<v1));
-    BOOST_CHECK(e<v2);
-    BOOST_CHECK(!(e<v3));
+    BOOST_CHECK((e<v0).is_false());
+    BOOST_CHECK((e<v1).is_uncertain());
+    BOOST_CHECK((e<v2).is_true());
+    BOOST_CHECK((e<v3).is_false());
 
-    BOOST_CHECK(!(v0<e));
-    BOOST_CHECK(!(v1<e));
-    BOOST_CHECK(!(v2<e));
-    BOOST_CHECK(v3<e);
+    BOOST_CHECK((v0<e).is_uncertain());
+    BOOST_CHECK((v1<e).is_false());
+    BOOST_CHECK((v2<e).is_false());
+    BOOST_CHECK((v3<e).is_true());
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_lesser_or_equal, T, test_types)
@@ -215,85 +215,85 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_lesser_or_equal, T, test_types)
     Approximation<T> a(0,1), b(0,0), c(1,1), d(-1,2), e(0, 1);
     T v0{0}, v1{1}, v2{2}, v3{-1};
 
-    BOOST_CHECK(!(a<=a));
-    BOOST_CHECK(!(a<=b));
-    BOOST_CHECK(a<=c);
-    BOOST_CHECK(!(a<=d));
-    BOOST_CHECK(!(a<=e));
+    BOOST_CHECK((a<=a).is_true());
+    BOOST_CHECK((a<=b).is_uncertain());
+    BOOST_CHECK((a<=c).is_true());
+    BOOST_CHECK((a<=d).is_uncertain());
+    BOOST_CHECK((a<=e).is_uncertain());
 
-    BOOST_CHECK(!(a<=v0));
-    BOOST_CHECK(a<=v1);
-    BOOST_CHECK(a<=v2);
-    BOOST_CHECK(!(a<=v3));
+    BOOST_CHECK((a<=v0).is_uncertain());
+    BOOST_CHECK((a<=v1).is_true());
+    BOOST_CHECK((a<=v2).is_true());
+    BOOST_CHECK((a<=v3).is_false());
 
-    BOOST_CHECK(v0<=a);
-    BOOST_CHECK(!(v1<=a));
-    BOOST_CHECK(!(v2<=a));
-    BOOST_CHECK(v3<=a);
+    BOOST_CHECK((v0<=a).is_true());
+    BOOST_CHECK((v1<=a).is_uncertain());
+    BOOST_CHECK((v2<=a).is_false());
+    BOOST_CHECK((v3<=a).is_true());
 
-    BOOST_CHECK(b<=a);
-    BOOST_CHECK(b<=b);
-    BOOST_CHECK(b<=c);
-    BOOST_CHECK(!(b<d));
-    BOOST_CHECK(b<=e);
+    BOOST_CHECK((b<=a).is_true());
+    BOOST_CHECK((b<=b).is_true());
+    BOOST_CHECK((b<=c).is_true());
+    BOOST_CHECK((b<=d).is_uncertain());
+    BOOST_CHECK((b<=e).is_true());
 
-    BOOST_CHECK(b<=v0);
-    BOOST_CHECK(b<=v1);
-    BOOST_CHECK(b<=v2);
-    BOOST_CHECK(!(b<=v3));
+    BOOST_CHECK((b<=v0).is_true());
+    BOOST_CHECK((b<=v1).is_true());
+    BOOST_CHECK((b<=v2).is_true());
+    BOOST_CHECK((b<=v3).is_false());
 
-    BOOST_CHECK(v0<=b);
-    BOOST_CHECK(!(v1<=b));
-    BOOST_CHECK(!(v2<=b));
-    BOOST_CHECK(v3<=b);
+    BOOST_CHECK((v0<=b).is_true());
+    BOOST_CHECK((v1<=b).is_false());
+    BOOST_CHECK((v2<=b).is_false());
+    BOOST_CHECK((v3<=b).is_true());
 
-    BOOST_CHECK(!(c<=a));
-    BOOST_CHECK(!(c<=b));
-    BOOST_CHECK(c<=c);
-    BOOST_CHECK(!(c<=d));
-    BOOST_CHECK(!(c<=e));
+    BOOST_CHECK((c<=a).is_uncertain());
+    BOOST_CHECK((c<=b).is_false());
+    BOOST_CHECK((c<=c).is_true());
+    BOOST_CHECK((c<=d).is_uncertain());
+    BOOST_CHECK((c<=e).is_uncertain());
 
-    BOOST_CHECK(!(c<=v0));
-    BOOST_CHECK(c<=v1);
-    BOOST_CHECK(c<=v2);
-    BOOST_CHECK(!(c<=v3));
+    BOOST_CHECK((c<=v0).is_false());
+    BOOST_CHECK((c<=v1).is_true());
+    BOOST_CHECK((c<=v2).is_true());
+    BOOST_CHECK((c<=v3).is_false());
 
-    BOOST_CHECK(v0<=c);
-    BOOST_CHECK(v1<=c);
-    BOOST_CHECK(!(v2<=c));
-    BOOST_CHECK(v3<=c);
+    BOOST_CHECK((v0<=c).is_true());
+    BOOST_CHECK((v1<=c).is_true());
+    BOOST_CHECK((v2<=c).is_false());
+    BOOST_CHECK((v3<=c).is_true());
 
-    BOOST_CHECK(!(d<=a));
-    BOOST_CHECK(!(d<=b));
-    BOOST_CHECK(!(d<=c));
-    BOOST_CHECK(!(d<=d));
-    BOOST_CHECK(!(d<=e));
+    BOOST_CHECK((d<=a).is_uncertain());
+    BOOST_CHECK((d<=b).is_uncertain());
+    BOOST_CHECK((d<=c).is_uncertain());
+    BOOST_CHECK((d<=d).is_true());
+    BOOST_CHECK((d<=e).is_uncertain());
 
-    BOOST_CHECK(!(d<=v0));
-    BOOST_CHECK(!(d<=v1));
-    BOOST_CHECK(d<=v2);
-    BOOST_CHECK(!(d<=v3));
+    BOOST_CHECK((d<=v0).is_uncertain());
+    BOOST_CHECK((d<=v1).is_uncertain());
+    BOOST_CHECK((d<=v2).is_true());
+    BOOST_CHECK((d<=v3).is_uncertain());
 
-    BOOST_CHECK(!(v0<=d));
-    BOOST_CHECK(!(v1<=d));
-    BOOST_CHECK(!(v2<=d));
-    BOOST_CHECK(v3<=d);
+    BOOST_CHECK((v0<=d).is_uncertain());
+    BOOST_CHECK((v1<=d).is_uncertain());
+    BOOST_CHECK((v2<=d).is_uncertain());
+    BOOST_CHECK((v3<=d).is_true());
 
-    BOOST_CHECK(!(e<=a));
-    BOOST_CHECK(!(e<=b));
-    BOOST_CHECK(e<=c);
-    BOOST_CHECK(!(e<=d));
-    BOOST_CHECK(!(e<=e));
+    BOOST_CHECK((e<=a).is_uncertain());
+    BOOST_CHECK((e<=b).is_uncertain());
+    BOOST_CHECK((e<=c).is_true());
+    BOOST_CHECK((e<=d).is_uncertain());
+    BOOST_CHECK((e<=e).is_true());
 
-    BOOST_CHECK(!(e<=v0));
-    BOOST_CHECK(e<=v1);
-    BOOST_CHECK(e<=v2);
-    BOOST_CHECK(!(e<=v3));
+    BOOST_CHECK((e<=v0).is_uncertain());
+    BOOST_CHECK((e<=v1).is_true());
+    BOOST_CHECK((e<=v2).is_true());
+    BOOST_CHECK((e<=v3).is_false());
 
-    BOOST_CHECK(v0<=e);
-    BOOST_CHECK(!(v1<=e));
-    BOOST_CHECK(!(v2<=e));
-    BOOST_CHECK(v3<=a);
+    BOOST_CHECK((v0<=e).is_true());
+    BOOST_CHECK((v1<=e).is_uncertain());
+    BOOST_CHECK((v2<=e).is_false());
+    BOOST_CHECK((v3<=e).is_true());
 }
 
 
@@ -302,60 +302,85 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_greater, T, test_types)
     Approximation<T> a(0,1), b(0,0), c(1,1), d(-1,2), e(0, 1);
     T v0{0}, v1{1}, v2{2}, v3{-1};
 
-    BOOST_CHECK(!(a>a));
-    BOOST_CHECK(!(b>a));
-    BOOST_CHECK(!(c>a));
-    BOOST_CHECK(!(d>a));
-    BOOST_CHECK(!(e>a));
+    BOOST_CHECK((a>a).is_false());
+    BOOST_CHECK((b>a).is_false());
+    BOOST_CHECK((c>a).is_uncertain());
+    BOOST_CHECK((d>a).is_uncertain());
+    BOOST_CHECK((e>a).is_uncertain());
 
-    BOOST_CHECK(!(a<v0));
-    BOOST_CHECK(!(a<v1));
-    BOOST_CHECK(a<v2);
-    BOOST_CHECK(!(a<v3));
+    BOOST_CHECK((a>v0).is_uncertain());
+    BOOST_CHECK((a>v1).is_false());
+    BOOST_CHECK((a>v2).is_false());
+    BOOST_CHECK((a>v3).is_true());
 
-    BOOST_CHECK(!(a>b));
-    BOOST_CHECK(!(b>b));
-    BOOST_CHECK(c>b);
-    BOOST_CHECK(!(d>b));
-    BOOST_CHECK(!(e>b));
+    BOOST_CHECK((v0>a).is_false());
+    BOOST_CHECK((v1>a).is_uncertain());
+    BOOST_CHECK((v2>a).is_true());
+    BOOST_CHECK((v3>a).is_false());
 
-    BOOST_CHECK(!(b<v0));
-    BOOST_CHECK(b<v1);
-    BOOST_CHECK(b<v2);
-    BOOST_CHECK(!(b<v3));
+    BOOST_CHECK((a>b).is_uncertain());
+    BOOST_CHECK((b>b).is_false());
+    BOOST_CHECK((c>b).is_true());
+    BOOST_CHECK((d>b).is_uncertain());
+    BOOST_CHECK((e>b).is_uncertain());
 
-    BOOST_CHECK(!(c<a));
-    BOOST_CHECK(!(c<b));
-    BOOST_CHECK(!(c<c));
-    BOOST_CHECK(!(c<d));
-    BOOST_CHECK(!(c<e));
+    BOOST_CHECK((b>v0).is_false());
+    BOOST_CHECK((b>v1).is_false());
+    BOOST_CHECK((b>v2).is_false());
+    BOOST_CHECK((b>v3).is_true());
 
-    BOOST_CHECK(!(c<v0));
-    BOOST_CHECK(!(c<v1));
-    BOOST_CHECK(c<v2);
-    BOOST_CHECK(!(c<v3));
+    BOOST_CHECK((v0>b).is_false());
+    BOOST_CHECK((v1>b).is_true());
+    BOOST_CHECK((v2>b).is_true());
+    BOOST_CHECK((v3>b).is_false());
 
-    BOOST_CHECK(!(d<a));
-    BOOST_CHECK(!(d<b));
-    BOOST_CHECK(!(d<c));
-    BOOST_CHECK(!(d<d));
-    BOOST_CHECK(!(d<e));
+    BOOST_CHECK((c>a).is_uncertain());
+    BOOST_CHECK((c>b).is_true());
+    BOOST_CHECK((c>c).is_false());
+    BOOST_CHECK((c>d).is_uncertain());
+    BOOST_CHECK((c>e).is_uncertain());
 
-    BOOST_CHECK(!(d<v0));
-    BOOST_CHECK(!(d<v1));
-    BOOST_CHECK(!(d<v2));
-    BOOST_CHECK(!(d<v3));
+    BOOST_CHECK((c>v0).is_true());
+    BOOST_CHECK((c>v1).is_false());
+    BOOST_CHECK((c>v2).is_false());
+    BOOST_CHECK((c>v3).is_true());
 
-    BOOST_CHECK(!(e<a));
-    BOOST_CHECK(!(e<b));
-    BOOST_CHECK(!(e<c));
-    BOOST_CHECK(!(e<d));
-    BOOST_CHECK(!(e<e));
+    BOOST_CHECK((v0>c).is_false());
+    BOOST_CHECK((v1>c).is_false());
+    BOOST_CHECK((v2>c).is_true());
+    BOOST_CHECK((v3>c).is_false());
 
-    BOOST_CHECK(!(e<v0));
-    BOOST_CHECK(!(e<v1));
-    BOOST_CHECK(e<v2);
-    BOOST_CHECK(!(e<v3));
+    BOOST_CHECK((d>a).is_uncertain());
+    BOOST_CHECK((d>b).is_uncertain());
+    BOOST_CHECK((d>c).is_uncertain());
+    BOOST_CHECK((d>d).is_false());
+    BOOST_CHECK((d>e).is_uncertain());
+
+    BOOST_CHECK((d>v0).is_uncertain());
+    BOOST_CHECK((d>v1).is_uncertain());
+    BOOST_CHECK((d>v2).is_false());
+    BOOST_CHECK((d>v3).is_uncertain());
+
+    BOOST_CHECK((v0>d).is_uncertain());
+    BOOST_CHECK((v1>d).is_uncertain());
+    BOOST_CHECK((v2>d).is_uncertain());
+    BOOST_CHECK((v3>d).is_false());
+
+    BOOST_CHECK((a>e).is_uncertain());
+    BOOST_CHECK((b>e).is_false());
+    BOOST_CHECK((c>e).is_uncertain());
+    BOOST_CHECK((d>e).is_uncertain());
+    BOOST_CHECK((e>e).is_false());
+
+    BOOST_CHECK((e>v0).is_uncertain());
+    BOOST_CHECK((e>v1).is_false());
+    BOOST_CHECK((e>v2).is_false());
+    BOOST_CHECK((e>v3).is_true());
+
+    BOOST_CHECK((v0>e).is_false());
+    BOOST_CHECK((v1>e).is_uncertain());
+    BOOST_CHECK((v2>e).is_true());
+    BOOST_CHECK((v3>e).is_false());
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_greater_or_equal, T, test_types)
@@ -363,60 +388,85 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_greater_or_equal, T, test_types
     Approximation<T> a(0,1), b(0,0), c(1,1), d(-1,2), e(0, 1);
     T v0{0}, v1{1}, v2{2}, v3{-1};
 
-    BOOST_CHECK(!(a<=a));
-    BOOST_CHECK(!(a<=b));
-    BOOST_CHECK(a<=c);
-    BOOST_CHECK(!(a<=d));
-    BOOST_CHECK(!(a<=e));
+    BOOST_CHECK((a>=a).is_true());
+    BOOST_CHECK((b>=a).is_uncertain());
+    BOOST_CHECK((c>=a).is_true());
+    BOOST_CHECK((d>=a).is_uncertain());
+    BOOST_CHECK((e>=a).is_uncertain());
 
-    BOOST_CHECK(!(a<=v0));
-    BOOST_CHECK(a<=v1);
-    BOOST_CHECK(a<=v2);
-    BOOST_CHECK(!(a<=v3));
+    BOOST_CHECK((a>=v0).is_true());
+    BOOST_CHECK((a>=v1).is_uncertain());
+    BOOST_CHECK((a>=v2).is_false());
+    BOOST_CHECK((a>=v3).is_true());
 
-    BOOST_CHECK(b<=a);
-    BOOST_CHECK(b<=b);
-    BOOST_CHECK(b<=c);
-    BOOST_CHECK(!(b<d));
-    BOOST_CHECK(b<=e);
+    BOOST_CHECK((v0>=a).is_uncertain());
+    BOOST_CHECK((v1>=a).is_true());
+    BOOST_CHECK((v2>=a).is_true());
+    BOOST_CHECK((v3>=a).is_false());
 
-    BOOST_CHECK(b<=v0);
-    BOOST_CHECK(b<=v1);
-    BOOST_CHECK(b<=v2);
-    BOOST_CHECK(!(b<=v3));
+    BOOST_CHECK((a>=b).is_true());
+    BOOST_CHECK((b>=b).is_true());
+    BOOST_CHECK((c>=b).is_true());
+    BOOST_CHECK((d>=b).is_uncertain());
+    BOOST_CHECK((e>=b).is_true());
 
-    BOOST_CHECK(!(c<=a));
-    BOOST_CHECK(!(c<=b));
-    BOOST_CHECK(c<=c);
-    BOOST_CHECK(!(c<=d));
-    BOOST_CHECK(!(c<=e));
+    BOOST_CHECK((b>=v0).is_true());
+    BOOST_CHECK((b>=v1).is_false());
+    BOOST_CHECK((b>=v2).is_false());
+    BOOST_CHECK((b>=v3).is_true());
 
-    BOOST_CHECK(!(c<=v0));
-    BOOST_CHECK(c<=v1);
-    BOOST_CHECK(c<=v2);
-    BOOST_CHECK(!(c<=v3));
+    BOOST_CHECK((v0>=b).is_true());
+    BOOST_CHECK((v1>=b).is_true());
+    BOOST_CHECK((v2>=b).is_true());
+    BOOST_CHECK((v3>=b).is_false());
 
-    BOOST_CHECK(!(d<=a));
-    BOOST_CHECK(!(d<=b));
-    BOOST_CHECK(!(d<=c));
-    BOOST_CHECK(!(d<=d));
-    BOOST_CHECK(!(d<=e));
+    BOOST_CHECK((c>=a).is_true());
+    BOOST_CHECK((c>=b).is_true());
+    BOOST_CHECK((c>=c).is_true());
+    BOOST_CHECK((c>=d).is_uncertain());
+    BOOST_CHECK((c>=e).is_true());
 
-    BOOST_CHECK(!(d<=v0));
-    BOOST_CHECK(!(d<=v1));
-    BOOST_CHECK(d<=v2);
-    BOOST_CHECK(!(d<=v3));
+    BOOST_CHECK((c>=v0).is_true());
+    BOOST_CHECK((c>=v1).is_true());
+    BOOST_CHECK((c>=v2).is_false());
+    BOOST_CHECK((c>=v3).is_true());
 
-    BOOST_CHECK(!(e<=a));
-    BOOST_CHECK(!(e<=b));
-    BOOST_CHECK(e<=c);
-    BOOST_CHECK(!(e<=d));
-    BOOST_CHECK(!(e<=e));
+    BOOST_CHECK((v0>=c).is_false());
+    BOOST_CHECK((v1>=c).is_true());
+    BOOST_CHECK((v2>=c).is_true());
+    BOOST_CHECK((v3>=c).is_false());
 
-    BOOST_CHECK(!(e<=v0));
-    BOOST_CHECK(e<=v1);
-    BOOST_CHECK(e<=v2);
-    BOOST_CHECK(!(e<=v3));
+    BOOST_CHECK((d>=a).is_uncertain());
+    BOOST_CHECK((d>=b).is_uncertain());
+    BOOST_CHECK((d>=c).is_uncertain());
+    BOOST_CHECK((d>=d).is_true());
+    BOOST_CHECK((d>=e).is_uncertain());
+
+    BOOST_CHECK((d>=v0).is_uncertain());
+    BOOST_CHECK((d>=v1).is_uncertain());
+    BOOST_CHECK((d>=v2).is_uncertain());
+    BOOST_CHECK((d>=v3).is_true());
+
+    BOOST_CHECK((v0>=d).is_uncertain());
+    BOOST_CHECK((v1>=d).is_uncertain());
+    BOOST_CHECK((v2>=d).is_true());
+    BOOST_CHECK((v3>=d).is_uncertain());
+
+    BOOST_CHECK((a>=e).is_uncertain());
+    BOOST_CHECK((b>=e).is_uncertain());
+    BOOST_CHECK((c>=e).is_true());
+    BOOST_CHECK((d>=e).is_uncertain());
+    BOOST_CHECK((e>=e).is_true());
+
+    BOOST_CHECK((e>=v0).is_true());
+    BOOST_CHECK((e>=v1).is_uncertain());
+    BOOST_CHECK((e>=v2).is_false());
+    BOOST_CHECK((e>=v3).is_true());
+
+    BOOST_CHECK((v0>=e).is_uncertain());
+    BOOST_CHECK((v1>=e).is_true());
+    BOOST_CHECK((v2>=e).is_true());
+    BOOST_CHECK((v3>=e).is_false());
 }
 
 template<typename T, typename R=Approximation<T>>

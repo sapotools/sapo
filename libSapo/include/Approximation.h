@@ -15,6 +15,7 @@
 #include <cmath>
 
 #include "FloatingPoints.h"
+#include "TriBool.h"
 #include "ErrorHandling.h"
 
 /**
@@ -22,12 +23,12 @@
  *
  * This structure is only meant to distinguish punctual arithmetic types,
  * like `float`, `double`, or `int`, from interval-based types, such as
- * `Approximation`. This is required to disable `operator==` and
- * `operator!=` between interval-based vector because of their
- * puzzling semantics.
- * In order to use the `LinearAlgebra` implementation of `operator==`
- * and `operator!=` to compare vectors having a non-standard scalar
- * type, please, specialize `is_punctual`.
+ * `Approximation`. This is required to force `TriBool` as output type
+ * of both `operator==` and `operator!=` exclusively when interval-based
+ * vectors are compared.
+ * In order to use the standard `operator==` and `operator!=` to compare
+ * vectors having a non-standard scalar type (e.g., GMP's `mpq_class`),
+ * please, specialize `is_punctual`.
  *
  * @tparam T is the type to be tested
  */
@@ -35,84 +36,20 @@ template<typename T>
 struct is_punctual : public std::is_arithmetic<T> {
 };
 
-/**
- * @brief Interval-based approximation for numeric types
- *
- * @tparam T is a punctual numeric type
- */
-template<typename T,
-         typename = typename std::enable_if<is_punctual<T>::value>::type>
-class Approximation;
-
-/**
- * @brief The over-approximated absolute value of an approximation
- *
- * @tparam T is a punctual numeric type
- * @param a is an approximation
- * @return the over-approximation of the absolute value of `a`
- */
-template<typename T>
-Approximation<T> abs(Approximation<T> &&a);
-
-/**
- * @brief The over-approximated square root of an approximation
- *
- * @tparam T is a punctual numeric type
- * @param a is an approximation
- * @return the over-approximation of the square root of `a`
- */
-template<typename T>
-Approximation<T> sqrt(Approximation<T> &&a);
-
-/**
- * @brief The over-approximated quotient of two approximations
- *
- * @tparam T is a punctual numeric type
- * @param a is an approximation
- * @param b is an approximation
- * @return an over-approximation of \f$a/b\f$
- */
-template<typename T>
-Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b);
+template<class T>
+inline constexpr bool is_punctual_v = is_punctual<T>::value;
 
 /**
  * @brief Approximation for floating point numbers
  *
  * @tparam T is a punctual numeric type
- *
- * @todo This template exploits `std::nextafter` to blindly lower
- *       and upper bounds the result of arithmetic operations.
- *       This approach is less accurate than using floating point
- *       approximations in combination with `std::fegetround()`
- *       and `std::fesetround()`, however, it is much faster
- *       (about 10 time faster in a MacBook Pro 2020). This
- *       performance drop is due to the contest switch required
- *       by `std::fesetround()`.
  */
-template<typename T, typename>
+template<typename T,
+         typename = typename std::enable_if<is_punctual<T>::value>::type>
 class Approximation
 {
   T _lower_bound; //!< the approximation lower bound
   T _upper_bound; //!< the approximation upper bound
-
-  /**
-   * @brief Set the approximation bounds
-   *
-   * @param lower_bound is the new lower bound
-   * @param upper_bound is the new upper bound
-   * @return a reference to the updated approximation
-   */
-  Approximation<T> &set_bounds(const T &lower_bound, const T &upper_bound);
-
-  /**
-   * @brief Set the approximation bounds and approximate them
-   *
-   * @param lower_bound is the new lower bound (to be under-approximated)
-   * @param upper_bound is the new upper bound (to be over-approximated)
-   * @return a reference to the updated approximation
-   */
-  Approximation<T> &set_bounds_and_approximate(const T &lower_bound,
-                                               const T &upper_bound);
 
 public:
   /**
@@ -166,7 +103,7 @@ public:
    * @return `true` if and only if this approximation strictly contains
    *       `approximation`
    */
-  bool strictly_contains(const Approximation<T> &approximation) const;
+  bool interior_contains(const Approximation<T> &approximation) const;
 
   /**
    * @brief Test whether an approximation contains a value
@@ -183,7 +120,43 @@ public:
    * @return `true` if and only if this approximation strictly contains
    *       `value`
    */
-  bool strictly_contains(const T &value) const;
+  bool interior_contains(const T &value) const;
+
+  /**
+   * @brief Test whether two approximations have non-null intersection
+   *
+   * @param approximation is an approximation
+   * @return `true` if and only if one of possibile values for `*this`
+   *     is also a possible value for `approximation`
+   */
+  bool does_intersect(const Approximation<T> &approximation) const;
+
+  /**
+   * @brief Test whether two approximation interiors have non-null intersection
+   *
+   * @param approximation is an approximation
+   * @return `true` if and only if one of possibile values for `*this`
+   *     that are different from its bounds is also a possible value
+   *     for `approximation`
+   */
+  bool interior_does_intersect(const Approximation<T> &approximation) const;
+
+  /**
+   * @brief Test whether the lower and upper bounds coincide
+   *
+   * @return `true` if and only if the approximation lower and upper
+   *     bounds coincide
+   */
+  bool is_exact() const;
+
+  /**
+   * @brief Set the approximation bounds
+   *
+   * @param lower_bound is the new lower bound
+   * @param upper_bound is the new upper bound
+   * @return a reference to the updated approximation
+   */
+  Approximation<T> &set_bounds(const T &lower_bound, const T &upper_bound);
 
   /**
    * @brief Get the approximation error
@@ -249,12 +222,6 @@ public:
    * @todo tight approximation
    */
   Approximation<T> &operator/=(const Approximation<T> &a);
-
-  friend Approximation<T> abs<T>(Approximation<T> &&a);
-  friend Approximation<T> sqrt<T>(Approximation<T> &&a);
-
-  friend Approximation<T> operator/<T>(const Approximation<T> &a,
-                                       Approximation<T> &&b);
 };
 
 template<typename T, typename B>
@@ -267,20 +234,42 @@ inline Approximation<T> &Approximation<T, B>::set_bounds(const T &lower_bound,
   return *this;
 }
 
-template<typename T, typename B>
-inline Approximation<T> &
-Approximation<T, B>::set_bounds_and_approximate(const T &lower_bound,
-                                                const T &upper_bound)
+/**
+ * @brief Over-approximate approximation bounds
+ *
+ * This function decreases the lower bound and increases the
+ * upper bound of an approximation and guarantees the
+ * over-approximation of the image of any function that
+ * approximates real arithmetic by using floating point
+ * arithmetics. This is achieved by decreasing the lower bound
+ * to the greatest number that is exactly representable by the
+ * type `T` and is lesser than the lower bound itself.
+ * Analogously, the upper bound is increased up to the least
+ * number that is exactly representable by the type `T` and
+ * is lesser than the upper bound.
+ * If `T` is not a floating point type, the values of
+ * the lower and the upper bounds will not be changed.
+ *
+ * This method exploits `std::nextafter` to blindly lower
+ * and upper bounds the result of arithmetic operations.
+ * This approach is less accurate than using floating point
+ * approximations in combination with `std::fegetround()`
+ * and `std::fesetround()`, however, it is much faster
+ * (about 10 time faster in a MacBook Pro 2020). This
+ * performance drop is due to the contest switch required
+ * by `std::fesetround()`.
+ *
+ * @tparam T is a punctual numeric type
+ * @param lower_bound is the new lower bound (to be under-approximated)
+ * @param upper_bound is the new upper bound (to be over-approximated)
+ */
+template<typename T>
+inline void approximate_bounds(T &lower_bound, T &upper_bound)
 {
   if constexpr (std::is_floating_point_v<T>) {
-    this->set_bounds(
-        nextafter(lower_bound, -std::numeric_limits<T>::infinity()),
-        nextafter(upper_bound, std::numeric_limits<T>::infinity()));
-  } else {
-    this->set_bounds(lower_bound, upper_bound);
+    lower_bound = nextafter(lower_bound, -std::numeric_limits<T>::infinity());
+    upper_bound = nextafter(upper_bound, std::numeric_limits<T>::infinity());
   }
-
-  return *this;
 }
 
 template<typename T, typename B>
@@ -325,11 +314,37 @@ Approximation<T, B>::contains(const Approximation<T> &approximation) const
 }
 
 template<typename T, typename B>
-inline bool Approximation<T, B>::strictly_contains(
+inline bool Approximation<T, B>::interior_contains(
     const Approximation<T> &approximation) const
 {
   return _lower_bound < approximation.lower_bound()
          && approximation.upper_bound() < _upper_bound;
+}
+
+template<typename T, typename B>
+bool Approximation<T, B>::does_intersect(
+    const Approximation<T> &approximation) const
+{
+  return (approximation.contains(lower_bound())
+          || approximation.contains(upper_bound())
+          || this->contains(approximation.lower_bound())
+          || this->contains(approximation.upper_bound()));
+}
+
+template<typename T, typename B>
+bool Approximation<T, B>::interior_does_intersect(
+    const Approximation<T> &approximation) const
+{
+  return (approximation.interior_contains(lower_bound())
+          || approximation.interior_contains(upper_bound())
+          || this->interior_contains(approximation.lower_bound())
+          || this->interior_contains(approximation.upper_bound()));
+}
+
+template<typename T, typename B>
+inline bool Approximation<T, B>::is_exact() const
+{
+  return lower_bound() == upper_bound();
 }
 
 template<typename T, typename B>
@@ -339,7 +354,7 @@ inline bool Approximation<T, B>::contains(const T &value) const
 }
 
 template<typename T, typename B>
-inline bool Approximation<T, B>::strictly_contains(const T &value) const
+inline bool Approximation<T, B>::interior_contains(const T &value) const
 {
   return _lower_bound < value && value < _upper_bound;
 }
@@ -377,7 +392,7 @@ template<typename T, typename B>
 inline Approximation<T> &
 Approximation<T, B>::operator-=(const Approximation<T> &a)
 {
-  if (a == 0) {
+  if ((a == 0).is_true()) {
     return *this;
   }
 
@@ -401,16 +416,16 @@ Approximation<T, B>::operator-=(const Approximation<T> &a)
 template<typename T, typename B>
 Approximation<T> &Approximation<T, B>::operator*=(const Approximation<T> &a)
 {
-  if (a == 0) {
+  if ((a == 0).is_true()) {
     this->set_bounds(0, 0);
     return *this;
   }
-  if (*this == 0) {
+  if ((*this == 0).is_true()) {
     return *this;
   }
 
-  if (*this > 0) {
-    if (a > 0) {
+  if ((*this > 0).is_true()) {
+    if ((a > 0).is_true()) {
       // [*this_l, *this_u] >= 0 && [a_l , a_u] >= 0:
       // min is this_l*a_l and max is this_u*a_u
       if constexpr (!std::is_floating_point_v<T>) {
@@ -448,7 +463,7 @@ Approximation<T> &Approximation<T, B>::operator*=(const Approximation<T> &a)
     }
   }
 
-  if (*this < 0) {
+  if ((*this < 0).is_true()) {
     // compute -((-*this)*a)
 
     this->negate();
@@ -457,7 +472,7 @@ Approximation<T> &Approximation<T, B>::operator*=(const Approximation<T> &a)
   }
 
   // this->contains(0)
-  if (a > 0) {
+  if ((a > 0).is_true()) {
     // *this_l < 0 && *this_u >= 0 && [a_l, a_u] >= 0:
     // min is *this_l*a_u and max is *this_u*a_u
     if constexpr (!std::is_floating_point_v<T>) {
@@ -513,7 +528,7 @@ Approximation<T> &Approximation<T, B>::operator/=(const Approximation<T> &a)
     SAPO_ERROR("division by 0", std::runtime_error);
   }
 
-  if (*this == 0) {
+  if ((*this == 0).is_true()) {
     return *this;
   }
 
@@ -521,24 +536,28 @@ Approximation<T> &Approximation<T, B>::operator/=(const Approximation<T> &a)
     return this->set_bounds(1, 1);
   }
 
-  if (a > 0) {
-    if (*this >= 0) {
+  if ((a > 0).is_true()) {
+    T lower_bound, upper_bound;
+    if ((*this >= 0).is_true()) {
       // [a_l, a_u] > 0 && [*this_l, *this_u] >= 0:
       // min is *this_l/a_u and max is *this_u/a_l
-      this->set_bounds_and_approximate(lower_bound() / a.upper_bound(),
-                                       upper_bound() / a.lower_bound());
+      lower_bound = this->lower_bound() / a.upper_bound();
+      upper_bound = this->upper_bound() / a.lower_bound();
     } else if (this->upper_bound() >= 0) {
       // [a_l, a_u] > 0 && *this_l < 0  && *this_u >= 0:
       // min is *this_l/a_l and max is *this_u/a_l
-      this->set_bounds_and_approximate(lower_bound() / a.lower_bound(),
-                                       upper_bound() / a.lower_bound());
+      lower_bound = this->lower_bound() / a.lower_bound();
+      upper_bound = this->upper_bound() / a.lower_bound();
     } else {
       // [a_l, a_u] > 0 && [*this_l, *this_u] < 0:
       // min is *this_l/a_l and max is *this_u/a_u
-      this->set_bounds_and_approximate(lower_bound() / a.lower_bound(),
-                                       upper_bound() / a.upper_bound());
+      lower_bound = this->lower_bound() / a.lower_bound();
+      upper_bound = this->upper_bound() / a.upper_bound();
     }
-    return *this;
+
+    approximate_bounds(lower_bound, upper_bound);
+
+    return this->set_bounds(lower_bound, upper_bound);
   }
 
   // !a.contains(0)&&a>0, hence, a<0
@@ -555,12 +574,23 @@ Approximation<T> &Approximation<T, B>::operator/=(const Approximation<T> &a)
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
- * @return `true` if and only if any possible value of `a` equals `value`
+ * @return `TriBool::TRUE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::FALSE`
  */
 template<typename T>
-inline bool operator==(const Approximation<T> &a, const T &value)
+inline TriBool operator==(const Approximation<T> &a, const T &value)
 {
-  return a.lower_bound() == value && a.upper_bound() == value;
+  if (a.is_exact()) {
+    return value == a.lower_bound();
+  }
+
+  if (a.contains(value)) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
 }
 
 /**
@@ -570,12 +600,15 @@ inline bool operator==(const Approximation<T> &a, const T &value)
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
- * @return `true` if and only if any possible value of `a` equals `value`
+ * @return `TriBool::TRUE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::FALSE`.
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
              !(std::is_same<K, Approximation<T>>::value)>::type>
-inline bool operator==(const Approximation<T> &a, const K &value)
+inline TriBool operator==(const Approximation<T> &a, const K &value)
 {
   return a == T(value);
 }
@@ -587,12 +620,15 @@ inline bool operator==(const Approximation<T> &a, const K &value)
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
- * @return `true` if and only if `value` equals any possible value of `a`
+ * @return `TriBool::TRUE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::FALSE`.
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
              !(std::is_same<K, Approximation<T>>::value)>::type>
-inline bool operator==(const K &value, const Approximation<T> &a)
+inline TriBool operator==(const K &value, const Approximation<T> &a)
 {
   return a == T(value);
 }
@@ -603,13 +639,30 @@ inline bool operator==(const K &value, const Approximation<T> &a)
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
- * @return `true` if and only if `a` and `b` are the same
+ * @return `TriBool::TRUE` if either `a` and `b` are
+ *     references to the same object or `a` and `b` are
+ *     exact approximations and the bounds coincide. If
+ *     `a` does intersect `b`, but they are not exact,
+ *     `TriBool::UNCERTAIN` is returned. In the
+ *     remaining cases, this method returns
+ *     `TriBool::FALSE`.
  */
 template<typename T>
-inline bool operator==(const Approximation<T> &a, const Approximation<T> &b)
+inline TriBool operator==(const Approximation<T> &a, const Approximation<T> &b)
 {
-  return a.lower_bound() == b.lower_bound()
-         && a.upper_bound() == b.upper_bound();
+  if (&a == &b) {
+    return TriBool::TRUE;
+  }
+
+  if (a.is_exact() && b.is_exact()) {
+    return a.lower_bound() == b.lower_bound();
+  }
+
+  if (a.does_intersect(b)) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
 }
 
 /**
@@ -618,11 +671,13 @@ inline bool operator==(const Approximation<T> &a, const Approximation<T> &b)
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param value is a value
- * @return `true` if and only if some possible values of `a` differ from
- * `value`
+ * @return `TriBool::FALSE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T>
-inline bool operator!=(const Approximation<T> &a, const T &value)
+inline TriBool operator!=(const Approximation<T> &a, const T &value)
 {
   return !(a == value);
 }
@@ -634,15 +689,17 @@ inline bool operator!=(const Approximation<T> &a, const T &value)
  * @tparam K is a numeric type
  * @param a is an approximation
  * @param value is a value
- * @return `true` if and only if some possible values of `a` differ from
- * `value`
+ * @return `TriBool::FALSE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
              !(std::is_same<K, Approximation<T>>::value)>::type>
-inline bool operator!=(const Approximation<T> &a, const K &value)
+inline TriBool operator!=(const Approximation<T> &a, const K &value)
 {
-  return !(a == T(value));
+  return a != T(value);
 }
 
 /**
@@ -651,13 +708,15 @@ inline bool operator!=(const Approximation<T> &a, const K &value)
  * @tparam T is a punctual numeric type
  * @param value is a value
  * @param a is an approximation
- * @return `true` if and only if `value` differs from some possible values of
- * `a`
+ * @return `TriBool::FALSE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T>
-inline bool operator!=(const T &value, const Approximation<T> &a)
+inline TriBool operator!=(const T &value, const Approximation<T> &a)
 {
-  return !(a == value);
+  return a != value;
 }
 
 /**
@@ -667,15 +726,17 @@ inline bool operator!=(const T &value, const Approximation<T> &a)
  * @tparam K is a numeric type
  * @param value is a value
  * @param a is an approximation
- * @return `true` if and only if `value` differs from some possible values of
- * `a`
+ * @return `TriBool::FALSE` if `a` is exact and the bounds
+ *     equal `value`. If `a` contains `value`, but it is
+ *     not exact, this method returns `TriBool::UNCERTAIN`.
+ *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T, typename K,
          typename = typename std::enable_if<
              !(std::is_same<K, Approximation<T>>::value)>::type>
-inline bool operator!=(const K &value, const Approximation<T> &a)
+inline TriBool operator!=(const K &value, const Approximation<T> &a)
 {
-  return !(a == T(value));
+  return a != value;
 }
 
 /**
@@ -684,166 +745,267 @@ inline bool operator!=(const K &value, const Approximation<T> &a)
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
- * @return `true` if and only if `a` and `b` differ
+ * @return `TriBool::FALSE` if `a` and `b` are exact and
+ *     the bounds coincide. If `a` does intersect `b`,
+ *     but they are not exact, `TriBool::UNCERTAIN` is
+ *     returned. In the remaining cases, this method
+ *     returns `TriBool::TRUE`.
  */
 template<typename T>
-inline bool operator!=(const Approximation<T> &a, const Approximation<T> &b)
+inline TriBool operator!=(const Approximation<T> &a, const Approximation<T> &b)
 {
   return !(a == b);
 }
 
 /**
- * @brief The "lesser than" relation between an approximation and a value
+ * @brief The "lesser than" relation
  *
  * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
  * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if any possible value of `a` is lesser than
- * `value`
+ * @param value is a `K`-value
+ * @return `TriBool::TRUE` if `a.upper_bound()` is lesser than `value`.
+ *     If `a` contains `value` and `a.lower_bound()` is lesser than
+ *     `value`, this  method returns `TriBool::UNCERTAIN`. In the
+ *     remaining cases, it returns `TriBool::FALSE`.
  */
-template<typename T>
-inline bool operator<(const Approximation<T> &a, const T &value)
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+TriBool operator<(const Approximation<T> &a, const K &value)
 {
-  return a.upper_bound() < value;
+  if (a.upper_bound() < value) {
+    return TriBool::TRUE;
+  }
+
+  if (a.lower_bound() < value) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
 }
 
 /**
- * @brief The "lesser than" relation between a value and an approximation
+ * @brief The "lesser than" relation
  *
  * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param value is a `K`-value
  * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if `value` is lesser than any possible value of
- * `a`
+ * @return `TriBool::TRUE` if `a.lower_bound()` is greater than `value`.
+ *     If `a` contains `value` and `a.lower_bound()` is greater than
+ *     `value`, this method returns `TriBool::UNCERTAIN`. In the
+ *     remaining cases, it returns `TriBool::FALSE`.
  */
-template<typename T>
-inline bool operator<(const T &value, const Approximation<T> &a)
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+TriBool operator<(const K &value, const Approximation<T> &a)
 {
-  return value < a.lower_bound();
+  if (value < a.lower_bound()) {
+    return TriBool::TRUE;
+  }
+
+  if (value < a.upper_bound()) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
 }
 
 /**
- * @brief The "lesser than or equal to" relation between an approximation and a
- * value
- *
- * @tparam T is a punctual numeric type
- * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if any possible value of `a` are lesser than or
- *          equal to `value`
- */
-template<typename T>
-inline bool operator<=(const Approximation<T> &a, const T &value)
-{
-  return a.upper_bound() <= value;
-}
-
-/**
- * @brief The "lesser than or equal to" relation between a value and an
- * approximation
- *
- * @tparam T is a punctual numeric type
- * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if `value` is lesser than or equal to any
- * possible value of `a`
- */
-template<typename T>
-inline bool operator<=(const T &value, const Approximation<T> &a)
-{
-  return value <= a.lower_bound();
-}
-
-/**
- * @brief The "greater than" relation between an approximation and a value
- *
- * @tparam T is a punctual numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if and only if any possible value of `a` is
- * greater than `value`
- */
-template<typename T>
-inline bool operator>(const Approximation<T> &a, const T &value)
-{
-  return a.lower_bound() > value;
-}
-
-/**
- * @brief The "greater than" relation between a value and an approximation
- *
- * @tparam T is a punctual numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if `value` is greater than any possible value of
- * `a`
- */
-template<typename T>
-inline bool operator>(const T &value, const Approximation<T> &a)
-{
-  return value > a.upper_bound();
-}
-
-/**
- * @brief The "greater than or equal to" relation between an approximation and
- * a value
- *
- * @tparam T is a punctual numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if any possible value of `a` are greater than or
- *          equal to `value`
- */
-template<typename T>
-inline bool operator>=(const Approximation<T> &a, const T &value)
-{
-  return a.lower_bound() >= value;
-}
-
-/**
- * @brief The "greater than or equal to" relation between a value and an
- * approximation
- *
- * @tparam T is a punctual numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if `value` is greater than or equal to any
- * possible value of `a`
- */
-template<typename T>
-inline bool operator>=(const T &value, const Approximation<T> &a)
-{
-  return value >= a.upper_bound();
-}
-
-/**
- * @brief The "lesser than" relation between approximations
+ * @brief The "lesser than" relation
  *
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
- * @return `true` if and only if any possible value of `a` is lesser
- *     than any possible value of `b`
+ * @return `TriBool::FALSE` if `a` and `b` are references to the
+ *     same object. `TriBool::TRUE` if `b.lower_bound()` is greater
+ *     than `a.upper_bound()`. If `a` does intersect `b` and
+ *     `b.upper_bound()` is greater than `a.lower_bound()`, this
+ *     method returns `TriBool::UNCERTAIN`. In the remaining cases,
+ *     it returns `TriBool::FALSE`.
  */
 template<typename T>
-inline bool operator<(const Approximation<T> &a, const Approximation<T> &b)
+TriBool operator<(const Approximation<T> &a, const Approximation<T> &b)
 {
-  return a.upper_bound() < b.lower_bound();
+  if (&a == &b) {
+    return TriBool::FALSE;
+  }
+
+  if (a.upper_bound() < b.lower_bound()) {
+    return TriBool::TRUE;
+  }
+
+  if (a.lower_bound() < b.upper_bound()) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
 }
 
 /**
- * @brief The "lesser than or equal to" relation between approximations
+ * @brief The "lesser than or equal to" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param value is a `K`-value
+ * @return `TriBool::TRUE` if `a.upper_bound()` is lesser than or
+ *     equal to `value`. If `a` contains `value`, this method
+ *     returns `TriBool::UNCERTAIN`. In the remaining cases, it
+ *     returns `TriBool::FALSE`.
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+TriBool operator<=(const Approximation<T> &a, const K &value)
+{
+  if (a.upper_bound() <= value) {
+    return TriBool::TRUE;
+  }
+
+  if (a.lower_bound() <= value) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
+}
+
+/**
+ * @brief The "lesser than or equal to" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param value is a `K`-value
+ * @param a is an approximation
+ * @return `TriBool::TRUE` if `a.lower_bound()` is greater than or
+ *     equal to `value`. If `a` contains `value`, this method returns
+ *     `TriBool::UNCERTAIN`. In the remaining cases, it returns
+ *     `TriBool::FALSE`.
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+TriBool operator<=(const K &value, const Approximation<T> &a)
+{
+  if (value <= a.lower_bound()) {
+    return TriBool::TRUE;
+  }
+
+  if (value <= a.upper_bound()) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
+}
+
+/**
+ * @brief The "lesser than or equal to" relation
  *
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
- * @return `true` if and only if any possible value of `a` is lesser than or
- *      equal to any possible value of `b`
+ * @return `TriBool::TRUE` if either `a` and `b` are references
+ *     to the same object or `b.lower_bound()` is  greater than
+ *     or equal to `a.upper_bound()`. If `a` does intersect `b`,
+ *     this method returns `TriBool::UNCERTAIN`. In the
+ *     remaining cases, it returns `TriBool::FALSE`
  */
 template<typename T>
-inline bool operator<=(const Approximation<T> &a, const Approximation<T> &b)
+inline TriBool operator<=(const Approximation<T> &a, const Approximation<T> &b)
 {
-  return a.upper_bound() <= b.lower_bound();
+  if (&a == &b || a.upper_bound() <= b.lower_bound()) {
+    return TriBool::TRUE;
+  }
+
+  if (a.lower_bound() <= b.upper_bound()) {
+    return TriBool::UNCERTAIN;
+  }
+
+  return TriBool::FALSE;
+}
+
+/**
+ * @brief The "greater than" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param value is a `K`-value
+ * @return the evalutation of `value < a`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+inline TriBool operator>(const Approximation<T> &a, const K &value)
+{
+  return (value < a);
+}
+
+/**
+ * @brief The "greater than" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param value is a `K`-value
+ * @param a is an approximation
+ * @return the evalutation of `a < value`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+inline TriBool operator>(const K &value, const Approximation<T> &a)
+{
+  return (a < value);
+}
+
+/**
+ * @brief The "greater than" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @param a is an approximation
+ * @param b is an approximation
+ * @return the evalutation of `b < a`
+ */
+template<typename T>
+inline TriBool operator>(const Approximation<T> &a, const Approximation<T> &b)
+{
+  return (b < a);
+}
+
+/**
+ * @brief The "greater than or equal to" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param a is an approximation
+ * @param value is a `K`-value
+ * @return the evalutation of `value <= a`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+inline TriBool operator>=(const Approximation<T> &a, const K &value)
+{
+  return (value <= a);
+}
+
+/**
+ * @brief The "greater than or equal to" relation
+ *
+ * @tparam T is a punctual numeric type
+ * @tparam K is a numeric type
+ * @param value is a `K`-value
+ * @param a is an approximation
+ * @return the evalutation of `a <= value`
+ */
+template<typename T, typename K,
+         typename = typename std::enable_if_t<
+             !(std::is_same<K, Approximation<T>>::value)>>
+inline TriBool operator>=(const K &value, const Approximation<T> &a)
+{
+  return (a <= value);
 }
 
 /**
@@ -852,188 +1014,12 @@ inline bool operator<=(const Approximation<T> &a, const Approximation<T> &b)
  * @tparam T is a punctual numeric type
  * @param a is an approximation
  * @param b is an approximation
- * @return `true` if and only if any possible value of `a` is greater than or
- *     equal to any possible value of `b`
+ * @return the evalutation of `b <= a`
  */
 template<typename T>
-inline bool operator>(const Approximation<T> &a, const Approximation<T> &b)
+inline TriBool operator>=(const Approximation<T> &a, const Approximation<T> &b)
 {
-  return a.lower_bound() > b.upper_bound();
-}
-
-/**
- * @brief The "greater than or equal to" relation between a value and an
- * approximation
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if `value` is greater than or equal to any
- * possible value of `a`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator>=(const K &value, const Approximation<T> &a)
-{
-  return T(value) >= a;
-}
-
-/**
- * @brief The "greater than or equal to" relation between an
- * approximation and a value
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if any possible value of `a` is
- * greater than or equal to `value`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator>=(const Approximation<T> &a, const K &value)
-{
-  return a >= T(value);
-}
-
-/**
- * @brief The "lesser than" relation between a value and an
- * approximation
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if `value` is lesser than any
- * possible value of `a`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator<(const K &value, const Approximation<T> &a)
-{
-  return T(value) < a;
-}
-
-/**
- * @brief The "lesser than" relation between an approximation
- * and a value
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if any possible value of `a` is lesser than
- * `value
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator<(const Approximation<T> &a, const K &value)
-{
-  return a < T(value);
-}
-
-/**
- * @brief The "lesser than or equal to" relation between a value and an
- * approximation
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if `value` is lesser than or
- *      equal to any possible value of `a`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator<=(const K &value, const Approximation<T> &a)
-{
-  return T(value) <= a;
-}
-
-/**
- * @brief The "lesser than or equal to" relation between an
- * approximation and a value
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if any possible value of `a` is lesser than or
- *      equal to `value`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator<=(const Approximation<T> &a, const K &value)
-{
-  return a <= T(value);
-}
-
-/**
- * @brief The "greater than or equal to" relation between a value and an
- * approximation
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param value is a value
- * @param a is an approximation
- * @return `true` if and only if `value` is greater than or
- *      equal to any possible value of `a`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator>(const K &value, const Approximation<T> &a)
-{
-  return T(value) > a;
-}
-
-/**
- * @brief The "greater than or equal to" relation between an
- * approximation and a value
- *
- * @tparam T is a punctual numeric type
- * @tparam K is a numeric type
- * @param a is an approximation
- * @param value is a value
- * @return `true` if and only if any possible value of `a` is greater than or
- *      equal to `value`
- */
-template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same<K, T>::value
-               || std::is_same<K, Approximation<T>>::value)>>
-inline bool operator>(const Approximation<T> &a, const K &value)
-{
-  return a > T(value);
-}
-
-/**
- * @brief The "greater than or equal to" relation between approximations
- *
- * @tparam T is a punctual numeric type
- * @param a is an approximation
- * @param b is an approximation
- * @return `true` if and only if any possible value of `a` is greater than or
- *      equal to any possible value of `b`
- */
-template<typename T>
-inline bool operator>=(const Approximation<T> &a, const Approximation<T> &b)
-{
-  return a.lower_bound() >= b.upper_bound();
+  return (b <= a);
 }
 
 /**
@@ -1341,23 +1327,30 @@ Approximation<T> operator/(Approximation<T> &&a, const Approximation<T> &b)
  * @param b is an approximation
  * @return an over-approximation of \f$a/b\f$
  */
-template<typename T>
-Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b)
+template<typename T, typename B>
+Approximation<T, B> operator/(const Approximation<T, B> &a,
+                              Approximation<T, B> &&b)
 {
   if (b > 0) {
+    T lower_bound, upper_bound;
     if (a >= 0) {
       // [b_l, b_u] > 0 && [a_l, a_u] >= 0: min a_l/b_u and max a_u/b_l
-      b.set_bounds_and_approximate(a.lower_bound() / b.upper_bound(),
-                                   a.upper_bound() / b.lower_bound());
+      lower_bound = a.lower_bound() / b.upper_bound();
+      upper_bound = a.upper_bound() / b.lower_bound();
     } else if (a.upper_bound() >= 0) {
       // [b_l, b_u] > 0 && a_l < 0  && a_u >= 0:  min a_l/b_l and max a_u/b_l
-      b.set_bounds_and_approximate(a.lower_bound() / b.lower_bound(),
-                                   a.upper_bound() / b.lower_bound());
+      lower_bound = a.lower_bound() / b.lower_bound();
+      upper_bound = a.upper_bound() / b.lower_bound();
     } else {
       // [b_l, b_u] > 0 && [a_l, a_u] < 0: min a_l/b_l and max a_u/b_u
-      b.set_bounds_and_approximate(a.lower_bound() / b.lower_bound(),
-                                   a.upper_bound() / b.upper_bound());
+      lower_bound = a.lower_bound() / b.lower_bound();
+      upper_bound = a.upper_bound() / b.upper_bound();
     }
+
+    approximate_bounds(lower_bound, upper_bound);
+
+    b.set_bounds(lower_bound, upper_bound);
+
     return std::move(b);
   }
 
