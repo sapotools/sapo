@@ -9,7 +9,6 @@ It consists in a list of statements, each belonging to one of the following cate
 - [SAPO Options](#footer)
 
 
-
 ## <a name="header">Header
 It consists in
 
@@ -97,7 +96,7 @@ const c3 = c1 + 2*c2;
 ```
 
 ### Definitions
-They are used to name subexpressions wich occur in different places. They can contain variables, parameters, constants and other definitions.
+They are used to name expressions that can be used as sub-expressions. They can contain variables, parameters, constants and other definitions.
 
 ```C++
 define ex = v + c*p/2;
@@ -259,6 +258,17 @@ direction default_x: x in [a, b];
 ```
 
 Notice that the implicit direction defined during variable declaration is always named `default_<var_name>`.
+
+#### The `around` shortcut
+
+The reserved word `around` is a shortcut to define intervals. `around(<value>, <length ratio>)` produced the interval centered in `<value>` having length `<value>*<length ratio>`.
+
+```C++
+const c = 0.1;
+const v = 12.2;
+
+var x in around(v/2, 2*c);  // x in [5.49, 6.71]
+```
 
 #### Adaptive directions
 

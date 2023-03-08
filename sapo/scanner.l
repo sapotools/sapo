@@ -67,6 +67,7 @@ var			return yy::parser::make_VAR(loc);
 param			return yy::parser::make_PARAM(loc);
 const			return yy::parser::make_CONST(loc);
 define			return yy::parser::make_DEFINE(loc);
+around			return yy::parser::make_AROUND(loc);
 in			return yy::parser::make_IN(loc);
 adaptive		return yy::parser::make_ADAPTIVE(loc);
 next			return yy::parser::make_NEXT(loc);

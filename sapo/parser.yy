@@ -92,6 +92,7 @@ std::set<std::string> let_identifiers;
 	PARAM
 	CONST
 	DEFINE
+	AROUND
 	IN
 	ADAPTIVE
 	NEXT
@@ -1139,6 +1140,36 @@ doubleInterval	: "[" numericExpression "," numericExpression "]"
 									ERROR(@4, "Missing \"]\"");
 									$$ = std::pair<double, double>(0, 1);
 								}
+								| AROUND "(" numericExpression "," numericExpression ")"
+								{
+									$$ = std::pair<double, double>($3*(1-$5/2), $3*(1+$5/2));
+								}
+								| AROUND "(" numericExpression "," numericExpression error
+								{
+									ERROR(@6, "Missing \")\"");
+									$$ = std::pair<double, double>(0, 1);
+								}
+								| AROUND "(" numericExpression "," error
+								{
+									ERROR(@5, "Missing approximation radius");
+									$$ = std::pair<double, double>(0, 1);
+								}
+								| AROUND "(" numericExpression error
+								{
+									ERROR(@4, "Missing approximation radius");
+									$$ = std::pair<double, double>(0, 1);
+								}
+								| AROUND "(" error
+								{
+									ERROR(@3, "Missing approximation center");
+									$$ = std::pair<double, double>(0, 1);
+								}
+								| AROUND error
+								{
+									ERROR(@2, "Missing \"(\"");
+									$$ = std::pair<double, double>(0, 1);
+								}
+
 
 number		: DOUBLE {
 					$$ = $1; 
@@ -1502,6 +1533,7 @@ std::string possibleStatements(std::string s)
 		"param",
 		"const",
 		"define",
+		"around",
 		"next",
 		"'",
 		"invariant",
