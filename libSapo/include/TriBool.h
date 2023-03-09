@@ -399,6 +399,68 @@ TriBool operator||(const TriBool &a, TriBool &&b);
  */
 TriBool operator||(const TriBool &a, const TriBool &b);
 
+/**
+ * @brief A characterization for Boolean types
+ *
+ * @tparam T is the type to be tested
+ */
+template<typename T>
+struct is_logic
+    : public std::integral_constant<bool,
+                                    std::is_same<bool, T>::value
+                                        || std::is_same<TriBool, T>::value> {
+};
+
+template<class T>
+inline constexpr bool is_logic_v = is_logic<T>::value;
+
+/**
+ * @brief Test whether a value is true
+ *
+ * @param bool_value is a Boolean value
+ * @return `true` if and only if `bool_value==true`
+ */
+bool is_true(const bool &bool_value);
+
+/**
+ * @brief Test whether a value is false
+ *
+ * @param bool_value is a Boolean value
+ * @return `true` if and only if `bool_value==false`
+ */
+bool is_false(const bool &bool_value);
+
+/**
+ * @brief Test whether a value is uncertain
+ *
+ * @param bool_value is a Boolean value
+ * @return `false`
+ */
+bool is_uncertain(const bool &bool_value);
+
+/**
+ * @brief Test whether a value is true
+ *
+ * @param bool_value is a tri-Boolean value
+ * @return `bool_value.is_true()`
+ */
+bool is_true(const TriBool &bool_value);
+
+/**
+ * @brief Test whether a value is false
+ *
+ * @param bool_value is a tri-Boolean value
+ * @return `bool_value.is_false()`
+ */
+bool is_false(const TriBool &bool_value);
+
+/**
+ * @brief Test whether a value is uncertain
+ *
+ * @param bool_value is a tri-Boolean value
+ * @return `bool_value.is_uncertain()`
+ */
+bool is_uncertain(const TriBool &bool_value);
 
 /**
  * @brief Test the value of a `TriBool` object
@@ -628,6 +690,74 @@ inline TriBool operator||(const TriBool &a, TriBool &&b)
 inline TriBool operator||(const TriBool &a, const TriBool &b)
 {
   return TriBool(a) || b;
+}
+
+/**
+ * @brief Test whether a value is true
+ *
+ * @param bool_value is a Boolean value
+ * @return `true` if and only if `bool_value==true`
+ */
+inline bool is_true(const bool &bool_value)
+{
+  return bool_value;
+}
+
+/**
+ * @brief Test whether a value is false
+ *
+ * @param bool_value is a Boolean value
+ * @return `true` if and only if `bool_value==false`
+ */
+inline bool is_false(const bool &bool_value)
+{
+  return !bool_value;
+}
+
+/**
+ * @brief Test whether a value is uncertain
+ *
+ * @param bool_value is a Boolean value
+ * @return `false`
+ */
+inline bool is_uncertain(const bool &bool_value)
+{
+  (void)bool_value; // to avoid `-Wunused-parameter`
+
+  return false;
+}
+
+/**
+ * @brief Test whether a value is true
+ *
+ * @param bool_value is a tri-Boolean value
+ * @return `bool_value.is_true()`
+ */
+inline bool is_true(const TriBool &bool_value)
+{
+  return bool_value.is_true();
+}
+
+/**
+ * @brief Test whether a value is false
+ *
+ * @param bool_value is a tri-Boolean value
+ * @return `bool_value.is_false()`
+ */
+inline bool is_false(const TriBool &bool_value)
+{
+  return bool_value.is_false();
+}
+
+/**
+ * @brief Test whether a value is uncertain
+ *
+ * @param bool_value is a tri-Boolean value
+ * @return `bool_value.is_uncertain()`
+ */
+inline bool is_uncertain(const TriBool &bool_value)
+{
+  return bool_value.is_uncertain();
 }
 
 #endif // _TRIBOOL_H_
