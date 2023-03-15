@@ -1,0 +1,101 @@
+/*
+ * This SIL describes an extension of the chronic myeloid leukaemia (CML) model introduced in:
+ * Michor, F., Hughes, T., Iwasa, Y. et al.
+ * Dynamics of chronic myeloid leukaemia
+ * Nature 435, 1267–1270 (2005)
+ * https://doi.org/10.1038/nature03669
+ */
+
+problem: synthesis;
+max_parameter_splits: 5;
+const epochs_per_day = 1;
+
+iterations: 500*epochs_per_day;   // 500 days
+
+const approx = 1e-4;
+
+// normal haematopoietic cells
+var x0 in around(1e6, approx);      // stem cells
+var x1 in around(1e8, approx);      // progenitors cells
+var x2 in around(1e10, approx);     // partially differentiated cells
+var x3 in around(1e12, approx);     // terminally differentiated cells
+
+// non-treated leukeamic cells *without* resistance mutation
+var y0 in around(2.5e5, approx);    // stem cells
+var y1 in around(5e7, approx);      // progenitors cells
+var y2 in around(1e10, approx);     // partially differentiated cells
+var y3 in around(1e12, approx);     // terminally differentiated cells
+
+// treated leukeamic cells *without* resistance mutation
+var w0 in around(0, approx);       // stem cells
+var w1 in around(0, approx);       // progenitors cells
+var w2 in around(0, approx);       // partially differentiated cells
+var w3 in around(0, approx);       // terminally differentiated cells
+
+// leukeamic cells *with* resistance mutation
+var z0 in around(0, approx);       // stem cells
+var z1 in around(0, approx);      // progenitors cells
+var z2 in around(0, approx);      // partially differentiated cells
+var z3 in around(0, approx);      // terminally differentiated cells
+
+// Rates
+
+// Death Rates
+
+const d0 = 3e-3;   // stem cells
+const d1 = 8e-3;   // progenitors cells
+const d2 = 5e-2;   // partially differentiated cells
+const d3 = 1;      // terminally differentiated cells
+
+// Lineage evolution rates
+
+// Stem-to-Progenitor rate
+const ax = 0.8;               // normal haematopoietic cells
+define ay = 2 * ax;           //  non-treated leukeamic cells *without* resistance mutation
+define aw = ay / 100;         //  treated leukeamic cells *without* resistance mutation
+define az = ay;               // leukeamic cells *with* resistance mutation
+
+// Progenitor-to-Differentiated rate
+const bx = 5;                 // normal haematopoietic cells
+define by = 2 * bx;           // non-treated leukeamic cells *without* resistance mutation
+define bw = by/750;           // treated leukeamic cells *without* resistance mutation
+define bz = by;               // leukeamic cells *with* resistance mutation
+
+// Differentiated-to-Terminally-Differentiated rate
+const cx = 100;    // normal haematopoietic cells
+define cy = cx;    // leukeamic cells *without* resistance mutation
+define cw = cx;    // treated leukeamic cells *without* resistance mutation
+define cz = cx;    // leukeamic cells *with* resistance mutation
+
+// Division rate
+const ry = 8e-3;   // leukeamic cells *without* resistance mutation
+const rz = 23e-3;  // leukeamic cells *with* resistance mutation
+
+param u in around(4e-8,0.5);    // probability of the resistance mutation occurrence
+
+param tr in [0, 1.00]; // treatment
+
+x0' = 0;   // (delta(x0) - d0)*x0
+x1' = ax * x0 - d1 * x1;
+x2' = bx * x1 - d2 * x2;
+x3' = cx * x2 - d3 * x3;
+
+y0' = (ry - d0)*(1-tr)*y0 - tr*y0;
+y1' = (ay * y0 - d1 * y1)*(1-tr) - tr*y1;
+y2' = (by * y1 - d2 * y2)*(1-tr) - tr*y2;
+y3' = (cy * y2 - d3 * y3)*(1-tr) - tr*y3;
+
+w0' = tr*y0 -(ry*u + d0)*w0;
+w1' = aw * w0 - d1 * w1 + tr*y1;
+w2' = bw * w1 - d2 * w2 + tr*y2;
+w3' = cw * w2 - d3 * w3 + tr*y3;
+
+z0' = (rz-d0) * z0 + ry * w0 * u;
+z1' = az * z0 - d1 * z1;
+z2' = bz * z1 - d2 * z2;
+z3' = cz * z2 - d3 * z3;
+
+spec: G[0,500](z3<=150e6);
+
+option integration_step 1/epochs_per_day;
+option integrator euler;

@@ -1,0 +1,107 @@
+/*
+ * This SIL described the colorectal tumorigenesis model introduced in:
+ * Franziska Michor, Yoh Iwasa, Christoph Lengauer, Martin A. Nowak
+ * Dynamics of colorectal cancer
+ * Seminars in Cancer Biology (15)6, 484-493, 2005
+ * https://doi.org/10.1016/j.semcancer.2005.06.005
+ */
+
+problem: reachability;
+
+iterations: 7*365;
+
+const u1 = 1e-7;   // mutation rate of the first APC allele
+                   // in stem cells: 1e-7 
+
+const sqrt_u2 = 1e-3;        // square route of the  mutation rate of 
+                             // the second APC allele in non-CIN stem 
+                             // cell: [3.162*1e-4, 3.162*1e-3]
+define u2 = sqrt_u2*sqrt_u2; // mutation rate of the second APC allele
+                             // in non-CIN stem cell: [1e-7, 1e-5]
+
+const sqrt_u3 = 1e-1;        // square route of the  mutation rate of 
+                             // the second APC allele in CIN stem 
+                             // cell: 1e-1
+define u3 = sqrt_u3*sqrt_u3; // mutation rate of the second APC allele
+                             // in CIN stem cell: 1e-2
+const u4 = 1e-9;             // mutation rate for RAS: 1e-9
+const uc = 2*u2;             // rate of the mutation that induces 
+                             // CIN: 2*u2 or u1
+const tau0 = 10;             // duplication time for APC-active stem
+                             // cell (in days): 10
+const tau1 = 5;              // duplication time for both APC and 
+                             // RAS-inactive stem cell (in days): 5
+const tau2 = 1;              // duplication time for APC-inactive and
+                             // RAS-active stem cell (in days): 1
+const N0 = 4;                // initial stem cell population per 
+                             // compartment: [1,10]
+// const N1 = 1e3;              // stem cell population in a compartment
+//                              // after APC inactivation: [1e3, 1e4]
+// const N2 = 1e5;              // stem cell population in a compartment
+//                              // after APC and RAS inactivations: [1e5, 1e6]
+// const r = 0.6;               // CIN cell has relative fitness [0.6,1]
+
+const approx = 1e-1;
+
+// non-CIN (chromosomic stable compartments)
+var x0 in [1-approx,1];  // no mutation on the APC gene
+var x1 = 0;  // one APC allele is mutated
+var x2 = 0;  // both APC alleles are mutated
+var x3 = 0;  // both APC alleles and one
+             // RAS allele are mutated 
+var x5 = 0;  // both APC alleles, one RAS
+             // allele, and both p53 alleles 
+             // are mutated
+
+// CIN (chromosomic instable compartments)
+var y0 = 0;  // no mutation on the APC gene
+var y1 = 0;  // one APC allele is mutated
+var y2 = 0;  // both APC alleles are mutated
+var y3 = 0;  // both APC alleles and one
+             // RAS allele are mutated 
+var y5 = 0;  // both APC alleles, one RAS
+             // allele, and both p53 alleles 
+             // are mutated
+
+
+var r in [0.6,0.9];
+param N1 in [1e3,1e4];
+param N2 in [1e5,1e6];
+
+r' = 0;
+//N1' = 0;
+//N2' = 0;
+
+assume x0 >= 0 && x1 >= 0 && x2 >= 0 && x3 >= 0 && x5 >= 0;
+assume y0 >= 0 && y1 >= 0 && y2 >= 0 && y3 >= 0 && y5 >= 0;
+//assume x0+x1+x2+x3+x5+y0+y1+y2+y3+y5 in [1-approx,1];
+
+define a = u1/tau0;
+define b = N0*uc*(r^3 - r^4 + r^7 - r^8)/tau0;  // 4th order Taylor 
+                                                // approximation of 
+                                                // b with N0 = 4
+define c = N0*u2/tau0;
+define d = N0*uc*u3*(r+r^2+r^3+r^4+r^5+r^6+r^7+r^8)/tau0;       // 4th order approximation 
+                                                                // of d
+define e = N1*u4/tau1;
+define f = N2*u1*sqrt_u2/tau2;
+define g = N0*u3/tau0;
+define h = N2*u1*sqrt_u3/tau2;
+
+//  non-CIN dynamics
+x0' = -(a+b)*x0;
+x1' = a*x0 - (b+c+d)*x1;
+x2' = c*x1 - e*x2;
+x3' = e*x2 - f*x3;
+x5' = f*x3;
+
+// CIN dynamics
+y0' = b*x0 - a*y0;
+y1' = a*y0 + b*x1 - g*y1;
+y2' = g*y1 + d*x1 - e*y2;
+y3' = e*y2 - h*y3;
+y5' = h*y3;
+
+option integration_step 1;
+option integrator euler;
+option no_caching;
