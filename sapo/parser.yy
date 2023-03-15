@@ -710,19 +710,19 @@ matrices		: var_constraint {}
 constraint	: expr constraintType expr
 						{
 							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
-								ERROR(@1, "Expression in constraints must be at most linear");
+								ERROR(@1, "Expression in constraints must be linear");
 								$1 = 0;
 							}
 							if (AbsSyn::getDegree($3, drv.data.getVarSymbols()) > 1) {
-								ERROR(@3, "Expression in constraints must be at most linear");
+								ERROR(@3, "Expression in constraints must be linear");
 								$3 = 0;
 							}
-							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
-								ERROR(@1, "Expression in constraints cannot contain parameters");
+							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
+								ERROR(@1, "Expression in constraints must be linear");
 								$1 = 0;
 							}
-							if (AbsSyn::getDegree($3, drv.data.getParamSymbols()) > 0) {
-								ERROR(@3, "Expression in constraints cannot contain parameters");
+							if (AbsSyn::getDegree($3, drv.data.getVarSymbols()) > 1) {
+								ERROR(@3, "Expression in constraints must be linear");
 								$3 = 0;
 							}
 							$$ = new AbsSyn::Direction<>($1, $3, $2);
@@ -730,10 +730,10 @@ constraint	: expr constraintType expr
 						| expr IN doubleInterval
 						{
 							if (AbsSyn::getDegree($1, drv.data.getVarSymbols()) > 1) {
-								ERROR(@1, "Expression in constraints must be at most linear");
+								ERROR(@1, "Expression in constraints must be linear");
 							}
-							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 0) {
-								ERROR(@1, "Expression in constraints cannot contain parameters");
+							if (AbsSyn::getDegree($1, drv.data.getParamSymbols()) > 1) {
+								ERROR(@1, "Expression in constraints must be linear");
 								$$ = new AbsSyn::Direction<>(0, $3.first, $3.second);
 							} else {
 								$$ = new AbsSyn::Direction<>($1, $3.first, $3.second);
@@ -1170,7 +1170,6 @@ doubleInterval	: "[" numericExpression "," numericExpression "]"
 									$$ = std::pair<double, double>(0, 1);
 								}
 
-
 number		: DOUBLE {
 					$$ = $1; 
 				}
@@ -1419,7 +1418,7 @@ option	: TRANS transType ";"
 		{
 			MISSING_SC(@2);
 		}
-		| INTEGRATION_STEP number ";"
+		| INTEGRATION_STEP numericExpression ";"
 		{
 			if (drv.data.getSpecificationType()==AbsSyn::InputData::DISCRETE) {
 				WARNING(@0,"The dynamics is specified as discrete: the integration "
@@ -1432,7 +1431,7 @@ option	: TRANS transType ";"
 				}
 			}
 		}
-		| INTEGRATION_STEP DOUBLE error
+		| INTEGRATION_STEP numericExpression error
 		{
 			MISSING_SC(@3);
 		}
