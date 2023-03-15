@@ -282,11 +282,19 @@ class SimplexMethodOptimizer
           row.push_back(row_idx == i ? 1 : 0);
         }
 
-        // add the last artificial variable
-        row.push_back(b[row_idx] < 0 ? -1 : 0);
+        if (row_idx < num_rows) {
+          // add the last artificial variable
+          row.push_back(b[row_idx] < 0 ? -1 : 0);
 
-        // add the constant coefficient
-        row.push_back(row_idx < num_rows ? b[row_idx] : 0);
+          // add the constant coefficient
+          row.push_back(b[row_idx]);
+        } else {
+          // add the last artificial variable
+          row.push_back(0);
+
+          // add the constant coefficient
+          row.push_back(0); 
+        }
 
         ++row_idx;
       }
