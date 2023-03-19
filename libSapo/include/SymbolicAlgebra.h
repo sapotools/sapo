@@ -2303,6 +2303,10 @@ public:
       for (auto p_it = std::begin(prods); p_it != std::end(prods); ++p_it) {
         result.push_back((*p_it)->multiply(_constant));
       }
+    } else {
+      for (auto& prod: prods) {
+        delete prod;
+      }
     }
     prods.clear();
 
@@ -3196,9 +3200,7 @@ public:
       base = base->divided_by(div->clone());
     }
 
-    std::list<base_expression_type<C> *> result;
-
-    result.push_back(base);
+    std::list<base_expression_type<C> *> result{base};
 
     for (auto it = std::begin(_numerator); it != std::end(_numerator); ++it) {
       base_expression_type<C> *new_it = (*it)->expand();
