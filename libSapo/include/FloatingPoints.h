@@ -125,6 +125,10 @@ struct IEEE754WorkingType<double> {
   using sign_type = uint32_t;
 };
 
+// avoid optimizations because of strict aliasing
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
 /**
  * @brief A class to compute rounded floating point operations
  *
@@ -162,7 +166,7 @@ public:
     fp_codec(const T &value): value(value) {}
 
     T value;
-    struct {
+    struct __attribute__ ((packed)) {
       mantissa_type mantissa : mantissa_size;
       exponent_type exponent : exponent_size;
       sign_type negative : 1;
@@ -757,10 +761,11 @@ template<typename T>
 inline T add(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
+  const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
+  const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
 
-  return IEEE754Rounding<T>::add(
-      (const fp_codec *)(&a), ((const fp_codec *)(&a))->binary.negative,
-      (const fp_codec *)(&b), ((const fp_codec *)(&b))->binary.negative,
+  return IEEE754Rounding<T>::add(fp_a, fp_a->binary.negative,
+                                 fp_b, fp_b->binary.negative,
       rounding);
 }
 
@@ -769,9 +774,11 @@ inline T subtract(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
 
-  return IEEE754Rounding<T>::subtract(
-      (const fp_codec *)(&a), ((const fp_codec *)(&a))->binary.negative,
-      (const fp_codec *)(&b), ((const fp_codec *)(&b))->binary.negative,
+  const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
+  const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
+
+  return IEEE754Rounding<T>::subtract(fp_a, fp_a->binary.negative,
+                                      fp_b, fp_b->binary.negative,
       rounding);
 }
 
@@ -780,8 +787,10 @@ inline T multiply(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
 
-  return IEEE754Rounding<T>::multiply((const fp_codec *)(&a),
-                                      (const fp_codec *)(&b), rounding);
+  const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
+  const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
+
+  return IEEE754Rounding<T>::multiply(fp_a, fp_b, rounding);
 }
 
 template<typename T>
@@ -799,5 +808,7 @@ std::ostream &operator<<(std::ostream &os,
 
   return os;
 }
+
+#pragma GCC pop_options
 
 #endif // _FLOATING_POINTS_H_

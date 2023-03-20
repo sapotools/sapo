@@ -584,3 +584,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_approximation_product, T, test_types)
         }
     }
 }
+
+BOOST_AUTO_TEST_CASE(test_strict_aliasing_issue)
+{
+    Approximation<double> a{2.51581e-08}, b{2.51581e-08};
+
+    auto c = a-b;
+    BOOST_CHECK(is_true(c==0));
+}
