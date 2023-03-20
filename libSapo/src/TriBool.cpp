@@ -201,3 +201,23 @@ TriBool operator||(TriBool &&a, const TriBool &b)
   }
   return a;
 }
+
+/**
+ * @brief Print a tri-Boolean in an output stream
+ * 
+ * @param os is the output stream
+ * @param tribool is the tri-Boolean value to stream
+ * @return a reference to the output stream
+ */
+std::ostream& operator<<(std::ostream& os, const TriBool& tribool)
+{
+  if (tribool.is_false()) {
+    return (os << "False");
+  }
+
+  if (tribool.is_true()) {
+    return (os << "True");
+  }
+
+  return (os << "Uncertain");
+}

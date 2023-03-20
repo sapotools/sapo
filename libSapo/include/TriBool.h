@@ -760,4 +760,13 @@ inline bool is_uncertain(const TriBool &bool_value)
   return bool_value.is_uncertain();
 }
 
+/**
+ * @brief Print a tri-Boolean in an output stream
+ * 
+ * @param os is the output stream
+ * @param tribool is the tri-Boolean value to stream
+ * @return a reference to the output stream
+ */
+std::ostream& operator<<(std::ostream& os, const TriBool& tribool);
+
 #endif // _TRIBOOL_H_
