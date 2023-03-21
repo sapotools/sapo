@@ -127,7 +127,7 @@ struct IEEE754WorkingType<double> {
 
 // avoid optimizations because of strict aliasing
 #pragma GCC push_options
-#pragma GCC optimize ("O0")
+#pragma GCC optimize("O0")
 
 /**
  * @brief A class to compute rounded floating point operations
@@ -166,7 +166,7 @@ public:
     fp_codec(const T &value): value(value) {}
 
     T value;
-    struct __attribute__ ((packed)) {
+    struct __attribute__((packed)) {
       mantissa_type mantissa : mantissa_size;
       exponent_type exponent : exponent_size;
       sign_type negative : 1;
@@ -379,7 +379,7 @@ public:
     mantissa_type lost_bits;
 
     T result;
-    fp_codec *r_pointer = (fp_codec *)(&result);
+    fp_codec *r_pointer = reinterpret_cast<fp_codec *>(&result);
 
     if (a->binary.exponent > b->binary.exponent) {
       r_mantissa = a->binary.mantissa | implicit_bit;
@@ -465,7 +465,7 @@ public:
    * @brief Add two floating point values by using the specified rounding
    *
    * This method computes the tightest floating point approximation of the
-   * sum of two numbers that respects a specified rounding mode.
+   * subtraction of two numbers that respects a specified rounding mode.
    *
    * @tparam T is a floating point type
    * @param a is an `fp_codec` pointer to a floating point number whose sign
@@ -556,7 +556,7 @@ public:
     mantissa_type lost_bits;
 
     T result;
-    fp_codec *r_pointer = (fp_codec *)(&result);
+    fp_codec *r_pointer = reinterpret_cast<fp_codec *>(&result);
 
     if (a->binary.exponent > b->binary.exponent) {
       r_mantissa = a->binary.mantissa | implicit_bit;
@@ -644,8 +644,8 @@ public:
    * @brief Multiply two floating point values by using the specified rounding
    *
    * This method computes the tightest floating point approximation of the
-   * sum of two numbers that respects a specified rounding mode. This goal is
-   * achieved by implementing the Karatsuba's algorithm.
+   * product of two numbers that respects a specified rounding mode. This goal
+   * is achieved by implementing the Karatsuba's algorithm.
    *
    * @tparam T is a floating point type
    * @param a is an `fp_codec` pointer to a floating point number
@@ -747,11 +747,95 @@ public:
     }
 
     T result{0};
-    fp_codec *r_pointer = (fp_codec *)(&result);
+    fp_codec *r_pointer = reinterpret_cast<fp_codec *>(&result);
 
     r_pointer->binary.negative = (negative ? 1 : 0);
     r_pointer->binary.exponent = new_exponent;
     r_pointer->binary.mantissa = H;
+
+    return result;
+  }
+
+  /**
+   * @brief Divide two floating point values by using the specified rounding
+   *
+   * This method computes the tightest floating point approximation of the
+   * quotient of two numbers that respects a specified rounding mode.
+   *
+   * @tparam T is a floating point type
+   * @param a is an `fp_codec` pointer to a floating point number
+   * @param b is an `fp_codec` pointer to a floating point number
+   * @param rounding is one of the supported rounding mode, i.e.,
+   *      `FE_UPWARD`, `FE_DOWNWARD`, `FE_NEAREST`
+   * @return the tightest floating point approximation of \f$a/b\f$ that
+   *       respects `rounding`.
+   *       When `rounding` is `FE_UPWARD`, the returned value is the least
+   *       number representable in `T` that is greater that or equal to
+   *       \f$a/b\f$. When `rounding` is `FE_DOWNWARD`, the returned value
+   *       is the greatest number representable in `T` that is lesser that
+   *       or equal to \f$a/b\f$. When `rounding` is `FE_NEAREST`, the
+   *       returned value is a number, representable in `T`, whose distance
+   *       from \f$a/b\f$ is the least one.
+   */
+  static T divide(const fp_codec *a, const fp_codec *b, int rounding)
+  {
+    if (a->value == 0) {
+      return 0;
+    }
+
+    if (b->value == 1) {
+      return a->value;
+    }
+
+    if (b->value == 0) {
+      std::domain_error("Division by 0");
+    }
+
+    bool negative = (a->value > 0 ? b->value < 0 : b->value > 0);
+
+    exponent_type new_exponent = (a->binary.exponent - b->binary.exponent);
+
+    new_exponent += exponent_bias + 1;
+    mantissa_type A = a->binary.mantissa | implicit_bit;
+    const mantissa_type B = b->binary.mantissa | implicit_bit;
+
+    mantissa_type res{0};
+    size_t res_size = 0;
+
+    while (A != 0 && res_size < mantissa_size) {
+      while (A < B && res_size < mantissa_size) {
+        if (res != 0) {
+          ++res_size;
+          res <<= 1;
+        }
+        --new_exponent;
+        A <<= 1;
+      }
+      if ((res < implicit_bit_successor) && (A >= B)) {
+        res |= 1;
+        A -= B;
+      }
+    }
+
+    new_exponent += res_size - 1;
+    res <<= (mantissa_size - res_size);
+
+    if (A > 0
+        && ((rounding == FE_UPWARD && !negative)
+            || (rounding == FE_DOWNWARD && negative))) {
+      ++res;
+      if (res & implicit_bit_successor) {
+        res >>= 1;
+        ++new_exponent;
+      }
+    }
+
+    T result{0};
+    fp_codec *r_pointer = reinterpret_cast<fp_codec *>(&result);
+
+    r_pointer->binary.negative = negative;
+    r_pointer->binary.exponent = new_exponent;
+    r_pointer->binary.mantissa = res & mantissa_mask;
 
     return result;
   }
@@ -764,9 +848,8 @@ inline T add(const T &a, const T &b, int rounding)
   const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
   const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
 
-  return IEEE754Rounding<T>::add(fp_a, fp_a->binary.negative,
-                                 fp_b, fp_b->binary.negative,
-      rounding);
+  return IEEE754Rounding<T>::add(fp_a, fp_a->binary.negative, fp_b,
+                                 fp_b->binary.negative, rounding);
 }
 
 template<typename T>
@@ -777,9 +860,8 @@ inline T subtract(const T &a, const T &b, int rounding)
   const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
   const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
 
-  return IEEE754Rounding<T>::subtract(fp_a, fp_a->binary.negative,
-                                      fp_b, fp_b->binary.negative,
-      rounding);
+  return IEEE754Rounding<T>::subtract(fp_a, fp_a->binary.negative, fp_b,
+                                      fp_b->binary.negative, rounding);
 }
 
 template<typename T>
@@ -791,6 +873,19 @@ inline T multiply(const T &a, const T &b, int rounding)
   const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
 
   return IEEE754Rounding<T>::multiply(fp_a, fp_b, rounding);
+}
+
+template<typename T>
+inline T divide(const T &a, const T &b, int rounding)
+{
+  using fp_codec = typename IEEE754Rounding<T>::fp_codec;
+
+  const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
+  const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
+
+  auto res = IEEE754Rounding<T>::divide(fp_a, fp_b, rounding);
+
+  return res;
 }
 
 template<typename T>
