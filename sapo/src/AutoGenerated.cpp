@@ -268,6 +268,8 @@ DiscreteSystem<double> get_integrated_dynamics(const InputData &id,
     RungeKutta4Integrator rk4;
     return rk4(ode, id.getIntegrationStep());
   }
+  default:
+    SAPO_ERROR("Unsupported intergrator", std::domain_error);
   }
 }
 
