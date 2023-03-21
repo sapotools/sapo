@@ -53,6 +53,19 @@ TriBool::TriBool(const bool value):
 TriBool::TriBool(const TriBool &orig): _value(orig._value) {}
 
 /**
+ * @brief Assignement operator
+ *
+ * @param orig is the original tri-Boolean object
+ * @return a reference to the updated object
+ */
+TriBool &TriBool::operator=(const TriBool &orig)
+{
+  _value = orig._value;
+
+  return *this;
+}
+
+/**
  * @brief Equality between tri-Boolean values
  *
  * @param a is a tri-Boolean value
@@ -204,20 +217,20 @@ TriBool operator||(TriBool &&a, const TriBool &b)
 
 /**
  * @brief Print a tri-Boolean in an output stream
- * 
+ *
  * @param os is the output stream
  * @param tribool is the tri-Boolean value to stream
  * @return a reference to the output stream
  */
-std::ostream& operator<<(std::ostream& os, const TriBool& tribool)
+std::ostream &operator<<(std::ostream &os, const TriBool &tribool)
 {
   if (tribool.is_false()) {
-    return (os << "False");
+    return (os << "TriBool::FALSE");
   }
 
   if (tribool.is_true()) {
-    return (os << "True");
+    return (os << "TriBool::TRUE");
   }
 
-  return (os << "Uncertain");
+  return (os << "TriBool::UNCERTAIN");
 }

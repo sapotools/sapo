@@ -71,6 +71,14 @@ public:
   TriBool(const TriBool &orig);
 
   /**
+   * @brief Assignement operator
+   *
+   * @param orig is the original tri-Boolean object
+   * @return a reference to the updated object
+   */
+  TriBool &operator=(const TriBool &orig);
+
+  /**
    * @brief Test the value of a `TriBool` object
    *
    * This method checks whether the value of `*this`
@@ -762,11 +770,11 @@ inline bool is_uncertain(const TriBool &bool_value)
 
 /**
  * @brief Print a tri-Boolean in an output stream
- * 
+ *
  * @param os is the output stream
  * @param tribool is the tri-Boolean value to stream
  * @return a reference to the output stream
  */
-std::ostream& operator<<(std::ostream& os, const TriBool& tribool);
+std::ostream &operator<<(std::ostream &os, const TriBool &tribool);
 
 #endif // _TRIBOOL_H_
