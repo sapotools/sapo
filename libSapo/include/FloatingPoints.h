@@ -125,9 +125,13 @@ struct IEEE754WorkingType<double> {
   using sign_type = uint32_t;
 };
 
+#if (defined(__GNUC__) || defined(__GNUG__)) && not defined(__clang__)
+
 // avoid optimizations because of strict aliasing
 #pragma GCC push_options
 #pragma GCC optimize("O0")
+
+#endif
 
 /**
  * @brief A class to compute rounded floating point operations
@@ -904,6 +908,8 @@ std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
+#if (defined(__GNUC__) || defined(__GNUG__)) && not defined(__clang__)
 #pragma GCC pop_options
+#endif
 
 #endif // _FLOATING_POINTS_H_
