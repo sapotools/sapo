@@ -576,8 +576,8 @@ protected:
  * @return A linear system representing the provided linear systems
  */
 template<typename T, template<class, class> class CONTAINER>
-LinearSystem getConstraintsSystem(
-    const CONTAINER<Direction<> *, std::allocator<Direction<> *>> &constraints,
+LinearSystem<T> getConstraintsSystem(
+    const CONTAINER<Direction<T> *, std::allocator<Direction<T> *>> &constraints,
     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
 {
   using namespace LinearAlgebra;
@@ -600,7 +600,7 @@ LinearSystem getConstraintsSystem(
       b.push_back(dir.get_lower_bound() == 0 ? 0 : -dir.get_lower_bound());
     }
   }
-  return LinearSystem(std::move(A), std::move(b));
+  return LinearSystem<T>(std::move(A), std::move(b));
 }
 
 }

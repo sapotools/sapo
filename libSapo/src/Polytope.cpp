@@ -162,7 +162,7 @@ Polytope &Polytope::intersect_with(const Polytope &P)
   }
 
   for (unsigned int i = 0; i < P.size(); i++) {
-    if (!this->satisfies(P._A[i], P._b[i])) {
+    if (!is_true(this->satisfies(P._A[i], P._b[i]))) {
       (this->_A).push_back(P._A[i]);
       (this->_b).push_back(P._b[i]);
     }
@@ -222,11 +222,11 @@ Polytope over_approximate_union(const Polytope &P1, const Polytope &P2)
                std::domain_error);
   }
 
-  if (P1.is_empty()) {
+  if (is_true(P1.is_empty())) {
     return P2;
   }
 
-  if (P2.is_empty()) {
+  if (is_true(P2.is_empty())) {
     return P1;
   }
 
@@ -267,11 +267,11 @@ SetsUnion<Polytope> subtract_and_close(const Polytope &P1, const Polytope &P2)
 
   SetsUnion<Polytope> su;
 
-  if (P2.includes(P1)) {
+  if (is_true(P2.includes(P1))) {
     return su;
   }
 
-  if (are_disjoint(P1, P2)) {
+  if (!is_false(are_disjoint(P1, P2))) {
     su.add(P1);
 
     return su;

@@ -13,8 +13,8 @@
 inline bool epsilon_equivalent(const Polytope& P1,
                                const Polytope& P2, const double epsilon)
 {
-    return ((expand(P1, epsilon).includes(P2)) && 
-            (expand(P2, epsilon).includes(P1)));    
+    return is_true((expand(P1, epsilon).includes(P2)) && 
+                   (expand(P2, epsilon).includes(P1)));    
 }
 
 BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
@@ -50,10 +50,10 @@ BOOST_AUTO_TEST_CASE(test_parametric_transform_bundle)
 
     Bundle next = T(rSet, pSet);
 
-    BOOST_CHECK(next==Bundle(rA, {0,0,0}, {1,0.7,1.6}));
+    BOOST_CHECK(is_true(next==Bundle(rA, {0,0,0}, {1,0.7,1.6})));
 
     next = T(next, pSet);
-    BOOST_CHECK(next==Bundle(rA, {0,0,0}, {1,0.49,2.02}));
+    BOOST_CHECK(is_true(next==Bundle(rA, {0,0,0}, {1,0.49,2.02})));
 
     Dense::Matrix<double> errA1{
         {1,0,0,0},

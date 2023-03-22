@@ -887,7 +887,7 @@ Bundle &Bundle::canonize()
   }
 
   // if the bundle is empty
-  if (is_empty()) {
+  if (is_true(is_empty())) {
     return *this;
   }
 
@@ -900,7 +900,7 @@ Bundle &Bundle::canonize()
   return *this;
 }
 
-bool are_disjoint(const Bundle &A, const Bundle &B)
+TriBool are_disjoint(const Bundle &A, const Bundle &B)
 {
   if (A.dim() != B.dim()) {
     SAPO_ERROR("the two bundles must have the same dimension",
@@ -930,9 +930,7 @@ bool are_disjoint(const Bundle &A, const Bundle &B)
 
   SimplexMethodOptimizer<double> optimizer;
 
-  auto result = optimizer(ls_A, ls_b, Vector<double>(A.dim()));
-
-  return result.feasible_set_is_empty();
+  return !optimizer.is_feasible(ls_A, ls_b);
 }
 
 /**
@@ -942,44 +940,54 @@ bool are_disjoint(const Bundle &A, const Bundle &B)
  * of a bundle.
  *
  * @param[in] bundle is the tested bundle
- * @return `true` if and only if the current bundle is a
- *         subset of `bundle`
+ * @return `true` if the method can establish that this bundle
+ *         is a subset of `P`. `false` when it can establish that
+ *         this bundle is not a subset of `P`. `uncertain` in
+ *         the remaining cases
  */
-bool Bundle::is_subset_of(const Bundle &bundle) const
+TriBool Bundle::is_subset_of(const Bundle &bundle) const
 {
   // if this object is empty
-  if (this->is_empty()) {
+  if (is_true(this->is_empty())) {
     return true;
   }
 
   // if the parameter is empty and this object is not,
   // return false
-  if (bundle.is_empty()) {
+  if (is_true(bundle.is_empty())) {
     return false;
   }
+
+  TriBool is_sub{true};
 
   Polytope P_this = *this;
   // for each direction in the bundle
   for (unsigned int dir_idx = 0; dir_idx < bundle.size(); ++dir_idx) {
 
+    auto min_value = P_this.minimize(bundle.get_direction(dir_idx));
+
     // if the minimum of this object on that direction is lesser than
     // the bundle minimum, this object is not a subset of the bundle
-    if (P_this.minimize(bundle.get_direction(dir_idx)).objective_value()
-        < bundle.get_lower_bound(dir_idx)) {
-      return false;
+    is_sub
+        = is_sub
+          && (min_value.objective_value() >= bundle.get_lower_bound(dir_idx));
+    if (is_false(is_sub)) {
+      return is_sub;
     }
+
+    auto max_value = P_this.maximize(bundle.get_direction(dir_idx));
 
     // if the maximum of this object on that direction is greater than
     // the bundle maximum, this object is not a subset of the bundle
-    if (P_this.maximize(bundle.get_direction(dir_idx)).objective_value()
-        > bundle.get_upper_bound(dir_idx)) {
-      return false;
+    is_sub
+        = is_sub
+          && (max_value.objective_value() <= bundle.get_upper_bound(dir_idx));
+    if (is_false(is_sub)) {
+      return is_sub;
     }
   }
 
-  // if none of the previous conditions hold, this object is a
-  // subset for the bundle
-  return true;
+  return is_sub;
 }
 
 /**
@@ -989,36 +997,41 @@ bool Bundle::is_subset_of(const Bundle &bundle) const
  * current object are solutions for a linear system.
  *
  * @param ls is the considered linear system
- * @return `true` if and only if all the points of
- *          the current bundle are solutions for `ls`
+ * @return `true` if the method can establish that all the
+ *          points in the current bundle are solutions for
+ *          `ls`. `false` if it can establish that some of
+ *          of the points in the current bundle are not
+ *          solutions for `ls`. `uncertain` in the
+ *          remaining cases
  */
-bool Bundle::satisfies(const LinearSystem &ls) const
+TriBool Bundle::satisfies(const LinearSystem<double> &ls) const
 {
   // if this object is empty
-  if (this->is_empty()) {
+  if (is_true(this->is_empty())) {
     return true;
   }
 
   // if the parameter has no solutions and this object is not,
   // return false
-  if (!ls.has_solutions()) {
+  if (is_false(ls.has_solutions())) {
     return false;
   }
+
+  TriBool sat{true};
 
   Polytope P_this = *this;
   // for each direction in the bundle
   for (unsigned int dir_idx = 0; dir_idx < ls.size(); ++dir_idx) {
 
-    // if the maximum of this object on that direction is smaller than
-    // the bundle maximum, this object does not include the bundle
-    if (P_this.maximize(ls.A(dir_idx)).objective_value() > ls.b(dir_idx)) {
+    auto max_res = P_this.maximize(ls.A(dir_idx));
+
+    sat = sat && (max_res.objective_value() <= ls.b(dir_idx));
+    if (is_false(sat)) {
       return false;
     }
   }
 
-  // if none of the previous conditions hold, the bundle is a
-  // subset for this object
-  return true;
+  return sat;
 }
 
 /**
@@ -1288,7 +1301,7 @@ Bundle &Bundle::intersect_with(const Bundle &A)
  * @param ls is the intersecting linear system
  * @return a reference to the updated object
  */
-Bundle &Bundle::intersect_with(const LinearSystem &ls)
+Bundle &Bundle::intersect_with(const LinearSystem<double> &ls)
 {
   using namespace LinearAlgebra;
   using namespace LinearAlgebra::Dense;
@@ -1351,7 +1364,7 @@ Bundle &Bundle::intersect_with(const LinearSystem &ls)
 
 Bundle &Bundle::expand_by(const double delta)
 {
-  if (is_empty()) {
+  if (is_true(is_empty())) {
     return *this;
   }
 
@@ -1379,11 +1392,11 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
     SAPO_ERROR("the two bundles differ in dimensions", std::domain_error);
   }
 
-  if (b1.is_empty()) {
+  if (is_true(b1.is_empty())) {
     return b2;
   }
 
-  if (b2.is_empty()) {
+  if (is_true(b2.is_empty())) {
     return b1;
   }
 
@@ -1450,11 +1463,11 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
 SetsUnion<Bundle> subtract_and_close(const Bundle &b1, const Bundle &b2)
 {
   SetsUnion<Bundle> su;
-  if (b2.includes(b1)) {
+  if (is_true(b2.includes(b1))) {
     return su;
   }
 
-  if (are_disjoint(b1, b2)) {
+  if (is_true(are_disjoint(b1, b2))) {
     su.add(b1);
 
     return su;

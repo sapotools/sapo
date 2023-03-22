@@ -554,6 +554,27 @@ inline TriBool operator==(const TriBool &a, TriBool &&b)
  *
  * @param a is a tri-Boolean value
  * @param b is a tri-Boolean value
+ * @return a `TriBool` object `res` such that
+ *     `res.is_uncertain()` when either
+ *     `a.is_uncertain()` or `b.is_uncertain()`.
+ *     If `a._value==b._value` and `!a.is_uncertain()`,
+ *     then the method returns a `TriBool` object `res`
+ *     such that `res.is_true()`. When, instead,
+ *     `a._value!=b._value` and `!a.is_uncertain()`
+ *     and `!b.is_uncertain()`, the method
+ *     returns a `TriBool` object `res` such that
+ *     `res.is_false()`.
+ */
+inline TriBool operator==(TriBool &&a, TriBool &&b)
+{
+  return std::move(a) == b;
+}
+
+/**
+ * @brief Equality between tri-Boolean values
+ *
+ * @param a is a tri-Boolean value
+ * @param b is a tri-Boolean value
  * @return if `a` and `b` are reference to the same
  *      object, then a `TriBool` object `res` such that
  *     `res.is_true()`. When either `a.is_uncertain()`
@@ -567,14 +588,7 @@ inline TriBool operator==(const TriBool &a, TriBool &&b)
  *     returns a `TriBool` object `res` such that
  *     `res.is_false()`.
  */
-inline TriBool operator==(const TriBool &a, const TriBool &b)
-{
-  if (&a == &b) {
-    return true;
-  }
-
-  return TriBool(a) == b;
-}
+TriBool operator==(const TriBool &a, const TriBool &b);
 
 /**
  * @brief Inequality between tri-Boolean values
@@ -640,6 +654,20 @@ inline TriBool operator!=(const TriBool &a, const TriBool &b)
 inline TriBool operator!(const TriBool &a)
 {
   return !TriBool(a);
+}
+
+/**
+ * @brief Tri-Boolean logic conjunction
+ *
+ * @param a is a tri-Boolean value
+ * @param b is a tri-Boolean value
+ * @return a copy of `b` when either `a.is_uncertain()`
+ *     and `b.is_false()` or `a.is_true()`. In the
+ *     remaining cases, this method returns `a`.
+ */
+inline TriBool operator&&(TriBool &&a, TriBool &&b)
+{
+  return std::move(a) && b;
 }
 
 /**

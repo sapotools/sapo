@@ -32,7 +32,7 @@ class SetsUnion;
  * provides some set-based methods and functions
  * such as `is_empty` or `intersect`.
  */
-class Polytope : public LinearSystem
+class Polytope : public LinearSystem<double>
 {
 
 private:
@@ -45,21 +45,21 @@ public:
   /**
    * Constructor that instantiates a unbounded polytope
    */
-  Polytope(): LinearSystem() {}
+  Polytope(): LinearSystem<double>() {}
 
   /**
    * Copy constructor
    *
    * @param[in] orig the original polytope
    */
-  Polytope(const Polytope &orig): LinearSystem(orig) {}
+  Polytope(const Polytope &orig): LinearSystem<double>(orig) {}
 
   /**
    * Swap constructor
    *
    * @param[in] orig the original polytope
    */
-  Polytope(Polytope &&orig): LinearSystem(orig) {}
+  Polytope(Polytope &&orig): LinearSystem<double>(orig) {}
 
   /**
    * Constructor
@@ -70,7 +70,7 @@ public:
    */
   Polytope(const std::vector<std::vector<double>> &A,
            const std::vector<double> &b):
-      LinearSystem(A, b)
+      LinearSystem<double>(A, b)
   {
   }
 
@@ -81,7 +81,7 @@ public:
    * @param[in] b offset vector
    */
   Polytope(std::vector<std::vector<double>> &&A, std::vector<double> &&b):
-      LinearSystem(A, b)
+      LinearSystem<double>(A, b)
   {
   }
 
@@ -94,7 +94,7 @@ public:
    */
   Polytope(const std::vector<SymbolicAlgebra::Symbol<>> &vars,
            const std::vector<SymbolicAlgebra::Expression<>> &constraints):
-      LinearSystem(vars, constraints)
+      LinearSystem<double>(vars, constraints)
   {
   }
 
@@ -106,7 +106,7 @@ public:
    */
   Polytope &operator=(const Polytope &orig)
   {
-    static_cast<LinearSystem *>(this)->operator=(orig);
+    static_cast<LinearSystem<double> *>(this)->operator=(orig);
 
     return *this;
   }
@@ -119,7 +119,7 @@ public:
    */
   Polytope &operator=(Polytope &&orig)
   {
-    static_cast<LinearSystem *>(this)->operator=(orig);
+    static_cast<LinearSystem<double> *>(this)->operator=(orig);
 
     return *this;
   }
@@ -129,9 +129,11 @@ public:
    *
    * @param[in] strict_inequality specifies whether the polytope is
    *         defined by a strict inequality (i.e., Ax < b).
-   * @return `true` if and only if the polytope is empty
+   * @return `true` when it can establish that the polytope is
+   *         empty. `false` when it can establish that the polytope
+   *         is not empty. `uncertain` in the other cases
    */
-  inline bool is_empty(const bool strict_inequality = false) const
+  inline TriBool is_empty(const bool strict_inequality = false) const
   {
     return !this->has_solutions(strict_inequality);
   }
@@ -139,9 +141,11 @@ public:
   /**
    * Establish whether a polytope interior is empty
    *
-   * @return `true` if and only if the polytope interior is empty
+   * @return `true` when it can establish that the polytope interior
+   *         is empty. `false` when it can establish that the polytope
+   *         interior is not empty. `uncertain` in the other cases
    */
-  inline bool is_interior_empty() const
+  inline TriBool is_interior_empty() const
   {
     return !this->has_solutions(true);
   }
@@ -154,9 +158,12 @@ public:
    *
    * @param[in] P is the polytope that are compared to the current
    *             object
-   * @return `true` if and only if this polytope is a subset of `P`
+   * @return `true` if the method can establish that this polytope
+   *         is a subset of `P`. `false` when it can establish that
+   *         this polytope is not a subset of `P`. `uncertain` in
+   *         the remaining cases
    */
-  inline bool is_subset_of(const Polytope &P) const
+  inline TriBool is_subset_of(const Polytope &P) const
   {
     return this->satisfies(P);
   }
@@ -169,9 +176,12 @@ public:
    *
    * @param[in] P is the polytope that are compared to the current
    *             object
-   * @return `true` if and only if this polytope is a superset of `P`
+   * @return `true` if the method can establish that this polytope
+   *         is a superset of `P`. `false` when it can establish that
+   *         this polytope is not a superset of `P`. `uncertain` in
+   *         the remaining cases
    */
-  inline bool includes(const Polytope &P) const
+  inline TriBool includes(const Polytope &P) const
   {
     return P.satisfies(*this);
   }
@@ -283,8 +293,12 @@ public:
  * @param P1 is a polytope
  * @param P2 is a polytope
  * @return `true` if and only if `P1` and `P2` are disjoint
+ * @return `true` if the method can establish that `P1` and `P2`
+ *         are disjoint. `false` when it can establish that
+ *         `P1` and `P2` are not disjoint. `uncertain` in
+ *         the remaining cases
  */
-inline bool are_disjoint(const Polytope &P1, const Polytope &P2)
+inline TriBool are_disjoint(const Polytope &P1, const Polytope &P2)
 {
   return have_disjoint_solutions(P1, P2);
 }

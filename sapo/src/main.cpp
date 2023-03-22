@@ -145,7 +145,7 @@ void output_synthesis(OSTREAM &os, const Model *model,
   os << OF::field_separator() << OF::field_begin("task") << "\"synthesis\""
      << OF::field_end() << OF::field_separator() << OF::field_begin("data");
 
-  if (every_set_is_empty(synth_params)) {
+  if (is_true(every_set_is_empty(synth_params))) {
     os << OF::empty_list();
   } else {
     os << OF::list_begin();
@@ -272,7 +272,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model,
 
   std::vector<Flowpipe> flowpipes(synth_params.size());
 
-  if (!every_set_is_empty(synth_params)) {
+  if (!is_true(every_set_is_empty(synth_params))) {
 #ifdef WITH_THREADS
     auto compute_reachability
         = [&flowpipes, &sapo, &model, &accounter](

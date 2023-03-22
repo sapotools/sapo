@@ -99,6 +99,41 @@ TriBool operator==(TriBool &&a, const TriBool &b)
 }
 
 /**
+ * @brief Equality between tri-Boolean values
+ *
+ * @param a is a tri-Boolean value
+ * @param b is a tri-Boolean value
+ * @return if `a` and `b` are reference to the same
+ *      object, then a `TriBool` object `res` such that
+ *     `res.is_true()`. When either `a.is_uncertain()`
+ *     or `b.is_uncertain()`, a  `TriBool` object `res`
+ *     such that `res.is_uncertain()`.
+ *     If `a._value==b._value` and `!a.is_uncertain()`,
+ *     then the method returns a `TriBool` object `res`
+ *     such that `res.is_true()`. When, instead,
+ *     `a._value!=b._value` and `!a.is_uncertain()`
+ *     and `!b.is_uncertain()`, the method
+ *     returns a `TriBool` object `res` such that
+ *     `res.is_false()`.
+ */
+TriBool operator==(const TriBool &a, const TriBool &b)
+{
+  if (&a == &b) {
+    return true;
+  }
+
+  if (is_uncertain(a) || is_uncertain(b)) {
+    return TriBool::UNCERTAIN;
+  }
+
+  if (is_true(a)) {
+    return is_true(b);
+  }
+
+  return is_false(b);
+}
+
+/**
  * @brief Inequality between tri-Boolean values
  *
  * @param a is a tri-Boolean value

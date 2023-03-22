@@ -83,7 +83,7 @@ public:
 private:
   Evolver<double> *_evolver; //!< the dynamical system evolver
 
-  const LinearSystem assumptions;
+  const LinearSystem<double> assumptions;
 
   /**
    * @brief Parameter synthesis
@@ -313,7 +313,7 @@ public:
   InvariantValidationResult
   check_invariant(const SetsUnion<Bundle> &init_set,
                   const SetsUnion<Polytope> &pSet,
-                  const LinearSystem &invariant_candidate,
+                  const LinearSystem<double> &invariant_candidate,
                   ProgressAccounter *accounter = NULL);
 
   /**
@@ -326,18 +326,26 @@ public:
  * Test whether all the sets in a list are empty
  *
  * @param[in] sets is a list of sets
- * @returns `true` if and only if all the sets in `sets` are empty
+ * @returns `true` when the function establishes that either
+ *          `sets` has null size or every set in `sets` is
+ *          empty. `false` if the function establishes that
+ *          `sets` contains one non-empty set. `uncertain` in
+ *          the remaining cases
  */
 template<class T>
-bool every_set_is_empty(const std::list<T> &sets)
+TriBool every_set_is_empty(const std::list<T> &sets)
 {
+  TriBool res{true};
+
   for (auto s_it = std::begin(sets); s_it != std::end(sets); ++s_it) {
-    if (!s_it->is_empty()) {
-      return false;
+
+    res = res && s_it->is_empty();
+    if (is_false(res)) {
+      return res;
     }
   }
 
-  return true;
+  return res;
 }
 
 #endif /* SAPO_H_ */

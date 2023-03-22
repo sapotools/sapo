@@ -109,4 +109,94 @@ public:
   friend void swap(Parallelotope &A, Parallelotope &B);
 };
 
+/**
+ * @brief Test whether two sets are the same
+ *
+ * @param A is a polytope
+ * @param B is a parallelotope
+ * @return `true` when the method can establish that `A` and `B`
+ *         represent the same set. `false` when it can
+ *         establish `A` and `B` differ. `uncertain` in the
+ *         remaining cases
+ */
+inline TriBool operator==(const Polytope &A, const Parallelotope &B)
+{
+  return static_cast<Polytope>(B) == A;
+}
+
+/**
+ * @brief Test whether two sets are the same
+ *
+ * @param A is a parallelotope
+ * @param B is a polytope
+ * @return `true` when the method can establish that `A` and `B`
+ *         represent the same set. `false` when it can
+ *         establish `A` and `B` differ. `uncertain` in the
+ *         remaining cases
+ */
+inline TriBool operator==(const Parallelotope &A, const Polytope &B)
+{
+  return B == A;
+}
+
+/**
+ * @brief Test whether two parallelotopes are the same
+ *
+ * @param A is a parallelotope
+ * @param B is a parallelotope
+ * @return `true` when the method can establish that `A` and `B`
+ *         represent the same set. `false` when it can
+ *         establish `A` and `B` differ. `uncertain` in the
+ *         remaining cases
+ */
+inline TriBool operator==(const Parallelotope &A, const Parallelotope &B)
+{
+  return static_cast<Polytope>(A) == static_cast<Polytope>(B);
+}
+
+/**
+ * @brief Test whether two sets differ
+ *
+ * @param A is a polytope
+ * @param B is a parallelotope
+ * @return `true` when the method can establish that `A` and `B`
+ *         differ. `false` when it can establish `A` and `B`
+ *         represent the same set. `uncertain` in the remaining
+ *         cases
+ */
+inline TriBool operator!=(const Polytope &A, const Parallelotope &B)
+{
+  return !(A == B);
+}
+
+/**
+ * @brief Test whether two sets differ
+ *
+ * @param A is a parallelotope
+ * @param B is a polytope
+ * @return `true` when the method can establish that `A` and `B`
+ *         differ. `false` when it can establish `A` and `B`
+ *         represent the same set. `uncertain` in the remaining
+ *         cases
+ */
+inline TriBool operator!=(const Parallelotope &A, const Polytope &B)
+{
+  return !(A == B);
+}
+
+/**
+ * @brief Test whether two parallelotopes differ
+ *
+ * @param A is a parallelotope
+ * @param B is a parallelotope
+ * @return `true` when the method can establish that `A` and `B`
+ *         differ. `false` when it can establish `A` and `B`
+ *         represent the same set. `uncertain` in the remaining
+ *         cases
+ */
+inline TriBool operator!=(const Parallelotope &A, const Parallelotope &B)
+{
+  return !(A == B);
+}
+
 #endif /* PARALLELOTOPE_H_ */

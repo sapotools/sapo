@@ -178,22 +178,22 @@ BOOST_AUTO_TEST_CASE(test_has_solutions_linear_systems)
     LinearSystem ls(A,b);
 
     // Test non-empty solution set
-    BOOST_CHECK(!ls.has_solutions());
+    BOOST_CHECK(is_false(ls.has_solutions()));
 
     b[3]=-1;
     ls = LinearSystem(A,b);
 
     // Test non-empty solution set
-    BOOST_CHECK(ls.has_solutions());
+    BOOST_CHECK(is_true(ls.has_solutions()));
 
     // Test non-empty interior
-    BOOST_CHECK(!ls.has_solutions(true));
+    BOOST_CHECK(is_false(ls.has_solutions(true)));
 
     b[3]=1;
     ls = LinearSystem(A,b);
 
     // Test non-empty interior
-    BOOST_CHECK(ls.has_solutions());
+    BOOST_CHECK(is_true(ls.has_solutions()));
 }
 
 BOOST_AUTO_TEST_CASE(test_simplify_linear_systems)
@@ -236,15 +236,15 @@ BOOST_AUTO_TEST_CASE(test_simplify_linear_systems)
                  ls2(B,{1,2,7,2,3,3,2,1}),
                  ls3(C,{1,7,2,3,3,2,1,7});
 
-    BOOST_CHECK(ls1.get_simplified()==ls1);
-    BOOST_CHECK(ls2.get_simplified()==ls1);
-    BOOST_CHECK(ls3.get_simplified()==ls1);
+    BOOST_CHECK(is_true(ls1.get_simplified()==ls1));
+    BOOST_CHECK(is_true(ls2.get_simplified()==ls1));
+    BOOST_CHECK(is_true(ls3.get_simplified()==ls1));
 
     ls1.simplify();
     ls2.simplify();
     ls3.simplify();
 
-    BOOST_CHECK(LinearSystem(A,{1,2,3,3,2,1})==ls1);
-    BOOST_CHECK(ls2==ls1);
-    BOOST_CHECK(ls3==ls1);
+    BOOST_CHECK(is_true(LinearSystem(A,{1,2,3,3,2,1})==ls1));
+    BOOST_CHECK(is_true(ls2==ls1));
+    BOOST_CHECK(is_true(ls3==ls1));
 }

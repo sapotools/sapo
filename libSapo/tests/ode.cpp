@@ -24,8 +24,8 @@ typedef boost::mpl::list<double> test_types;
 inline bool epsilon_equivalent(const Polytope& P1,
                                const Polytope& P2, const double epsilon)
 {
-    return ((expand(P1, epsilon).includes(P2)) && 
-            (expand(P2, epsilon).includes(P1)));    
+    return is_true(((expand(P1, epsilon).includes(P2)) && 
+                   (expand(P2, epsilon).includes(P1))));    
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_ode, T, test_types)

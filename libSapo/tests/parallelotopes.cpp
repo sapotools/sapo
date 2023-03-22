@@ -47,14 +47,14 @@ BOOST_AUTO_TEST_CASE(test_parallelotope)
         {0,0,-1},
     };
 
-    BOOST_CHECK(p1==Polytope(Ap, {1,2,3,3,2,1}));
-    BOOST_CHECK(p1!=Polytope(Ap, {1,2,3,7,2,1}));
+    BOOST_CHECK(is_true(p1==Polytope(Ap, {1,2,3,3,2,1})));
+    BOOST_CHECK(is_true(p1!=Polytope(Ap, {1,2,3,7,2,1})));
 
     // The following commented test fails because of approximation errors
     // BOOST_CHECK((Polytope)p2==Polytope(Bp, {2,5,3,-1,-1,-1}));
 
-    BOOST_CHECK(p2!=Polytope(Bp, {1,5,3,4,-1,-1}));
-    BOOST_CHECK(p1!=p2);
+    BOOST_CHECK(is_true(p2!=Polytope(Bp, {1,5,3,4,-1,-1})));
+    BOOST_CHECK(is_true(p1!=p2));
 }
 
 BOOST_AUTO_TEST_CASE(test_parallelotope_error)

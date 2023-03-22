@@ -160,7 +160,7 @@ public:
    */
   bool add(const BASIC_SET_TYPE &set_obj)
   {
-    if (set_obj.is_empty()) {
+    if (is_true(set_obj.is_empty())) {
       return false;
     }
 
@@ -176,7 +176,7 @@ public:
     for (auto c_it = std::begin(_classes); c_it != std::end(_classes);) {
 
       // if it is not disjoint
-      if (!are_disjoint(c_it->sets_union, set_obj)) {
+      if (!is_true(are_disjoint(c_it->sets_union, set_obj))) {
 
         // reverse the class sets union in `jc_union`.
         // Since all the classes are disjoint by definition
@@ -212,7 +212,7 @@ public:
    * This method works in-place and changes the calling object.
    *
    * @param[in] sets_union is a sets union
-   * @return a reference to the updated object
+   * @return `true` if and only if this object has changed
    */
   bool update(const SetsUnion<BASIC_SET_TYPE> &sets_union)
   {
@@ -230,45 +230,59 @@ public:
    * @brief Test whether any of the sets in the union includes a set
    *
    * @param set_obj is the set whose inclusion has to be tested
-   * @return `true` if and only if any of the set in the sticky union
-   *     includes `set_obj`
+   * @return `true` if the method establishes that the set in the
+   *         sticky union includes `set_obj`. `false` if the method
+   *         establishes that the set in the sticky union does not
+   *         includes `set_obj`. `uncertain` in the remaining cases
    */
-  bool any_includes(const BASIC_SET_TYPE &set_obj) const
+  TriBool any_includes(const BASIC_SET_TYPE &set_obj) const
   {
-    if (set_obj.is_empty()) {
+    if (is_true(set_obj.is_empty())) {
       return true;
     }
+
+    TriBool res{false};
 
     // for each class
     for (auto c_it = std::begin(_classes); c_it != std::end(_classes);
          ++c_it) {
 
+      res = res || c_it->sets_union.any_includes(set_obj);
+
       // if the class over-approximation includes
-      if (c_it->sets_union.any_includes(set_obj)) {
-        return true;
+      if (is_true(res)) {
+        return res;
       }
     }
 
-    return false;
+    return res;
   }
 
   /**
    * @brief Test whether a sticky union includes a sets union
    *
    * @param sets_union is the sets union whose inclusion has to be tested
-   * @return `true` if and only if for any set in `sets_union` there exists a
-   *     set in the current object that includes it
+   * @return `true` if the method establishes that for any set `S` in
+   *         `sets_union` there exists a set `T` in this sticky union
+   *         such that `S` is included in `T`. `false` if the method
+   *         establishes that there exists a set `S` in `set_union`
+   *         that is not contained by any set in this sticky union.
+   *         `uncertain` in the remaining cases
    */
-  bool any_includes(const SetsUnion<BASIC_SET_TYPE> &sets_union) const
+  TriBool any_includes(const SetsUnion<BASIC_SET_TYPE> &sets_union) const
   {
+    TriBool res{true};
+
     for (auto s_it = std::begin(sets_union); s_it != std::end(sets_union);
          ++s_it) {
-      if (!any_includes(*s_it)) {
-        return false;
+
+      res = res && any_includes(*s_it);
+      if (is_false(res)) {
+        return res;
       }
     }
 
-    return true;
+    return res;
   }
 
   /**
@@ -277,24 +291,35 @@ public:
    * @param set_obj is the set whose inclusion has to be tested
    * @return `true` if and only if the over-approximation of the union of
    *  one of the \f$\approx_{\textrm{in}}\f$-classes includes `set_obj`
+   * @return `true` if the method can establish that the
+   *         over-approximation of the union of one of the
+   *         \f$\approx_{\textrm{in}}\f$-classes includes `set_obj`.
+   *         `false` when the method can establish that none of the
+   *         union over-approximations of the
+   *         \f$\approx_{\textrm{in}}\f$-classes includes `set_obj`.
+   *         `uncertain` in the remaining cases
    */
-  bool includes(const BASIC_SET_TYPE &set_obj) const
+  TriBool includes(const BASIC_SET_TYPE &set_obj) const
   {
-    if (set_obj.is_empty()) {
+    if (is_true(set_obj.is_empty())) {
       return true;
     }
+
+    TriBool res{false};
 
     // for each class
     for (auto c_it = std::begin(_classes); c_it != std::end(_classes);
          ++c_it) {
 
+      res = res || c_it->over_approx.includes(set_obj);
+
       // if the class over-approximation includes
-      if (c_it->over_approx.includes(set_obj)) {
-        return true;
+      if (is_true(res)) {
+        return res;
       }
     }
 
-    return false;
+    return res;
   }
 
   /**
@@ -302,19 +327,26 @@ public:
    * union
    *
    * @param sets_union is the sets union whose inclusion has to be tested
-   * @return `true` if and only if the over-approximation of the union of
-   *  one of the \f$\approx_{\textrm{in}}\f$-classes includes `sets_union`
+   * @return `true` if the method can establish that the over-approximation
+   *         of the union of one of the \f$\approx_{\textrm{in}}\f$-classes
+   *         includes `sets_union`. `false` when the method can establish
+   *         that none of the union over-approximations of the
+   *         \f$\approx_{\textrm{in}}\f$-classes includes `sets_union`.
+   *         `uncertain` in the remaining cases
    */
-  bool includes(const SetsUnion<BASIC_SET_TYPE> &sets_union) const
+  TriBool includes(const SetsUnion<BASIC_SET_TYPE> &sets_union) const
   {
+    TriBool res{false};
+
     for (auto s_it = std::begin(sets_union); s_it != std::end(sets_union);
          ++s_it) {
-      if (!includes(*s_it)) {
-        return false;
+      res = res || includes(*s_it);
+      if (is_true(res)) {
+        return res;
       }
     }
 
-    return true;
+    return res;
   }
 
   /**
@@ -328,7 +360,7 @@ public:
    * @return `true` if and only if all the points in the over-approximation of
    *          the classes of the current object are solutions for `ls`
    */
-  bool satisfies(const LinearSystem &ls) const
+  bool satisfies(const LinearSystem<double> &ls) const
   {
     if (ls.size() == 0) {
       return true;
@@ -354,7 +386,7 @@ public:
    * @return `true` if and only if all the points in the basic sets of the
    *         current object are solutions for `ls`
    */
-  bool exact_satisfies(const LinearSystem &ls) const
+  bool exact_satisfies(const LinearSystem<double> &ls) const
   {
     if (ls.size() == 0) {
       return true;

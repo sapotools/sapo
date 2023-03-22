@@ -86,7 +86,7 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
 
     // TODO: check whether there is any chance for a transformed bundle to
     // be empty
-    if (!nbundle.is_empty()) {
+    if (!is_true(nbundle.is_empty())) {
       // split if necessary the new reached bundle and add the resulting
       // bundles to the nbundles list
       nbundles.splice(nbundles.end(),
@@ -208,7 +208,7 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
 
       // TODO: check whether there is any chance for a transformed bundle to
       // be empty
-      if (!bls.is_empty()) {
+      if (!is_true(bls.is_empty())) {
         // split if necessary the new reached bundle and add the resulting
         // bundles to the nbundles list
         nbundles[pos].splice(nbundles[pos].end(),
@@ -473,7 +473,7 @@ std::list<SetsUnion<Polytope>> Sapo::synthesize(
     accounter->increase_performed_to(already_performed_steps);
   }
 
-  while (every_set_is_empty(res) && num_of_splits++ < max_splits) {
+  while (is_true(every_set_is_empty(res)) && (num_of_splits++ < max_splits)) {
     pSetList = get_a_finer_covering(pSetList);
 
     res = synthesize_list(*this, init_set, pSetList, formula, accounter);
@@ -647,7 +647,7 @@ SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
     SetsUnion<Polytope> P1
         = this->synthesize(init_set, pSet, formula->get_left_subformula());
 
-    if (P1.is_empty()) {
+    if (is_true(P1.is_empty())) {
       return P1; // false until
     } else {
       return transition_and_synthesis(init_set, P1, formula, time);
@@ -660,7 +660,7 @@ SetsUnion<Polytope> Sapo::synthesize(const Bundle &init_set,
     SetsUnion<Polytope> P1
         = this->synthesize(init_set, pSet, formula->get_left_subformula());
 
-    if (P1.is_empty()) {
+    if (is_true(P1.is_empty())) {
       return this->synthesize(init_set, pSet, formula->get_right_subformula());
     }
 
@@ -710,7 +710,7 @@ Sapo::synthesize(const Bundle &init_set, const SetsUnion<Polytope> &pSet,
     SetsUnion<Polytope> P
         = this->synthesize(init_set, pSet, formula->get_subformula());
 
-    if (P.is_empty()) {
+    if (is_true(P.is_empty())) {
       return P;
     }
 
@@ -783,7 +783,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
   auto T_reached = reached_set;
   for (unsigned int k = 1; k < max_k; ++k) {
     T_reached = evolver->operator()(T_reached);
-    if (reached_set.includes(T_reached)) {
+    if (is_true(reached_set.includes(T_reached))) {
       return k;
     }
     T_reached = intersect(reached_set, T_reached);
@@ -791,7 +791,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
   T_reached = evolver->operator()(T_reached);
 
-  if (reached_set.includes(T_reached)) {
+  if (is_true(reached_set.includes(T_reached))) {
     return max_k;
   }
 
@@ -812,7 +812,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
   auto T_reached = reached_set;
   for (unsigned int k = 1; k < max_k; ++k) {
     T_reached = T(T_reached);
-    if (reached_set.includes(T_reached)) {
+    if (is_true(reached_set.includes(T_reached))) {
       return k;
     }
     T_reached = intersect(reached_set, T_reached);
@@ -820,7 +820,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
   T_reached = T(T_reached);
 
-  if (reached_set.includes(T_reached)) {
+  if (is_true(reached_set.includes(T_reached))) {
     return max_k;
   }
 
@@ -835,7 +835,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
   auto T_reached = reached_set;
   for (unsigned int k = 1; k < max_k; ++k) {
     T_reached = evolver->operator()(T_reached);
-    if (reached_set.includes(T_reached)) {
+    if (is_true(reached_set.includes(T_reached))) {
       return k;
     }
     T_reached = intersect(reached_set, T_reached);
@@ -843,7 +843,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
   T_reached = evolver->operator()(T_reached);
 
-  if (reached_set.includes(T_reached)) {
+  if (is_true(reached_set.includes(T_reached))) {
     return max_k;
   }
 
@@ -864,7 +864,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
   auto T_reached = reached_set;
   for (unsigned int k = 1; k < max_k; ++k) {
     T_reached = T(T_reached);
-    if (reached_set.includes(T_reached)) {
+    if (is_true(reached_set.includes(T_reached))) {
       return k;
     }
     T_reached = intersect(reached_set, T_reached);
@@ -872,7 +872,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
   T_reached = T(T_reached);
 
-  if (reached_set.includes(T_reached)) {
+  if (is_true(reached_set.includes(T_reached))) {
     return max_k;
   }
 
@@ -929,22 +929,22 @@ Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
 }
 
 /// @ private
-inline bool is_reached_set_invariant(Evolver<double> *evolver,
-                                     const SetsUnion<Bundle> &reached_set,
-                                     const SetsUnion<Bundle> &Tk)
+inline TriBool is_reached_set_invariant(Evolver<double> *evolver,
+                                        const SetsUnion<Bundle> &reached_set,
+                                        const SetsUnion<Bundle> &Tk)
 {
   return reached_set.includes(evolver->operator()(Tk));
 }
 
 /// @ private
-bool is_reached_set_invariant(Evolver<double> *evolver,
-                              const SetsUnion<Bundle> &reached_set,
-                              const SetsUnion<Polytope> &param_set,
-                              const SetsUnion<Bundle> &Tk)
+TriBool is_reached_set_invariant(Evolver<double> *evolver,
+                                 const SetsUnion<Bundle> &reached_set,
+                                 const SetsUnion<Polytope> &param_set,
+                                 const SetsUnion<Bundle> &Tk)
 {
   // alias the transformation function
   auto T = [&evolver, &param_set](const SetsUnion<Bundle> &set) {
-    return evolver->operator()(set, param_set);
+    return (*evolver)(set, param_set);
   };
 
   return reached_set.includes(T(Tk));
@@ -1048,9 +1048,11 @@ void update_reached_set_and_approx(SetsUnion<Bundle> &Tk_approx,
  * in which `invariant_candidate` has been disproved to be
  * a `k`-invariant
  */
-InvariantValidationResult Sapo::check_invariant(
-    const SetsUnion<Bundle> &init_set, const SetsUnion<Polytope> &pSet,
-    const LinearSystem &invariant_candidate, ProgressAccounter *accounter)
+InvariantValidationResult
+Sapo::check_invariant(const SetsUnion<Bundle> &init_set,
+                      const SetsUnion<Polytope> &pSet,
+                      const LinearSystem<double> &invariant_candidate,
+                      ProgressAccounter *accounter)
 {
   using namespace LinearAlgebra;
 
@@ -1065,7 +1067,7 @@ InvariantValidationResult Sapo::check_invariant(
 
   flowpipe.push_back(init_set);
 
-  if (!init_set.satisfies(invariant_candidate)) {
+  if (is_false(init_set.satisfies(invariant_candidate))) {
 
     // if init_set does not satisfies the invariant candidate
     // return false, 0
@@ -1089,7 +1091,7 @@ InvariantValidationResult Sapo::check_invariant(
                                      const SetsUnion<Bundle> &Tk,
                                      const unsigned int &max_k) {
     if (sapo->join_approx == Sapo::NO_APPROX) {
-      bool invariant;
+      TriBool invariant;
       if (sapo->dynamical_system().parameters().size() > 0) {
         invariant
             = is_reached_set_invariant(sapo->evolver(), reached_set, pSet, Tk);
@@ -1097,7 +1099,7 @@ InvariantValidationResult Sapo::check_invariant(
         invariant = is_reached_set_invariant(sapo->evolver(), reached_set, Tk);
       }
 
-      return static_cast<unsigned int>(invariant ? 1 : 0);
+      return static_cast<unsigned int>(is_true(invariant) ? 1 : 0);
     }
 
     if (sapo->dynamical_system().parameters().size() > 0) {
@@ -1125,7 +1127,7 @@ InvariantValidationResult Sapo::check_invariant(
     flowpipe.push_back(new_Tk);
 
     // when the last reached region is included in the previous one
-    if (Tk.includes(new_Tk)) {
+    if (is_true(Tk.includes(new_Tk))) {
       if (dynamical_system().parameters().size() > 0) {
         return {InvariantValidationResult::PROVED, std::move(flowpipe),
                 get_k_invariant_proof(evolver(), Tk, pSet, 0)};
@@ -1138,7 +1140,7 @@ InvariantValidationResult Sapo::check_invariant(
     update_reached_set_and_approx(Tk_approx, reached_set, Tk, over_Tk_approx,
                                   cse, *this);
 
-    if (!Tk.satisfies(invariant_candidate)) {
+    if (is_false(Tk.satisfies(invariant_candidate))) {
 
       // if Tk(init_set) does not satisfies the invariant candidate
       // return false, k
@@ -1146,7 +1148,7 @@ InvariantValidationResult Sapo::check_invariant(
               Flowpipe()};
     }
 
-    if (!reached_set.satisfies(invariant_candidate)) {
+    if (is_false(reached_set.satisfies(invariant_candidate))) {
       reached_set = Tk;
       k = 0;
     }

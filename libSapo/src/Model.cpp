@@ -27,13 +27,13 @@ Model::Model(const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
 }
 
 void Model::validate_parameters(
-    const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-    const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
+    const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
     const Bundle &init_set, const SetsUnion<Polytope> &parameter_set)
 {
   using namespace SymbolicAlgebra;
-  std::set<Symbol<>> dyn_symbols;
+  std::set<Symbol<double>> dyn_symbols;
 
   for (const auto &dyn: dynamics) {
     auto symbols = dyn.get_symbols();
@@ -93,7 +93,7 @@ Model &Model::set_specification(std::shared_ptr<STL::STL> specification)
   return *this;
 }
 
-Model &Model::set_assumptions(const LinearSystem &assumptions)
+Model &Model::set_assumptions(const LinearSystem<double> &assumptions)
 {
   if (assumptions.size() > 0 && assumptions.dim() != dim()) {
     SAPO_ERROR("the assumptions space and the model variables differ "
@@ -101,12 +101,12 @@ Model &Model::set_assumptions(const LinearSystem &assumptions)
                std::domain_error);
   }
 
-  _assumptions = LinearSystem(assumptions);
+  _assumptions = LinearSystem<double>(assumptions);
 
   return *this;
 }
 
-Model &Model::set_invariant(const LinearSystem &invariant)
+Model &Model::set_invariant(const LinearSystem<double> &invariant)
 {
   if (invariant.size() > 0 && invariant.dim() != dim()) {
     SAPO_ERROR("the invariant space and the model variables differ "
@@ -114,23 +114,23 @@ Model &Model::set_invariant(const LinearSystem &invariant)
                std::domain_error);
   }
 
-  _invariant = LinearSystem(invariant);
+  _invariant = LinearSystem<double>(invariant);
 
   return *this;
 }
 
 DiscreteModel::DiscreteModel(
-    const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+    const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
     const Bundle &init_set, const std::string name):
     DiscreteModel(variables, {}, dynamics, init_set, {}, name)
 {
 }
 
 DiscreteModel::DiscreteModel(
-    const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-    const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-    const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
+    const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
     const Bundle &init_set, const SetsUnion<Polytope> &param_set,
     const std::string name):
     Model(init_set, param_set, name),

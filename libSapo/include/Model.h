@@ -36,8 +36,8 @@ protected:
 
   std::shared_ptr<STL::STL> _spec; //!< a specification
 
-  LinearSystem _assumptions; //!< The assumptions
-  LinearSystem _invariant;   //!< The candidate invariant
+  LinearSystem<double> _assumptions; //!< The assumptions
+  LinearSystem<double> _invariant;   //!< The candidate invariant
 
   std::string _name; //!< The model name
 
@@ -54,9 +54,9 @@ protected:
    * @param param_set is the set of the parameter
    */
   static void validate_parameters(
-      const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-      const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-      const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
+      const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+      const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
+      const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
       const Bundle &init_set, const SetsUnion<Polytope> &parameter_set);
 
 public:
@@ -105,7 +105,7 @@ public:
    *
    * @return a reference to the model variables
    */
-  inline const std::vector<SymbolicAlgebra::Symbol<>> &variables() const
+  inline const std::vector<SymbolicAlgebra::Symbol<double>> &variables() const
   {
     return this->dynamical_system().variables();
   }
@@ -115,7 +115,7 @@ public:
    *
    * @return a reference to the model parameters
    */
-  inline const std::vector<SymbolicAlgebra::Symbol<>> &parameters() const
+  inline const std::vector<SymbolicAlgebra::Symbol<double>> &parameters() const
   {
     return this->dynamical_system().parameters();
   }
@@ -125,7 +125,8 @@ public:
    *
    * @return a reference to the model dynamic laws
    */
-  inline const std::vector<SymbolicAlgebra::Expression<>> &dynamics() const
+  inline const std::vector<SymbolicAlgebra::Expression<double>> &
+  dynamics() const
   {
     return this->dynamical_system().dynamics();
   }
@@ -172,7 +173,7 @@ public:
    *
    * @return a reference to the model assumptions
    */
-  inline const LinearSystem &assumptions() const
+  inline const LinearSystem<double> &assumptions() const
   {
     return this->_assumptions;
   }
@@ -182,7 +183,7 @@ public:
    *
    * @return a reference to the candidate model invariant
    */
-  inline const LinearSystem &invariant() const
+  inline const LinearSystem<double> &invariant() const
   {
     return this->_invariant;
   }
@@ -192,14 +193,14 @@ public:
    *
    * @return a reference to the model assumptions
    */
-  Model &set_assumptions(const LinearSystem &assumptions);
+  Model &set_assumptions(const LinearSystem<double> &assumptions);
 
   /**
    * @brief Set the candidate model invariant
    *
    * @return a reference to the candidate model invariant
    */
-  Model &set_invariant(const LinearSystem &invariant);
+  Model &set_invariant(const LinearSystem<double> &invariant);
 
   /**
    * @brief Get the number of variables in the model
@@ -246,9 +247,10 @@ public:
    * @param init_set is the initial set
    * @param name is the model name
    */
-  DiscreteModel(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-                const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-                const Bundle &init_set, const std::string name = "Unknown");
+  DiscreteModel(
+      const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+      const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
+      const Bundle &init_set, const std::string name = "Unknown");
 
   /**
    * @brief Constructor
@@ -260,11 +262,12 @@ public:
    * @param param_set is the set of the parameter
    * @param name is the model name
    */
-  DiscreteModel(const std::vector<SymbolicAlgebra::Symbol<>> &variables,
-                const std::vector<SymbolicAlgebra::Symbol<>> &parameters,
-                const std::vector<SymbolicAlgebra::Expression<>> &dynamics,
-                const Bundle &init_set, const SetsUnion<Polytope> &param_set,
-                const std::string name = "Unknown");
+  DiscreteModel(
+      const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+      const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
+      const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
+      const Bundle &init_set, const SetsUnion<Polytope> &param_set,
+      const std::string name = "Unknown");
 
   /**
    * @brief Get the model discrete system

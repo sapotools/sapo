@@ -501,9 +501,11 @@ public:
   /**
    * @brief Test whether the bundle is empty
    *
-   * @return `true` if and only if the bundle is empty
+   * @return `true` when it can establish that the bundle is
+   *         empty. `false` when it can establish that the bundle
+   *         is not empty. `uncertain` in the other cases
    */
-  inline bool is_empty() const
+  inline TriBool is_empty() const
   {
     return static_cast<Polytope>(*this).is_empty();
   }
@@ -511,9 +513,11 @@ public:
   /**
    * @brief Test whether the bundle interior is empty
    *
-   * @return `true` if and only if the bundle interior is empty
+   * @return `true` when it can establish that the bundle interior
+   *         is empty. `false` when it can establish that the bundle
+   *         interior is not empty. `uncertain` in the other cases
    */
-  inline bool is_interior_empty() const
+  inline TriBool is_interior_empty() const
   {
     return static_cast<Polytope>(*this).is_interior_empty();
   }
@@ -525,10 +529,12 @@ public:
    * of a bundle.
    *
    * @param[in] bundle is the tested bundle
-   * @return `true` if and only if the current bundle is a
-   *         subset of `bundle`
+   * @return `true` if the method can establish that this bundle
+   *         is a subset of `P`. `false` when it can establish that
+   *         this bundle is not a subset of `P`. `uncertain` in
+   *         the remaining cases
    */
-  bool is_subset_of(const Bundle &bundle) const;
+  TriBool is_subset_of(const Bundle &bundle) const;
 
   /**
    * @brief Test whether a bundle is subset of a polytope
@@ -537,10 +543,12 @@ public:
    * of a polytope.
    *
    * @param[in] P is a polytope
-   * @return `true` if and only if the current bundle is a
-   *         subset of `P`
+   * @return `true` if the method can establish that this bundle
+   *         is a subset of `P`. `false` when it can establish that
+   *         this bundle is not a subset of `P`. `uncertain` in
+   *         the remaining cases
    */
-  inline bool is_subset_of(const Polytope &P) const
+  inline TriBool is_subset_of(const Polytope &P) const
   {
     return this->satisfies(P);
   }
@@ -552,10 +560,12 @@ public:
    * current object.
    *
    * @param[in] bundle is the bundle whose inclusion is tested
-   * @return `true` if and only if `bundle` is a subset of
-   *         the current bundle
+   * @return `true` if the method can establish that this bundle
+   *         is a superset of `P`. `false` when it can establish that
+   *         this bundle is not a superset of `P`. `uncertain` in
+   *         the remaining cases
    */
-  inline bool includes(const Bundle &bundle) const
+  inline TriBool includes(const Bundle &bundle) const
   {
     return bundle.is_subset_of(*this);
   }
@@ -564,12 +574,14 @@ public:
    * @brief Test whether a bundle includes a polytope
    *
    * @param P is the polytope whose inclusion is tested
-   * @return `true` if and only if `P` is a subset of
-   *         the current bundle
+   * @return `true` if the method can establish that this bundle
+   *         is a superset of `P`. `false` when it can establish that
+   *         this bundle is not a superset of `P`. `uncertain` in
+   *         the remaining cases
    */
-  inline bool includes(const Polytope &P) const
+  inline TriBool includes(const Polytope &P) const
   {
-    return ((Polytope) * this).includes(P);
+    return (Polytope(*this)).includes(P);
   }
 
   /**
@@ -579,10 +591,14 @@ public:
    * current object are solutions for a linear system.
    *
    * @param ls is the considered linear system
-   * @return `true` if and only if all the points of
-   *          the current bundle are solutions for `ls`
+   * @return `true` if the method can establish that all the
+   *          points in the current bundle are solutions for
+   *          `ls`. `false` if it can establish that some of
+   *          of the points in the current bundle are not
+   *          solutions for `ls`. `uncertain` in the
+   *          remaining cases
    */
-  bool satisfies(const LinearSystem &ls) const;
+  TriBool satisfies(const LinearSystem<double> &ls) const;
 
   /**
    * @brief Generate the polytope represented by the bundle
@@ -671,7 +687,7 @@ public:
    * @param ls is the intersecting linear system
    * @return a reference to the updated object
    */
-  Bundle &intersect_with(const LinearSystem &ls);
+  Bundle &intersect_with(const LinearSystem<double> &ls);
 
   /**
    * @brief Expand the bundle
@@ -715,8 +731,12 @@ public:
  * @param A is a bundle
  * @param B is a bundle
  * @return `true` if and only if `A` and `B` are disjoint
+ * @return `true` when the method can establish that `A` and
+ *         `B` are disjoint. `false` when it can establish
+ *         that `b1` and `b2` are not disjoint. `uncertain`
+ *         in the remaining cases
  */
-bool are_disjoint(const Bundle &A, const Bundle &B);
+TriBool are_disjoint(const Bundle &A, const Bundle &B);
 
 /**
  * @brief Swap the content of two bundles
@@ -737,12 +757,89 @@ void swap(Bundle &A, Bundle &B);
  *
  * @param b1 is a bundle
  * @param b2 is a bundle
- * @return `true` if and only if `b1` and `b2` represent the
- *         very same space set
+ * @return `true` when the method can establish that `b1` and
+ *         `b2` are the same. `false` when it can  establish
+ *         that `b1` and `b2` differ. `uncertain` in the
+ *         remaining cases
  */
-inline bool operator==(const Bundle &b1, const Bundle &b2)
+inline TriBool operator==(const Bundle &b1, const Bundle &b2)
 {
   return b1.is_subset_of(b2) && b2.is_subset_of(b1);
+}
+
+/**
+ * @brief Test whether two sets are the same
+ *
+ * @param A is a polytope
+ * @param B is a bundle
+ * @return `true` when the method can establish that `A` and `B`
+ *         represent the same set. `false` when it can
+ *         establish `A` and `B` differ. `uncertain` in the
+ *         remaining cases
+ */
+inline TriBool operator==(const Polytope &A, const Bundle &B)
+{
+  return static_cast<Polytope>(B) == A;
+}
+
+/**
+ * @brief Test whether two sets are the same
+ *
+ * @param A is a bundle
+ * @param B is a polytope
+ * @return `true` when the method can establish that `A` and `B`
+ *         represent the same set. `false` when it can
+ *         establish `A` and `B` differ. `uncertain` in the
+ *         remaining cases
+ */
+inline TriBool operator==(const Bundle &A, const Polytope &B)
+{
+  return B == A;
+}
+
+/**
+ * @brief Test whether two sets differ
+ *
+ * @param A is a polytope
+ * @param B is a parallelotope
+ * @return `true` when the method can establish that `A` and `B`
+ *         differ. `false` when it can establish `A` and `B`
+ *         represent the same set. `uncertain` in the remaining
+ *         cases
+ */
+inline TriBool operator!=(const Polytope &A, const Bundle &B)
+{
+  return !(A == B);
+}
+
+/**
+ * @brief Test whether two sets differ
+ *
+ * @param A is a bundle
+ * @param B is a polytope
+ * @return `true` when the method can establish that `A` and `B`
+ *         differ. `false` when it can establish `A` and `B`
+ *         represent the same set. `uncertain` in the remaining
+ *         cases
+ */
+inline TriBool operator!=(const Bundle &A, const Polytope &B)
+{
+  return !(A == B);
+}
+
+/**
+ * @brief Test whether two bundles differ
+ *
+ * @param A is a bundle
+ * @param B is a bundle
+ * @return `true` when the method can establish that `A` and `B`
+ *         differ. `false` when it can establish `A` and `B`
+ *         represent the same set. `uncertain` in the remaining
+ *         cases
+ */
+inline TriBool operator!=(const Bundle &A, const Bundle &B)
+{
+  return !(A == B);
 }
 
 /**
@@ -771,7 +868,7 @@ inline Bundle intersect(const Bundle &b1, const Bundle &b2)
  *         `bundle` and `linear_system`
  */
 inline Bundle intersect(const Bundle &bundle,
-                        const LinearSystem &linear_system)
+                        const LinearSystem<double> &linear_system)
 {
   Bundle res(bundle);
 
@@ -788,7 +885,7 @@ inline Bundle intersect(const Bundle &bundle,
  * @return A bundle representing the intersection between
  *         `linear_system` and `bundle`
  */
-inline Bundle intersect(const LinearSystem &linear_system,
+inline Bundle intersect(const LinearSystem<double> &linear_system,
                         const Bundle &bundle)
 {
   return intersect(bundle, linear_system);

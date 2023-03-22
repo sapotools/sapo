@@ -101,7 +101,7 @@ private:
                  std::domain_error);
     }
 
-    if (set_obj.is_empty()) {
+    if (is_true(set_obj.is_empty())) {
       return false;
     }
 
@@ -111,14 +111,14 @@ private:
       // if the set includes `set_obj`, then
       // `set_obj` is already included in the union
       // and the current object can be returned
-      if (it->includes(set_obj)) {
+      if (is_true(it->includes(set_obj))) {
         return false;
       }
 
       // if the set is a subset of `set_obj`, then
       // this set can be removed as `set_obj` is
       // going to be added to the list
-      if (it->is_subset_of(set_obj)) {
+      if (is_true(it->is_subset_of(set_obj))) {
         it = std::list<BASIC_SET_TYPE>::erase(it);
       } else {
         ++it;
@@ -164,7 +164,7 @@ private:
                  std::domain_error);
     }
 
-    if (set_obj.is_empty()) {
+    if (is_true(set_obj.is_empty())) {
       return false;
     }
 
@@ -174,14 +174,14 @@ private:
       // if the set includes `set_obj`, then
       // `set_obj` is already included in the union
       // and the current object can be returned
-      if (it->includes(set_obj)) {
+      if (is_true(it->includes(set_obj))) {
         return false;
       }
 
       // if the set is a subset of `set_obj`, then
       // this set can be removed as `set_obj` is
       // going to be added to the list
-      if (it->is_subset_of(set_obj)) {
+      if (is_true(it->is_subset_of(set_obj))) {
         it = std::list<BASIC_SET_TYPE>::erase(it);
       } else {
         ++it;
@@ -435,19 +435,24 @@ public:
    * current object are solutions for a linear system.
    *
    * @param ls is the considered linear system
-   * @return `true` if and only if all the points of
-   *          the current union of closed sets are solutions
-   *          for `ls`
+   * @return `true` if the method can establish that the
+   *         points of the current union of closed sets
+   *         are solutions for `ls`. `false` when the
+   *         method can establish that some of the
+   *         points of the this union are not solution
+   *         for `ls`. `uncertain` in the remaining cases
    */
-  bool satisfies(const LinearSystem &ls) const
+  TriBool satisfies(const LinearSystem<double> &ls) const
   {
+    TriBool sat{true};
     for (auto it = begin(); it != end(); ++it) {
-      if (!it->satisfies(ls)) {
-        return false;
+      sat = sat && it->satisfies(ls);
+      if (is_false(sat)) {
+        return sat;
       }
     }
 
-    return true;
+    return sat;
   }
 
   /**
@@ -460,17 +465,25 @@ public:
    * @param[in] set_obj is the set
    * @return `true` if and only if the current bundle is a
    *         subset of `set_obj`
+   * @return `true` if the method can establish that the
+   *         current bundle is a subset of `set_obj`.
+   *         `false` when the method can establish that the
+   *         current bundle is not a subset of `set_obj`.
+   *         `uncertain` in the remaining cases
    */
   template<class BASIC_SET_TYPE2>
-  bool is_subset_of(const BASIC_SET_TYPE2 &set_obj) const
+  TriBool is_subset_of(const BASIC_SET_TYPE2 &set_obj) const
   {
+    TriBool res{true};
+
     for (auto it = begin(); it != end(); ++it) {
-      if (!it->is_subset_of(set_obj)) {
-        return false;
+      res = res && it->is_subset_of(set_obj);
+      if (is_false(res)) {
+        return res;
       }
     }
 
-    return true;
+    return res;
   }
 
   /**
@@ -478,11 +491,15 @@ public:
    *
    * @tparam BASIC_SET_TYPE2 is the type of the tested set
    * @param sets_union is the tested sets union
-   * @return `true` if and only if the current bundle is a
-   *         subset of `sets_union`
+   * @return `true` if the method can establish that the
+   *         current bundle is a subset of `sets_union`.
+   *         `false` when the method can establish that the
+   *         current bundle is not a subset of `sets_union`.
+   *         `uncertain` in the remaining cases
    */
   template<class BASIC_SET_TYPE2>
-  inline bool is_subset_of(const SetsUnion<BASIC_SET_TYPE2> &sets_union) const
+  inline TriBool
+  is_subset_of(const SetsUnion<BASIC_SET_TYPE2> &sets_union) const
   {
     return sets_union.includes(*this);
   }
@@ -492,11 +509,14 @@ public:
    *
    * @tparam BASIC_SET_TYPE2 is the type of the tested set
    * @param set_obj is the set whose inclusion must be tested
-   * @return `true` if and only if `set_obj` is a subset of the
-   *         current object
+   * @return `true` if the method can establish that the
+   *         current bundle includes `set_obj`.
+   *         `false` when the method can establish that the
+   *         current bundle does not includes `set_obj`.
+   *         `uncertain` in the remaining cases
    */
   template<class BASIC_SET_TYPE2>
-  inline bool includes(const BASIC_SET_TYPE2 &set_obj) const
+  inline TriBool includes(const BASIC_SET_TYPE2 &set_obj) const
   {
     return subtract_and_close(set_obj, *this).is_empty();
   }
@@ -510,7 +530,7 @@ public:
    *         current object
    */
   template<class BASIC_SET_TYPE2>
-  inline bool includes(const SetsUnion<BASIC_SET_TYPE2> &sets_union) const
+  inline TriBool includes(const SetsUnion<BASIC_SET_TYPE2> &sets_union) const
   {
     return subtract_and_close(sets_union, *this).is_empty();
   }
@@ -524,10 +544,10 @@ public:
    *         the sets in the union
    */
   template<class BASIC_SET_TYPE2>
-  bool any_includes(const BASIC_SET_TYPE2 &set_obj) const
+  TriBool any_includes(const BASIC_SET_TYPE2 &set_obj) const
   {
 
-    if (set_obj.is_empty()) {
+    if (is_true(set_obj.is_empty())) {
       return true;
     }
 
@@ -535,32 +555,40 @@ public:
     class ThreadResult
     {
       mutable std::shared_timed_mutex mutex;
-      bool value;
+      TriBool value;
 
     public:
       ThreadResult(): value(false) {}
 
-      bool get() const
+      TriBool get() const
       {
         std::shared_lock<std::shared_timed_mutex> rlock(mutex);
 
         return value;
       }
 
-      void set(const bool &value)
+      void set(const TriBool &value)
       {
         std::unique_lock<std::shared_timed_mutex> wlock(mutex);
 
         this->value = value;
+      }
+
+      void update(const TriBool &value)
+      {
+        std::unique_lock<std::shared_timed_mutex> wlock(mutex);
+
+        if ((is_uncertain(this->value) && is_true(value))
+            || is_false(this->value)) {
+          this->value = value;
+        }
       }
     };
 
     ThreadResult result;
 
     auto check_and_update = [&result, &set_obj](const BASIC_SET_TYPE &s) {
-      if (!result.get() && set_obj.is_subset_of(s)) {
-        result.set(true);
-      }
+      result.update(set_obj.is_subset_of(s));
     };
 
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
@@ -578,13 +606,17 @@ public:
 
     return result.get();
 #else  // WITH_THREADS
+    TriBool res{false};
+
     for (auto it = std::cbegin(*this); it != std::cend(*this); ++it) {
-      if (set_obj.is_subset_of(*it)) {
-        return true;
+      res = res || set_obj.is_subset_of(*it);
+
+      if (is_true(res)) {
+        return res;
       }
     }
 
-    return false;
+    return res;
 #endif // WITH_THREADS
   }
 
@@ -675,15 +707,23 @@ public:
    * @brief Test whether the union of closed sets is empty
    *
    * @return `true` if and only if the union of closed sets is empty
+   * @return `true` if the method establishes that this set union
+   *         is empty. `false` when the method establishes that this
+   *         set union is not empty. `uncertain` in the remaining cases
    */
-  inline bool is_empty() const
+  inline TriBool is_empty() const
   {
-    // since sets are added to the union exclusively by using
-    // add methods and those methods exclusively push in the
-    // list non-empty set, the union is empty if and only if
-    // the list is empty
+    TriBool res{true};
 
-    return this->empty();
+    for (auto it = std::begin(*this); it != std::end(*this); ++it) {
+      res = res && it->is_empty();
+
+      if (is_false(res)) {
+        return res;
+      }
+    }
+
+    return res;
   }
 
   /**
@@ -710,21 +750,27 @@ public:
  * @tparam BASIC_SET_TYPE is the basic set type
  * @param A is a sets union
  * @param B is a sets union
- * @return `true` if and only if `A` and `B` are disjoint
+ * @return `true` if the function can establish that `A` and
+ *         `B` are disjoint. `false` when the function can
+ *         establish the intersection of `A` and `B` is
+ *         not empty. `uncertain` in the remaining cases
  */
 template<class BASIC_SET_TYPE>
-bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
-                  const SetsUnion<BASIC_SET_TYPE> &B)
+TriBool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
+                     const SetsUnion<BASIC_SET_TYPE> &B)
 {
+  TriBool res{true};
+
   for (auto A_it = std::begin(A); A_it != std::end(A); ++A_it) {
     for (auto B_it = std::begin(B); B_it != std::end(B); ++B_it) {
-      if (!are_disjoint(*A_it, *B_it)) {
-        return false;
+      res = res && are_disjoint(*A_it, *B_it);
+      if (is_false(res)) {
+        return res;
       }
     }
   }
 
-  return true;
+  return res;
 }
 
 /**
@@ -733,18 +779,25 @@ bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
  * @tparam BASIC_SET_TYPE is the basic set type
  * @param A is a sets union
  * @param B is a set
- * @return `true` if and only if `A` and `B` are disjoint
+ * @return `true` if the function can establish that `A` and
+ *         `B` are disjoint. `false` when the function can
+ *         establish the intersection of `A` and `B` is
+ *         not empty. `uncertain` in the remaining cases
  */
 template<class BASIC_SET_TYPE>
-bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A, const BASIC_SET_TYPE &B)
+TriBool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A,
+                     const BASIC_SET_TYPE &B)
 {
+  TriBool res{true};
+
   for (auto A_it = std::begin(A); A_it != std::end(A); ++A_it) {
-    if (!are_disjoint(*A_it, B)) {
-      return false;
+    res = res && are_disjoint(*A_it, B);
+    if (is_false(res)) {
+      return res;
     }
   }
 
-  return true;
+  return res;
 }
 
 /**
@@ -753,11 +806,14 @@ bool are_disjoint(const SetsUnion<BASIC_SET_TYPE> &A, const BASIC_SET_TYPE &B)
  * @tparam BASIC_SET_TYPE is the basic set type
  * @param A is a set
  * @param B is a sets union
- * @return `true` if and only if `A` and `B` are disjoint
+ * @return `true` if the function can establish that `A` and
+ *         `B` are disjoint. `false` when the function can
+ *         establish the intersection of `A` and `B` is
+ *         not empty. `uncertain` in the remaining cases
  */
 template<class BASIC_SET_TYPE>
-inline bool are_disjoint(const BASIC_SET_TYPE &A,
-                         const SetsUnion<BASIC_SET_TYPE> &B)
+inline TriBool are_disjoint(const BASIC_SET_TYPE &A,
+                            const SetsUnion<BASIC_SET_TYPE> &B)
 {
   return are_disjoint(B, A);
 }
@@ -1012,7 +1068,7 @@ BASIC_SET_TYPE chain_join(std::list<BASIC_SET_TYPE> sets_list,
     fix_point_reached = true;
 
     for (auto it = std::begin(sets_list); it != std::end(sets_list);) {
-      if (!are_disjoint(*it, set_obj)) {
+      if (is_false(are_disjoint(*it, set_obj))) {
         intersecting.push_back(std::move(*it));
         it = sets_list.erase(it);
 

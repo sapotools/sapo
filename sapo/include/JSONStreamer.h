@@ -201,11 +201,25 @@ JSON::ostream &operator<<(JSON::ostream &out, const std::vector<T> &v)
 
 /**
  * @brief Print a linear system in a JSON stream
- *
+ * 
+ * @tparam T is the type of the linear system coefficients
+ * @tparam APPROX_TYPEis the type of approximation used in place of T
+ *      during the computation
  * @param out is the output JSON stream
  * @param ls is the linear system to be print
  * @return a reference to the output JSON stream
  */
-JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem &ls);
+template<typename T, typename APPROX_TYPE>
+JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem<T,APPROX_TYPE> &ls);
+
+
+template<typename T, typename APPROX_TYPE>
+JSON::ostream &operator<<(JSON::ostream &out, const LinearSystem<T,APPROX_TYPE> &ls)
+{
+  out << "{\"A\":" << ls.A() << ","
+      << "\"b\":" << ls.b() << "}";
+
+  return out;
+}
 
 #endif // JSONSTREAMER_H_
