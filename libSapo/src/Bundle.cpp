@@ -928,7 +928,7 @@ bool are_disjoint(const Bundle &A, const Bundle &B)
   add_bundle_constraints(A);
   add_bundle_constraints(B);
 
-  SimplexMethodOptimizer optimizer;
+  SimplexMethodOptimizer<double> optimizer;
 
   auto result = optimizer(ls_A, ls_b, Vector<double>(A.dim()));
 

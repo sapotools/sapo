@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_optimum, T, test_types)
     for (auto &prob: min_probs) {
         const auto& input = prob.first;
         const auto& output = prob.second;
-        SimplexMethodOptimizer optimizer;
+        SimplexMethodOptimizer<T> optimizer;
         auto result = optimizer(A, b, input.first, input.second);
         auto value = input.first*result.optimum();
         BOOST_CHECK_MESSAGE(output==value, 
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_unbounded, T, test_types)
 
     Vector<T> b = {2,3,3,2};
 
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<T> optimizer;
 
     Vector<T> obj{1,0,0};
     auto result = optimizer(A, b, obj, OptimizationGoal::MAXIMIZE);
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_unbounded2, T, test_types)
 
     Vector<T> b = {2,3};
 
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<T> optimizer;
 
     Vector<T> obj{1,1};
     auto result = optimizer(A, b, obj, OptimizationGoal::MAXIMIZE);
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_unfeasible, T, test_types)
 
     Vector<T> obj{1,0,0};
     
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<T> optimizer;
 
     auto result = optimizer(A,b,obj,OptimizationGoal::MAXIMIZE);
     BOOST_CHECK_MESSAGE(result.status()==OptimizationResult<T>::INFEASIBLE,
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_3D_square, T, test_types)
 
     Vector<T> obj{1,0,0};
     
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<T> optimizer;
     
     auto result = optimizer(A,b,obj,OptimizationGoal::MAXIMIZE);
     BOOST_CHECK(is_exactly<T>(result,1));
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_0_constraints, T, test_types)
 
     Vector<T> obj{1,0,0};
     
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<T> optimizer;
     
     auto result = optimizer(A,b,obj,OptimizationGoal::MAXIMIZE);
     BOOST_CHECK(is_exactly<T>(result,1));
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_simplex_negative_constraints, T, test_types)
         y in [0.05, 10.05]
     */
 
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<T> optimizer;
 
     Vector<T> obj{1,-1};
     
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(test_simplex_GPLK_bug)
        2.51581e-08*x + -1*y <= -0.05
     */
 
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<double> optimizer;
 
     Vector<double> obj{1,0};
 
@@ -378,11 +378,11 @@ BOOST_AUTO_TEST_CASE(test_approximated_simplex)
        2.51581e-08*x + -1*y <= -0.05
     */
 
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<double, Approximation<double>> optimizer;
 
     Vector<double> obj{1,0};
 
-    auto result = optimizer.operator()<double, Approximation<double>>(A,b,obj,OptimizationGoal::MINIMIZE);
+    auto result = optimizer(A,b,obj,OptimizationGoal::MINIMIZE);
 
     for (const auto& value: b-A*result.optimum()) {
         BOOST_CHECK(!((value<0).is_true()));
@@ -411,9 +411,9 @@ BOOST_AUTO_TEST_CASE(test_Q_approximated_simplex_infeasible_despite_errors)
 
     Vector<mpq_class> obj{1,0};
     
-    SimplexMethodOptimizer optimizer;
+    SimplexMethodOptimizer<mpq_class, Approximation<mpq_class>> optimizer;
 
-    auto result = optimizer.operator()<mpq_class, Approximation<mpq_class>>(A,b,obj,OptimizationGoal::MAXIMIZE);
+    auto result = optimizer(A,b,obj,OptimizationGoal::MAXIMIZE);
     BOOST_CHECK_MESSAGE(result.status()==result.INFEASIBLE,
                         "maximizing " << obj << " on "
                         "A x<= b where A: " << 
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(test_Q_approximated_simplex_infeasible_despite_errors)
                         ": INFEASIBLE was expected.");
 
     obj = {0,1};
-    result = optimizer.operator()<mpq_class, Approximation<mpq_class>>(A,b,obj,OptimizationGoal::MINIMIZE);
+    result = optimizer(A,b,obj,OptimizationGoal::MINIMIZE);
     BOOST_CHECK_MESSAGE(result.status()==result.INFEASIBLE,
                         "minimizing " << obj << " on "
                         "A x<= b where A: " << 

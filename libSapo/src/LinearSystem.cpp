@@ -60,7 +60,7 @@ OptimizationResult<double>
 LinearSystem::optimize(const LinearAlgebra::Vector<double> &obj_fun,
                        const bool maximize) const
 {
-  SimplexMethodOptimizer optimizer;
+  SimplexMethodOptimizer<double> optimizer;
 
   return optimizer(this->_A, this->_b, obj_fun,
                    (maximize ? MAXIMIZE : MINIMIZE));
@@ -135,7 +135,7 @@ bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
   b.reserve(ls1.size() + ls2.size());
   std::copy(std::begin(ls2.b()), std::end(ls2.b()), std::back_inserter(b));
 
-  SimplexMethodOptimizer optimizer;
+  SimplexMethodOptimizer<double> optimizer;
 
   auto result = optimizer(A, b, obj);
 
@@ -151,7 +151,7 @@ bool have_disjoint_solutions(const LinearSystem &ls1, const LinearSystem &ls2)
 OptimizationResult<double>
 LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
-  SimplexMethodOptimizer optimizer;
+  SimplexMethodOptimizer<double> optimizer;
 
   return optimizer(this->_A, this->_b, obj_fun);
 }
@@ -165,7 +165,7 @@ LinearSystem::minimize(const LinearAlgebra::Vector<double> &obj_fun) const
 OptimizationResult<double>
 LinearSystem::maximize(const LinearAlgebra::Vector<double> &obj_fun) const
 {
-  SimplexMethodOptimizer optimizer;
+  SimplexMethodOptimizer<double> optimizer;
 
   return optimizer(this->_A, this->_b, obj_fun, MAXIMIZE);
 }

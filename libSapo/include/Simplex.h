@@ -192,7 +192,12 @@ enum OptimizationGoal { MAXIMIZE, MINIMIZE };
 
 /**
  * @brief An linear optimizer that implements the simplex method
+ *
+ * @tparam T is the type of the linear system coefficients
+ * @tparam APPROX_TYPE is the type of approximation used in place of T
+ *      during the computation
  */
+template<typename T, typename APPROX_TYPE = T>
 class SimplexMethodOptimizer
 {
   /**
@@ -214,16 +219,12 @@ class SimplexMethodOptimizer
    * - index 2*num_cols(A)+num_rows(A): the artificial variable
    * - index 2*num_cols(A)+num_rows(A)+1: the constant coefficient
    *
-   * @tparam T is the system coefficient type
-   * @tparam APPROX_TYPE is the type of approximation used in place of T
-   *      during the computation
    * @param A is the linear system matrix
    * @param b is the linear system vector
    * @param objective is the objective coefficient vector
    * @param optimization_type is the type of optimization
    *      to achieve, i.e., MAXIMIZE or MINIMIZE
    */
-  template<typename T, typename APPROX_TYPE = T>
   class Tableau
   {
     std::vector<LinearAlgebra::Vector<APPROX_TYPE>>
@@ -233,13 +234,14 @@ class SimplexMethodOptimizer
     /**
      * @brief Initialize the initial basic variable vector
      */
-    void init_basic_variables()
+    void init_basic_variables(const bool &has_objective)
     {
-      const size_t slack_begin
-          = _tableau[0].size() - (_tableau.size() - 2) - 3;
+      const size_t slack_begin = _tableau[0].size()
+                                 - (_tableau.size() - (has_objective ? 2 : 1))
+                                 - 3;
       _basic_variables.resize(0);
       std::generate_n(std::back_inserter(_basic_variables),
-                      _tableau.size() - 2,
+                      _tableau.size() - (has_objective ? 2 : 1),
                       [n = slack_begin]() mutable { return ++n; });
     }
 
@@ -252,6 +254,18 @@ class SimplexMethodOptimizer
                                                    APPROX_TYPE(0));
       omega_row[last_artificial_column_index()] = APPROX_TYPE(1);
       _tableau.push_back(std::move(omega_row));
+    }
+
+    /**
+     * @brief Initialize the tableau for feasibility test
+     *
+     * @param A is the linear system matrix
+     * @param b is the linear system vector
+     */
+    void init_tableau(const std::vector<LinearAlgebra::Vector<T>> &A,
+                      const LinearAlgebra::Vector<T> &b)
+    {
+      this->init_tableau(A, b, LinearAlgebra::Vector<APPROX_TYPE>());
     }
 
     /**
@@ -279,7 +293,9 @@ class SimplexMethodOptimizer
       }
 
       // add objective row
-      _tableau.push_back(std::move(objective));
+      if (objective.size() > 0) {
+        _tableau.push_back(std::move(objective));
+      }
 
       // complete tableau rows
       size_t row_idx = 0;
@@ -356,7 +372,7 @@ class SimplexMethodOptimizer
         if (is_artificial(_basic_variables[i])) {
           artificials_in_basics.insert(i);
         }
-        basic_vector[i] = true;
+        basic_vector[_basic_variables[i]] = true;
       }
 
       for (auto &artificial_in_basics: artificials_in_basics) {
@@ -364,7 +380,7 @@ class SimplexMethodOptimizer
             = _basic_variables[artificial_in_basics];
 
         auto &artificial_row = _tableau[artificial_in_basics];
-        if (is_true(artificial_row[b_column_index()] == 0)) {
+        if (!is_false(artificial_row[b_column_index()] == 0)) {
 
           size_t entering = num_of_columns();
           for (size_t i = 0; i < first_artificial_column_index(); ++i) {
@@ -529,6 +545,30 @@ class SimplexMethodOptimizer
     /**
      * @brief A constructor
      *
+     * This constructor build a new Tableau object for the feasibility
+     * test of the linear system \f$A * x <= b\f$.
+     *
+     * @param A is the linear system matrix
+     * @param b is the linear system vector
+     */
+    Tableau(const std::vector<LinearAlgebra::Vector<T>> &A,
+            const LinearAlgebra::Vector<T> &b)
+    {
+      using namespace LinearAlgebra;
+
+      if (A.size() != b.size()) {
+        SAPO_ERROR("A and b differ in the number of rows", std::domain_error);
+      }
+
+      init_tableau(A, b);
+
+      add_omega_row();
+      init_basic_variables(false);
+    }
+
+    /**
+     * @brief A constructor
+     *
      * This constructor build a new Tableau object for a the linear
      * optimization problem subject to the system \f$A * x <= b\f$.
      *
@@ -546,8 +586,8 @@ class SimplexMethodOptimizer
     {
       using namespace LinearAlgebra;
 
-      size_t num_rows = A.size();
-      size_t num_cols = (A.size() == 0 ? 0 : A[0].size());
+      const size_t num_rows = A.size();
+      const size_t num_cols = (A.size() == 0 ? 0 : A[0].size());
 
       if (num_cols != objective.size()) {
         SAPO_ERROR("the objective dimension does not equal the number "
@@ -570,7 +610,7 @@ class SimplexMethodOptimizer
       }
 
       add_omega_row();
-      init_basic_variables();
+      init_basic_variables(true);
     }
 
     /**
@@ -825,9 +865,12 @@ class SimplexMethodOptimizer
      * also remove the omega row and nullify all the coefficients of
      * the artificial variables.
      *
-     * @return `true` if and only if the problem solution is not empty
+     * @return if the problem solution set is certaintly not empty, this
+     *      method returns `TriBool::TRUE`. When the set is certaintly
+     *      empty, the method returns `TriBool::FALSE`. Otherwise,
+     *      `TriBool::UNCERTAIN` is returned.
      */
-    bool bootstrap()
+    TriBool bootstrap()
     {
       const size_t entering_variable = last_artificial_column_index();
       size_t leaving_variable = get_the_minimum_coefficient_index();
@@ -842,13 +885,7 @@ class SimplexMethodOptimizer
         let_artificial_variables_in_null_constraints_be_non_basic();
       }
 
-      // `_tableau[num_of_rows() - 1][b_column_index()] == 0` may be
-      // tri-Boolean. In that case,
-      // `!is_false(_tableau[num_of_rows()-1][b_column_index()] == 0` may
-      // differ from `is_true(_tableau[num_of_rows() - 1][b_column_index()] ==
-      // 0`)`
-      bool feasible
-          = !is_false(_tableau[num_of_rows() - 1][b_column_index()] == 0);
+      auto feasible = _tableau[num_of_rows() - 1][b_column_index()] == 0;
 
       nullify_artificial_variable_coefficients();
 
@@ -866,14 +903,42 @@ public:
   SimplexMethodOptimizer() {}
 
   /**
+   * @brief Check whether a linear system is feasible
+   *
+   * This method verifies whether a linear system has a non-empty
+   * set of solutions by using the simplex method.
+   *
+   * @param A is the linear system matrix
+   * @param b is the linear system vector
+   * @return if the problem solution set is certaintly not empty, this
+   *      method returns `TriBool::TRUE`. When the set is certaintly
+   *      empty, the method returns `TriBool::FALSE`. Otherwise,
+   *      `TriBool::UNCERTAIN` is returned.
+   */
+  TriBool is_feasible(const std::vector<LinearAlgebra::Vector<T>> &A,
+                      const LinearAlgebra::Vector<T> &b)
+  {
+    if (A.size() != b.size()) {
+      SAPO_ERROR("the number of rows in A and that of "
+                 "elements in b differ",
+                 std::domain_error);
+    }
+
+    if (A.size() == 0) {
+      return true;
+    }
+
+    Tableau tableau{A, b};
+
+    return tableau.bootstrap();
+  }
+
+  /**
    * @brief Solves a linear programming problem
    *
    * This method solves a linear programming problem by using the simplex
    * method.
    *
-   * @tparam T is the type of the linear system coefficients
-   * @tparam APPROX_TYPE is the type of approximation used in place of T
-   *      during the computation
    * @param A is the linear system matrix
    * @param b is the linear system vector
    * @param objective is the objective coefficient vector
@@ -881,7 +946,6 @@ public:
    *                          minimize or maximize
    * @return the result of the optimization process
    */
-  template<typename T, typename APPROX_TYPE = T>
   OptimizationResult<APPROX_TYPE>
   operator()(const std::vector<LinearAlgebra::Vector<T>> &A,
              const LinearAlgebra::Vector<T> &b,
@@ -910,9 +974,9 @@ public:
     std::copy(objective.begin(), objective.end(),
               std::back_inserter(approx_objective));
 
-    Tableau<T, APPROX_TYPE> tableau{A, b, approx_objective, optimization_type};
+    Tableau tableau{A, b, approx_objective, optimization_type};
 
-    if (!tableau.bootstrap()) {
+    if (is_false(tableau.bootstrap())) {
       return OptimizationResult<APPROX_TYPE>(
           OptimizationResult<APPROX_TYPE>::INFEASIBLE);
     }
