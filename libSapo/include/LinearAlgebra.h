@@ -139,8 +139,7 @@ Vector<T> operator-(const Vector<T> &orig)
  * @param b is the second vector to be compared
  * @return `true` if and only if the two vectors are the same
  */
-template<typename T,
-         typename = typename std::enable_if<is_punctual_v<T>>::type>
+template<typename T, std::enable_if_t<is_punctual_v<T>>>
 bool operator==(const Vector<T> &a, const Vector<T> &b)
 {
   if (a.size() != b.size()) {
@@ -165,8 +164,7 @@ bool operator==(const Vector<T> &a, const Vector<T> &b)
  * @param b is the second vector to be compared
  * @return `true` if and only if the two vectors differ
  */
-template<typename T,
-         typename = typename std::enable_if<is_punctual_v<T>>::type>
+template<typename T, std::enable_if_t<is_punctual_v<T>>>
 bool operator!=(const Vector<T> &a, const Vector<T> &b)
 {
   return !(a == b);
@@ -2960,23 +2958,21 @@ inline Sparse::Matrix<T> operator/(const Sparse::Matrix<T> &A, const T scalar)
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
  *         one
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator+(const Vector<APPROX_TYPE<T, B>> &a,
-                                    const Vector<T> &b)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator+(const Vector<APPROX_TYPE<T>> &a,
+                                 const Vector<T> &b)
 {
   if (a.size() != b.size()) {
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  Vector<APPROX_TYPE<T, B>> res(a.size());
+  Vector<APPROX_TYPE<T>> res(a.size());
 
   for (size_t i = 0; i < res.size(); ++i) {
     res[i] = a[i] + b[i];
@@ -2989,17 +2985,15 @@ Vector<APPROX_TYPE<T, B>> operator+(const Vector<APPROX_TYPE<T, B>> &a,
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
  *         one
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator+(const Vector<T> &a,
-                                    const Vector<APPROX_TYPE<T, B>> &b)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator+(const Vector<T> &a,
+                                 const Vector<APPROX_TYPE<T>> &b)
 {
   return b + a;
 }
@@ -3008,23 +3002,21 @@ Vector<APPROX_TYPE<T, B>> operator+(const Vector<T> &a,
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
  *         one
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator-(const Vector<T> &a,
-                                    const Vector<APPROX_TYPE<T, B>> &b)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator-(const Vector<T> &a,
+                                 const Vector<APPROX_TYPE<T>> &b)
 {
   if (a.size() != b.size()) {
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  Vector<APPROX_TYPE<T, B>> res(a.size());
+  Vector<APPROX_TYPE<T>> res(a.size());
 
   for (size_t i = 0; i < res.size(); ++i) {
     res[i] = a[i] - b[i];
@@ -3037,23 +3029,21 @@ Vector<APPROX_TYPE<T, B>> operator-(const Vector<T> &a,
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param a is the vector from which the second parameter must be subtracted
  * @param b is the vector that must be subtracted
  * @return the element-wise difference of the second parameter from the first
  *         one
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator-(const Vector<APPROX_TYPE<T, B>> &a,
-                                    const Vector<T> &b)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator-(const Vector<APPROX_TYPE<T>> &a,
+                                 const Vector<T> &b)
 {
   if (a.size() != b.size()) {
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  Vector<APPROX_TYPE<T, B>> res(a.size());
+  Vector<APPROX_TYPE<T>> res(a.size());
 
   for (size_t i = 0; i < res.size(); ++i) {
     res[i] = a[i] - b[i];
@@ -3066,34 +3056,29 @@ Vector<APPROX_TYPE<T, B>> operator-(const Vector<APPROX_TYPE<T, B>> &a,
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param v is a vector
  * @param s is a scalar value
  * @return the element-wise scalar product \f$v * s\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator*(const Vector<APPROX_TYPE<T, B>> &v,
-                                    const T &s)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator*(const Vector<APPROX_TYPE<T>> &v, const T &s)
 {
-  return v * APPROX_TYPE<T, B>(s);
+  return v * APPROX_TYPE<T>(s);
 }
 
 /**
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param s is a scalar value
  * @param v is a vector
  * @return the element-wise scalar product \f$s * v\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-inline Vector<APPROX_TYPE<T, B>> operator*(const T &s,
-                                           const Vector<APPROX_TYPE<T, B>> &v)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+inline Vector<APPROX_TYPE<T>> operator*(const T &s,
+                                        const Vector<APPROX_TYPE<T>> &v)
 {
   return v * s;
 }
@@ -3102,18 +3087,15 @@ inline Vector<APPROX_TYPE<T, B>> operator*(const T &s,
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param v is a vector
  * @param s is a scalar value
  * @return the element-wise scalar product \f$v * s\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator*(const Vector<T> &v,
-                                    const APPROX_TYPE<T, B> &s)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator*(const Vector<T> &v, const APPROX_TYPE<T> &s)
 {
-  Vector<APPROX_TYPE<T, B>> res(v.size());
+  Vector<APPROX_TYPE<T>> res(v.size());
 
   for (size_t i = 0; i < res.size(); ++i) {
     res[i] = v[i] * s;
@@ -3126,16 +3108,14 @@ Vector<APPROX_TYPE<T, B>> operator*(const Vector<T> &v,
  * @brief Compute the element-wise difference of two vectors
  *
  * @tparam T ia a numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param s is a scalar value
  * @param v is a vector
  * @return the element-wise scalar product \f$s * v\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-inline Vector<APPROX_TYPE<T, B>> operator*(const APPROX_TYPE<T, B> &s,
-                                           const Vector<T> &v)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+inline Vector<APPROX_TYPE<T>> operator*(const APPROX_TYPE<T> &s,
+                                        const Vector<T> &v)
 {
   return v * s;
 }
@@ -3144,18 +3124,15 @@ inline Vector<APPROX_TYPE<T, B>> operator*(const APPROX_TYPE<T, B> &s,
  * @brief Compute the element-wise scalar division
  *
  * @tparam T is a punctual numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param v is a vector
  * @param s is a scalar value
  * @return the element-wise scalar division \f$v/\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator/(const Vector<T> &v,
-                                    const APPROX_TYPE<T, B> &s)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator/(const Vector<T> &v, const APPROX_TYPE<T> &s)
 {
-  Vector<APPROX_TYPE<T, B>> res(v.size());
+  Vector<APPROX_TYPE<T>> res(v.size());
 
   for (size_t i = 0; i < res.size(); ++i) {
     res[i] = v[i] / s;
@@ -3168,22 +3145,19 @@ Vector<APPROX_TYPE<T, B>> operator/(const Vector<T> &v,
  * @brief Compute the vector product
  *
  * @tparam T is a punctual numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param v1 is a vector
  * @param v2 is a vector
  * @return the vector product \f$v1 \cdot v2\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-APPROX_TYPE<T, B> operator*(const Vector<T> &v1,
-                            const Vector<APPROX_TYPE<T, B>> &v2)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+APPROX_TYPE<T> operator*(const Vector<T> &v1, const Vector<APPROX_TYPE<T>> &v2)
 {
   if (v1.size() != v2.size()) {
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
   }
 
-  APPROX_TYPE<T, B> res = 0;
+  APPROX_TYPE<T> res = 0;
   auto it2 = std::begin(v2);
   for (auto it1 = std::begin(v1); it1 != std::end(v1); ++it1) {
     res += (*it1) * (*it2);
@@ -3198,16 +3172,14 @@ APPROX_TYPE<T, B> operator*(const Vector<T> &v1,
  * @brief Compute the vector product
  *
  * @tparam T is a punctual numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param v1 is a vector
  * @param v2 is a vector
  * @return the vector product \f$v1 \cdot v2\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-inline APPROX_TYPE<T, B> operator*(const Vector<APPROX_TYPE<T, B>> &v1,
-                                   const Vector<T> &v2)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+inline APPROX_TYPE<T> operator*(const Vector<APPROX_TYPE<T>> &v1,
+                                const Vector<T> &v2)
 {
   return v2 * v1;
 }
@@ -3216,20 +3188,18 @@ inline APPROX_TYPE<T, B> operator*(const Vector<APPROX_TYPE<T, B>> &v1,
  * @brief Compute the row-column matrix-vector multiplication
  *
  * @tparam T is a punctual numeric type
- * @tparam B is the second type parameter of the APPROX_TYPE template
  * @tparam APPROX_TYPE is an approximation type
  * @param A is a dense matrix
  * @param v is a vector
  * @return the row-column matrix-vector multiplication \f$A \cdot v\f$
  */
-template<typename T, typename B,
-         template<class, class> class APPROX_TYPE = Approximation>
-Vector<APPROX_TYPE<T, B>> operator*(const Dense::Matrix<T> &A,
-                                    const Vector<APPROX_TYPE<T, B>> &v)
+template<typename T, template<class> class APPROX_TYPE = Approximation>
+Vector<APPROX_TYPE<T>> operator*(const Dense::Matrix<T> &A,
+                                 const Vector<APPROX_TYPE<T>> &v)
 {
   if (((A.size() != 0 && A.front().size() == 0) || (A.size() == 0))
       && v.size() == 0) {
-    return Vector<APPROX_TYPE<T, B>>();
+    return Vector<APPROX_TYPE<T>>();
   }
 
   if (A.size() == 0 || A.front().size() != v.size()) {
@@ -3238,7 +3208,7 @@ Vector<APPROX_TYPE<T, B>> operator*(const Dense::Matrix<T> &A,
                std::domain_error);
   }
 
-  Vector<APPROX_TYPE<T, B>> res(A.size(), 0);
+  Vector<APPROX_TYPE<T>> res(A.size(), 0);
 
   auto res_it = std::begin(res);
   for (auto A_row_it = std::begin(A); A_row_it != std::end(A);

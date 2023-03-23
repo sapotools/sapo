@@ -312,10 +312,8 @@ public:
    *
    * @param value is the value of the expression
    */
-  template<typename T = C>
-  Expression(const double value,
-             typename std::enable_if<!std::is_same<T, double>::value,
-                                     int>::type * = nullptr):
+  template<typename T = C, std::enable_if_t<!std::is_same_v<T, double>>>
+  Expression(const double value):
       _ex(new low_level::constant_type<C>(static_cast<C>(value)))
   {
   }
@@ -631,8 +629,7 @@ public:
    * @return A reference to the updated object
    */
   template<typename T,
-           typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator+=(const T value)
   {
     _ex = _ex->add(static_cast<C>(value));
@@ -648,8 +645,7 @@ public:
    * @return A reference to the updated object
    */
   template<typename T,
-           typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator-=(const T value)
   {
     _ex = _ex->subtract(static_cast<C>(value));
@@ -665,8 +661,7 @@ public:
    * @return A reference to the updated object
    */
   template<typename T,
-           typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator*=(const T value)
   {
     _ex = _ex->multiply(static_cast<C>(value));
@@ -682,8 +677,7 @@ public:
    * @return A reference to the updated object
    */
   template<typename T,
-           typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator/=(const T value)
   {
     _ex = _ex->divided_by(static_cast<C>(value));
@@ -907,7 +901,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend Expression<C> operator+(const Expression<C> &lhs, const T value)
   {
     if (value == 0) {
@@ -932,7 +926,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator-(const T value,
                                         const Expression<C> &rhs)
   {
@@ -952,7 +946,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend Expression<C> operator*(const T value, const Expression<C> &rhs)
   {
     if (value == 0) {
@@ -981,7 +975,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend Expression<C> operator/(const T value, const Expression<C> &rhs)
   {
     if (value == 0) {
@@ -1004,7 +998,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator+(const T value,
                                         const Expression<C> &rhs)
   {
@@ -1024,7 +1018,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator-(const Expression<C> &lhs,
                                         const T value)
   {
@@ -1044,7 +1038,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator*(const Expression<C> &lhs,
                                         const T value)
   {
@@ -1065,7 +1059,7 @@ public:
    */
   template<typename T,
            typename
-           = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator/(const Expression<C> &lhs,
                                         const T value)
   {

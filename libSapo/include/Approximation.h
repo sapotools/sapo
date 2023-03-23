@@ -44,10 +44,12 @@ inline constexpr bool is_punctual_v = is_punctual<T>::value;
  *
  * @tparam T is a punctual numeric type
  */
-template<typename T,
-         typename = typename std::enable_if<is_punctual<T>::value>::type>
+template<typename T>
 class Approximation
 {
+  static_assert(is_punctual_v<T>, "Only puctual types can be "
+                                  "approximated by using this class");
+
   T _lower_bound; //!< the approximation lower bound
   T _upper_bound; //!< the approximation upper bound
 
@@ -224,9 +226,9 @@ public:
   Approximation<T> &operator/=(const Approximation<T> &a);
 };
 
-template<typename T, typename B>
-inline Approximation<T> &Approximation<T, B>::set_bounds(const T &lower_bound,
-                                                         const T &upper_bound)
+template<typename T>
+inline Approximation<T> &Approximation<T>::set_bounds(const T &lower_bound,
+                                                      const T &upper_bound)
 {
   _lower_bound = lower_bound;
   _upper_bound = upper_bound;
@@ -272,13 +274,13 @@ inline void approximate_bounds(T &lower_bound, T &upper_bound)
   }
 }
 
-template<typename T, typename B>
-Approximation<T, B>::Approximation(): Approximation(0, 0)
+template<typename T>
+Approximation<T>::Approximation(): Approximation(0, 0)
 {
 }
 
-template<typename T, typename B>
-Approximation<T, B>::Approximation(const T &lower_bound, const T &upper_bound):
+template<typename T>
+Approximation<T>::Approximation(const T &lower_bound, const T &upper_bound):
     _lower_bound(lower_bound), _upper_bound(upper_bound)
 {
   if (_upper_bound < _lower_bound) {
@@ -288,41 +290,41 @@ Approximation<T, B>::Approximation(const T &lower_bound, const T &upper_bound):
   }
 }
 
-template<typename T, typename B>
-Approximation<T, B>::Approximation(const T &value): Approximation(value, value)
+template<typename T>
+Approximation<T>::Approximation(const T &value): Approximation(value, value)
 {
 }
 
-template<typename T, typename B>
-inline const T &Approximation<T, B>::lower_bound() const
+template<typename T>
+inline const T &Approximation<T>::lower_bound() const
 {
   return _lower_bound;
 }
 
-template<typename T, typename B>
-inline const T &Approximation<T, B>::upper_bound() const
+template<typename T>
+inline const T &Approximation<T>::upper_bound() const
 {
   return _upper_bound;
 }
 
-template<typename T, typename B>
+template<typename T>
 inline bool
-Approximation<T, B>::contains(const Approximation<T> &approximation) const
+Approximation<T>::contains(const Approximation<T> &approximation) const
 {
   return _lower_bound <= approximation.lower_bound()
          && _upper_bound >= approximation.upper_bound();
 }
 
-template<typename T, typename B>
-inline bool Approximation<T, B>::interior_contains(
+template<typename T>
+inline bool Approximation<T>::interior_contains(
     const Approximation<T> &approximation) const
 {
   return _lower_bound < approximation.lower_bound()
          && approximation.upper_bound() < _upper_bound;
 }
 
-template<typename T, typename B>
-bool Approximation<T, B>::does_intersect(
+template<typename T>
+bool Approximation<T>::does_intersect(
     const Approximation<T> &approximation) const
 {
   return (approximation.contains(lower_bound())
@@ -331,8 +333,8 @@ bool Approximation<T, B>::does_intersect(
           || this->contains(approximation.upper_bound()));
 }
 
-template<typename T, typename B>
-bool Approximation<T, B>::interior_does_intersect(
+template<typename T>
+bool Approximation<T>::interior_does_intersect(
     const Approximation<T> &approximation) const
 {
   return (approximation.interior_contains(lower_bound())
@@ -341,41 +343,41 @@ bool Approximation<T, B>::interior_does_intersect(
           || this->interior_contains(approximation.upper_bound()));
 }
 
-template<typename T, typename B>
-inline bool Approximation<T, B>::is_exact() const
+template<typename T>
+inline bool Approximation<T>::is_exact() const
 {
   return lower_bound() == upper_bound();
 }
 
-template<typename T, typename B>
-inline bool Approximation<T, B>::contains(const T &value) const
+template<typename T>
+inline bool Approximation<T>::contains(const T &value) const
 {
   return _lower_bound <= value && value <= _upper_bound;
 }
 
-template<typename T, typename B>
-inline bool Approximation<T, B>::interior_contains(const T &value) const
+template<typename T>
+inline bool Approximation<T>::interior_contains(const T &value) const
 {
   return _lower_bound < value && value < _upper_bound;
 }
 
-template<typename T, typename B>
-inline const T Approximation<T, B>::error() const
+template<typename T>
+inline const T Approximation<T>::error() const
 {
   return subtract(_upper_bound, _lower_bound, FE_UPWARD);
 }
 
-template<typename T, typename B>
-inline Approximation<T> &Approximation<T, B>::negate()
+template<typename T>
+inline Approximation<T> &Approximation<T>::negate()
 {
   this->set_bounds(-_upper_bound, -_lower_bound);
 
   return *this;
 }
 
-template<typename T, typename B>
+template<typename T>
 inline Approximation<T> &
-Approximation<T, B>::operator+=(const Approximation<T> &a)
+Approximation<T>::operator+=(const Approximation<T> &a)
 {
   if constexpr (!std::is_floating_point_v<T>) {
     this->_lower_bound += a._lower_bound;
@@ -388,9 +390,9 @@ Approximation<T, B>::operator+=(const Approximation<T> &a)
   return *this;
 }
 
-template<typename T, typename B>
+template<typename T>
 inline Approximation<T> &
-Approximation<T, B>::operator-=(const Approximation<T> &a)
+Approximation<T>::operator-=(const Approximation<T> &a)
 {
   if ((a == 0).is_true()) {
     return *this;
@@ -413,8 +415,8 @@ Approximation<T, B>::operator-=(const Approximation<T> &a)
   return *this;
 }
 
-template<typename T, typename B>
-Approximation<T> &Approximation<T, B>::operator*=(const Approximation<T> &a)
+template<typename T>
+Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
 {
   if ((a == 0).is_true()) {
     this->set_bounds(0, 0);
@@ -520,8 +522,8 @@ Approximation<T> &Approximation<T, B>::operator*=(const Approximation<T> &a)
   }
 }
 
-template<typename T, typename B>
-Approximation<T> &Approximation<T, B>::operator/=(const Approximation<T> &a)
+template<typename T>
+Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
 {
   if (a.contains(0)) {
     // divisor contains 0
@@ -606,8 +608,8 @@ inline TriBool operator==(const Approximation<T> &a, const T &value)
  *     In the remaining cases, it returns `TriBool::FALSE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator==(const Approximation<T> &a, const K &value)
 {
   return a == T(value);
@@ -626,8 +628,8 @@ inline TriBool operator==(const Approximation<T> &a, const K &value)
  *     In the remaining cases, it returns `TriBool::FALSE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator==(const K &value, const Approximation<T> &a)
 {
   return a == T(value);
@@ -695,8 +697,8 @@ inline TriBool operator!=(const Approximation<T> &a, const T &value)
  *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator!=(const Approximation<T> &a, const K &value)
 {
   return a != T(value);
@@ -732,8 +734,8 @@ inline TriBool operator!=(const T &value, const Approximation<T> &a)
  *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator!=(const K &value, const Approximation<T> &a)
 {
   return a != value;
@@ -1066,8 +1068,8 @@ inline Approximation<T> operator+(const Approximation<T> &a,
  * @return an over-approximation of \f$a+b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator+(const Approximation<T> &a, const K &b)
 {
   return a + Approximation<T>(b);
@@ -1083,8 +1085,8 @@ inline Approximation<T> operator+(const Approximation<T> &a, const K &b)
  * @return an over-approximation of \f$a+b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator+(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) + b;
@@ -1179,8 +1181,8 @@ inline Approximation<T> operator-(Approximation<T> &&a,
  * @return an over-approximation of \f$a-b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator-(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) - b;
@@ -1196,8 +1198,8 @@ inline Approximation<T> operator-(const K &a, const Approximation<T> &b)
  * @return an over-approximation of \f$a-b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator-(const Approximation<T> &a, const K &b)
 {
   return a - Approximation<T>(b);
@@ -1264,8 +1266,8 @@ inline Approximation<T> operator*(const Approximation<T> &a,
  * @return an over-approximation of \f$a*b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator*(const Approximation<T> &a, const K &b)
 {
   return a * Approximation<T>(b);
@@ -1281,8 +1283,8 @@ inline Approximation<T> operator*(const Approximation<T> &a, const K &b)
  * @return an over-approximation of \f$a*b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator*(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) * b;
@@ -1327,9 +1329,8 @@ Approximation<T> operator/(Approximation<T> &&a, const Approximation<T> &b)
  * @param b is an approximation
  * @return an over-approximation of \f$a/b\f$
  */
-template<typename T, typename B>
-Approximation<T, B> operator/(const Approximation<T, B> &a,
-                              Approximation<T, B> &&b)
+template<typename T>
+Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b)
 {
   if (b > 0) {
     T lower_bound, upper_bound;
@@ -1372,8 +1373,8 @@ Approximation<T, B> operator/(const Approximation<T, B> &a,
  * @return an over-approximation of \f$a/b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator/(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) / b;
@@ -1389,8 +1390,8 @@ inline Approximation<T> operator/(const K &a, const Approximation<T> &b)
  * @return an over-approximation of \f$a/b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if<
-             !(std::is_same<K, Approximation<T>>::value)>::type>
+         typename = typename std::enable_if_t<
+             !(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator/(const Approximation<T> &a, const K &b)
 {
   return a / Approximation<T>(b);

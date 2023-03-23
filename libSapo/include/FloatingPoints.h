@@ -141,11 +141,11 @@ struct IEEE754WorkingType<double> {
  *
  * @tparam T is a floating point type
  */
-template<typename T,
-         typename =
-             typename std::enable_if<std::is_floating_point<T>::value>::type>
+template<typename T>
 class IEEE754Rounding
 {
+  static_assert(std::is_floating_point_v<T>, "This class exclusively supports "
+                "floating point types");
 public:
   using mantissa_type = typename IEEE754WorkingType<T>::mantissa_type;
   using exponent_type = typename IEEE754WorkingType<T>::exponent_type;
