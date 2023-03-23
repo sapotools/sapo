@@ -35,7 +35,8 @@
  *       is a number, representable in `T`, whose distance from `a+b` is
  *       the least one.
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<std::is_floating_point_v<T>>::type>
 T add(const T &a, const T &b, int rounding);
 
 /**
@@ -58,7 +59,8 @@ T add(const T &a, const T &b, int rounding);
  *       is a number, representable in `T`, whose distance from `a-b` is
  *       the least one.
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<std::is_floating_point_v<T>>::type>
 T subtract(const T &a, const T &b, int rounding);
 
 /**
@@ -81,7 +83,8 @@ T subtract(const T &a, const T &b, int rounding);
  *       is a number, representable in `T`, whose distance from `a*b` is
  *       the least one.
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<std::is_floating_point_v<T>>::type>
 T multiply(const T &a, const T &b, int rounding);
 
 /**
@@ -104,7 +107,8 @@ T multiply(const T &a, const T &b, int rounding);
  *       is a number, representable in `T`, whose distance from `a/b` is
  *       the least one.
  */
-template<typename T>
+template<typename T,
+         typename = typename std::enable_if<std::is_floating_point_v<T>>::type>
 T divide(const T &a, const T &b, int rounding);
 
 template<typename T>
@@ -145,7 +149,8 @@ template<typename T>
 class IEEE754Rounding
 {
   static_assert(std::is_floating_point_v<T>, "This class exclusively supports "
-                "floating point types");
+                                             "floating point types");
+
 public:
   using mantissa_type = typename IEEE754WorkingType<T>::mantissa_type;
   using exponent_type = typename IEEE754WorkingType<T>::exponent_type;
@@ -845,10 +850,11 @@ public:
   }
 };
 
-template<typename T>
+template<typename T, typename>
 inline T add(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
+
   const fp_codec *fp_a = reinterpret_cast<const fp_codec *>(&a);
   const fp_codec *fp_b = reinterpret_cast<const fp_codec *>(&b);
 
@@ -856,7 +862,7 @@ inline T add(const T &a, const T &b, int rounding)
                                  fp_b->binary.negative, rounding);
 }
 
-template<typename T>
+template<typename T, typename>
 inline T subtract(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
@@ -868,7 +874,7 @@ inline T subtract(const T &a, const T &b, int rounding)
                                       fp_b->binary.negative, rounding);
 }
 
-template<typename T>
+template<typename T, typename>
 inline T multiply(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
@@ -879,7 +885,7 @@ inline T multiply(const T &a, const T &b, int rounding)
   return IEEE754Rounding<T>::multiply(fp_a, fp_b, rounding);
 }
 
-template<typename T>
+template<typename T, typename>
 inline T divide(const T &a, const T &b, int rounding)
 {
   using fp_codec = typename IEEE754Rounding<T>::fp_codec;
