@@ -374,7 +374,7 @@ template<typename T>
 class ParamMinMaxCoeffFinder : public MinMaxCoeffFinder<T>
 {
   const std::vector<SymbolicAlgebra::Symbol<T>> &params;
-  const Polytope &paraSet;
+  const Polytope<T> &paraSet;
 
   /**
    * @brief Evaluate the parametric Bernstein coefficient upper-bound
@@ -404,7 +404,7 @@ public:
    * @param paraSet is the set of admissible values for parameters
    */
   ParamMinMaxCoeffFinder(const std::vector<SymbolicAlgebra::Symbol<T>> &params,
-                         const Polytope &paraSet):
+                         const Polytope<T> &paraSet):
       MinMaxCoeffFinder<T>(),
       params(params), paraSet(paraSet)
   {
@@ -533,7 +533,8 @@ LinearAlgebra::Vector<T> get_approx_center(const Bundle &bundle)
 
 template<typename T>
 std::vector<SymbolicAlgebra::Expression<T>>
-average_dynamics(const DynamicalSystem<T> &ds, const Polytope &parameter_set)
+average_dynamics(const DynamicalSystem<T> &ds,
+                 const Polytope<T> &parameter_set)
 {
   using namespace SymbolicAlgebra;
 
@@ -817,7 +818,7 @@ std::vector<LinearAlgebra::Vector<double>> get_parallelotope_basis_images(
  */
 std::vector<LinearAlgebra::Vector<double>>
 compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
-                       const Polytope &parameter_set)
+                       const Polytope<double> &parameter_set)
 {
   using namespace LinearAlgebra;
 
@@ -1041,7 +1042,7 @@ class BoundRefiner
 public:
   BoundRefiner(const Bundle &bundle,
                const DynamicalSystem<T> &dynamical_system,
-               const Polytope &parameter_set,
+               const Polytope<double> &parameter_set,
                const std::vector<LinearAlgebra::Vector<T>> &new_directions):
       _bundle(bundle),
       _dynamical_system(dynamical_system), _lower_bound(bundle.size()),
@@ -1140,7 +1141,7 @@ public:
 
 template<>
 Bundle Evolver<double>::operator()(const Bundle &bundle,
-                                   const Polytope &parameter_set)
+                                   const Polytope<double> &parameter_set)
 {
   using namespace std;
   using namespace SymbolicAlgebra;
@@ -1219,10 +1220,10 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
   return new_bundle;
 }
 
-SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
-                               const Bundle &bundle,
-                               const SetsUnion<Polytope> &parameter_set,
-                               const std::shared_ptr<STL::Atom> atom)
+SetsUnion<Polytope<double>>
+synthesize(const Evolver<double> &evolver, const Bundle &bundle,
+           const SetsUnion<Polytope<double>> &parameter_set,
+           const std::shared_ptr<STL::Atom> atom)
 {
   using namespace std;
   using namespace SymbolicAlgebra;
@@ -1247,7 +1248,7 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
                std::domain_error);
   }
 
-  SetsUnion<Polytope> result = parameter_set;
+  SetsUnion<Polytope<double>> result = parameter_set;
 
   std::vector<Symbol<>> alpha = get_symbol_vector<double>("f", bundle.dim());
 
@@ -1272,7 +1273,7 @@ SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
     // compute the Bernstein control points
     auto controlPts = get_Bernstein_coefficients(alpha, sofog);
 
-    Polytope constraints(ds.parameters(), controlPts);
+    Polytope<double> constraints(ds.parameters(), controlPts);
     result = ::intersect(result, constraints);
   }
 

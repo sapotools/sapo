@@ -577,7 +577,8 @@ protected:
  */
 template<typename T, template<class, class> class CONTAINER>
 LinearSystem<T> getConstraintsSystem(
-    const CONTAINER<Direction<T> *, std::allocator<Direction<T> *>> &constraints,
+    const CONTAINER<Direction<T> *, std::allocator<Direction<T> *>>
+        &constraints,
     const std::vector<SymbolicAlgebra::Symbol<T>> &symbols)
 {
   using namespace LinearAlgebra;

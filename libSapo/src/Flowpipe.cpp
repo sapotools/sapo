@@ -19,7 +19,7 @@
 /**
  * Constructor that instantiates flowpipes
  */
-Flowpipe::Flowpipe(): std::vector<SetsUnion<Polytope>>() {}
+Flowpipe::Flowpipe(): std::vector<SetsUnion<Polytope<double>>>() {}
 
 /**
  * Return the i-th polytopes union
@@ -27,7 +27,7 @@ Flowpipe::Flowpipe(): std::vector<SetsUnion<Polytope>>() {}
  * @param[in] i index
  * @return i-th polytopes union
  */
-const SetsUnion<Polytope> &Flowpipe::get(const unsigned int i) const
+const SetsUnion<Polytope<double>> &Flowpipe::get(const unsigned int i) const
 {
   if (i >= this->size()) {
     std::domain_error("Flowpipe::get: i must be included in [0,"

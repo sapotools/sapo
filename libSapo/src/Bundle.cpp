@@ -758,7 +758,7 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
 {
 }
 
-Bundle::Bundle(const Polytope &P)
+Bundle::Bundle(const Polytope<double> &P)
 {
   using namespace LinearAlgebra;
 
@@ -823,7 +823,7 @@ Bundle &Bundle::operator=(Bundle &&orig)
  *
  * @returns polytope represented by the bundle
  */
-Bundle::operator Polytope() const
+Bundle::operator Polytope<double>() const
 {
   using namespace std;
   using namespace LinearAlgebra;
@@ -892,7 +892,7 @@ Bundle &Bundle::canonize()
   }
 
   // get current polytope
-  Polytope bund = *this;
+  Polytope<double> bund = *this;
   for (unsigned int i = 0; i < this->size(); ++i) {
     _lower_bounds[i] = bund.minimize(this->_directions[i]).objective_value();
     _upper_bounds[i] = bund.maximize(this->_directions[i]).objective_value();
@@ -960,7 +960,7 @@ TriBool Bundle::is_subset_of(const Bundle &bundle) const
 
   TriBool is_sub{true};
 
-  Polytope P_this = *this;
+  Polytope<double> P_this = *this;
   // for each direction in the bundle
   for (unsigned int dir_idx = 0; dir_idx < bundle.size(); ++dir_idx) {
 
@@ -1019,7 +1019,7 @@ TriBool Bundle::satisfies(const LinearSystem<double> &ls) const
 
   TriBool sat{true};
 
-  Polytope P_this = *this;
+  Polytope<double> P_this = *this;
   // for each direction in the bundle
   for (unsigned int dir_idx = 0; dir_idx < ls.size(); ++dir_idx) {
 
@@ -1400,7 +1400,7 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
     return b1;
   }
 
-  Polytope p2(b2);
+  Polytope<double> p2(b2);
   Bundle res(b1);
   const Matrix<double> &res_dirs = res.directions();
 
@@ -1415,7 +1415,7 @@ Bundle over_approximate_union(const Bundle &b1, const Bundle &b2)
 
   const Matrix<double> &b2_dirs = b2.directions();
 
-  Polytope p1(b1);
+  Polytope<double> p1(b1);
   std::vector<unsigned int> new_ids(b2.size());
   // for each row in the linear system
   for (unsigned int i = 0; i < b2_dirs.size(); ++i) {
@@ -1473,7 +1473,7 @@ SetsUnion<Bundle> subtract_and_close(const Bundle &b1, const Bundle &b2)
     return su;
   }
 
-  Polytope p1 = b1;
+  Polytope<double> p1 = b1;
 
   for (unsigned int i = 0; i < b2.size(); ++i) {
     auto new_bound = p1.maximize(b2.get_direction(i)).objective_value();

@@ -24,7 +24,7 @@
  * a sequence of polytope union.
  * @todo reimplement this class as a list of `SetsUnion`
  */
-class Flowpipe : public std::vector<SetsUnion<Polytope>>
+class Flowpipe : public std::vector<SetsUnion<Polytope<double>>>
 {
 
 public:
@@ -33,7 +33,7 @@ public:
    */
   Flowpipe();
 
-  const SetsUnion<Polytope> &
+  const SetsUnion<Polytope<double>> &
   get(const unsigned int i) const; // get i-th polytopes union
 
   /**
@@ -42,9 +42,9 @@ public:
    * @param[in] Pu is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  inline Flowpipe &push_back(const SetsUnion<Polytope> &Pu)
+  inline Flowpipe &push_back(const SetsUnion<Polytope<double>> &Pu)
   {
-    std::vector<SetsUnion<Polytope>>::push_back(Pu);
+    std::vector<SetsUnion<Polytope<double>>>::push_back(Pu);
 
     return *this;
   }
@@ -55,9 +55,9 @@ public:
    * @param[in] Pu is the polytopes union to be appended
    * @return a reference to the new flowpipe
    */
-  inline Flowpipe &push_back(SetsUnion<Polytope> &&Pu)
+  inline Flowpipe &push_back(SetsUnion<Polytope<double>> &&Pu)
   {
-    std::vector<SetsUnion<Polytope>>::push_back(std::move(Pu));
+    std::vector<SetsUnion<Polytope<double>>>::push_back(std::move(Pu));
 
     return *this;
   }
@@ -70,7 +70,7 @@ public:
    */
   inline Flowpipe &push_back(const SetsUnion<Bundle> &Bu)
   {
-    SetsUnion<Polytope> Pu;
+    SetsUnion<Polytope<double>> Pu;
 
     for (const Bundle &b: Bu) {
       Pu.add(b);

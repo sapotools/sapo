@@ -93,15 +93,14 @@ private:
    * @param pSet is the set of parameters
    * @param formula is the specification
    * @param epoch_horizon
-   * @return SetsUnion<Polytope>
+   * @return SetsUnion<Polytope<double>>
    */
   template<typename T>
-  SetsUnion<Polytope>
-  transition_and_synthesis(Bundle init_set, const SetsUnion<Polytope> &pSet,
-                           const std::shared_ptr<T> formula,
-                           const int epoch_horizon)
+  SetsUnion<Polytope<double>> transition_and_synthesis(
+      Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
+      const std::shared_ptr<T> formula, const int epoch_horizon)
   {
-    SetsUnion<Polytope> result;
+    SetsUnion<Polytope<double>> result;
 
     // init_set.intersect(this->assumptions);
 
@@ -126,9 +125,9 @@ private:
    * @param[in] formula is an STL atomic formula providing the specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
-                                 const SetsUnion<Polytope> &pSet,
-                                 const std::shared_ptr<STL::Atom> formula);
+  SetsUnion<Polytope<double>>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope<double>> &pSet,
+             const std::shared_ptr<STL::Atom> formula);
 
   /**
    * Parameter synthesis for conjunctions
@@ -138,8 +137,8 @@ private:
    * @param[in] conj is an STL conjunction providing the specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope>
-  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
+  SetsUnion<Polytope<double>>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope<double>> &pSet,
              const std::shared_ptr<STL::Conjunction> formula);
 
   /**
@@ -150,8 +149,8 @@ private:
    * @param[in] conj is an STL disjunction providing the specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope>
-  synthesize(const Bundle &reachSet, const SetsUnion<Polytope> &pSet,
+  SetsUnion<Polytope<double>>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope<double>> &pSet,
              const std::shared_ptr<STL::Disjunction> formula);
 
   /**
@@ -163,10 +162,9 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
-                                 const SetsUnion<Polytope> &pSet,
-                                 const std::shared_ptr<STL::Until> formula,
-                                 const int time);
+  SetsUnion<Polytope<double>>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope<double>> &pSet,
+             const std::shared_ptr<STL::Until> formula, const int time);
 
   /**
    * Parameter synthesis for always formulas
@@ -177,10 +175,9 @@ private:
    * @param[in] time is the time of the current evaluation
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
-                                 const SetsUnion<Polytope> &pSet,
-                                 const std::shared_ptr<STL::Always> formula,
-                                 const int time);
+  SetsUnion<Polytope<double>>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope<double>> &pSet,
+             const std::shared_ptr<STL::Always> formula, const int time);
   /**
    * Parameter synthesis for the eventually formulas
    *
@@ -190,9 +187,9 @@ private:
    * specification
    * @returns refined parameter set
    */
-  SetsUnion<Polytope> synthesize(const Bundle &reachSet,
-                                 const SetsUnion<Polytope> &pSet,
-                                 const std::shared_ptr<STL::Eventually> ev);
+  SetsUnion<Polytope<double>>
+  synthesize(const Bundle &reachSet, const SetsUnion<Polytope<double>> &pSet,
+             const std::shared_ptr<STL::Eventually> ev);
 
 public:
   /**
@@ -253,7 +250,7 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns the reached flowpipe
    */
-  Flowpipe reach(Bundle init_set, const SetsUnion<Polytope> &pSet,
+  Flowpipe reach(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
                  unsigned int epoch_horizon,
                  ProgressAccounter *accounter = NULL);
 
@@ -266,10 +263,10 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns a parameter set refined according with `formula`
    */
-  SetsUnion<Polytope> synthesize(Bundle init_set,
-                                 const SetsUnion<Polytope> &pSet,
-                                 const std::shared_ptr<STL::STL> formula,
-                                 ProgressAccounter *accounter = NULL);
+  SetsUnion<Polytope<double>>
+  synthesize(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
+             const std::shared_ptr<STL::STL> formula,
+             ProgressAccounter *accounter = NULL);
 
   /**
    * Parameter synthesis with splits
@@ -284,8 +281,8 @@ public:
    * @param[in,out] accounter accounts for the computation progress
    * @returns the list of refined parameter sets
    */
-  std::list<SetsUnion<Polytope>>
-  synthesize(Bundle init_set, const SetsUnion<Polytope> &pSet,
+  std::list<SetsUnion<Polytope<double>>>
+  synthesize(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
              const std::shared_ptr<STL::STL> formula,
              const unsigned int max_splits,
              const unsigned int num_of_pre_splits = 0,
@@ -312,7 +309,7 @@ public:
    */
   InvariantValidationResult
   check_invariant(const SetsUnion<Bundle> &init_set,
-                  const SetsUnion<Polytope> &pSet,
+                  const SetsUnion<Polytope<double>> &pSet,
                   const LinearSystem<double> &invariant_candidate,
                   ProgressAccounter *accounter = NULL);
 

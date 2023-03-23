@@ -84,6 +84,9 @@ protected:
   TriBool constraint_is_redundant(const size_t i) const;
 
 public:
+  using numeric_type = T;
+  using approximation_type = APPROX_TYPE;
+
   /**
    * Constructor that instantiates an empty linear system
    */

@@ -89,11 +89,11 @@ BOOST_AUTO_TEST_CASE(test_any_includes)
         {0,0,-1}
     };
 
-    Polytope p1(A,{3,4,5,-2,-3,-4}), p2(A,{1,2,3,0,0,0}),
-             p3(A,{1,2,3,-3,2,1}), p4(A,{1,2,3,3,2,1}),
-             p5(A,{0.5,1.5,2.5,-0.5,-0.5,-0.5}); 
+    Polytope<double> p1(A,{3,4,5,-2,-3,-4}), p2(A,{1,2,3,0,0,0}),
+                     p3(A,{1,2,3,-3,2,1}), p4(A,{1,2,3,3,2,1}),
+                     p5(A,{0.5,1.5,2.5,-0.5,-0.5,-0.5}); 
 
-    StickyUnion<Polytope> Su1, Su2(p1), Su3({p1, p2}), Su4(p3);
+    StickyUnion<Polytope<double>> Su1, Su2(p1), Su3({p1, p2}), Su4(p3);
 
     BOOST_CHECK(is_false(p1.is_empty()));
     BOOST_CHECK(is_false(p2.is_empty()));
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(test_copy_sticky_union)
         {0,-1}
     };
 
-    Polytope p1(A,{1,2,3,0,0,0}), p2(A,{3,4,5,-2,-3,-4}),
+    Polytope<double> p1(A,{1,2,3,0,0,0}), p2(A,{3,4,5,-2,-3,-4}),
              p3(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
              p4(C,{1,1,0,0});
 
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(test_copy_sticky_union)
     BOOST_CHECK(is_false(p3.is_empty()));
     BOOST_CHECK(is_false(p4.is_empty()));
 
-    StickyUnion<Polytope> Su1({p1,p2,p3}), Su2(p4), Su3, res;
+    StickyUnion<Polytope<double>> Su1({p1,p2,p3}), Su2(p4), Su3, res;
     BOOST_CHECK(Su1.size()==3);
 
     res = Su3;
@@ -177,8 +177,8 @@ BOOST_AUTO_TEST_CASE(test_copy_sticky_union)
         BOOST_CHECK(res.size()==Su.size());
         BOOST_CHECK(res.number_of_classes()==Su.number_of_classes());
 
-        SetsUnion<Polytope> Pu = Su;
-        SetsUnion<Polytope> Pu_res = res;
+        SetsUnion<Polytope<double>> Pu = Su;
+        SetsUnion<Polytope<double>> Pu_res = res;
         BOOST_CHECK(is_true(Pu_res.is_empty()==Pu.is_empty()));
         BOOST_CHECK(Pu_res.size()==Pu.size());
 
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
         {0,-1}
     };
 
-    Polytope p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
+    Polytope<double> p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
              p3(A,{4,4,5,0,0,0}), p4(A,{3,4,6,-2,-3,-4}), 
              p5(A,{1,2,3,-3,2,1}), 
              p6(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
@@ -263,9 +263,9 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     BOOST_CHECK(is_false(p4.includes(p3)));
     BOOST_CHECK(is_false(p6.includes(p3)));
 
-    StickyUnion<Polytope> Su1({p1,p3}), Su2({p2,p4,p6}), Su3({p8, p9}),
+    StickyUnion<Polytope<double>> Su1({p1,p3}), Su2({p2,p4,p6}), Su3({p8, p9}),
                         Su4({intersect(p2, p8), p1}), Su5({p7});
-    SetsUnion<Polytope> res;
+    SetsUnion<Polytope<double>> res;
 
     // intersect the over-approximation of the union {p1, p3}
     res = intersect(Su1, Su1);

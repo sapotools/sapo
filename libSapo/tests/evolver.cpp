@@ -10,8 +10,8 @@
 #define APPROX_ERR 1e-14
 
 
-inline bool epsilon_equivalent(const Polytope& P1,
-                               const Polytope& P2, const double epsilon)
+inline bool epsilon_equivalent(const Polytope<double>& P1,
+                               const Polytope<double>& P2, const double epsilon)
 {
     return is_true((expand(P1, epsilon).includes(P2)) && 
                    (expand(P2, epsilon).includes(P1)));    
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
     std::shared_ptr<STL::Atom> atom1=std::make_shared<STL::Atom>(i-0.365),
                                atom2=std::make_shared<STL::Atom>(r-2);
 
-    SetsUnion<Polytope> pSet(Polytope(pA, {0.6,0.2,-0.5,-0.1}));
+    SetsUnion<Polytope<double>> pSet(Polytope(pA, {0.6,0.2,-0.5,-0.1}));
 
 
     Dense::Matrix<double> rA{
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(test_synthesis_bundle)
 
     Bundle rSet(rA, {0,0,0}, {1,0.7,1.6});
 
-    SetsUnion<Polytope> synthesized = synthesize(f, rSet, pSet, atom1);
+    SetsUnion<Polytope<double>> synthesized = synthesize(f, rSet, pSet, atom1);
 
     Polytope expected({{1,0},{0,-1},{-140,140}},{0.6,-0.1,-67.0});
 

@@ -219,10 +219,10 @@ compose_dynamics(const std::vector<Symbol<>> &variables,
   return dynamics;
 }
 
-SetsUnion<Polytope> getParameterSet(const InputData &id)
+SetsUnion<Polytope<double>> getParameterSet(const InputData &id)
 {
   if (id.paramDirectionsNum() == 0) {
-    return SetsUnion<Polytope>();
+    return SetsUnion<Polytope<double>>();
   }
 
   vector<vector<double>> pA(2 * id.paramDirectionsNum(),
@@ -240,7 +240,7 @@ SetsUnion<Polytope> getParameterSet(const InputData &id)
     pb[2 * i + 1] = -id.getParamDirection(i)->get_lower_bound();
   }
 
-  return SetsUnion<Polytope>(Polytope(pA, pb));
+  return SetsUnion<Polytope<double>>(Polytope(pA, pb));
 }
 
 DiscreteSystem<double> get_integrated_dynamics(const InputData &id,
@@ -296,17 +296,16 @@ Model *get_model(const InputData &id)
     compose_dynamics(variables, dynamics, id.getDynamicDegree());
   }
 
-  if (id.getDirectionsNum()<id.getVarNum()) {
+  if (id.getDirectionsNum() < id.getVarNum()) {
     std::cerr << "Not enough bundle directions: the directions "
-              << "must be as many as the variables at least"
-              << std::endl;
+              << "must be as many as the variables at least" << std::endl;
 
     return nullptr;
   }
 
   Bundle init_set = getBundle(id);
 
-  SetsUnion<Polytope> param_set = getParameterSet(id);
+  SetsUnion<Polytope<double>> param_set = getParameterSet(id);
 
   Model *model;
 

@@ -134,9 +134,10 @@ void reach_analysis(OSTREAM &os, Sapo &sapo, const Model *model,
 }
 
 template<typename OSTREAM>
-void output_synthesis(OSTREAM &os, const Model *model,
-                      const std::list<SetsUnion<Polytope>> &synth_params,
-                      const std::vector<Flowpipe> &flowpipes)
+void output_synthesis(
+    OSTREAM &os, const Model *model,
+    const std::list<SetsUnion<Polytope<double>>> &synth_params,
+    const std::vector<Flowpipe> &flowpipes)
 {
   using OF = OutputFormater<OSTREAM>;
 
@@ -261,7 +262,7 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model,
   }
 
   // Synthesize parameters
-  std::list<SetsUnion<Polytope>> synth_params = sapo.synthesize(
+  std::list<SetsUnion<Polytope<double>>> synth_params = sapo.synthesize(
       *(model->initial_set()), model->parameter_set(), model->specification(),
       sapo.max_param_splits, sapo.num_of_pre_splits, accounter);
 
@@ -274,12 +275,12 @@ void synthesis(OSTREAM &os, Sapo &sapo, const Model *model,
 
   if (!is_true(every_set_is_empty(synth_params))) {
 #ifdef WITH_THREADS
-    auto compute_reachability
-        = [&flowpipes, &sapo, &model, &accounter](
-              const SetsUnion<Polytope> &pSet, unsigned int params_idx) {
-            flowpipes[params_idx] = sapo.reach(*(model->initial_set()), pSet,
-                                               sapo.time_horizon, accounter);
-          };
+    auto compute_reachability = [&flowpipes, &sapo, &model, &accounter](
+                                    const SetsUnion<Polytope<double>> &pSet,
+                                    unsigned int params_idx) {
+      flowpipes[params_idx] = sapo.reach(*(model->initial_set()), pSet,
+                                         sapo.time_horizon, accounter);
+    };
 
     ThreadPool::BatchId batch_id = thread_pool.create_batch();
 
@@ -470,7 +471,7 @@ int main(int argc, char **argv)
 
   Model *model = get_model(drv.data);
 
-  if (model==nullptr) {
+  if (model == nullptr) {
     exit(1);
   }
 

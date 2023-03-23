@@ -294,7 +294,8 @@ public:
    * @return an over-approximation of the bundle transformed
    *         by the dynamic laws
    */
-  Bundle operator()(const Bundle &bundle, const Polytope &parameter_set);
+  Bundle operator()(const Bundle &bundle,
+                    const Polytope<double> &parameter_set);
 
   /**
    * @brief Transform a bundles union according with the system dynamics
@@ -330,7 +331,7 @@ public:
    *         by the dynamic laws
    */
   SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union,
-                               const Polytope &parameter_set)
+                               const Polytope<double> &parameter_set)
   {
     SetsUnion<Bundle> result;
 
@@ -350,8 +351,9 @@ public:
    * @return an over-approximation of set reached from `bundles_union`
    *         by the dynamic laws
    */
-  SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union,
-                               const SetsUnion<Polytope> &parameter_set)
+  SetsUnion<Bundle>
+  operator()(const SetsUnion<Bundle> &bundles_union,
+             const SetsUnion<Polytope<double>> &parameter_set)
   {
     SetsUnion<Bundle> result;
 
@@ -392,9 +394,9 @@ public:
  *         system when the parameters are in the returned set
  *         satisfies the atomic formula
  */
-SetsUnion<Polytope> synthesize(const Evolver<double> &evolver,
-                               const Bundle &bundle,
-                               const SetsUnion<Polytope> &parameter_set,
-                               const std::shared_ptr<STL::Atom> atom);
+SetsUnion<Polytope<double>>
+synthesize(const Evolver<double> &evolver, const Bundle &bundle,
+           const SetsUnion<Polytope<double>> &parameter_set,
+           const std::shared_ptr<STL::Atom> atom);
 
 #endif // EVOLVER_H_

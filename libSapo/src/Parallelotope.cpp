@@ -80,7 +80,7 @@ Parallelotope::Parallelotope(
  *
  * @returns a polytope representing the parallelotope
  */
-Parallelotope::operator Polytope() const
+Parallelotope::operator Polytope<double>() const
 {
   using namespace LinearAlgebra;
 

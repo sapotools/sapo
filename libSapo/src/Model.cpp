@@ -14,11 +14,12 @@
 #include "ErrorHandling.h"
 
 Model::Model(const Bundle &init_set, const std::string name):
-    Model(init_set, SetsUnion<Polytope>(), name)
+    Model(init_set, SetsUnion<Polytope<double>>(), name)
 {
 }
 
-Model::Model(const Bundle &init_set, const SetsUnion<Polytope> &parameter_set,
+Model::Model(const Bundle &init_set,
+             const SetsUnion<Polytope<double>> &parameter_set,
              const std::string name):
     _init_set(std::make_shared<Bundle>(init_set)),
     _param_set(parameter_set), _spec(nullptr), _assumptions(), _invariant(),
@@ -30,7 +31,7 @@ void Model::validate_parameters(
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
     const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
     const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-    const Bundle &init_set, const SetsUnion<Polytope> &parameter_set)
+    const Bundle &init_set, const SetsUnion<Polytope<double>> &parameter_set)
 {
   using namespace SymbolicAlgebra;
   std::set<Symbol<double>> dyn_symbols;
@@ -131,7 +132,7 @@ DiscreteModel::DiscreteModel(
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
     const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
     const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-    const Bundle &init_set, const SetsUnion<Polytope> &param_set,
+    const Bundle &init_set, const SetsUnion<Polytope<double>> &param_set,
     const std::string name):
     Model(init_set, param_set, name),
     _discrete_system(variables, parameters, dynamics)

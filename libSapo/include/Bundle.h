@@ -35,18 +35,6 @@ template<class BASIC_SET_TYPE>
 class SetsUnion;
 
 /**
- * @brief A class for parallelotope bundles
- *
- * A parallelotope bundle represents the intersection between different
- * non-singular parallelotopes. This class stores all of the parallelotope
- * directions/axes in one single array and constraints each of them between an
- * upper and a lower bound. The parallelotopes are represented by means of
- * bundle templates. A template is the vector of the indices of the bundle
- * directions involved in the corresponding parallelotope.
- */
-class Bundle;
-
-/**
  * @brief Bundle template
  *
  * This class represents bundle templates. A template of a $n$-dimensional
@@ -180,6 +168,16 @@ struct std::less<BundleTemplate> {
   bool operator()(const BundleTemplate &a, const BundleTemplate &b) const;
 };
 
+/**
+ * @brief A class for parallelotope bundles
+ *
+ * A parallelotope bundle represents the intersection between different
+ * non-singular parallelotopes. This class stores all of the parallelotope
+ * directions/axes in one single array and constraints each of them between an
+ * upper and a lower bound. The parallelotopes are represented by means of
+ * bundle templates. A template is the vector of the indices of the bundle
+ * directions involved in the corresponding parallelotope.
+ */
 class Bundle
 {
   std::vector<LinearAlgebra::Vector<double>>
@@ -352,7 +350,7 @@ public:
    *
    * @param P is the polytope whose bundle representation is aimed
    */
-  explicit Bundle(const Polytope &P);
+  explicit Bundle(const Polytope<double> &P);
 
   /**
    * @brief Assignment operator
@@ -507,7 +505,7 @@ public:
    */
   inline TriBool is_empty() const
   {
-    return static_cast<Polytope>(*this).is_empty();
+    return static_cast<Polytope<double>>(*this).is_empty();
   }
 
   /**
@@ -519,7 +517,7 @@ public:
    */
   inline TriBool is_interior_empty() const
   {
-    return static_cast<Polytope>(*this).is_interior_empty();
+    return static_cast<Polytope<double>>(*this).is_interior_empty();
   }
 
   /**
@@ -548,7 +546,7 @@ public:
    *         this bundle is not a subset of `P`. `uncertain` in
    *         the remaining cases
    */
-  inline TriBool is_subset_of(const Polytope &P) const
+  inline TriBool is_subset_of(const Polytope<double> &P) const
   {
     return this->satisfies(P);
   }
@@ -579,9 +577,9 @@ public:
    *         this bundle is not a superset of `P`. `uncertain` in
    *         the remaining cases
    */
-  inline TriBool includes(const Polytope &P) const
+  inline TriBool includes(const Polytope<double> &P) const
   {
-    return (Polytope(*this)).includes(P);
+    return static_cast<Polytope<double>>(*this).includes(P);
   }
 
   /**
@@ -605,7 +603,7 @@ public:
    *
    * @returns polytope represented by the bundle
    */
-  operator Polytope() const;
+  operator Polytope<double>() const;
 
   /**
    * @brief Get a parallelotope of the bundle
@@ -777,9 +775,9 @@ inline TriBool operator==(const Bundle &b1, const Bundle &b2)
  *         establish `A` and `B` differ. `uncertain` in the
  *         remaining cases
  */
-inline TriBool operator==(const Polytope &A, const Bundle &B)
+inline TriBool operator==(const Polytope<double> &A, const Bundle &B)
 {
-  return static_cast<Polytope>(B) == A;
+  return static_cast<Polytope<double>>(B) == A;
 }
 
 /**
@@ -792,7 +790,7 @@ inline TriBool operator==(const Polytope &A, const Bundle &B)
  *         establish `A` and `B` differ. `uncertain` in the
  *         remaining cases
  */
-inline TriBool operator==(const Bundle &A, const Polytope &B)
+inline TriBool operator==(const Bundle &A, const Polytope<double> &B)
 {
   return B == A;
 }
@@ -807,7 +805,7 @@ inline TriBool operator==(const Bundle &A, const Polytope &B)
  *         represent the same set. `uncertain` in the remaining
  *         cases
  */
-inline TriBool operator!=(const Polytope &A, const Bundle &B)
+inline TriBool operator!=(const Polytope<double> &A, const Bundle &B)
 {
   return !(A == B);
 }
@@ -822,7 +820,7 @@ inline TriBool operator!=(const Polytope &A, const Bundle &B)
  *         represent the same set. `uncertain` in the remaining
  *         cases
  */
-inline TriBool operator!=(const Bundle &A, const Polytope &B)
+inline TriBool operator!=(const Bundle &A, const Polytope<double> &B)
 {
   return !(A == B);
 }

@@ -23,10 +23,10 @@ BOOST_AUTO_TEST_CASE(test_sets_union)
         {0,0,-1}
     };
 
-    Polytope p1(A,{1,2,3,0,0,0}), p2(A,{3,4,5,-2,-3,-4}),
+    Polytope<double> p1(A,{1,2,3,0,0,0}), p2(A,{3,4,5,-2,-3,-4}),
              p3(A,{1,2,3,-3,2,1}); 
 
-    SetsUnion<Polytope> Pu1, Pu2(p1), Pu3({p1, p2}), Pu4(p3);
+    SetsUnion<Polytope<double>> Pu1, Pu2(p1), Pu3({p1, p2}), Pu4(p3);
 
     BOOST_CHECK(is_false(p1.is_empty()));
     BOOST_CHECK(is_false(p2.is_empty()));
@@ -62,11 +62,11 @@ BOOST_AUTO_TEST_CASE(test_any_includes)
         {0,0,-1}
     };
 
-    Polytope p1(A,{3,4,5,-2,-3,-4}), p2(A,{1,2,3,0,0,0}),
-             p3(A,{1,2,3,-3,2,1}), p4(A,{1,2,3,3,2,1}),
-             p5(A,{0.5,1.5,2.5,-0.5,-0.5,-0.5}); 
+    Polytope<double> p1(A,{3,4,5,-2,-3,-4}), p2(A,{1,2,3,0,0,0}),
+                     p3(A,{1,2,3,-3,2,1}), p4(A,{1,2,3,3,2,1}),
+                     p5(A,{0.5,1.5,2.5,-0.5,-0.5,-0.5}); 
 
-    SetsUnion<Polytope> Pu1, Pu2(p1), Pu3({p1, p2}), Pu4(p3);
+    SetsUnion<Polytope<double>> Pu1, Pu2(p1), Pu3({p1, p2}), Pu4(p3);
 
     BOOST_CHECK(is_false(p1.is_empty()));
     BOOST_CHECK(is_false(p2.is_empty()));
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(test_copy_sets_union)
         {0,-1}
     };
 
-    Polytope p1(A,{1,2,3,0,0,0}), p2(A,{3,4,5,-2,-3,-4}),
+    Polytope<double> p1(A,{1,2,3,0,0,0}), p2(A,{3,4,5,-2,-3,-4}),
              p3(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
              p4(C,{1,1,0,0});
 
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(test_copy_sets_union)
     BOOST_CHECK(is_false(p3.is_empty()));
     BOOST_CHECK(is_false(p4.is_empty()));
 
-    SetsUnion<Polytope> Pu1({p1,p2,p3}), Pu2(p4), Pu3, res;
+    SetsUnion<Polytope<double>> Pu1({p1,p2,p3}), Pu2(p4), Pu3, res;
     BOOST_CHECK(Pu1.size()==3);
 
     res = Pu3;
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(test_add_sets_union)
         {0,-1}
     };
 
-    Polytope p1(A,{3,4,5,3,2,1}), p2(A,{1,2,3,0,0,0}), 
+    Polytope<double> p1(A,{3,4,5,3,2,1}), p2(A,{1,2,3,0,0,0}), 
              p3(A,{4,4,5,0,0,0}), p4(A,{3,4,5,-2,-3,-4}), 
              p5(A,{1,2,3,-3,2,1}), 
              p6(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(test_add_sets_union)
     BOOST_CHECK(is_false(p6.includes(p3)));
     BOOST_CHECK(is_false(p6.includes(p4)));
 
-    SetsUnion<Polytope> Pu1({p2,p4});
+    SetsUnion<Polytope<double>> Pu1({p2,p4});
 
     BOOST_CHECK(Pu1.size()==2);
 
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(test_add_sets_union)
     
     BOOST_CHECK(Pu1.size()==2);
 
-    Pu1 = SetsUnion<Polytope>({p2,p4,p6});
+    Pu1 = SetsUnion<Polytope<double>>({p2,p4,p6});
 
     BOOST_CHECK(Pu1.size()==3);
 
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(test_make_union_sets_union)
         {0,-1}
     };
 
-    Polytope p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
+    Polytope<double> p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
              p3(A,{4,4,5,0,0,0}), p4(A,{3,4,6,-2,-3,-4}), 
              p5(A,{1,2,3,-3,2,1}), 
              p6(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_CASE(test_make_union_sets_union)
     BOOST_CHECK(is_false(p4.includes(p3)));
     BOOST_CHECK(is_false(p6.includes(p3)));
 
-    SetsUnion<Polytope> Pu1({p1,p3}), Pu2({p2,p4,p6}), Pu3({p8, p9}),
+    SetsUnion<Polytope<double>> Pu1({p1,p3}), Pu2({p2,p4,p6}), Pu3({p8, p9}),
                         Pu4({intersect(p2, p8), p1}), Pu5({p7}), res1, res2;
 
 
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(test_update_sets_union)
         {0,-1}
     };
 
-    Polytope p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
+    Polytope<double> p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
              p3(A,{4,4,5,0,0,0}), p4(A,{3,4,6,-2,-3,-4}), 
              p5(A,{1,2,3,-3,2,1}), 
              p6(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
@@ -482,7 +482,7 @@ BOOST_AUTO_TEST_CASE(test_update_sets_union)
     BOOST_CHECK(is_false(p4.includes(p3)));
     BOOST_CHECK(is_false(p6.includes(p3)));
 
-    SetsUnion<Polytope> Pu1({p1,p3}), Pu2({p2,p4,p6}), Pu3({p8, p9}),
+    SetsUnion<Polytope<double>> Pu1({p1,p3}), Pu2({p2,p4,p6}), Pu3({p8, p9}),
                         Pu4({intersect(p2, p8), p1}), Pu5({p7}), res;
 
 
@@ -583,7 +583,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
         {0,-1}
     };
 
-    Polytope p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
+    Polytope<double> p1(A,{3,4,6,3,2,1}), p2(A,{1,2,3,0,0,0}), 
              p3(A,{4,4,5,0,0,0}), p4(A,{3,4,6,-2,-3,-4}), 
              p5(A,{1,2,3,-3,2,1}), 
              p6(B,{1,1,3,3,0,2,4,2,1,1,3,3}),
@@ -619,7 +619,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
     BOOST_CHECK(is_false(p4.includes(p3)));
     BOOST_CHECK(is_false(p6.includes(p3)));
 
-    SetsUnion<Polytope> Pu1({p1,p3}), Pu2({p2,p4,p6}), Pu3({p8, p9}),
+    SetsUnion<Polytope<double>> Pu1({p1,p3}), Pu2({p2,p4,p6}), Pu3({p8, p9}),
                         Pu4({intersect(p2, p8), p1}), Pu5({p7}), res;
 
     res = intersect(Pu1, Pu1);
@@ -696,8 +696,8 @@ BOOST_AUTO_TEST_CASE(test_intersect_sets_union)
         BOOST_CHECK(is_true(res.any_includes(*it)));
     }
 
-    BOOST_CHECK(is_true(are_disjoint(Pu2, SetsUnion<Polytope>())));
-    BOOST_CHECK(is_true(are_disjoint(SetsUnion<Polytope>(), Pu2)));
+    BOOST_CHECK(is_true(are_disjoint(Pu2, SetsUnion<Polytope<double>>())));
+    BOOST_CHECK(is_true(are_disjoint(SetsUnion<Polytope<double>>(), Pu2)));
 }
 
 BOOST_AUTO_TEST_CASE(test_includes_sets_union)

@@ -21,8 +21,8 @@ typedef boost::mpl::list<double> test_types;
 
 #define APPROX_ERR 1e-14
 
-inline bool epsilon_equivalent(const Polytope& P1,
-                               const Polytope& P2, const double epsilon)
+inline bool epsilon_equivalent(const Polytope<double>& P1,
+                               const Polytope<double>& P2, const double epsilon)
 {
     return is_true(((expand(P1, epsilon).includes(P2)) && 
                    (expand(P2, epsilon).includes(P1))));    

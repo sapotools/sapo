@@ -59,7 +59,7 @@ public:
    *
    * @returns a polytope representing the parallelotope
    */
-  operator Polytope() const;
+  operator Polytope<double>() const;
 
   /**
    * @brief Get the base vertex
@@ -119,9 +119,9 @@ public:
  *         establish `A` and `B` differ. `uncertain` in the
  *         remaining cases
  */
-inline TriBool operator==(const Polytope &A, const Parallelotope &B)
+inline TriBool operator==(const Polytope<double> &A, const Parallelotope &B)
 {
-  return static_cast<Polytope>(B) == A;
+  return static_cast<Polytope<double>>(B) == A;
 }
 
 /**
@@ -134,7 +134,7 @@ inline TriBool operator==(const Polytope &A, const Parallelotope &B)
  *         establish `A` and `B` differ. `uncertain` in the
  *         remaining cases
  */
-inline TriBool operator==(const Parallelotope &A, const Polytope &B)
+inline TriBool operator==(const Parallelotope &A, const Polytope<double> &B)
 {
   return B == A;
 }
@@ -151,7 +151,7 @@ inline TriBool operator==(const Parallelotope &A, const Polytope &B)
  */
 inline TriBool operator==(const Parallelotope &A, const Parallelotope &B)
 {
-  return static_cast<Polytope>(A) == static_cast<Polytope>(B);
+  return static_cast<Polytope<double>>(A) == static_cast<Polytope<double>>(B);
 }
 
 /**
@@ -164,7 +164,7 @@ inline TriBool operator==(const Parallelotope &A, const Parallelotope &B)
  *         represent the same set. `uncertain` in the remaining
  *         cases
  */
-inline TriBool operator!=(const Polytope &A, const Parallelotope &B)
+inline TriBool operator!=(const Polytope<double> &A, const Parallelotope &B)
 {
   return !(A == B);
 }
@@ -179,7 +179,7 @@ inline TriBool operator!=(const Polytope &A, const Parallelotope &B)
  *         represent the same set. `uncertain` in the remaining
  *         cases
  */
-inline TriBool operator!=(const Parallelotope &A, const Polytope &B)
+inline TriBool operator!=(const Parallelotope &A, const Polytope<double> &B)
 {
   return !(A == B);
 }
