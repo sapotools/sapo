@@ -42,13 +42,14 @@ inline constexpr bool is_punctual_v = is_punctual<T>::value;
 /**
  * @brief Approximation for floating point numbers
  *
- * @tparam T is a punctual numeric type
+ * @tparam T is a punctual floating point numeric type
  */
 template<typename T>
 class Approximation
 {
-  static_assert(is_punctual_v<T>, "Only puctual types can be "
-                                  "approximated by using this class");
+  static_assert(std::is_floating_point_v<T> && is_punctual_v<T>,
+                "Only punctual floating point types can be "
+                "approximated by using this class");
 
   T _lower_bound; //!< the approximation lower bound
   T _upper_bound; //!< the approximation upper bound
@@ -379,13 +380,8 @@ template<typename T>
 inline Approximation<T> &
 Approximation<T>::operator+=(const Approximation<T> &a)
 {
-  if constexpr (!std::is_floating_point_v<T>) {
-    this->_lower_bound += a._lower_bound;
-    this->_upper_bound += a._upper_bound;
-  } else {
-    this->_lower_bound = add(_lower_bound, a._lower_bound, FE_DOWNWARD);
-    this->_upper_bound = add(_upper_bound, a._upper_bound, FE_UPWARD);
-  }
+  this->_lower_bound = add(_lower_bound, a._lower_bound, FE_DOWNWARD);
+  this->_upper_bound = add(_upper_bound, a._upper_bound, FE_UPWARD);
 
   return *this;
 }
@@ -404,13 +400,8 @@ Approximation<T>::operator-=(const Approximation<T> &a)
     return *this;
   }
 
-  if constexpr (!std::is_floating_point_v<T>) {
-    this->_lower_bound -= a._upper_bound;
-    this->_upper_bound += a._lower_bound;
-  } else {
-    this->_lower_bound = subtract(_lower_bound, a._upper_bound, FE_DOWNWARD);
-    this->_upper_bound = subtract(_upper_bound, a._lower_bound, FE_UPWARD);
-  }
+  this->_lower_bound = subtract(_lower_bound, a._upper_bound, FE_DOWNWARD);
+  this->_upper_bound = subtract(_upper_bound, a._lower_bound, FE_UPWARD);
 
   return *this;
 }
@@ -430,39 +421,24 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
     if ((a > 0).is_true()) {
       // [*this_l, *this_u] >= 0 && [a_l , a_u] >= 0:
       // min is this_l*a_l and max is this_u*a_u
-      if constexpr (!std::is_floating_point_v<T>) {
-        return set_bounds(this->lower_bound() * a.lower_bound(),
-                          this->upper_bound() * a.upper_bound());
-      } else {
-        return set_bounds(
-            multiply(this->lower_bound(), a.lower_bound(), FE_DOWNWARD),
-            multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
-      }
+      return set_bounds(
+          multiply(this->lower_bound(), a.lower_bound(), FE_DOWNWARD),
+          multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
     }
 
     if (a.upper_bound() >= 0) {
       // [*this_l, *this_u] >= 0 && a_l < 0 &&  a_u >= 0:
       // min is this_u*a_l and max is this_u*a_u
-      if constexpr (!std::is_floating_point_v<T>) {
-        return set_bounds(this->upper_bound() * a.lower_bound(),
-                          this->upper_bound() * a.upper_bound());
-      } else {
-        return set_bounds(
-            multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
-            multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
-      }
+      return set_bounds(
+          multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
+          multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
     }
 
     // [*this_l, *this_u] >= 0 && [a_l , a_u] < 0:
     // min is this_u*a_l and max is this_l*a_u
-    if constexpr (!std::is_floating_point_v<T>) {
-      return set_bounds(this->upper_bound() * a.lower_bound(),
-                        this->lower_bound() * a.upper_bound());
-    } else {
-      return set_bounds(
-          multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
-          multiply(this->lower_bound(), a.upper_bound(), FE_UPWARD));
-    }
+    return set_bounds(
+        multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
+        multiply(this->lower_bound(), a.upper_bound(), FE_UPWARD));
   }
 
   if ((*this < 0).is_true()) {
@@ -477,14 +453,9 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
   if ((a > 0).is_true()) {
     // *this_l < 0 && *this_u >= 0 && [a_l, a_u] >= 0:
     // min is *this_l*a_u and max is *this_u*a_u
-    if constexpr (!std::is_floating_point_v<T>) {
-      return set_bounds(this->lower_bound() * a.upper_bound(),
-                        this->upper_bound() * a.upper_bound());
-    } else {
-      return set_bounds(
-          multiply(this->lower_bound(), a.upper_bound(), FE_DOWNWARD),
-          multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
-    }
+    return set_bounds(
+        multiply(this->lower_bound(), a.upper_bound(), FE_DOWNWARD),
+        multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
   }
 
   if (a.upper_bound() >= 0) {
@@ -493,33 +464,21 @@ Approximation<T> &Approximation<T>::operator*=(const Approximation<T> &a)
     // *this_l*a_l)
     using namespace std;
 
-    T new_lower, new_upper;
-    if constexpr (!std::is_floating_point_v<T>) {
-      new_lower = min(lower_bound() * a.upper_bound(),
-                      upper_bound() * a.lower_bound());
-      new_upper = max(lower_bound() * a.lower_bound(),
-                      upper_bound() * a.upper_bound());
-    } else {
-      new_lower
-          = min(multiply(this->lower_bound(), a.upper_bound(), FE_DOWNWARD),
-                multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD));
-      new_upper
-          = max(multiply(this->lower_bound(), a.lower_bound(), FE_UPWARD),
-                multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
-    }
+    T new_lower
+        = min(multiply(this->lower_bound(), a.upper_bound(), FE_DOWNWARD),
+              multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD));
+    T new_upper
+        = max(multiply(this->lower_bound(), a.lower_bound(), FE_UPWARD),
+              multiply(this->upper_bound(), a.upper_bound(), FE_UPWARD));
+
     return this->set_bounds(new_lower, new_upper);
   }
 
   // *this_l < 0 && *this_u >= 0 && [a_l, a_u] < 0:
   // min is *this_u*a_l and max is *this_l*a_l
-  if constexpr (!std::is_floating_point_v<T>) {
-    return set_bounds(this->upper_bound() * a.lower_bound(),
-                      this->lower_bound() * a.lower_bound());
-  } else {
-    return set_bounds(
-        multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
-        multiply(this->lower_bound(), a.lower_bound(), FE_UPWARD));
-  }
+  return set_bounds(
+      multiply(this->upper_bound(), a.lower_bound(), FE_DOWNWARD),
+      multiply(this->lower_bound(), a.lower_bound(), FE_UPWARD));
 }
 
 template<typename T>
@@ -543,21 +502,19 @@ Approximation<T> &Approximation<T>::operator/=(const Approximation<T> &a)
     if ((*this >= 0).is_true()) {
       // [a_l, a_u] > 0 && [*this_l, *this_u] >= 0:
       // min is *this_l/a_u and max is *this_u/a_l
-      lower_bound = this->lower_bound() / a.upper_bound();
-      upper_bound = this->upper_bound() / a.lower_bound();
+      lower_bound = divide(this->lower_bound(), a.upper_bound(), FE_DOWNWARD);
+      upper_bound = divide(this->upper_bound(), a.lower_bound(), FE_UPWARD);
     } else if (this->upper_bound() >= 0) {
       // [a_l, a_u] > 0 && *this_l < 0  && *this_u >= 0:
       // min is *this_l/a_l and max is *this_u/a_l
-      lower_bound = this->lower_bound() / a.lower_bound();
-      upper_bound = this->upper_bound() / a.lower_bound();
+      lower_bound = divide(this->lower_bound(), a.lower_bound(), FE_DOWNWARD);
+      upper_bound = divide(this->upper_bound(), a.lower_bound(), FE_UPWARD);
     } else {
       // [a_l, a_u] > 0 && [*this_l, *this_u] < 0:
       // min is *this_l/a_l and max is *this_u/a_u
-      lower_bound = this->lower_bound() / a.lower_bound();
-      upper_bound = this->upper_bound() / a.upper_bound();
+      lower_bound = divide(this->lower_bound(), a.lower_bound(), FE_DOWNWARD);
+      upper_bound = divide(this->upper_bound(), a.upper_bound(), FE_UPWARD);
     }
-
-    approximate_bounds(lower_bound, upper_bound);
 
     return this->set_bounds(lower_bound, upper_bound);
   }
@@ -608,8 +565,8 @@ inline TriBool operator==(const Approximation<T> &a, const T &value)
  *     In the remaining cases, it returns `TriBool::FALSE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator==(const Approximation<T> &a, const K &value)
 {
   return a == T(value);
@@ -628,8 +585,8 @@ inline TriBool operator==(const Approximation<T> &a, const K &value)
  *     In the remaining cases, it returns `TriBool::FALSE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator==(const K &value, const Approximation<T> &a)
 {
   return a == T(value);
@@ -697,8 +654,8 @@ inline TriBool operator!=(const Approximation<T> &a, const T &value)
  *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator!=(const Approximation<T> &a, const K &value)
 {
   return a != T(value);
@@ -734,8 +691,8 @@ inline TriBool operator!=(const T &value, const Approximation<T> &a)
  *     In the remaining cases, it returns `TriBool::TRUE`.
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline TriBool operator!=(const K &value, const Approximation<T> &a)
 {
   return a != value;
@@ -1068,8 +1025,8 @@ inline Approximation<T> operator+(const Approximation<T> &a,
  * @return an over-approximation of \f$a+b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator+(const Approximation<T> &a, const K &b)
 {
   return a + Approximation<T>(b);
@@ -1085,8 +1042,8 @@ inline Approximation<T> operator+(const Approximation<T> &a, const K &b)
  * @return an over-approximation of \f$a+b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator+(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) + b;
@@ -1181,8 +1138,8 @@ inline Approximation<T> operator-(Approximation<T> &&a,
  * @return an over-approximation of \f$a-b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator-(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) - b;
@@ -1198,8 +1155,8 @@ inline Approximation<T> operator-(const K &a, const Approximation<T> &b)
  * @return an over-approximation of \f$a-b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator-(const Approximation<T> &a, const K &b)
 {
   return a - Approximation<T>(b);
@@ -1266,8 +1223,8 @@ inline Approximation<T> operator*(const Approximation<T> &a,
  * @return an over-approximation of \f$a*b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator*(const Approximation<T> &a, const K &b)
 {
   return a * Approximation<T>(b);
@@ -1283,8 +1240,8 @@ inline Approximation<T> operator*(const Approximation<T> &a, const K &b)
  * @return an over-approximation of \f$a*b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator*(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) * b;
@@ -1373,8 +1330,8 @@ Approximation<T> operator/(const Approximation<T> &a, Approximation<T> &&b)
  * @return an over-approximation of \f$a/b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator/(const K &a, const Approximation<T> &b)
 {
   return Approximation<T>(a) / b;
@@ -1390,8 +1347,8 @@ inline Approximation<T> operator/(const K &a, const Approximation<T> &b)
  * @return an over-approximation of \f$a/b\f$
  */
 template<typename T, typename K,
-         typename = typename std::enable_if_t<
-             !(std::is_same_v<K, Approximation<T>>)>>
+         typename
+         = typename std::enable_if_t<!(std::is_same_v<K, Approximation<T>>)>>
 inline Approximation<T> operator/(const Approximation<T> &a, const K &b)
 {
   return a / Approximation<T>(b);

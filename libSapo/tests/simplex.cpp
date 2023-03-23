@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(test_approximated_simplex)
 #ifdef HAVE_GMP
 
 
-BOOST_AUTO_TEST_CASE(test_Q_approximated_simplex_infeasible_despite_errors)
+BOOST_AUTO_TEST_CASE(test_Q_simplex_infeasible_despite_errors)
 {
     using namespace LinearAlgebra;
     using namespace LinearAlgebra::Dense;
@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE(test_Q_approximated_simplex_infeasible_despite_errors)
 
     Vector<mpq_class> obj{1,0};
     
-    SimplexMethodOptimizer<mpq_class, Approximation<mpq_class>> optimizer;
+    SimplexMethodOptimizer<mpq_class> optimizer;
 
     auto result = optimizer(A,b,obj,OptimizationGoal::MAXIMIZE);
     BOOST_CHECK_MESSAGE(result.status()==result.INFEASIBLE,
