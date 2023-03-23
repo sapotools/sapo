@@ -628,8 +628,7 @@ public:
    * @param value is the numeric value to be added
    * @return A reference to the updated object
    */
-  template<typename T,
-           std::enable_if_t<std::is_arithmetic_v<T>>>
+  template<typename T, std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator+=(const T value)
   {
     _ex = _ex->add(static_cast<C>(value));
@@ -644,8 +643,7 @@ public:
    * @param value is the numeric value to be subtracted
    * @return A reference to the updated object
    */
-  template<typename T,
-           std::enable_if_t<std::is_arithmetic_v<T>>>
+  template<typename T, std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator-=(const T value)
   {
     _ex = _ex->subtract(static_cast<C>(value));
@@ -660,8 +658,7 @@ public:
    * @param value is the numeric value to be multiplied
    * @return A reference to the updated object
    */
-  template<typename T,
-           std::enable_if_t<std::is_arithmetic_v<T>>>
+  template<typename T, std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator*=(const T value)
   {
     _ex = _ex->multiply(static_cast<C>(value));
@@ -676,8 +673,7 @@ public:
    * @param value is the numeric divisor
    * @return A reference to the updated object
    */
-  template<typename T,
-           std::enable_if_t<std::is_arithmetic_v<T>>>
+  template<typename T, std::enable_if_t<std::is_arithmetic_v<T>>>
   const Expression<C> &operator/=(const T value)
   {
     _ex = _ex->divided_by(static_cast<C>(value));
@@ -900,8 +896,7 @@ public:
    * @return An expression that represents the sum `lhs`+`value`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend Expression<C> operator+(const Expression<C> &lhs, const T value)
   {
     if (value == 0) {
@@ -925,8 +920,7 @@ public:
    * @return An expression that represents the subtraction `value`-`rhs`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator-(const T value,
                                         const Expression<C> &rhs)
   {
@@ -945,8 +939,7 @@ public:
    * @return An expression that represents the subtraction `value`*`rhs`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend Expression<C> operator*(const T value, const Expression<C> &rhs)
   {
     if (value == 0) {
@@ -974,8 +967,7 @@ public:
    * @return An expression that represents the division `lhs`/`value`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend Expression<C> operator/(const T value, const Expression<C> &rhs)
   {
     if (value == 0) {
@@ -997,8 +989,7 @@ public:
    * @return An expression that represents the sum `value`+`rhs`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator+(const T value,
                                         const Expression<C> &rhs)
   {
@@ -1017,8 +1008,7 @@ public:
    * @return An expression that represents the subtraction `lhs`-`value`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator-(const Expression<C> &lhs,
                                         const T value)
   {
@@ -1037,8 +1027,7 @@ public:
    * @return An expression that represents the subtraction `lhs`*`value`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator*(const Expression<C> &lhs,
                                         const T value)
   {
@@ -1058,8 +1047,7 @@ public:
    * @return An expression that represents the division `lhs`/`value`
    */
   template<typename T,
-           typename
-           = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+           typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
   friend inline Expression<C> operator/(const Expression<C> &lhs,
                                         const T value)
   {
