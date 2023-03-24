@@ -27,6 +27,47 @@
  *      during the computation
  */
 template<typename T = double, typename APPROX_TYPE = T>
+class Polytope;
+
+/**
+ * @brief Swap two polytopes
+ *
+ * @tparam T is the numeric type used to represent the two polytopes
+ * @tparam APPROX_TYPE is the approximation type used during the computation
+ * @param P1 is a polytope
+ * @param P2 is a polytope
+ */
+template<typename T, typename APPROX_TYPE>
+void swap(Polytope<T, APPROX_TYPE> &P1, Polytope<T, APPROX_TYPE> &P2);
+
+/**
+ * @brief Build the intersection of two polytopes
+ *
+ * @tparam T is the numeric type used to represent the two polytopes
+ * @tparam APPROX_TYPE is the approximation type used during the computation
+ * @param P1 is a polytope
+ * @param P2 is a polytope
+ * @return a polytope that represents the intersection between `P1` and `P2`
+ */
+template<typename T, typename APPROX_TYPE>
+Polytope<T, APPROX_TYPE> intersect(const Polytope<T, APPROX_TYPE> &P1,
+                                   const Polytope<T, APPROX_TYPE> &P2);
+
+/**
+ * @brief Over-approximate the union of two polytopes
+ *
+ * @tparam T is the numeric type used to represent the two polytopes
+ * @tparam APPROX_TYPE is the approximation type used during the computation
+ * @param P1 is a polytope
+ * @param P2 is a polytope
+ * @return a polytope that over-approximates the union of `P1` and `P2`
+ */
+template<typename T, typename APPROX_TYPE>
+Polytope<T, APPROX_TYPE>
+over_approximate_union(const Polytope<T, APPROX_TYPE> &P1,
+                       const Polytope<T, APPROX_TYPE> &P2);
+
+template<typename T, typename APPROX_TYPE>
 class Polytope : public LinearSystem<T, APPROX_TYPE>
 {
 
@@ -217,17 +258,16 @@ public:
    */
   T bounding_box_volume() const;
 
-  template<typename T2, typename APPROX2>
-  friend void swap(Polytope<T2, APPROX2> &P1, Polytope<T2, APPROX2> &P2);
+  friend void swap<T, APPROX_TYPE>(Polytope<T, APPROX_TYPE> &P1,
+                                   Polytope<T, APPROX_TYPE> &P2);
 
-  template<typename T2, typename APPROX2>
-  friend Polytope<T2, APPROX2> intersect(const Polytope<T2, APPROX2> &P1,
-                                         const Polytope<T2, APPROX2> &P2);
+  friend Polytope<T, APPROX_TYPE>
+  intersect<T, APPROX_TYPE>(const Polytope<T, APPROX_TYPE> &P1,
+                            const Polytope<T, APPROX_TYPE> &P2);
 
-  template<typename T2, typename APPROX2>
-  friend Polytope<T2, APPROX2>
-  over_approximate_union(const Polytope<T2, APPROX2> &P1,
-                         const Polytope<T2, APPROX2> &P2);
+  friend Polytope<T, APPROX_TYPE>
+  over_approximate_union<T, APPROX_TYPE>(const Polytope<T, APPROX_TYPE> &P1,
+                                         const Polytope<T, APPROX_TYPE> &P2);
 };
 
 /**

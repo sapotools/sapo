@@ -33,6 +33,21 @@
  *      during the computation
  */
 template<typename T = double, typename APPROX_TYPE = T>
+class LinearSystem;
+
+/**
+ * @brief Swap two linear systems
+ *
+ * @tparam T is the type of the linear system coefficients
+ * @tparam APPROX_TYPE is the approximation type of the parameters
+ * @param ls_1 is one of the linear system to be swapped
+ * @param ls_2 is the second linear system to be swapped
+ */
+template<typename T, typename APPROX_TYPE>
+void swap(LinearSystem<T, APPROX_TYPE> &ls_1,
+          LinearSystem<T, APPROX_TYPE> &ls_2);
+
+template<typename T, typename APPROX_TYPE>
 class LinearSystem
 {
 
@@ -326,9 +341,8 @@ public:
    */
   size_t size() const;
 
-  template<typename T2, typename APPROX2>
-  friend void swap(LinearSystem<T2, APPROX2> &ls_1,
-                   LinearSystem<T2, APPROX2> &ls_2);
+  friend void swap<T, APPROX_TYPE>(LinearSystem<T, APPROX_TYPE> &ls_1,
+                                   LinearSystem<T, APPROX_TYPE> &ls_2);
 };
 
 /**
@@ -349,18 +363,6 @@ public:
 template<typename T, typename APPROX_TYPE>
 TriBool have_disjoint_solutions(const LinearSystem<T, APPROX_TYPE> &ls1,
                                 const LinearSystem<T, APPROX_TYPE> &ls2);
-
-/**
- * @brief Swap two linear systems
- *
- * @tparam T is the type of the linear system coefficients
- * @tparam APPROX_TYPE is the approximation type of the parameters
- * @param ls_1 is one of the linear system to be swapped
- * @param ls_2 is the second linear system to be swapped
- */
-template<typename T, typename APPROX_TYPE>
-void swap(LinearSystem<T, APPROX_TYPE> &ls_1,
-          LinearSystem<T, APPROX_TYPE> &ls_2);
 
 /**
  * @brief Test whether two linear systems are the same one
