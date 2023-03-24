@@ -88,7 +88,7 @@ public:
    * @return `true` if and only if the coefficients for `P` and
    *         `direction` are cached
    */
-  bool coefficients_in_cache(const Parallelotope &P,
+  bool coefficients_in_cache(const Parallelotope<T> &P,
                              const LinearAlgebra::Vector<T> &direction) const
   {
 #ifdef WITH_THREADS
@@ -119,7 +119,7 @@ public:
    *         `direction`, and the current evolver
    */
   const std::vector<SymbolicAlgebra::Expression<T>> &
-  get_coefficients(const Parallelotope &P,
+  get_coefficients(const Parallelotope<T> &P,
                    const LinearAlgebra::Vector<T> &direction) const
   {
 #ifdef WITH_THREADS
@@ -141,7 +141,7 @@ public:
    * @param[in] coefficients is the vector of Bernstein coefficients
    */
   const std::vector<SymbolicAlgebra::Expression<T>> &save_coefficients(
-      const Parallelotope &P, const LinearAlgebra::Vector<T> &direction,
+      const Parallelotope<T> &P, const LinearAlgebra::Vector<T> &direction,
       const std::vector<SymbolicAlgebra::Expression<T>> &coefficients)
   {
 #ifdef WITH_THREADS
@@ -166,7 +166,7 @@ public:
    * @param[in] coefficients is the vector of Bernstein coefficients
    */
   const std::vector<SymbolicAlgebra::Expression<T>> &
-  save_coefficients(const Parallelotope &P,
+  save_coefficients(const Parallelotope<T> &P,
                     const LinearAlgebra::Vector<T> &direction,
                     std::vector<SymbolicAlgebra::Expression<T>> &&coefficients)
   {

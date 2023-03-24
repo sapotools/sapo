@@ -842,7 +842,7 @@ Bundle::operator Polytope<double>() const
   return Polytope(std::move(A), std::move(b));
 }
 
-Parallelotope
+Parallelotope<double>
 Bundle::get_parallelotope(const BundleTemplate &bundle_template) const
 {
   using namespace std;

@@ -611,7 +611,8 @@ public:
    * @param[in] bundle_template is the bundle template
    * @returns the parallelotope of the bundle associated to `bundle_template`
    */
-  Parallelotope get_parallelotope(const BundleTemplate &bundle_template) const;
+  Parallelotope<double>
+  get_parallelotope(const BundleTemplate &bundle_template) const;
 
   /**
    * @brief Get a canonical bundle equivalent to the current one

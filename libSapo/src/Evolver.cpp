@@ -151,7 +151,7 @@ std::vector<SymbolicAlgebra::Expression<T>> compute_Bernstein_coefficients(
  */
 template<typename T>
 typename SymbolicAlgebra::Expression<T>::replacement_type
-get_subs_from(const Parallelotope &P,
+get_subs_from(const Parallelotope<double> &P,
               const std::vector<SymbolicAlgebra::Symbol<T>> &q,
               const std::vector<SymbolicAlgebra::Symbol<T>> &beta)
 {
@@ -189,7 +189,7 @@ get_subs_from(const Parallelotope &P,
 template<typename T>
 std::vector<SymbolicAlgebra::Expression<T>>
 build_generator_functions(const std::vector<SymbolicAlgebra::Symbol<T>> &alpha,
-                          const Parallelotope &P)
+                          const Parallelotope<T> &P)
 {
   using namespace LinearAlgebra;
 
@@ -751,7 +751,7 @@ inline void fix_new_dir_verse(const LinearAlgebra::Vector<T> &dir_image,
  * @return the vector of parallelotope basis vertices
  */
 std::vector<LinearAlgebra::Vector<double>>
-get_parallelotope_basis_vertices(const Parallelotope &p)
+get_parallelotope_basis_vertices(const Parallelotope<double> &p)
 {
   using namespace LinearAlgebra;
 
@@ -782,7 +782,7 @@ get_parallelotope_basis_vertices(const Parallelotope &p)
 std::vector<LinearAlgebra::Vector<double>> get_parallelotope_basis_images(
     const std::vector<SymbolicAlgebra::Expression<double>> &dynamical_system,
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
-    const Parallelotope &p)
+    const Parallelotope<double> &p)
 {
   using namespace LinearAlgebra;
 
@@ -921,7 +921,7 @@ class BoundRefiner
    */
   class ParallelotopeProcessor
   {
-    const Parallelotope
+    const Parallelotope<T>
         _parallelotope; //!< the parallelotope of the considered template
 
     std::vector<SymbolicAlgebra::Expression<T>>
