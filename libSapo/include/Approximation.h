@@ -1440,6 +1440,67 @@ Approximation<T> sqrt(Approximation<T> &&a)
 }
 
 /**
+ * @brief Get the lower bound of an approximation
+ *
+ * @tparam T is the numeric type for the approximation
+ * @param approximation is an approximation
+ * @return the lower bound of `approximation`
+ */
+template<typename T>
+inline T get_lower_bound(const Approximation<T> &approximation)
+{
+  return approximation.lower_bound();
+}
+
+/**
+ * @brief Get the upper bound of an approximation
+ *
+ * @tparam T is the numeric type for the approximation
+ * @param approximation is an approximation
+ * @return the upper bound of `approximation`
+ */
+template<typename T>
+inline T get_upper_bound(const Approximation<T> &approximation)
+{
+  return approximation.upper_bound();
+}
+
+/**
+ * @brief Get the lower bound of a punctual value
+ *
+ * This method returns the lower bound of a punctual value,
+ * i.e., the value itself. This method is only meant to
+ * allow a uniform API for both punctual and approximated
+ * values.
+ *
+ * @tparam T is a punctual numeric type
+ * @param value is a punctual value
+ * @return `value`
+ */
+template<typename T, std::enable_if_t<is_punctual_v<T>>>
+inline T get_lower_bound(const T &value)
+{
+  return value;
+}
+/**
+ * @brief Get the upper bound of a punctual value
+ *
+ * This method returns the upper bound of a punctual value,
+ * i.e., the value itself. This method is only meant to
+ * allow a uniform API for both punctual and approximated
+ * values.
+ *
+ * @tparam T is a punctual numeric type
+ * @param value is a punctual value
+ * @return `value`
+ */
+template<typename T, std::enable_if_t<is_punctual_v<T>>>
+inline T get_upper_bound(const T &value)
+{
+  return value;
+}
+
+/**
  * @brief The over-approximated square root of an approximation
  *
  * @tparam T is a punctual numeric type
