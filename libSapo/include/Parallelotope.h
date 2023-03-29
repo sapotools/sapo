@@ -212,6 +212,8 @@ template<typename T, typename APPROX_TYPE>
 TriBool operator!=(const Parallelotope<T, APPROX_TYPE> &A,
                    const Parallelotope<T, APPROX_TYPE> &B);
 
+// Inplementation
+
 template<typename T, typename APPROX_TYPE>
 Parallelotope<T, APPROX_TYPE>::Parallelotope(
     const std::vector<LinearAlgebra::Vector<T>> &directions,

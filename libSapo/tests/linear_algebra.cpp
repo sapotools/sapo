@@ -419,7 +419,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_linear_dep_ratio, T, test_types)
     };
 
     for (auto test_it = std::begin(tests); test_it != std::end(tests); ++test_it) {
-        auto ratio = test_it->first.first / test_it->first.second;
+        auto ratio = get_dependency_coefficient(test_it->first.first, test_it->first.second);
         bool beval = (ratio == test_it->second);
         BOOST_REQUIRE_MESSAGE(beval, "(" << test_it->first.first << " / "
                                           << test_it->first.second  << ") == " 
@@ -436,7 +436,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_linear_dep_ratio, T, test_types)
         {{1,7,5,5,0}, {1,7,5,-5,0}}
     };
     for (auto test_it = std::begin(err_test); test_it != std::end(err_test); ++test_it) {
-        BOOST_REQUIRE_THROW(test_it->first / test_it->second, std::domain_error); 
+        BOOST_REQUIRE_THROW(get_dependency_coefficient(test_it->first,
+                                                       test_it->second), std::domain_error); 
     }
 }
 

@@ -749,12 +749,13 @@ bool are_linearly_dependent(const Vector<T> &v1, const Vector<T> &v2)
  * @brief Compute the ratio between two linearly dependent vectors
  *
  * @tparam T is the type of the scalar values
+ * @tparam APPROX_TYPE is the approximation type
  * @param v1 is the first vector
  * @param v2 is the second vector
  * @return The ratio between two linearly dependent vectors
  */
-template<typename T>
-T operator/(const Vector<T> &v1, const Vector<T> &v2)
+template<typename T, typename APPROX_TYPE = T>
+T get_dependency_coefficient(const Vector<T> &v1, const Vector<T> &v2)
 {
   if (v1.size() != v2.size()) {
     SAPO_ERROR("the two vectors differ in dimension", std::domain_error);
@@ -779,9 +780,12 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
         non_zero_idx = i;
       }
     } else {
+      APPROX_TYPE coeff1{v1[i]}, coeff2{v2[i]};
+      coeff1 *= v2[non_zero_idx];
+      coeff2 *= v1[non_zero_idx];
 
       if ((v1[i] == 0 && v2[i] != 0) || (v1[i] != 0 && v2[i] == 0)
-          || (v1[i] * v2[non_zero_idx] != v2[i] * v1[non_zero_idx])) {
+          || is_false(coeff1 == coeff2)) {
         SAPO_ERROR("the two vectors are not linearly dependent",
                    std::domain_error);
       }
@@ -793,7 +797,10 @@ T operator/(const Vector<T> &v1, const Vector<T> &v2)
                std::domain_error);
   }
 
-  return v1[non_zero_idx] / v2[non_zero_idx];
+  APPROX_TYPE coeff{v1[non_zero_idx]};
+  coeff /= v2[non_zero_idx];
+
+  return coeff;
 }
 
 //! Linear algebra for dense matrices

@@ -511,7 +511,7 @@ build_interpretation(const std::vector<SymbolicAlgebra::Symbol<T>> &symbols,
 }
 
 template<typename T>
-LinearAlgebra::Vector<T> get_approx_center(const Bundle &bundle)
+LinearAlgebra::Vector<T> get_approx_center(const Bundle<double> &bundle)
 {
   using namespace LinearAlgebra;
   std::vector<T> approx_c;
@@ -817,7 +817,8 @@ std::vector<LinearAlgebra::Vector<double>> get_parallelotope_basis_images(
  * @return a vector of new directions for the bundle
  */
 std::vector<LinearAlgebra::Vector<double>>
-compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
+compute_new_directions(const Bundle<double> &bundle,
+                       const DynamicalSystem<double> &ds,
                        const Polytope<double> &parameter_set)
 {
   using namespace LinearAlgebra;
@@ -872,7 +873,7 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
 }
 
 /**
- * @brief Bundle bound refiner
+ * @brief Bundle<double> bound refiner
  *
  * When a bundle is transformed according to a parametric
  * dynamical system, the bounds of its image on a set of
@@ -890,7 +891,7 @@ compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
 template<typename T>
 class BoundRefiner
 {
-  const Bundle _bundle;                        //!< the considered bundle
+  const Bundle<double> _bundle;                //!< the considered bundle
   const DynamicalSystem<T> &_dynamical_system; //!< the dynamical system
 
   std::vector<CondSyncUpdater<T, std::greater<T>>>
@@ -1040,7 +1041,7 @@ class BoundRefiner
   };
 
 public:
-  BoundRefiner(const Bundle &bundle,
+  BoundRefiner(const Bundle<double> &bundle,
                const DynamicalSystem<T> &dynamical_system,
                const Polytope<double> &parameter_set,
                const std::vector<LinearAlgebra::Vector<T>> &new_directions):
@@ -1140,8 +1141,9 @@ public:
 };
 
 template<>
-Bundle Evolver<double>::operator()(const Bundle &bundle,
-                                   const Polytope<double> &parameter_set)
+Bundle<double>
+Evolver<double>::operator()(const Bundle<double> &bundle,
+                            const Polytope<double> &parameter_set)
 {
   using namespace std;
   using namespace SymbolicAlgebra;
@@ -1200,9 +1202,10 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     SAPO_ERROR(oss.str(), std::domain_error);
   }
 
-  Bundle new_bundle(bundle.adaptive_directions(), std::move(new_directions),
-                    bound_refiner.get_lower_bounds(),
-                    bound_refiner.get_upper_bounds(), bundle.templates());
+  Bundle<double> new_bundle(
+      bundle.adaptive_directions(), std::move(new_directions),
+      bound_refiner.get_lower_bounds(), bound_refiner.get_upper_bounds(),
+      bundle.templates());
 
   for (const auto &len: bundle.edge_lengths()) {
     if (len > EDGE_MAX_LENGTH) {
@@ -1221,7 +1224,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
 }
 
 SetsUnion<Polytope<double>>
-synthesize(const Evolver<double> &evolver, const Bundle &bundle,
+synthesize(const Evolver<double> &evolver, const Bundle<double> &bundle,
            const SetsUnion<Polytope<double>> &parameter_set,
            const std::shared_ptr<STL::Atom> atom)
 {

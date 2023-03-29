@@ -13,15 +13,15 @@
 
 #include "ErrorHandling.h"
 
-Model::Model(const Bundle &init_set, const std::string name):
+Model::Model(const Bundle<double> &init_set, const std::string name):
     Model(init_set, SetsUnion<Polytope<double>>(), name)
 {
 }
 
-Model::Model(const Bundle &init_set,
+Model::Model(const Bundle<double> &init_set,
              const SetsUnion<Polytope<double>> &parameter_set,
              const std::string name):
-    _init_set(std::make_shared<Bundle>(init_set)),
+    _init_set(std::make_shared<Bundle<double>>(init_set)),
     _param_set(parameter_set), _spec(nullptr), _assumptions(), _invariant(),
     _name(name)
 {
@@ -31,7 +31,8 @@ void Model::validate_parameters(
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
     const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
     const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-    const Bundle &init_set, const SetsUnion<Polytope<double>> &parameter_set)
+    const Bundle<double> &init_set,
+    const SetsUnion<Polytope<double>> &parameter_set)
 {
   using namespace SymbolicAlgebra;
   std::set<Symbol<double>> dyn_symbols;
@@ -123,7 +124,7 @@ Model &Model::set_invariant(const LinearSystem<double> &invariant)
 DiscreteModel::DiscreteModel(
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
     const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-    const Bundle &init_set, const std::string name):
+    const Bundle<double> &init_set, const std::string name):
     DiscreteModel(variables, {}, dynamics, init_set, {}, name)
 {
 }
@@ -132,8 +133,8 @@ DiscreteModel::DiscreteModel(
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
     const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
     const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-    const Bundle &init_set, const SetsUnion<Polytope<double>> &param_set,
-    const std::string name):
+    const Bundle<double> &init_set,
+    const SetsUnion<Polytope<double>> &param_set, const std::string name):
     Model(init_set, param_set, name),
     _discrete_system(variables, parameters, dynamics)
 {

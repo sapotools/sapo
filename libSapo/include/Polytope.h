@@ -318,6 +318,8 @@ Polytope<T, APPROX_TYPE>
 over_approximate_union(const Polytope<T, APPROX_TYPE> &P1,
                        const Polytope<T, APPROX_TYPE> &P2);
 
+// Inplementation
+
 template<typename T, typename APPROX_TYPE>
 Polytope<T, APPROX_TYPE>::Polytope(): LinearSystem<T, APPROX_TYPE>()
 {

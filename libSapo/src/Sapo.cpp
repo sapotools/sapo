@@ -46,16 +46,17 @@ Sapo::Sapo(const DiscreteModel &model, bool cached):
   _evolver = new Evolver<double>(ds, cached);
 }
 
-Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
+Flowpipe Sapo::reach(Bundle<double> init_set, unsigned int k,
                      ProgressAccounter *accounter)
 {
   init_set.intersect_with(this->assumptions);
 
   // create current bundles list
-  std::list<Bundle> cbundles = init_set.split(max_bundle_magnitude, 1.0);
+  std::list<Bundle<double>> cbundles
+      = init_set.split(max_bundle_magnitude, 1.0);
 
   // create next bundles list
-  std::list<Bundle> nbundles;
+  std::list<Bundle<double>> nbundles;
 
   // last polytope union in flowpipe
   SetsUnion<Polytope<double>> last_step(init_set);
@@ -68,18 +69,19 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
 #ifdef WITH_THREADS
   std::mutex mutex;
 
-  auto compute_next_bundles_and_add_to_last
-      = [&nbundles, &last_step, &mutex](Sapo *sapo, const Bundle &bundle)
+  auto compute_next_bundles_and_add_to_last =
+      [&nbundles, &last_step, &mutex](Sapo *sapo, const Bundle<double> &bundle)
 #else
   auto compute_next_bundles_and_add_to_last
-      = [&nbundles, &last_step](Sapo *sapo, const Bundle &bundle)
+      = [&nbundles, &last_step](Sapo *sapo, const Bundle<double> &bundle)
 #endif
 
   {
     using namespace LinearAlgebra;
 
     // get the transformed bundle
-    Bundle nbundle = sapo->_evolver->operator()(bundle); // transform it
+    Bundle<double> nbundle
+        = sapo->_evolver->operator()(bundle); // transform it
 
     // guarantee the assumptions
     nbundle.intersect_with(sapo->assumptions);
@@ -142,7 +144,7 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
     // swap current bundles and new bundles
     std::swap(cbundles, nbundles);
 
-    nbundles = std::list<Bundle>();
+    nbundles = std::list<Bundle<double>>();
 
     // add the last step to the flow pipe
     flowpipe.push_back(last_step); // store result
@@ -155,8 +157,9 @@ Flowpipe Sapo::reach(Bundle init_set, unsigned int k,
   return flowpipe;
 }
 
-Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
-                     unsigned int k, ProgressAccounter *accounter)
+Flowpipe Sapo::reach(Bundle<double> init_set,
+                     const SetsUnion<Polytope<double>> &pSet, unsigned int k,
+                     ProgressAccounter *accounter)
 {
   using namespace std;
   const unsigned int num_p_poly = pSet.size();
@@ -168,11 +171,12 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
   init_set.intersect_with(this->assumptions);
 
   // create current bundle list vector
-  std::list<Bundle> cbundle_list = init_set.split(max_bundle_magnitude, 1.0);
-  std::vector<std::list<Bundle>> cbundles(num_p_poly, cbundle_list);
+  std::list<Bundle<double>> cbundle_list
+      = init_set.split(max_bundle_magnitude, 1.0);
+  std::vector<std::list<Bundle<double>>> cbundles(num_p_poly, cbundle_list);
 
   // create next bundles list
-  std::vector<std::list<Bundle>> nbundles;
+  std::vector<std::list<Bundle<double>>> nbundles;
 
   // last polytope union in flowpipe
   SetsUnion<Polytope<double>> last_step(init_set);
@@ -199,7 +203,8 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
     for (auto b_it = std::cbegin(cbundles[pos]);
          b_it != std::cend(cbundles[pos]); ++b_it) {
       // get the transformed bundle
-      Bundle nbundle = sapo->_evolver->operator()(*b_it, pSet); // transform it
+      Bundle<double> nbundle
+          = sapo->_evolver->operator()(*b_it, pSet); // transform it
 
       // guarantee the assumptions
       nbundle.intersect_with(sapo->assumptions);
@@ -230,7 +235,7 @@ Flowpipe Sapo::reach(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
   // TODO: check whether there exists any chance for the last_step to be empty
   while (i < k && last_step.size() != 0) {
 
-    nbundles = std::vector<std::list<Bundle>>(num_p_poly);
+    nbundles = std::vector<std::list<Bundle<double>>>(num_p_poly);
 
     // create a new last step reach set
     last_step = SetsUnion<Polytope<double>>();
@@ -380,7 +385,7 @@ public:
  * @returns the list of refined parameter sets
  */
 std::list<SetsUnion<Polytope<double>>>
-synthesize_list(Sapo &sapo, const Bundle &init_set,
+synthesize_list(Sapo &sapo, const Bundle<double> &init_set,
                 const std::list<SetsUnion<Polytope<double>>> &pSetList,
                 const std::shared_ptr<STL::STL> &formula,
                 ProgressAccounter *accounter)
@@ -447,7 +452,7 @@ synthesize_list(Sapo &sapo, const Bundle &init_set,
  * @returns the list of refined parameter sets
  */
 std::list<SetsUnion<Polytope<double>>> Sapo::synthesize(
-    Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
+    Bundle<double> init_set, const SetsUnion<Polytope<double>> &pSet,
     const std::shared_ptr<STL::STL> formula, const unsigned int max_splits,
     const unsigned int num_of_pre_splits, ProgressAccounter *accounter)
 {
@@ -500,7 +505,7 @@ std::list<SetsUnion<Polytope<double>>> Sapo::synthesize(
  * @returns refined parameter set
  */
 SetsUnion<Polytope<double>>
-Sapo::synthesize(const Bundle &init_set,
+Sapo::synthesize(const Bundle<double> &init_set,
                  const SetsUnion<Polytope<double>> &pSet,
                  const std::shared_ptr<STL::Conjunction> conj)
 {
@@ -520,7 +525,7 @@ Sapo::synthesize(const Bundle &init_set,
  * @returns refined parameter set
  */
 SetsUnion<Polytope<double>>
-Sapo::synthesize(const Bundle &init_set,
+Sapo::synthesize(const Bundle<double> &init_set,
                  const SetsUnion<Polytope<double>> &pSet,
                  const std::shared_ptr<STL::Disjunction> disj)
 {
@@ -540,7 +545,7 @@ Sapo::synthesize(const Bundle &init_set,
  * @returns refined parameter set
  */
 SetsUnion<Polytope<double>>
-Sapo::synthesize(const Bundle &init_set,
+Sapo::synthesize(const Bundle<double> &init_set,
                  const SetsUnion<Polytope<double>> &pSet,
                  const std::shared_ptr<STL::Eventually> ev)
 {
@@ -562,10 +567,9 @@ Sapo::synthesize(const Bundle &init_set,
  * @param[in,out] accounter accounts for the computation progress
  * @returns a parameter set refined according with `formula`
  */
-SetsUnion<Polytope<double>>
-Sapo::synthesize(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
-                 const std::shared_ptr<STL::STL> formula,
-                 ProgressAccounter *accounter)
+SetsUnion<Polytope<double>> Sapo::synthesize(
+    Bundle<double> init_set, const SetsUnion<Polytope<double>> &pSet,
+    const std::shared_ptr<STL::STL> formula, ProgressAccounter *accounter)
 {
   (void)accounter;
   if (this->assumptions.size() > 0) {
@@ -618,7 +622,7 @@ Sapo::synthesize(Bundle init_set, const SetsUnion<Polytope<double>> &pSet,
  * @returns refined parameter set
  */
 SetsUnion<Polytope<double>>
-Sapo::synthesize(const Bundle &init_set,
+Sapo::synthesize(const Bundle<double> &init_set,
                  const SetsUnion<Polytope<double>> &pSet,
                  const std::shared_ptr<STL::Atom> atom)
 {
@@ -635,7 +639,7 @@ Sapo::synthesize(const Bundle &init_set,
  * @returns refined parameter set
  */
 SetsUnion<Polytope<double>>
-Sapo::synthesize(const Bundle &init_set,
+Sapo::synthesize(const Bundle<double> &init_set,
                  const SetsUnion<Polytope<double>> &pSet,
                  const std::shared_ptr<STL::Until> formula, const int time)
 {
@@ -691,7 +695,7 @@ Sapo::synthesize(const Bundle &init_set,
  * @returns refined parameter set
  */
 SetsUnion<Polytope<double>>
-Sapo::synthesize(const Bundle &init_set,
+Sapo::synthesize(const Bundle<double> &init_set,
                  const SetsUnion<Polytope<double>> &pSet,
                  const std::shared_ptr<STL::Always> formula, const int time)
 {
@@ -728,8 +732,8 @@ Sapo::synthesize(const Bundle &init_set,
 }
 
 /// @ private
-typedef SetsUnion<Bundle> (*approx_funct_type)(const SetsUnion<Bundle> &,
-                                               const SetsUnion<Bundle> &);
+typedef SetsUnion<Bundle<double>> (*approx_funct_type)(
+    const SetsUnion<Bundle<double>> &, const SetsUnion<Bundle<double>> &);
 
 /// @ private
 template<class BASIC_SET_TYPE>
@@ -770,11 +774,11 @@ approx_funct_type select_approx(Sapo::joinApproxType approx)
 {
   switch (approx) {
   case Sapo::NO_APPROX:
-    return Tk_identify<Bundle>;
+    return Tk_identify<Bundle<double>>;
   case Sapo::CHAIN_JOIN:
-    return &Tk_chain_join<Bundle>;
+    return &Tk_chain_join<Bundle<double>>;
   case Sapo::FULL_JOIN:
-    return &Tk_full_join<Bundle>;
+    return &Tk_full_join<Bundle<double>>;
   default:
     SAPO_ERROR("unsupported approximation type", std::domain_error);
   }
@@ -782,7 +786,7 @@ approx_funct_type select_approx(Sapo::joinApproxType approx)
 
 /// @ private
 unsigned int is_max_k_invariant(Evolver<double> *evolver,
-                                const Bundle &reached_set,
+                                const Bundle<double> &reached_set,
                                 const unsigned int max_k)
 {
   auto T_reached = reached_set;
@@ -805,12 +809,12 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
 /// @ private
 unsigned int is_max_k_invariant(Evolver<double> *evolver,
-                                const Bundle &reached_set,
+                                const Bundle<double> &reached_set,
                                 const Polytope<double> &param_set,
                                 const unsigned int max_k)
 {
   // alias the transformation function
-  auto T = [&evolver, &param_set](const Bundle &set) {
+  auto T = [&evolver, &param_set](const Bundle<double> &set) {
     return evolver->operator()(set, param_set);
   };
 
@@ -834,7 +838,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
 /// @ private
 unsigned int is_max_k_invariant(Evolver<double> *evolver,
-                                const SetsUnion<Bundle> &reached_set,
+                                const SetsUnion<Bundle<double>> &reached_set,
                                 const unsigned int max_k)
 {
   auto T_reached = reached_set;
@@ -857,12 +861,12 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
 /// @ private
 unsigned int is_max_k_invariant(Evolver<double> *evolver,
-                                const SetsUnion<Bundle> &reached_set,
+                                const SetsUnion<Bundle<double>> &reached_set,
                                 const SetsUnion<Polytope<double>> &param_set,
                                 const unsigned int max_k)
 {
   // alias the transformation function
-  auto T = [&evolver, &param_set](const SetsUnion<Bundle> &set) {
+  auto T = [&evolver, &param_set](const SetsUnion<Bundle<double>> &set) {
     return evolver->operator()(set, param_set);
   };
 
@@ -886,7 +890,7 @@ unsigned int is_max_k_invariant(Evolver<double> *evolver,
 
 /// @ private
 Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
-                               const SetsUnion<Bundle> &reached_set,
+                               const SetsUnion<Bundle<double>> &reached_set,
                                const unsigned int k)
 {
   Flowpipe k_induction_proof;
@@ -908,12 +912,12 @@ Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
 
 /// @ private
 Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
-                               const SetsUnion<Bundle> &reached_set,
+                               const SetsUnion<Bundle<double>> &reached_set,
                                const SetsUnion<Polytope<double>> &param_set,
                                const unsigned int k)
 {
   // alias the transformation function
-  auto T = [&evolver, &param_set](const SetsUnion<Bundle> &set) {
+  auto T = [&evolver, &param_set](const SetsUnion<Bundle<double>> &set) {
     return evolver->operator()(set, param_set);
   };
 
@@ -934,21 +938,22 @@ Flowpipe get_k_invariant_proof(Evolver<double> *evolver,
 }
 
 /// @ private
-inline TriBool is_reached_set_invariant(Evolver<double> *evolver,
-                                        const SetsUnion<Bundle> &reached_set,
-                                        const SetsUnion<Bundle> &Tk)
+inline TriBool
+is_reached_set_invariant(Evolver<double> *evolver,
+                         const SetsUnion<Bundle<double>> &reached_set,
+                         const SetsUnion<Bundle<double>> &Tk)
 {
   return reached_set.includes(evolver->operator()(Tk));
 }
 
 /// @ private
 TriBool is_reached_set_invariant(Evolver<double> *evolver,
-                                 const SetsUnion<Bundle> &reached_set,
+                                 const SetsUnion<Bundle<double>> &reached_set,
                                  const SetsUnion<Polytope<double>> &param_set,
-                                 const SetsUnion<Bundle> &Tk)
+                                 const SetsUnion<Bundle<double>> &Tk)
 {
   // alias the transformation function
-  auto T = [&evolver, &param_set](const SetsUnion<Bundle> &set) {
+  auto T = [&evolver, &param_set](const SetsUnion<Bundle<double>> &set) {
     return (*evolver)(set, param_set);
   };
 
@@ -956,7 +961,8 @@ TriBool is_reached_set_invariant(Evolver<double> *evolver,
 }
 
 /// @ private
-double difference_max_thickness(const Bundle &A, const Bundle &B)
+double difference_max_thickness(const Bundle<double> &A,
+                                const Bundle<double> &B)
 {
   if (A.directions() != B.directions()) {
     SAPO_ERROR("the two parameters must have the same "
@@ -1004,10 +1010,10 @@ double difference_max_thickness(const Bundle &A, const Bundle &B)
  *                 the threshold
  * @param[in] sapo is a `Sapo` instance
  */
-void update_reached_set_and_approx(SetsUnion<Bundle> &Tk_approx,
-                                   SetsUnion<Bundle> &reached_set,
-                                   SetsUnion<Bundle> &Tk,
-                                   SetsUnion<Bundle> &over_Tk_approx,
+void update_reached_set_and_approx(SetsUnion<Bundle<double>> &Tk_approx,
+                                   SetsUnion<Bundle<double>> &reached_set,
+                                   SetsUnion<Bundle<double>> &Tk,
+                                   SetsUnion<Bundle<double>> &over_Tk_approx,
                                    unsigned int &cse, const Sapo &sapo)
 {
   auto approximate_Tk = select_approx(sapo.join_approx);
@@ -1054,7 +1060,7 @@ void update_reached_set_and_approx(SetsUnion<Bundle> &Tk_approx,
  * a `k`-invariant
  */
 InvariantValidationResult
-Sapo::check_invariant(const SetsUnion<Bundle> &init_set,
+Sapo::check_invariant(const SetsUnion<Bundle<double>> &init_set,
                       const SetsUnion<Polytope<double>> &pSet,
                       const LinearSystem<double> &invariant_candidate,
                       ProgressAccounter *accounter)
@@ -1084,7 +1090,7 @@ Sapo::check_invariant(const SetsUnion<Bundle> &init_set,
 
   // alias the transformation function
   Sapo *sapo = this;
-  auto T = [&sapo, &pSet](const SetsUnion<Bundle> &set) {
+  auto T = [&sapo, &pSet](const SetsUnion<Bundle<double>> &set) {
     if (sapo->dynamical_system().parameters().size() > 0) {
       return sapo->evolver()->operator()(set, pSet);
     } else {
@@ -1092,9 +1098,10 @@ Sapo::check_invariant(const SetsUnion<Bundle> &init_set,
     }
   };
 
-  auto is_max_k_inv = [&sapo, &pSet](const SetsUnion<Bundle> &reached_set,
-                                     const SetsUnion<Bundle> &Tk,
-                                     const unsigned int &max_k) {
+  auto is_max_k_inv = [&sapo,
+                       &pSet](const SetsUnion<Bundle<double>> &reached_set,
+                              const SetsUnion<Bundle<double>> &Tk,
+                              const unsigned int &max_k) {
     if (sapo->join_approx == Sapo::NO_APPROX) {
       TriBool invariant;
       if (sapo->dynamical_system().parameters().size() > 0) {

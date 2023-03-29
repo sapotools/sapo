@@ -140,7 +140,7 @@ collect_constraints(std::vector<std::vector<double>> &directions,
       LB.push_back(id.getDirection(i)->get_lower_bound());
     } else { // not necessary if we assume that bound
              // optimization has been performed
-      double coeff = directions[pos] / dir;
+      double coeff = get_dependency_coefficient(directions[pos], dir);
 
       auto new_UB = coeff * id.getDirection(i)->get_upper_bound();
       auto new_LB = coeff * id.getDirection(i)->get_lower_bound();
@@ -162,7 +162,7 @@ collect_constraints(std::vector<std::vector<double>> &directions,
   return get_templates(id, template_ids);
 }
 
-Bundle getBundle(const InputData &id)
+Bundle<double> getBundle(const InputData &id)
 {
   using namespace LinearAlgebra;
 
@@ -187,7 +187,7 @@ Bundle getBundle(const InputData &id)
                                        templates);
   }
 
-  Bundle bundle = Bundle(directions, LB, UB, templates, adaptive_directions);
+  auto bundle = Bundle<double>(directions, LB, UB, templates, adaptive_directions);
 
   if (id.getUseInvariantDirections()) {
     const auto variables = id.getVarSymbols();

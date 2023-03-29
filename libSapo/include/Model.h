@@ -31,8 +31,8 @@ class Model
 {
 
 protected:
-  std::shared_ptr<Bundle> _init_set;      //!< The initial set
-  SetsUnion<Polytope<double>> _param_set; //!< The parameter set
+  std::shared_ptr<Bundle<double>> _init_set; //!< The initial set
+  SetsUnion<Polytope<double>> _param_set;    //!< The parameter set
 
   std::shared_ptr<STL::STL> _spec; //!< a specification
 
@@ -57,7 +57,7 @@ protected:
       const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
       const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
       const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-      const Bundle &init_set,
+      const Bundle<double> &init_set,
       const SetsUnion<Polytope<double>> &parameter_set);
 
 public:
@@ -69,7 +69,7 @@ public:
    * @param init_set is the initial set
    * @param name is the model name
    */
-  Model(const Bundle &init_set, const std::string name = "Unknown");
+  Model(const Bundle<double> &init_set, const std::string name = "Unknown");
 
   /**
    * @brief Constructor
@@ -81,7 +81,8 @@ public:
    * @param param_set is the set of the parameter
    * @param name is the model name
    */
-  Model(const Bundle &init_set, const SetsUnion<Polytope<double>> &param_set,
+  Model(const Bundle<double> &init_set,
+        const SetsUnion<Polytope<double>> &param_set,
         const std::string name = "Unknown");
 
   /**
@@ -137,7 +138,7 @@ public:
    *
    * @return a reference to the model initial set
    */
-  inline const std::shared_ptr<Bundle> initial_set() const
+  inline const std::shared_ptr<Bundle<double>> initial_set() const
   {
     return this->_init_set;
   }
@@ -251,7 +252,7 @@ public:
   DiscreteModel(
       const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
       const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-      const Bundle &init_set, const std::string name = "Unknown");
+      const Bundle<double> &init_set, const std::string name = "Unknown");
 
   /**
    * @brief Constructor
@@ -267,7 +268,8 @@ public:
       const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
       const std::vector<SymbolicAlgebra::Symbol<double>> &parameters,
       const std::vector<SymbolicAlgebra::Expression<double>> &dynamics,
-      const Bundle &init_set, const SetsUnion<Polytope<double>> &param_set,
+      const Bundle<double> &init_set,
+      const SetsUnion<Polytope<double>> &param_set,
       const std::string name = "Unknown");
 
   /**

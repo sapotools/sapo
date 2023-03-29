@@ -744,10 +744,10 @@ BOOST_AUTO_TEST_CASE(test_includes_sets_union)
 
     BOOST_CHECK(is_true(are_disjoint(b5,b6)));
 
-    std::list<Bundle> blist{b1,b2,b3,b4,b5,b6,b7,b8,b9};
+    std::list<Bundle<double>> blist{b1,b2,b3,b4,b5,b6,b7,b8,b9};
 
-    SetsUnion<Bundle> bsu(blist);
-    SetsUnion<Bundle> bsu2({c1, c2});
+    SetsUnion<Bundle<double>> bsu(blist);
+    SetsUnion<Bundle<double>> bsu2({c1, c2});
 
     BOOST_CHECK(is_false(bsu.any_includes(c1)));
     BOOST_CHECK(is_false(bsu.any_includes(c2)));

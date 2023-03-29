@@ -272,14 +272,14 @@ public:
    * @return an over-approximation of the bundle transformed
    *         by the dynamic laws
    */
-  inline Bundle operator()(const Bundle &bundle)
+  inline Bundle<double> operator()(const Bundle<double> &bundle)
   {
     if (_ds.parameters().size() != 0) {
       SAPO_ERROR("the parameter set has not been specified",
                  std::domain_error);
     }
 
-    return this->operator()(bundle, Polytope());
+    return this->operator()(bundle, Polytope<double>());
   }
 
   /**
@@ -294,8 +294,8 @@ public:
    * @return an over-approximation of the bundle transformed
    *         by the dynamic laws
    */
-  Bundle operator()(const Bundle &bundle,
-                    const Polytope<double> &parameter_set);
+  Bundle<double> operator()(const Bundle<double> &bundle,
+                            const Polytope<double> &parameter_set);
 
   /**
    * @brief Transform a bundles union according with the system dynamics
@@ -304,14 +304,15 @@ public:
    * @return an over-approximation of set reached from `bundles_union`
    *         by the dynamic laws
    */
-  SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union)
+  SetsUnion<Bundle<double>>
+  operator()(const SetsUnion<Bundle<double>> &bundles_union)
   {
     if (_ds.parameters().size() != 0) {
       SAPO_ERROR("the parameter set has not been specified",
                  std::domain_error);
     }
 
-    SetsUnion<Bundle> result;
+    SetsUnion<Bundle<double>> result;
 
     for (auto b_it = std::begin(bundles_union);
          b_it != std::end(bundles_union); ++b_it) {
@@ -330,10 +331,11 @@ public:
    * @return an over-approximation of set reached from `bundles_union`
    *         by the dynamic laws
    */
-  SetsUnion<Bundle> operator()(const SetsUnion<Bundle> &bundles_union,
-                               const Polytope<double> &parameter_set)
+  SetsUnion<Bundle<double>>
+  operator()(const SetsUnion<Bundle<double>> &bundles_union,
+             const Polytope<double> &parameter_set)
   {
-    SetsUnion<Bundle> result;
+    SetsUnion<Bundle<double>> result;
 
     for (auto it = std::begin(bundles_union); it != std::end(bundles_union);
          ++it) {
@@ -351,11 +353,11 @@ public:
    * @return an over-approximation of set reached from `bundles_union`
    *         by the dynamic laws
    */
-  SetsUnion<Bundle>
-  operator()(const SetsUnion<Bundle> &bundles_union,
+  SetsUnion<Bundle<double>>
+  operator()(const SetsUnion<Bundle<double>> &bundles_union,
              const SetsUnion<Polytope<double>> &parameter_set)
   {
-    SetsUnion<Bundle> result;
+    SetsUnion<Bundle<double>> result;
 
     for (auto p_it = std::begin(parameter_set);
          p_it != std::end(parameter_set); ++p_it) {
@@ -395,7 +397,7 @@ public:
  *         satisfies the atomic formula
  */
 SetsUnion<Polytope<double>>
-synthesize(const Evolver<double> &evolver, const Bundle &bundle,
+synthesize(const Evolver<double> &evolver, const Bundle<double> &bundle,
            const SetsUnion<Polytope<double>> &parameter_set,
            const std::shared_ptr<STL::Atom> atom);
 

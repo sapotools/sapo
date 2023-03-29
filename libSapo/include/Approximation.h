@@ -1477,7 +1477,7 @@ inline T get_upper_bound(const Approximation<T> &approximation)
  * @param value is a punctual value
  * @return `value`
  */
-template<typename T, std::enable_if_t<is_punctual_v<T>>>
+template<typename T, typename = std::enable_if_t<is_punctual_v<T>>>
 inline T get_lower_bound(const T &value)
 {
   return value;
@@ -1494,7 +1494,7 @@ inline T get_lower_bound(const T &value)
  * @param value is a punctual value
  * @return `value`
  */
-template<typename T, std::enable_if_t<is_punctual_v<T>>>
+template<typename T, typename = std::enable_if_t<is_punctual_v<T>>>
 inline T get_upper_bound(const T &value)
 {
   return value;

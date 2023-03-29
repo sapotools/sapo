@@ -68,12 +68,12 @@ public:
    * @param[in] Bu is the bundles union to be appended
    * @return a reference to the new flowpipe
    */
-  inline Flowpipe &push_back(const SetsUnion<Bundle> &Bu)
+  inline Flowpipe &push_back(const SetsUnion<Bundle<double>> &Bu)
   {
     SetsUnion<Polytope<double>> Pu;
 
-    for (const Bundle &b: Bu) {
-      Pu.add(b);
+    for (const auto &bundle: Bu) {
+      Pu.add(bundle);
     }
 
     push_back(Pu);
@@ -87,7 +87,7 @@ public:
    * @param[in] bundle bundle to be appended
    * @return a reference to the new flowpipe
    */
-  inline Flowpipe &push_back(const Bundle &bundle)
+  inline Flowpipe &push_back(const Bundle<double> &bundle)
   {
     this->emplace(this->end(), bundle);
 

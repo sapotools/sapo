@@ -55,9 +55,9 @@ BOOST_AUTO_TEST_CASE(test_sticky_union)
 
     BOOST_CHECK(is_true(are_disjoint(b5,b6)));
 
-    std::list<Bundle> b_list{b1,b2,b3,b4,b5,b6,b7,b8,b9};
+    std::list<Bundle<double>> b_list{b1,b2,b3,b4,b5,b6,b7,b8,b9};
 
-    StickyUnion<Bundle> Su(b_list);
+    StickyUnion<Bundle<double>> Su(b_list);
 
     BOOST_CHECK(is_false(Su.any_includes(c1)));
     BOOST_CHECK(is_false(Su.any_includes(c2)));
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(test_sticky_union)
     BOOST_CHECK(is_true(Su.includes(c1)));
     BOOST_CHECK(is_true(Su.includes(c2)));
 
-    BOOST_REQUIRE_THROW(StickyUnion<Bundle>({b1, b10}), std::domain_error);
+    BOOST_REQUIRE_THROW(StickyUnion<Bundle<double>>({b1, b10}), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_any_includes)
@@ -352,16 +352,16 @@ BOOST_AUTO_TEST_CASE(test_includes_sticky_union)
 
     BOOST_CHECK(is_true(are_disjoint(b5,b6)));
 
-    std::list<Bundle> blist{b1,b2,b3,b4,b5,b6,b7,b8,b9};
+    std::list<Bundle<double>> blist{b1,b2,b3,b4,b5,b6,b7,b8,b9};
 
-    SetsUnion<Bundle> bsu(blist);
+    SetsUnion<Bundle<double>> bsu(blist);
 
     BOOST_CHECK(is_false(bsu.any_includes(c1)));
     BOOST_CHECK(is_false(bsu.any_includes(c2)));
 
     BOOST_CHECK(bsu.size()==7);
 
-    StickyUnion<Bundle> sticky_union = bsu;
+    StickyUnion<Bundle<double>> sticky_union = bsu;
 
     BOOST_CHECK(sticky_union.size()==7);
     BOOST_CHECK(sticky_union.number_of_classes()==3);

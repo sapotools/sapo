@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(test_bundle)
         {0,0,1}
     };
 
-    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}, T),
+    Bundle<double> b1(A,{0,0,0,0,0},{5,5,5,3,7}, T),
            b2(B,{0,0,0,0,0},{3,5,5,7,5}, 
               {{2,1,4}}), // all the directions are static
            b3(B,{0,0,0,0,0},{3,5,5,7,5}, 
@@ -103,13 +103,13 @@ BOOST_AUTO_TEST_CASE(test_bundle_error)
         {0,3,4}
     };
 
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0}, {5,5,5,3,7}, T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,3,7}, T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0,0}, {5,5,5,3,7}, T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,5,3,7}, T);, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7}});, std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7,0,0}}), std::domain_error);
-    BOOST_REQUIRE_THROW(Bundle b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{0,0,0}}), std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0}, {5,5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0,0}, {5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0,0,0}, {5,5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0,0}, {5,5,5,5,3,7}, T);, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7}});, std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{7,0,0}}), std::domain_error);
+    BOOST_REQUIRE_THROW(Bundle<double> b1(A,{0,0,0,0,0}, {5,5,5,3,7}, {{0,0,0}}), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_is_empty_bundle)
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(test_is_empty_bundle)
         {0,3,4}
     };
 
-    Bundle b1(A, {0,0,0,0,0}, {5,5,5,3,7}, T),
+    Bundle<double> b1(A, {0,0,0,0,0}, {5,5,5,3,7}, T),
            b2(A, {0,0,0,0,0}, {-5,5,5,3,7}, T);
 
     BOOST_CHECK(is_false(b1.is_empty()));
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(test_are_disjoint_polytope)
         {1,-1},
     };
 
-    Bundle b1(A,{-1,-2,-3},{3,2,1}), b2(A,{-1,-2,-3},{0,0,0}), 
+    Bundle<double> b1(A,{-1,-2,-3},{3,2,1}), b2(A,{-1,-2,-3},{0,0,0}), 
            b3(A,{-3,-4,-5},{0,0,0}), b4(A,{-3,-4,-5},{-2,-3,-4}), 
            b5(A,{-1,-2,-3},{-3,2,1}), 
            b6(B,{0,0},{10,10});
@@ -232,14 +232,14 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
         {2,0,3}
     };
 
-    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}, TA),
+    Bundle<double> b1(A,{0,0,0,0,0},{5,5,5,3,7}, TA),
            b2(B,{0,0,0,0,0},{3,5,5,7,5}, TB),
            b3(A,{-1,-1,-1,-7,-7},{5,5,5,3,7}, TA),
            b4(A,{1,1,1,1,1},{5,5,5,3,7}, TA),
            b5(A,{0,0,0,0,0},{-5,5,5,3,7}, TA),
            b_err({{1}}, {0}, {1});
 
-    Bundle ba = intersect(b1,b1);
+    Bundle<double> ba = intersect(b1,b1);
     BOOST_CHECK(is_true(ba==b1));
     
     ba = intersect(b1,b2);
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_bundle)
     BOOST_CHECK(is_true(ba==intersect(b5,b1)));
 
     for (const auto& b: {b1,b2,b3,b4,b5}) {
-        Bundle bi = intersect(b1,b);
+        Bundle<double> bi = intersect(b1,b);
         ba = b1;
         ba.intersect_with(b);
         BOOST_CHECK(is_true(ba==bi));
@@ -290,14 +290,14 @@ BOOST_AUTO_TEST_CASE(test_is_subset_of_bundle)
         {0,1,1}
     };
 
-    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}),
+    Bundle<double> b1(A,{0,0,0,0,0},{5,5,5,3,7}),
            b2(A,{-1,0,-1,-3,-3},{6,7,8,9,10}),
            b3(A,{-1,-1,-1,-7,-7},{5,5,5,3,7}),
            b4(A,{1,1,1,1,1},{5,5,5,3,7}),
            b5(A,{0,0,0,0,0},{1,5,5,3,7}),
            b6(A,{0,0,0,0,0},{-5,5,5,3,7});
 
-    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+    for (const Bundle<double>& bundle: {b1, b2, b3, b4, b5, b6}) {
         BOOST_CHECK(is_true(bundle.is_subset_of(bundle)));
     }
 
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(test_is_subset_of_bundle)
     BOOST_CHECK(is_false(b4.is_subset_of(b5)));
     BOOST_CHECK(is_false(b5.is_subset_of(b4)));
 
-    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+    for (const Bundle<double>& bundle: {b1, b2, b3, b4, b5, b6}) {
         BOOST_CHECK(is_true(b6.is_subset_of(bundle)));
 
         if (!is_true(bundle.is_empty())) {
@@ -338,14 +338,14 @@ BOOST_AUTO_TEST_CASE(test_includes_bundle)
         {0,1,1}
     };
 
-    Bundle b1(A,{0,0,0,0,0},{5,5,5,3,7}),
+    Bundle<double> b1(A,{0,0,0,0,0},{5,5,5,3,7}),
            b2(A,{-1,0,-1,-3,-3},{6,7,8,9,10}),
            b3(A,{-1,-1,-1,-7,-7},{5,5,5,3,7}),
            b4(A,{1,1,1,1,1},{5,5,5,3,7}),
            b5(A,{0,0,0,0,0},{1,5,5,3,7}),
            b6(A,{0,0,0,0,0},{-5,5,5,3,7});
 
-    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+    for (const Bundle<double>& bundle: {b1, b2, b3, b4, b5, b6}) {
         BOOST_CHECK(is_true(bundle.includes(bundle)));
     }
 
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(test_includes_bundle)
     BOOST_CHECK(is_false(b4.includes(b5)));
     BOOST_CHECK(is_false(b5.includes(b4)));
 
-    for (const Bundle& bundle: {b1, b2, b3, b4, b5, b6}) {
+    for (const Bundle<double>& bundle: {b1, b2, b3, b4, b5, b6}) {
         BOOST_CHECK(is_true(bundle.includes(b6)));
 
         if (!is_true(bundle.is_empty())) {
@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
     std::vector<Vector<double>> B = {{1,0,1},
                                      {-1,0,1}};
 
-    Bundle b(A,{0,0,0,0,0},{5,5,5,3,7}, TA);
+    Bundle<double> b(A,{0,0,0,0,0},{5,5,5,3,7}, TA);
 
     LinearSystem ls1(B, {5, 0}),
                  ls2(B, {100, 100}),
@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE(test_intersect_with_ls_bundle)
         {-1,0,1}
     };
 
-    Bundle ba = b;
+    Bundle<double> ba = b;
     ba.intersect_with(ls1);
     BOOST_CHECK(is_true(b.includes(ba)));
     BOOST_CHECK(is_true(ba.satisfies(ls1)));
@@ -488,11 +488,11 @@ BOOST_AUTO_TEST_CASE(test_canonical_bundle)
         {0,3,4}
     };
 
-    Bundle b_orig(A,{0,0,0,-100,-100},{5,5,5,300,700}, TA);
+    Bundle<double> b_orig(A,{0,0,0,-100,-100},{5,5,5,300,700}, TA);
 
-    Bundle b(b_orig);
+    Bundle<double> b(b_orig);
 
-    Bundle bc = b.get_canonical();
+    Bundle<double> bc = b.get_canonical();
 
     BOOST_CHECK(is_true(b_orig==b));
     BOOST_CHECK(is_true(bc==b));
@@ -550,18 +550,18 @@ BOOST_AUTO_TEST_CASE(test_approximate_union_bundle)
         {0,3,4}
     };
 
-    Bundle b1(A,{6,6,6,2,2},{12,12,12,15,15}, TA),
+    Bundle<double> b1(A,{6,6,6,2,2},{12,12,12,15,15}, TA),
            b2(B,{0,0,0},{5,5,5}),
            b3(C,{0,0,0},{5,5,5}),
            b_empty(B,{0,0,6},{5,5,5}),
            b_err({{1}},{0},{1});
 
-    std::vector<std::pair<Bundle, Bundle>> b_pairs{
+    std::vector<std::pair<Bundle<double>, Bundle<double>>> b_pairs{
         {b1,b2}, {b1,b3}, {b2,b3}, {b1, b_empty}
     };
 
     for (const auto& b_pair: b_pairs) {
-        Bundle res = over_approximate_union(b_pair.first, b_pair.second);
+        Bundle<double> res = over_approximate_union(b_pair.first, b_pair.second);
         BOOST_CHECK(is_true(res.includes(b_pair.first)));
         BOOST_CHECK(is_true(res.includes(b_pair.second)));
         
