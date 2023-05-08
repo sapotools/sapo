@@ -801,6 +801,31 @@ using Matrix = std::vector<Vector<T>>;
 }
 
 /**
+ * @brief Inplace transpose a square matrix
+ *
+ * @tparam T is the scalar value type
+ * @param A is the matrix to be transposed
+ * @return a reference to the transposed matrix
+ */
+template<typename T>
+Dense::Matrix<T>& inplace_transpose(Dense::Matrix<T> &A)
+{
+  if (A.size() != 0 && A.front().size() != A.size()) {
+    SAPO_ERROR("the parameter must be a square matrix",
+               std::domain_error);
+  }
+
+  for (size_t i = 1; i < A.size(); ++i) {
+    for (size_t j = 0; j < i; ++j) {
+      std::swap(A[j][i], A[i][j]);
+    }
+  }
+
+  return A;
+}
+
+
+/**
  * @brief Transpose a matrix
  *
  * @tparam T is the scalar value type
@@ -810,8 +835,8 @@ using Matrix = std::vector<Vector<T>>;
 template<typename T>
 Dense::Matrix<T> transpose(const Dense::Matrix<T> &A)
 {
-  size_t num_of_rows = A.size();
-  size_t num_of_cols = (num_of_rows == 0 ? 0 : A[0].size());
+  const size_t num_of_rows = A.size();
+  const size_t num_of_cols = (num_of_rows == 0 ? 0 : A[0].size());
   Dense::Matrix<T> TA(num_of_cols, Vector<T>(num_of_rows));
 
   for (size_t i = 0; i < num_of_rows; ++i) {
@@ -1353,14 +1378,14 @@ T determinant(const Dense::Matrix<T> &A)
 }
 
 /**
- * @brief Compute the inverse matrix
+ * @brief Compute the transposed of the inverse matrix
  *
  * @tparam T is the type of the scalar values
  * @param A is the dense matrix to be inverted
- * @return a matrix \f$A^{-1}\f$ such that \f$A\cdot A^{-1} = I\f$
+ * @return a matrix \f$M\f$ such that \f$A\cdot M^{T} = I\f$
  */
 template<typename T>
-Dense::Matrix<T> inverse(Dense::Matrix<T> &A)
+Dense::Matrix<T> transpose_inverse(const Dense::Matrix<T> &A)
 {
   if (A.size() == 0 || A.front().size() == 0) {
     SAPO_ERROR("0x0-matrices not supported", std::domain_error);
@@ -1378,7 +1403,20 @@ Dense::Matrix<T> inverse(Dense::Matrix<T> &A)
     vi[i] = 0;
   }
 
-  return transpose(A_inv);
+  return A_inv;
+}
+
+/**
+ * @brief Compute the inverse matrix
+ *
+ * @tparam T is the type of the scalar values
+ * @param A is the dense matrix to be inverted
+ * @return a matrix \f$M\f$ such that \f$A\cdot M = I\f$
+ */
+template<typename T>
+inline Dense::Matrix<T> inverse(const Dense::Matrix<T> &A)
+{
+  return transpose(transpose_inverse(A));
 }
 
 /**
