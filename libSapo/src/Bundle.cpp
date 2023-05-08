@@ -331,6 +331,13 @@ filter_duplicated_directions(std::vector<LinearAlgebra::Vector<T>> &directions,
 
       const T coeff = new_directions[new_idx] / directions[i];
 
+      // if coeff < 0, then coeff*lower_bounds[i] and 
+      // coeff*upper_bounds[i] are the new potential 
+      // upper and lower bounds, respectively 
+      if (coeff < 0) {
+        std::swap(lower_bounds[i], upper_bounds[i]);
+      }
+
       // if necessary, increase the lower bound
       new_lower_bounds[new_idx]
           = std::max(new_lower_bounds[new_idx], lower_bounds[i] * coeff);
