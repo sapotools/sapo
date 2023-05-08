@@ -13,3 +13,4 @@ direction y <= 2;
 direction x >= 1;
 direction y >= 1;
 
+option remove_duplicate_dirs;

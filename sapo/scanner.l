@@ -93,6 +93,8 @@ max_k_induction	return yy::parser::make_MAX_K_INDUCTION(loc);
 delta_thickness_threshold	return yy::parser::make_DELTA_THICKNESS(loc);
 integration_step 		return yy::parser::make_INTEGRATION_STEP(loc);
 integrator 		return yy::parser::make_INTEGRATOR(loc);
+remove_duplicate_dirs	return yy::parser::make_REMOVE_DUPLICATE_DIRS(loc);
+remove_unused_dirs	return yy::parser::make_REMOVE_UNUSED_DIRS(loc);
 
 transformation		return yy::parser::make_TRANS(loc);
 AFO			return yy::parser::make_AFO(loc);

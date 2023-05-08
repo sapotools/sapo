@@ -303,13 +303,16 @@ public:
    * @param[in] adaptive_direction is the set of adaptive directions
    * @param[in] remove_unused_directions is a flag to remove
    *      directions not belonging to any template
+   * @param[in] remove_duplicate_directions is a flag to remove 
+   *      duplicate directions
    */
   Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
          const LinearAlgebra::Vector<double> &lower_bounds,
          const LinearAlgebra::Vector<double> &upper_bounds,
          std::set<std::vector<unsigned int>> templates,
          const std::set<size_t> &adaptive_directions,
-         const bool remove_unused_directions = false);
+         const bool remove_unused_directions = false,
+         const bool remove_duplicate_directions = false);
 
   /**
    * @brief A constructor

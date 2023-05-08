@@ -39,7 +39,7 @@ trim_unused_directions(std::vector<std::vector<double>> &directions,
   for (unsigned int i = 0; i < directions.size(); i++) {
 
     /* if i is a used direction */
-    if ((i == 0 && new_pos[i] == 1) || (new_pos[i] != new_pos[i - 1])) {
+    if ((i == 0 && new_pos[i] == 1) || (i>0 && (new_pos[i] != new_pos[i - 1]))) {
 
       /* reassign i to its new position */
       const int new_i = new_pos[i] - 1;
@@ -68,7 +68,9 @@ trim_unused_directions(std::vector<std::vector<double>> &directions,
 
   std::set<size_t> new_adaptive_directions;
   for (const auto &dir: adaptive_directions) {
-    new_adaptive_directions.insert(new_pos[dir] - 1);
+    if (new_pos[dir]>0) {
+      new_adaptive_directions.insert(new_pos[dir] - 1);
+    }
   }
   std::swap(adaptive_directions, new_adaptive_directions);
 
@@ -131,7 +133,12 @@ collect_constraints(std::vector<std::vector<double>> &directions,
   // get directions and boundaries from input data
   for (unsigned i = 0; i < id.getDirectionsNum(); i++) {
     auto dir = id.getDirection(i)->get_variable_coefficients(variables);
-    auto pos = find_linearly_dependent_row(directions, dir);
+    size_t pos;
+    if (id.removeDuplicateDirs()) {
+      pos = find_linearly_dependent_row(directions, dir);
+    } else {
+      pos = directions.size();
+    }
 
     template_ids[i] = pos;
     if (pos == directions.size()) {
@@ -176,7 +183,7 @@ Bundle getBundle(const InputData &id)
   auto templates = collect_constraints(directions, LB, UB, id);
 
   /* if users have specified at least one template, ... */
-  if (templates.size() > 0) {
+  if (templates.size() > 0 && id.removeUnusedDirs()) {
     /* ... they really want to exclusively use those templates.
        Thus, trim the unused directions. */
 
@@ -187,7 +194,8 @@ Bundle getBundle(const InputData &id)
                                        templates);
   }
 
-  Bundle bundle = Bundle(directions, LB, UB, templates, adaptive_directions);
+  Bundle bundle = Bundle(directions, LB, UB, templates, adaptive_directions, 
+                         id.removeUnusedDirs(), id.removeDuplicateDirs());
 
   if (id.getUseInvariantDirections()) {
     const auto variables = id.getVarSymbols();

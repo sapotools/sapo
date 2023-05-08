@@ -23,7 +23,8 @@ InputData::InputData():
     integration_step_set(false), integrator_type_set(false),
     trans(transType::T_UNDEF), compose_dynamic(false), dynamic_degree(1),
     approx_type(Sapo::NO_APPROX), bern_caching(true), all_dirs_adaptive(false),
-    use_invariant_directions(false), integration_step(), integrator_type()
+    use_invariant_directions(false), integration_step(), integrator_type(),
+    remove_duplicate_dirs(false), remove_unused_dirs(false)
 {
 }
 

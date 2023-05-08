@@ -425,8 +425,6 @@ std::set<std::vector<unsigned int>> update_templates_directions(
     for (auto &dir_id: new_template) {
       dir_id = new_positions[dir_id];
     }
-    canonize_template(new_template);
-
     new_templates.insert(std::move(new_template));
   }
 
@@ -438,8 +436,7 @@ std::set<std::vector<unsigned int>> update_templates_directions(
  *
  * This function returns a set of templates which are built by updating the
  * indices of those in the input set indices according to the map of the new
- * direction positions. Moreover, the new templates are brought to the
- * canonical form.
+ * direction positions.
  *
  * @param templates is the set of the templates whose direction position
  *               must be updated
@@ -457,7 +454,6 @@ std::set<std::vector<unsigned int>> update_templates_directions(
     for (auto &dir_id: new_template) {
       dir_id = new_positions.at(dir_id);
     }
-    canonize_template(new_template);
 
     new_templates.insert(std::move(new_template));
   }
@@ -687,7 +683,8 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
                const LinearAlgebra::Vector<double> &upper_bounds,
                std::set<std::vector<unsigned int>> templates,
                const std::set<size_t> &adaptive_directions,
-               const bool remove_unused_directions):
+               const bool remove_unused_directions,
+               const bool remove_duplicate_directions):
     _directions(directions),
     _adaptive_directions(adaptive_directions), _lower_bounds(lower_bounds),
     _upper_bounds(upper_bounds), _templates()
@@ -703,12 +700,16 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
     }
   }
 
-  // filter duplicated direction, update templates, and bring them in canonical
-  // form
-  auto new_pos = filter_duplicated_directions(
-      _directions, _adaptive_directions, _lower_bounds, _upper_bounds);
+  if (remove_duplicate_directions) {
+    // filter duplicated direction, update templates, and bring them in canonical
+    // form
+    auto new_pos = filter_duplicated_directions(
+        _directions, _adaptive_directions, _lower_bounds, _upper_bounds);
 
-  templates = update_templates_directions(templates, new_pos);
+    templates = update_templates_directions(templates, new_pos);
+  }
+
+  templates = canonize_templates(templates);
 
   auto used_dirs = collect_directions_in_templates(templates);
 
@@ -736,6 +737,8 @@ Bundle::Bundle(const std::vector<LinearAlgebra::Vector<double>> &directions,
       resort_directions(_directions, _adaptive_directions, _lower_bounds,
                         _upper_bounds, new_pos);
       templates = update_templates_directions(templates, new_pos);
+      
+      templates = canonize_templates(templates);
     }
   }
   duplicate_adaptive_directions(_directions, _adaptive_directions,

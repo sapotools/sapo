@@ -106,6 +106,8 @@ std::set<std::string> let_identifiers;
 	DELTA_THICKNESS
 	INTEGRATION_STEP
 	INTEGRATOR
+	REMOVE_DUPLICATE_DIRS
+	REMOVE_UNUSED_DIRS
 	PSPLITS
 	PRESPLITS
 	USE_INVARIANT_DIRS
@@ -1459,6 +1461,23 @@ option	: TRANS transType ";"
 		{
 			MISSING_SC(@2);
 		}
+		| REMOVE_DUPLICATE_DIRS ";"
+		{
+			drv.data.setRemoveDuplicateDirs(true);
+		}
+		| REMOVE_DUPLICATE_DIRS error
+		{
+			MISSING_SC(@2);
+		}
+		| REMOVE_UNUSED_DIRS ";"
+		{
+			drv.data.setRemoveUnusedDirs(true);
+		}
+		| REMOVE_UNUSED_DIRS error
+		{
+			MISSING_SC(@2);
+		}
+		
 
 transType : AFO { $$ = AbsSyn::transType::AFO; }
 					| OFO { $$ = AbsSyn::transType::OFO; }

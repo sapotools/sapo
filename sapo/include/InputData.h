@@ -493,6 +493,26 @@ public:
     return integration_step_set;
   }
 
+  inline void setRemoveDuplicateDirs(const bool &flag)
+  {
+    remove_duplicate_dirs = flag;
+  }
+
+  inline const bool& removeDuplicateDirs() const
+  {
+    return remove_duplicate_dirs;
+  }
+
+  inline void setRemoveUnusedDirs(const bool &flag)
+  {
+    remove_unused_dirs = flag;
+  }
+
+  inline const bool& removeUnusedDirs() const
+  {
+    return remove_unused_dirs;
+  }
+
   /**
    * @brief Fix boundaries according to the whole input
    *
@@ -565,6 +585,8 @@ protected:
   bool use_invariant_directions;
   double integration_step;
   IntegratorType integrator_type;
+  bool remove_duplicate_dirs;
+  bool remove_unused_dirs;
 };
 
 /**
