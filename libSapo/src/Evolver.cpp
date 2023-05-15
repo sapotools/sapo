@@ -764,6 +764,56 @@ get_parallelotope_basis_vertices(const Parallelotope &p)
 }
 
 /**
+ * @brief Get the basis of a parallelotope
+ *
+ * Every parallelotope is described by a vector of generator
+ * vectors \f$G\f$, their lengths \f$\lambda\f$, and a
+ * base vertices \f$b\f$. The parallelotope basis is
+ * the set of vectors \f$\lambda_i*G_i\f$.
+ *
+ * @param p is a parallelotope
+ * @return the vector of parallelotope basis vertices
+ */
+std::vector<LinearAlgebra::Vector<double>>
+get_parallelotope_basis(const Parallelotope &p)
+{
+  using namespace LinearAlgebra;
+
+  std::vector<Vector<double>> basis;
+  for (size_t j = 0; j < p.dim(); ++j) {
+    basis.push_back( p.generators()[j] * p.lengths()[j]);
+  }
+
+  return basis;
+}
+
+/**
+ * @brief Compute the images of a set of vectors
+ * 
+ * This method computes the images of a set of vectors according to 
+ * a set of dynamical laws.
+ * 
+ * @param dynamical_system is the vector of the system dynamical laws
+ * @param variables is the vector of variables
+ * @param vectors is the vector of vectors whose images is aimed
+ * @return the vector of vector images
+ */
+std::vector<LinearAlgebra::Vector<double>> compute_images(
+    const std::vector<SymbolicAlgebra::Expression<double>> &dynamical_system,
+    const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
+    const std::vector<LinearAlgebra::Vector<double>>& vectors)
+{
+  using namespace LinearAlgebra;
+
+  std::vector<Vector<double>> images;
+  for (const auto &v: vectors) {
+    images.push_back(compute_image(dynamical_system, variables, v));
+  }
+
+  return images;
+}
+
+/**
  * @brief Get the parallelotope basis image
  *
  * Every parallelotope is described by a vector of generator
@@ -773,32 +823,139 @@ get_parallelotope_basis_vertices(const Parallelotope &p)
  * The parallelotope basis vertices are vertices of the
  * parallelotope in the form \f$\lambda_i*G_i+b\f$.
  * The image of the parallelotope basis through a function
- * \f$f\f$ is the set of vectors \f$f(lambda_i*G_i+b)-f(b)\f$.
+ * \f$f\f$ is the set of vectors \f$f(\lambda_i*G_i+b)-f(b)\f$.
  *
+ * @param f is the vector of the multi-dimensional function
+ * @param variables is the vector of variables
  * @param p is a parallelotope
  * @return the vector of the parallelotope basis image
  */
 std::vector<LinearAlgebra::Vector<double>> get_parallelotope_basis_images(
-    const std::vector<SymbolicAlgebra::Expression<double>> &dynamical_system,
+    const std::vector<SymbolicAlgebra::Expression<double>> &f,
     const std::vector<SymbolicAlgebra::Symbol<double>> &variables,
     const Parallelotope &p)
 {
   using namespace LinearAlgebra;
 
-  auto edge_vertices = get_parallelotope_basis_vertices(p);
-
-  const auto base_vertex_image
-      = compute_image(dynamical_system, variables, p.base_vertex());
+  const auto base_vertex_image = compute_image(f, variables, p.base_vertex());
 
   std::vector<Vector<double>> basis_images;
-  for (const auto &edge_vertex: edge_vertices) {
-    auto vertex_image
-        = compute_image(dynamical_system, variables, edge_vertex);
-    vertex_image -= base_vertex_image;
-    basis_images.push_back(std::move(vertex_image));
+  for (size_t j = 0; j < p.dim(); ++j) {
+    auto vertex = p.generators()[j] * p.lengths()[j]+p.base_vertex();
+    const auto vertex_image = compute_image(f, variables,vertex);
+    basis_images.push_back(vertex_image-base_vertex_image);
   }
 
   return basis_images;
+}
+
+/**
+ * @brief Compute new directions for a bundle template
+ *
+ * This method computes new directions for a bundle template 
+ * subject to a dynamical system. This is achieved 
+ * by computing the images of each parallelotope edge on the 
+ * base-vertex side and evaluating the vector normal to the 
+ * corresponding faces.
+ *
+ * @param new_dirs[out] is the vector of the new directions
+ * @param bundle[in] is the considered bundle
+ * @param bundle_template[in] is the template whose new 
+ *     directions are aimed
+ * @param laws[in] is the vector of the dynamical laws
+ * @param variables[in] is the vector of the variables
+ */
+void
+compute_new_directions_by_faces(std::vector<LinearAlgebra::Vector<double>> &new_dirs,
+                                const Bundle &bundle, 
+                                const BundleTemplate& bundle_template,
+                                const std::vector<SymbolicAlgebra::Expression<double>> &laws,
+                                const std::vector<SymbolicAlgebra::Symbol<double>> &variables)
+{
+  Parallelotope p = bundle.get_parallelotope(bundle_template);
+
+  auto basis_images
+      = get_parallelotope_basis_images(laws, variables, p);
+
+  // if an basis has length 0, then the corresponding generator
+  // does not change
+  for (size_t i = 0; i < p.dim(); ++i) {
+    if (p.lengths()[i] == 0) {
+      basis_images[i] = p.generators()[i];
+    }
+  }
+
+  for (const auto &adaptive_index: bundle_template.adaptive_indices()) {
+    const auto &direction_index = bundle_template[adaptive_index];
+    if (bundle.is_direction_adaptive(direction_index)) {
+
+      using namespace LinearAlgebra;
+
+      // remove the basis vector of the considered direction
+      Vector<double> basis_direction
+          = extract_value(basis_images, adaptive_index);
+
+      // compute one of vectors orthogonal to sampling images
+      new_dirs[direction_index]
+          = compute_orthogonal_direction(basis_images);
+
+      // insert again the basis vector of the considered direction
+      insert_value(basis_images, adaptive_index,
+                    std::move(basis_direction));
+
+      fix_new_dir_verse(bundle.get_direction(direction_index),
+                        new_dirs[direction_index]);
+    }
+  }
+}
+
+/**
+ * @brief Compute new directions for a bundle template
+ *
+ * This method computes new directions for a bundle template 
+ * subject to a dynamical system. This is achieved by 
+ * approximating the dynamical system using the linear
+ * transformation $h$ that maps all the vertices of the kind 
+ * \f$b+\lambda_i*G_i\f$, where \f$b\f$ is the bundle 
+ * base-vertex, \f$\lambda_i\f$ are the edges lengths, 
+ * and \f$G_i\f$ the corresponding generators, in 
+ * \f$f(b+\lambda_i*G_i)\f$.
+ *
+ * @param new_dirs[out] is the vector of the new directions
+ * @param bundle[in] is the considered bundle
+ * @param bundle_template[in] is the template whose new 
+ *     directions are aimed
+ * @param laws[in] is the vector of the dynamical laws
+ * @param variables[in] is the vector of the variables
+ */
+void
+compute_new_directions_by_transformation(std::vector<LinearAlgebra::Vector<double>> &new_dirs,
+                                         const Bundle &bundle, 
+                                         const BundleTemplate& bundle_template,
+                                         const std::vector<SymbolicAlgebra::Expression<double>> &laws,
+                                         const std::vector<SymbolicAlgebra::Symbol<double>> &variables)
+{
+  using namespace LinearAlgebra;
+
+  Parallelotope p = bundle.get_parallelotope(bundle_template);
+
+  auto basis_images
+      = get_parallelotope_basis_images(laws, variables, p);
+
+  if (rank(basis_images)==basis_images.size()) {
+
+    // compute transformation of normal vectors
+    inplace_transpose(basis_images);
+    auto normalT = transpose_inverse(basis_images) * get_parallelotope_basis(p);
+
+    // apply the transformation of the normal vector to any adaptive directions 
+    for (const auto &direction_index: bundle_template.direction_indices()) {
+      new_dirs[direction_index] = normalT * bundle.get_direction(direction_index);
+
+      // normalizes new directions
+      new_dirs[direction_index] /= norm_2(new_dirs[direction_index]);
+    }
+  }
 }
 
 /**
@@ -819,50 +976,23 @@ std::vector<LinearAlgebra::Vector<double>>
 compute_new_directions(const Bundle &bundle, const DynamicalSystem<double> &ds,
                        const Polytope &parameter_set)
 {
-  using namespace LinearAlgebra;
-
   // if no direction is dynamic return the old direction vector
   if (bundle.adaptive_directions().size() == 0) {
     return bundle.directions();
   }
 
-  std::vector<Vector<double>> new_dirs(bundle.directions());
+  std::vector<LinearAlgebra::Vector<double>> new_dirs(bundle.directions());
 
   auto avg_ds = average_dynamics(ds, parameter_set);
 
   for (const auto &bundle_template: bundle.templates()) {
     if (bundle_template.is_adaptive()) {
-      Parallelotope p = bundle.get_parallelotope(bundle_template);
-
-      auto basis_images
-          = get_parallelotope_basis_images(avg_ds, ds.variables(), p);
-
-      // if an basis has length 0, then the corresponding generator
-      // does not change
-      for (size_t i = 0; i < p.dim(); ++i) {
-        if (p.lengths()[i] == 0) {
-          basis_images[i] = p.generators()[i];
-        }
-      }
-
-      for (const auto &adaptive_index: bundle_template.adaptive_indices()) {
-        const auto &direction_index = bundle_template[adaptive_index];
-        if (bundle.is_direction_adaptive(direction_index)) {
-          // remove the basis vector of the considered direction
-          Vector<double> basis_direction
-              = extract_value(basis_images, adaptive_index);
-
-          // compute one of vectors orthogonal to sampling images
-          new_dirs[direction_index]
-              = compute_orthogonal_direction(basis_images);
-
-          // insert again the basis vector of the considered direction
-          insert_value(basis_images, adaptive_index,
-                       std::move(basis_direction));
-
-          fix_new_dir_verse(bundle.get_direction(direction_index),
-                            new_dirs[direction_index]);
-        }
+      if (bundle_template.adaptive_indices().size()<bundle_template.dim()) {
+        compute_new_directions_by_faces(new_dirs, bundle, bundle_template,
+                                        avg_ds, ds.variables());
+      } else {
+        compute_new_directions_by_transformation(new_dirs, bundle, bundle_template, 
+                                                 avg_ds, ds.variables());
       }
     }
   }
@@ -1212,7 +1342,7 @@ Bundle Evolver<double>::operator()(const Bundle &bundle,
     }
   }
 
-  if (this->mode == ONE_FOR_ONE) {
+  if (this->mode == ALL_FOR_ONE) {
     new_bundle.canonize();
   }
 
