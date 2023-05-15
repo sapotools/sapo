@@ -68,6 +68,20 @@ BundleTemplate::canonize(std::vector<unsigned int> &bundle_template)
   return bundle_template;
 }
 
+std::set<std::vector<unsigned int>>
+BundleTemplate::canonize(const std::set<std::vector<unsigned int>> &bundle_templates)
+{
+  std::set<std::vector<unsigned int>> new_templates;
+
+  for (auto bundle_template: bundle_templates) {
+    BundleTemplate::canonize(bundle_template);
+
+    new_templates.insert(std::move(bundle_template));
+  }
+
+  return new_templates;
+}
+
 std::ostream &operator<<(std::ostream &os,
                          const BundleTemplate &bundle_template)
 {
@@ -119,7 +133,6 @@ std::set<std::vector<unsigned int>> BundleTemplate::update_directions(
     for (auto &dir_id: new_template) {
       dir_id = new_positions[dir_id];
     }
-    BundleTemplate::canonize(new_template);
 
     new_templates.insert(std::move(new_template));
   }
@@ -138,7 +151,6 @@ std::set<std::vector<unsigned int>> BundleTemplate::update_directions(
     for (auto &dir_id: new_template) {
       dir_id = new_positions.at(dir_id);
     }
-    BundleTemplate::canonize(new_template);
 
     new_templates.insert(std::move(new_template));
   }

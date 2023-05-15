@@ -49,14 +49,27 @@ class BundleTemplate
   canonize(std::vector<unsigned int> &bundle_template);
 
   /**
+   * @brief Canonize a set of index vectors representing templates
+   *
+   * A template is in canonical form if it is sorted. This function
+   * builds a set of index vectors representing templates in 
+   * canonical form that is equivalent to the set in input.
+   *
+   * @param bundle_templates is the set of index vectors 
+   *    representing templates to be brought in canonical form
+   * @return the set of input index vectors brought in canonical form
+   */
+  static std::set<std::vector<unsigned int>>
+  canonize(const std::set<std::vector<unsigned int>> &bundle_templates);
+
+  /**
    * @private
    * @brief Update the direction positions in a set of templates
    *
    * This method returns a set of vectors representing templates. The
    * vectors themselves are built by updating the indices of those in
    * the input set according to the vector of the new direction
-   * positions. The returned templates are also brought to the
-   * canonical form.
+   * positions.
    *
    * @param templates is the set of the templates whose direction position
    *               must be updated
@@ -74,7 +87,6 @@ class BundleTemplate
    * This method returns a set of vectors representing templates. The
    * vectors themselves are built by updating the indices of those in
    * the input set according to the map of the new direction positions.
-   * The returned templates are also brought to the canonical form.
    *
    * @param templates is the set of the templates whose direction position
    *               must be updated

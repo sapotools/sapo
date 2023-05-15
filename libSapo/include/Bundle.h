@@ -373,14 +373,17 @@ public:
    * @param[in] templates is the set of the bundle templates
    * @param[in] adaptive_direction is the set of adaptive directions
    * @param[in] remove_unused_directions is a flag to remove
-   *      directions not belonging to any template
+   *      directions not belonging to any template (default: false)
+   * @param[in] remove_duplicate_directions is a flag to remove 
+   *      duplicate directions (default: false)
    */
   Bundle(const std::vector<LinearAlgebra::Vector<T>> &directions,
          const LinearAlgebra::Vector<T> &lower_bounds,
          const LinearAlgebra::Vector<T> &upper_bounds,
          std::set<std::vector<unsigned int>> templates,
          const std::set<size_t> &adaptive_directions,
-         const bool remove_unused_directions = false);
+         const bool remove_unused_directions = false,
+         const bool remove_duplicate_directions = false);
 
   /**
    * @brief A constructor
@@ -390,13 +393,16 @@ public:
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] templates is the set of the bundle templates
    * @param[in] remove_unused_directions is a flag to remove
-   *      directions not belonging to any template
+   *      directions not belonging to any template (default: false)
+   * @param[in] remove_duplicate_directions is a flag to remove 
+   *      duplicate directions (default: false)
    */
   Bundle(const std::vector<LinearAlgebra::Vector<T>> &directions,
          const LinearAlgebra::Vector<T> &lower_bounds,
          const LinearAlgebra::Vector<T> &upper_bounds,
          const std::set<std::vector<unsigned int>> &templates,
-         const bool remove_unused_directions = false);
+         const bool remove_unused_directions = false,
+         const bool remove_duplicate_directions = false);
 
   /**
    * @brief A constructor
@@ -409,12 +415,15 @@ public:
    * @param[in] lower_bounds is the vector of direction lower bounds
    * @param[in] upper_bounds is the vector of direction upper bounds
    * @param[in] remove_unused_directions is a flag to remove
-   *      directions not belonging to any template
+   *      directions not belonging to any template (default: false)
+   * @param[in] remove_duplicate_directions is a flag to remove 
+   *      duplicate directions (default: false)
    */
   Bundle(const std::vector<LinearAlgebra::Vector<T>> &directions,
          const LinearAlgebra::Vector<T> &lower_bounds,
          const LinearAlgebra::Vector<T> &upper_bounds,
-         const bool remove_unused_directions = false);
+         const bool remove_unused_directions = false,
+         const bool remove_duplicate_directions = false);
 
   /**
    * @brief A constructor
@@ -1267,6 +1276,13 @@ Bundle<T, APPROX_TYPE>::filter_duplicated_directions()
       const APPROX_TYPE coeff = get_dependency_coefficient<T, APPROX_TYPE>(
           new_directions[new_idx], _directions[i]);
 
+      // if coeff < 0, then coeff*_lower_bounds[i] and 
+      // coeff*_upper_bounds[i] are the new potential 
+      // upper and lower bounds, respectively 
+      if (coeff < 0) {
+        std::swap(_lower_bounds[i], _upper_bounds[i]);
+      }
+
       // if necessary, increase the lower bound
       new_lower_bounds[new_idx]
           = std::max(new_lower_bounds[new_idx],
@@ -1342,7 +1358,8 @@ Bundle<T, APPROX_TYPE>::Bundle(
     const LinearAlgebra::Vector<T> &upper_bounds,
     std::set<std::vector<unsigned int>> templates,
     const std::set<size_t> &adaptive_directions,
-    const bool remove_unused_directions):
+    const bool remove_unused_directions,
+    const bool remove_duplicate_directions):
     _directions(directions),
     _adaptive_directions(adaptive_directions), _lower_bounds(lower_bounds),
     _upper_bounds(upper_bounds), _templates()
@@ -1350,11 +1367,14 @@ Bundle<T, APPROX_TYPE>::Bundle(
   validate_directions_and_bounds();
   validate_templates(templates);
 
-  // filter duplicated direction, update templates, and bring them in canonical
-  // form
-  auto new_pos = filter_duplicated_directions();
+  if (remove_duplicate_directions) {
+    // filter duplicated direction, update templates, and bring them in canonical
+    // form
+    auto new_pos = filter_duplicated_directions();
 
-  templates = BundleTemplate::update_directions(templates, new_pos);
+    templates = BundleTemplate::update_directions(templates, new_pos);
+  }
+  templates = BundleTemplate::canonize(templates);
 
   auto used_dirs = BundleTemplate::collect_directions(templates);
 
@@ -1382,6 +1402,8 @@ Bundle<T, APPROX_TYPE>::Bundle(
 
       resort_directions(new_pos);
       templates = BundleTemplate::update_directions(templates, new_pos);
+      
+      templates = BundleTemplate::canonize(templates);
     }
   }
   templates = duplicate_adaptive_directions(templates);
@@ -1397,9 +1419,10 @@ Bundle<T, APPROX_TYPE>::Bundle(
     const LinearAlgebra::Vector<T> &lower_bounds,
     const LinearAlgebra::Vector<T> &upper_bounds,
     const std::set<std::vector<unsigned int>> &templates,
-    const bool remove_unused_directions):
+    const bool remove_unused_directions,
+    const bool remove_duplicate_directions):
     Bundle<T, APPROX_TYPE>(directions, lower_bounds, upper_bounds, templates, {},
-           remove_unused_directions)
+           remove_unused_directions, remove_duplicate_directions)
 {
 }
 
@@ -1408,9 +1431,10 @@ Bundle<T, APPROX_TYPE>::Bundle(
     const std::vector<LinearAlgebra::Vector<T>> &directions,
     const LinearAlgebra::Vector<T> &lower_bounds,
     const LinearAlgebra::Vector<T> &upper_bounds,
-    const bool remove_unused_directions):
+    const bool remove_unused_directions,
+    const bool remove_duplicate_directions):
     Bundle<T, APPROX_TYPE>(directions, lower_bounds, upper_bounds, {}, {},
-           remove_unused_directions)
+           remove_unused_directions, remove_duplicate_directions)
 {
 }
 
